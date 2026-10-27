@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Mechanistic Finetuning of Vision-Language-Action Models via Few-Shot Demonstrations</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Mechanistic Finetuning of Vision-Language-Action Models via Few-Shot Demonstrations</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-示范已经说明了动作-能否进一步指定更新位置"><span class="toc-num">02</span> 2. 关键问题：示范已经说明了动作，能否进一步指定更新位置？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先用动作回归给头排序-再训练选中的参数切片"><span class="toc-num">03</span> 3. 关键方法：先用动作回归给头排序，再训练选中的参数切片</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着同一个案例走一遍">3.1 沿着同一个案例走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-为什么用回归-而不只判断任务类别">3.2 为什么用回归，而不只判断任务类别？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-实际训练的-不只有-query">3.3 实际训练的，不只有 Query</a></li>
+<li><a class="toc-link" href="#4-数据与评估-少样本真机任务-覆盖范围仍窄"><span class="toc-num">04</span> 4. 数据与评估：少样本真机任务，覆盖范围仍窄</a></li>
+<li><a class="toc-link" href="#5-关键结果-整套方案有效-但选头贡献与泛化强度需要拆开"><span class="toc-num">05</span> 5. 关键结果：整套方案有效，但选头贡献与泛化强度需要拆开</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-九个组合更高-一个组合退步">5.1 主实验：九个组合更高，一个组合退步</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融-mlp-很关键-选头身份的独立贡献仍缺控制">5.2 消融：MLP 很关键，选头身份的独立贡献仍缺控制</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-迁移与扰动-相对更好-不等于保留旧能力">5.3 迁移与扰动：相对更好，不等于保留旧能力</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-可读出动作-是好的工程筛选器-还不是物理机制解释">6.1 “可读出动作”是好的工程筛选器，还不是物理机制解释</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-下一步最值得补的是同预算-同冻结范围的随机选头">6.2 下一步最值得补的是同预算、同冻结范围的随机选头</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-可读出的位置-不一定是最值得修改的位置">6.3 可读出的位置，不一定是最值得修改的位置</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-27</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/html/2511.22697v1" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Mechanistic Finetuning of Vision-Language-Action Models via Few-Shot Demonstrations</h1>
+    <p class="authors">['Chancharik Mitra', 'Yusen Luo', 'Raj Saravanan', 'Dantong Niu', 'Anirudh Pai', 'Jesse Thomason', 'Trevor Darrell', 'Abrar Anwar', 'Deva Ramanan', 'Roei Herzig']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">PEFT</span></div>
+</header>
+
+<h1>论文笔记：Mechanistic Finetuning of Vision-Language-Action Models via Few-Shot Demonstrations</h1>
+<p><strong>Robotic Steering 最有用的想法，是让示范数据同时回答“机器人该怎么做”和“模型该改哪里”。</strong> 作者用每个注意力头的表示做动作近邻回归，选出误差较低的头，再有选择地微调。真机结果支持这套适配方案在少量示范下的实用价值；但“选中了有用的更新位置”与“找到了物理推理机制”，证据强度相差很大。</p>
+<p>读这篇记住四件事：用<strong>跨轨迹的动作预测误差</strong>选头；实际训练范围比“只改少数头”更广；性能和参数收益同时受到冻结策略影响；未见任务与扰动结果有改善，但不足以证明旧技能保持或物理机制已被解释。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Chancharik Mitra 等；Carnegie Mellon University、University of Southern California、UC Berkeley、MIT-IBM Watson AI Lab。</li>
+<li><strong>版本</strong>：2025-11-27 发布的 arXiv v1。本笔记只讨论用户指定版本，不据此判断后续录用或修订状态。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2511.22697v1">官方全文与附录 A–D</a>、<a href="https://arxiv.org/abs/2511.22697v1">版本元数据</a>、<a href="https://chancharikmitra.github.io/robosteering/">项目页</a>。已阅读全文并核对所选原图；未运行作者代码、未复现训练或真机实验。</li>
+</ul>
+<h2 id="2-关键问题-示范已经说明了动作-能否进一步指定更新位置">2. 关键问题：示范已经说明了动作，能否进一步指定更新位置？</h2>
+<p><strong>Golden Case：把记号笔放进杯子。</strong> 这是论文的真实任务，成功标准是笔完全进入杯内（Appendix C.1）。同一句指令背后，笔的位置、杯口几何、相机视角和抓取姿态都影响动作。Table 1 中，预训练的 $\pi_{0.5}$-DROID 在这一具体设置下零样本成功率只有 10%。</p>
+<p>常规适配会用示范监督动作，但每个任务通常沿用同一套可训练模块。作者问：既然示范包含了当前场景需要什么动作，能否先判断哪些内部表示最贴近这些动作，再集中更新？这里新增的是<strong>用示范选择参数位置</strong>；对照 LoRA 也使用相同数量的示范，不能把本文优势解释成“有示范”对“只有语言”。</p>
+<p>一个关键假设随之出现：<strong>某个头的表示越容易预测专家动作，更新这个头越有利于适配。</strong> 前半句是可测的读出能力，后半句才是需要下游实验支持的训练假设。</p>
+<h2 id="3-关键方法-先用动作回归给头排序-再训练选中的参数切片">3. 关键方法：先用动作回归给头排序，再训练选中的参数切片</h2>
+<h3 id="3-1-沿着同一个案例走一遍">3.1 沿着同一个案例走一遍</h3>
+<p>给定 20 条“把记号笔放进杯子”的遥操作示范，流程如下（§3.2–3.4、Appendix B.1）：</p>
+<ol>
+<li><strong>抽表示</strong>：冻结 VLA，把每个时间步的图像、指令和机器人状态送入模型，记录各注意力头的激活。检索单位是时间步，不是整条轨迹；论文还用关键帧抽取降低计算量。</li>
+<li><strong>考每个头的动作读出能力</strong>：取一条示范中的某一时刻，只到<strong>其他轨迹</strong>里寻找激活最相似的 $k$ 个时刻，把它们的专家动作平均，再与当前真实动作比较。排除同轨迹邻居，可减少相邻帧几乎相同造成的虚假好成绩。</li>
+<li><strong>选位置并适配</strong>：把回归误差最低的 20 个头作为候选更新位置，使用同一批示范训练所选 LoRA 切片及辅助模块；训练损失仍沿用基座的 flow matching 目标。</li>
+<li><strong>正常部署</strong>：得到常规 checkpoint，在线接收新观测并输出动作，不再做 k-NN 检索，也不用额外注入 steering vector。</li>
+</ol>
+<p>为便于理解，设当前时刻是“夹爪已经夹住笔，准备上提”。一个有用的头，应当把它与其他示范中需要相近关节动作的时刻放近，而不只是检索出“画面里也有杯子”的帧。<strong>这是对算法的示意解释，论文没有展示这一具体检索案例或逐阶段功能验证。</strong></p>
+<p><img src="../../assets/robotic-steering-2511.22697v1/figure2-method.png" alt="Robotic Steering 的选头、微调与部署流程" /></p>
+<p><em>原文 <a href="https://arxiv.org/html/2511.22697v1#S1.F2">Figure 2</a>。看示范被使用了两次：第一次确定更新位置，第二次监督训练。图中的“火焰/雪花”概括了更新与冻结，完整训练范围要看附录 Table 7。</em></p>
+<h3 id="3-2-为什么用回归-而不只判断任务类别">3.2 为什么用回归，而不只判断任务类别？</h3>
+<p>令 $z_{lh}(q)$ 是头 $(l,h)$ 在观测 $q$ 上的激活，$a_q$ 是该时刻的专家动作。将原文 Eq. 2–5 合写为：</p>
+<div class="math-display">$$
+\begin{aligned}
+\mathcal N_k^{lh}(q)&amp;=\operatorname{TopK}_{u:\,\tau(u)\ne\tau(q)}
+\cos\bigl(z_{lh}(q),z_{lh}(u)\bigr),\\
+\widehat a_{lh}(q)&amp;=\frac1k\sum_{u\in\mathcal N_k^{lh}(q)}a_u,\\
+S(l,h)&amp;=\frac1{|\mathcal Q|}\sum_{q\in\mathcal Q}
+\|\widehat a_{lh}(q)-a_q\|_2^2.
+\end{aligned}
+$$</div>
+<p>$\mathcal Q$ 表示参与评分的时间步集合，$\tau(\cdot)$ 表示所属轨迹；每头独立检索、回归并评分，最后选 $S$ 最低的 $m=20$ 个头。余弦相似度决定“谁是邻居”，动作 MSE 决定“这个头是否值得选”。$k$ 在 $\{10,20,30,40\}$ 中按任务选择，以回归误差为依据（Appendix A.1）。筛选阶段不训练新的神经网络探针。</p>
+<p>这个目标比“是否属于放笔任务”细：同一任务中，靠近、夹持、抬升和释放需要不同动作。Appendix A.2 / Table 6 的任务二分类实验也说明了区别：最优 20 头分类准确率 86.75%，随机 20 头已有 82.5%，最差 20 头仍有 81.25%。这些是<strong>分类准确率</strong>，不能当成随机选头微调后的机器人成功率。</p>
+<p><strong>复现时不能忽略 token 位置。</strong> §3.1 写 final token，但 Appendix A.1 明确选择 first token in suffix，并在距离度量段称其为 state token。笔记按附录记录；不同架构中实际抽取的位置仍需查代码确认 <code>[?]</code>。作者选择它的依据是头评分更有区分度，不等于已证明该位置的动作控制效果最好。</p>
+<h3 id="3-3-实际训练的-不只有-query">3.3 实际训练的，不只有 Query</h3>
+<p>骨干有 18 层、每层 8 头，共 144 头；选 20 头约占 13.9%，LoRA rank 为 8（§4.1）。直觉上，修改 Query 会改变该头如何从已有信息中取用内容，Output 与后续 MLP 则影响这些信息如何进入下游计算。</p>
+<p>正文 §3.3 用 $W&#x27;_Q=W_Q+BA$ 描述更新，且强调 Query 与 MLP；但 <strong>Appendix B.1 / Table 7 给出了更完整的实现</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模块</th>
+<th>Robotic Steering 的处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主 LLM 注意力 Q、O 的 LoRA</td>
+<td>只更新所选头对应切片，使用带掩码的优化器</td>
+</tr>
+<tr>
+<td>主 LLM 的 K、V LoRA</td>
+<td>冻结；K/V 在层内共享，不能照搬逐 Query 头的独立选择</td>
+</tr>
+<tr>
+<td>主 LLM 的 FFN、归一化适配器</td>
+<td>按附录所列适配范围更新；不能理解为每个头有独立的 MLP</td>
+</tr>
+<tr>
+<td>动作输入/输出投影、时间条件 MLP</td>
+<td>可训练；$\pi_0$ 还更新状态投影</td>
+</tr>
+<tr>
+<td>SigLIP 视觉编码器、Action Expert 分支</td>
+<td>冻结</td>
+</tr>
+</tbody>
+</table></div>
+<p>附录同时称 Gemma 的非 LoRA 权重冻结，因此 FFN 更新应结合其适配器实现理解；不能把这些描述扩写成“整个主 LLM 的 MLP 原始权重全量解冻”。</p>
+<p>对照 Full-head LoRA 的可训练范围包含全部 LoRA 适配器和 SigLIP，Action Expert 也有可训练适配模块。<strong>两种方案不仅选头数量不同，冻结范围也不同。</strong> 这既解释了参数差距为何很大，也限制了把全部收益归因于“找对头”的说法。</p>
+<h2 id="4-数据与评估-少样本真机任务-覆盖范围仍窄">4. 数据与评估：少样本真机任务，覆盖范围仍窄</h2>
+<p>实验使用 $\pi_0$ 与 $\pi_{0.5}$ 的 DROID 配置，在 Franka Emika Panda 七自由度机械臂与 Robotiq 夹爪上进行。每个任务使用 <strong>20 条遥操作示范</strong>做选头和训练，训练 5,000 steps，硬件为 2 张 RTX A6000（§4）。输入包括腕部与外部相机图像、语言和机器人状态，输出为七维关节速度与夹爪位置（Appendix B.2）。</p>
+<p>五个任务是放笔进杯、用力按按钮、抓起方块、放方块进碗、推杯到碗边。成功由任务完成条件判定，而不是离线动作 MSE。评估在 $0.5\times0.28$ 米区域划分 $5\times8$ 网格，覆盖 40 个物体位置并随机化朝向；表格报告每任务 40 次试验的成功率（Appendix C、D.3）。</p>
+<p>必要训练配置：batch size 32，warmup 200 steps，学习率从峰值 $2.5\times10^{-5}$ 按余弦衰减至 $2.5\times10^{-6}$（Appendix B.3）。论文没有给出主表多训练随机种子的均值、误差条或显著性检验。40 次 rollout 也不能替代对训练稳定性的测量。</p>
+<h2 id="5-关键结果-整套方案有效-但选头贡献与泛化强度需要拆开">5. 关键结果：整套方案有效，但选头贡献与泛化强度需要拆开</h2>
+<h3 id="5-1-主实验-九个组合更高-一个组合退步">5.1 主实验：九个组合更高，一个组合退步</h3>
+<p>Table 1 的成功率如下；两种微调方法使用相同数量的示范。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型与方法</th>
+<th style="text-align:right">放笔进杯</th>
+<th style="text-align:right">按按钮</th>
+<th style="text-align:right">抓方块</th>
+<th style="text-align:right">方块进碗</th>
+<th style="text-align:right">推杯到碗</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\pi_0$ Full-head LoRA</td>
+<td style="text-align:right">75%</td>
+<td style="text-align:right">45%</td>
+<td style="text-align:right">75%</td>
+<td style="text-align:right">60%</td>
+<td style="text-align:right">10%</td>
+</tr>
+<tr>
+<td>$\pi_0$ Robotic Steering</td>
+<td style="text-align:right">80%</td>
+<td style="text-align:right">75%</td>
+<td style="text-align:right">90%</td>
+<td style="text-align:right">85%</td>
+<td style="text-align:right">17.5%</td>
+</tr>
+<tr>
+<td>$\pi_{0.5}$ Full-head LoRA</td>
+<td style="text-align:right">62.5%</td>
+<td style="text-align:right">90%</td>
+<td style="text-align:right">70%</td>
+<td style="text-align:right">65%</td>
+<td style="text-align:right">20%</td>
+</tr>
+<tr>
+<td>$\pi_{0.5}$ Robotic Steering</td>
+<td style="text-align:right">72.5%</td>
+<td style="text-align:right">85%</td>
+<td style="text-align:right">77.5%</td>
+<td style="text-align:right">80%</td>
+<td style="text-align:right">27.5%</td>
+</tr>
+</tbody>
+</table></div>
+<p>收益不是统一幅度：$\pi_0$ 按按钮高 30 个百分点，$\pi_{0.5}$ 同一任务却低 5 个百分点。因此正文“所有任务匹配或超过 LoRA”的表述不符合主表；最难的推杯任务成功率也仍然偏低。</p>
+<p>资源收益同样应分模型看（Table 1，比例按表中数字计算）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>基座</th>
+<th style="text-align:right">报告的可训练参数，LoRA → Steering</th>
+<th style="text-align:right">训练时间，LoRA → Steering</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\pi_0$</td>
+<td style="text-align:right">1,785.9M → 78.8M，减少约 95.6%</td>
+<td style="text-align:right">239 → 189 分钟，减少约 20.9%</td>
+</tr>
+<tr>
+<td>$\pi_{0.5}$</td>
+<td style="text-align:right">1,781.3M → 74.6M，减少约 95.8%</td>
+<td style="text-align:right">214 → 185 分钟，减少约 13.6%</td>
+</tr>
+</tbody>
+</table></div>
+<p>参数数目是作者报告值，本次没有从代码独立复算。“约少 96% 参数”指<strong>可训练参数</strong>，不代表整个模型缩小 96%，更不代表推理加速相同比例。正文所说训练时间减少 21%，也不能直接套到两个模型。主要收益是训练配置更轻，部署时无需额外检索或干预流程。</p>
+<h3 id="5-2-消融-mlp-很关键-选头身份的独立贡献仍缺控制">5.2 消融：MLP 很关键，选头身份的独立贡献仍缺控制</h3>
+<p><strong>更少的头是否真的更好？</strong> 在放笔任务的数量消融中，20 头达到 72.5%，扩到全部 144 头却只有 45%（Figure 5）。这是同一 Robotic Steering 冻结策略内部的比较，支持限制更新范围有价值；但 144 头版本仍冻结视觉编码器和动作专家，所以不能与 Full-head LoRA 的 62.5% 视作同一配置。</p>
+<p><img src="../../assets/robotic-steering-2511.22697v1/figure5-head-count.svg" alt="注意力头数量与放笔任务成功率" /></p>
+<p><em>原文 <a href="https://arxiv.org/html/2511.22697v1#A1.F5">Figure 5</a>。看绿色曲线在 20 头处达到最高点，也看红色虚线与最右端点对应不同训练范围。单任务的最佳头数不是跨任务通用定律。</em></p>
+<p><strong>究竟训练哪些组件才有效？</strong> Table 3 中 Queries only 为 10%，Queries + MLP 为 80%。这说明只更新被选 Query 不足以取得该表中的效果，但没有 MLP-only 对照，因此还无法判断选中的注意力头是否提供了不可替代的增益。</p>
+<p><strong>选头为什么用 k-NN？</strong> 同一表里 CMA、REINFORCE、k-NN 的成功率分别为 15%、80%、80%，选头耗时分别为 58、93、0.2 分钟。正文称三者表现相近，与表格不符；按表格应理解为 k-NN 与 REINFORCE 相同、明显高于这里实现的 CMA。0.2 分钟对应已有激活后的筛选阶段；激活缓存仍需模型前向，不能写成整个选头过程免模型推理。</p>
+<p><strong>v1 有一个不能抹平的数字冲突</strong>：§5.1 说所有消融使用 $\pi_{0.5}$，但 Table 3 的 k-NN / Queries + MLP 是 80%，主表与 Figure 5 的对应任务是 72.5%。是否有配置或运行差异未交代 <code>[?]</code>。这里分别保留，不把它们拼成同一条实验结论。</p>
+<h3 id="5-3-迁移与扰动-相对更好-不等于保留旧能力">5.3 迁移与扰动：相对更好，不等于保留旧能力</h3>
+<p>Table 2 在 $\pi_{0.5}$ 上考察单任务训练后的迁移：只训练放笔任务，未见的 Pick Mug 上，LoRA 为 42.5%，Steering 为 65%。这支持对这一近邻任务的相对迁移优势；但表中没有该未见任务的预训练零样本成绩，不能据此判断是否保持或超过原有能力。</p>
+<p>放笔任务遭遇光照、形状、干扰物变化时，成功率分别为：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>扰动</th>
+<th style="text-align:right">LoRA</th>
+<th style="text-align:right">Robotic Steering</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>光照变化</td>
+<td style="text-align:right">25%</td>
+<td style="text-align:right">47.5%</td>
+</tr>
+<tr>
+<td>形状/外观变化</td>
+<td style="text-align:right">22.5%</td>
+<td style="text-align:right">37.5%</td>
+</tr>
+<tr>
+<td>干扰物</td>
+<td style="text-align:right">30%</td>
+<td style="text-align:right">40%</td>
+</tr>
+</tbody>
+</table></div>
+<p>绝对成功率都更高，但干扰物条件下，两者相对各自标准环境<strong>都下降 32.5 个百分点</strong>。因此不能把所有扰动上的绝对优势都解释成更小的性能退化。改变光照、杯子颜色、笔的形状与场景杂物，提供的是这些具体变化下的证据，不是跨机器人或任意环境的鲁棒性保证。</p>
+<p>多任务训练的边界更明显：同时训练放笔与放方块后，LoRA 在 Pick Mug 上降至 0%，Steering 的分头方案与联合选头方案分别为 12.5%、20%；它们优于对应 LoRA，却都明显低于单任务训练的 65%。所以这里展示的是<strong>多任务干扰下相对较好的结果</strong>，还不足以声称实现了无干扰的技能组合。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-可读出动作-是好的工程筛选器-还不是物理机制解释">6.1 “可读出动作”是好的工程筛选器，还不是物理机制解释</h3>
+<p>回归分数回答的是“这个头的表示能否找到动作相近的样本”。它可能利用物体关系，也可能利用机器人姿态或轨迹阶段；当前实验没有把这些来源分开。Figure 4 显示的是被选头的位置网格与任务照片，不能直接读成某个头负责抓握、另一个负责容器几何。</p>
+<p><img src="../../assets/robotic-steering-2511.22697v1/figure4-selected-heads.png" alt="放笔和放方块任务选中的头及执行画面" /></p>
+<p><em>原文 <a href="https://arxiv.org/html/2511.22697v1#S5.F4">Figure 4</a>。蓝色方格说明“哪些头被选中”，右侧展示执行任务；它没有展示逐头干预怎样选择性改变某个物理变量。</em></p>
+<p><strong>我认为更准确的定位是“可解释性启发的监督式参数选择”。</strong> 若要推进到机制结论，应固定机器人状态与任务阶段，分别改变物体几何、语言目标或背景，再检查头的选择、动作读出和受控干预效果是否一起变化。否则“物理推理”只是对有效表示的一个解释。</p>
+<h3 id="6-2-下一步最值得补的是同预算-同冻结范围的随机选头">6.2 下一步最值得补的是同预算、同冻结范围的随机选头</h3>
+<p>数量消融说明限制更新范围可能有用，MLP 消融说明辅助更新不能省，但二者都没有直接证明 k-NN 找到的<strong>具体头身份</strong>比任意同样大小的集合更好。附录的随机头结果只做任务分类，不能填上这一缺口。</p>
+<p>若复用本文，先固定全部辅助模块、冻结范围与训练预算，比较 k-NN top-20、分层匹配的随机 20 头、最差 20 头和 MLP-only，再用多个训练种子做真机验证。这组实验能区分收益来自任务相关位置、一般性稀疏正则化，还是辅助模块本身。</p>
+<h3 id="6-3-可读出的位置-不一定是最值得修改的位置">6.3 可读出的位置，不一定是最值得修改的位置</h3>
+<p>选头依据是冻结模型中的动作可预测性，最终目标却是“更新后能否改善闭环控制”。两者并不必然一致：某个头可能很好地传递已有状态，但动作错误来自更下游；另一个头当前读出较弱，却可能具有更大的适配空间。</p>
+<p>因此，一个可检验的延伸是：对同预算候选头子集，比较其初始 k-NN 分数与短程微调后的独立验证增益，再看它们能否预测最终 rollout 成功率。只有这条关系成立，才能更有把握地把“表示里有什么”转化为“该改哪里”。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-VLA.html" title="MOC-VLA">MOC-VLA</a> — Topic：通过示范指定更新位置的 VLA 少样本适配；与推理期表征干预的部署成本不同。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — Topic：连接表示读出、参数更新选择与因果机制验证，三个证据层次需要分开。</li>
+</ul>
+<p><strong>阅读边界</strong>：以上结论来自 v1 的主文、附录和原图核对，属于文献分析，不是实验复现。正文与附录的训练范围、token 位置及部分实验数字存在差异，已在相关位置保留；实际复现应先对照公开实现核实这些配置。</p>
+<hr />
+
+
+
+<nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
+<a class="paper-nav-link next" href="Causal-analysis-improves-VLA-efficiency-因果定位与单层动作接口.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Causal analysis improves VLA efficiency：从因果定位到单层动作接口</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: mitra2025mechanistic</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
