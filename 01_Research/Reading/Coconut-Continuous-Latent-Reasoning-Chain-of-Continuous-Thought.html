@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-被迫在-语言空间-里推理-但语言不是为推理设计的-而且-transformer-给每个-token-分的算力都一样-浪费在没信息量的连接词上"><span class="toc-num">02</span> 2. 关键问题：LLM 被迫在"语言空间"里推理，但语言不是为推理设计的；而且 Transformer 给每个 token 分的算力都一样，浪费在没信息量的连接词上</a></li>
+<li><a class="toc-link" href="#3-关键方法-把最后一层-hidden-state-直接当下一步的输入-embedding-continuous-thought-配一个多阶段课程把语言-cot-逐步-退火-成连续思考"><span class="toc-num">03</span> 3. 关键方法：把最后一层 hidden state 直接当下一步的输入 embedding（"continuous thought"），配一个多阶段课程把语言 CoT 逐步"退火"成连续思考</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-数学形式化">3.1 数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-训练流程-多阶段课程-借自-icot-deng-2024">3.2 训练流程：多阶段课程（借自 iCoT / Deng 2024）</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-推理流程">3.3 推理流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-与已有方法的本质区别-tradeoff">3.4 与已有方法的本质区别 / tradeoff</a></li>
+<li><a class="toc-link" href="#4-数据集-一个真实数学-gsm8k-两个合成逻辑-prontoqa-自建-prosqa-后者专门为-需要大量规划搜索-设计"><span class="toc-num">04</span> 4. 数据集：一个真实数学（GSM8k）+ 两个合成逻辑（ProntoQA + 自建 ProsQA），后者专门为"需要大量规划搜索"设计</a></li>
+<li><a class="toc-link" href="#5a-关键结果-主实验-连续思考能像-cot-一样-链式-增强推理-规划密集任务上甚至超过-cot-且-token-少得多-但连续推理必须靠课程学习引导-端到端学不出来"><span class="toc-num">05</span> 5a. 关键结果（主实验）：连续思考能像 CoT 一样"链式"增强推理；规划密集任务上甚至超过 CoT 且 token 少得多；但连续推理必须靠课程学习引导，端到端学不出来</a></li>
+<li><a class="toc-link" href="#5b-关键结果-可解释性-bfs-机制-探针-隐式-value-function-节点高度相关性-把-latent-为什么利于规划-做成了机制解释"><span class="toc-num">06</span> 5b. 关键结果（可解释性 / BFS 机制）：探针 → 隐式 value function → 节点高度相关性，把"latent 为什么利于规划"做成了机制解释</a></li>
+<li><a class="toc-link" href="#5c-审稿人视角-最强攻击点-按杀伤力排序"><span class="toc-num">07</span> 5c. 审稿人视角：最强攻击点（按杀伤力排序）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">08</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">09</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-07-08</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2412.06769" target="_blank">arXiv</a>
+    </div>
+    <h1>Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</h1>
+    <p class="authors">Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason Weston, Yuandong Tian</p>
+    <div class="topic-row"><span class="topic-tag">Latent_Reasoning</span> <span class="topic-tag">Chain_of_Thought</span> <span class="topic-tag">Continuous_Thought</span> <span class="topic-tag">Reasoning</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">LLM</span></div>
+</header>
+
+<h1>论文笔记: Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</h1>
+<p>一句话：把 CoT 里&quot;生成一个词 token 再喂回去&quot;这一步，换成&quot;把最后一层 hidden state 直接当下一个输入 embedding 喂回去&quot;——让模型在连续空间里思考，不经过语言这个瓶颈。</p>
+<p><img src="../../assets/source-images/coconut/fig1-overview.png" alt="图1: CoT（左）每步 decode 一个 token 再喂回；Coconut（右）直接把 last hidden state 当下一步输入 embedding，跳过语言瓶颈|697" /></p>
+<hr />
+<p>我的疑问：</p>
+<ol>
+<li>现在coding agent 和VLA遇到的问题反而是输出的token太多，而不是太少。这是不是就是这个工作现在没有那么受关注的原因。当然还有另外一个方面，即使是在coding agent上，也有一些关键决策的turn，test-time computing不够多导致决策不正确，以及如果继续增加computing可能会让决策变得更好。结合这两个方面的话，那一个基础的问题是不是现在的输出都是token-by-token的，不能做到自适应的输出，简单的东西forward一次就输出一整个句子，复杂的东西一个token要forward好几次才能决定。</li>
+<li>即使是从latent reasoning的角度来看这个问题，那一个共识是LLM的浅层和深层都是在做理解和输出，中层是一个implicit的空间在负责做推理。那如果现在正常的next token prediction在遇到一些比较困难的问题的时候模型会输出一些嗯啊、啊啊的一些语气词或者说是一些那么关键的词，这个时候中间层是不是就是在增加computing，不断的再推理。从这个角度来说的话，是不是本身从token数量、啰嗦程度上，已经实现了自适应的reasoning budget。</li>
+</ol>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Shibo Hao、Sainbayar Sukhbaatar、DiJia Su、Xian Li、Zhiting Hu、Jason Weston、Yuandong Tian</li>
+<li>团队：FAIR at Meta + UC San Diego（Shibo Hao 是 UCSD 学生，实习期间在 Meta 完成）。作者阵容基本是 Meta 的 planning/search 那条线（Yuandong Tian、Sukhbaatar、Weston）。</li>
+<li>发表：arXiv 2412.06769，初版 2024-12，本地缓存标注 2025-08-07 修订版；cs.CL；未走正式会议，metadata 显示 arXiv.org。截至读时约 581 引用。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-llm-被迫在-语言空间-里推理-但语言不是为推理设计的-而且-transformer-给每个-token-分的算力都一样-浪费在没信息量的连接词上">2. 关键问题：LLM 被迫在&quot;语言空间&quot;里推理，但语言不是为推理设计的；而且 Transformer 给每个 token 分的算力都一样，浪费在没信息量的连接词上</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+论文 Figure 6 的 ProsQA 例子最能说明问题（我把它当贯穿全文的主线）。给一张 DAG，节点是虚构概念（lempus、sterpus、rorpus、bompus…），边是&quot;every X is a Y&quot;这种蕴含关系。问题形如：</p>
+<blockquote class="card card-info">
+<p>&quot;Is Alex a <em>bompus</em> or <em>[另一个概念]</em>？&quot;（要从 Alex 出发，在图里找一条能走到 bompus 的路径）</p>
+</blockquote>
+<p>从 Alex 出发第一步有四个孩子可选：{lempus, sterpus, zhorpus, grimpus}。此时模型<strong>根本没法确定该走哪个</strong>——正确路径要好几跳之后才看得出来。</p>
+<p>用 CoT 会怎样？模型必须<strong>当场吐一个词</strong>——比如它选了 sterpus，但 sterpus 是个叶子节点（死胡同），走到底发现到不了 bompus，于是为了自圆其说，<strong>幻觉出一条根本不存在的边</strong>（原文：&quot;The model trained with CoT hallucinates an edge (Every yumpus is a rempus) after getting stuck in a dead end.&quot;）。这就是 CoT 的病根：<strong>信息不足时就被逼着把话说死（premature commitment），错了还没有便宜的回退机制</strong>。</p>
+</blockquote>
+<p>把这个例子抽象成一般性问题，有两个层面：</p>
+<ul>
+<li>
+<p><strong>语言空间不是推理的最优载体（why 层面）</strong></p>
+<ul>
+<li>神经科学证据：人做推理任务时，大脑&quot;语言网络&quot;基本不激活（Amalric &amp; Dehaene 2019 等）；语言是为<strong>沟通</strong>优化的，不是为<strong>思考</strong>（Fedorenko et al. 2024, Nature）。</li>
+<li>直接推论：既然人推理时不靠语言，为什么要强迫 LLM 把每一步推理都翻译成词？</li>
+</ul>
+</li>
+<li>
+<p><strong>算力分配不均（architecture 层面）</strong></p>
+<ul>
+<li>CoT 里绝大多数 token 只是为了读起来通顺（&quot;the&quot;、&quot;is&quot;、&quot;so&quot;），对推理本身没贡献；但 Transformer 给每个 token 分的算力几乎一样（一次前向）。</li>
+<li>反过来，少数真正要做规划/搜索的关键 token，也只有一份算力。结果算力花在没用的连接词上，难的决策点反而不够。</li>
+</ul>
+</li>
+<li>
+<p><strong>之前的方法卡在哪</strong></p>
+<ul>
+<li>让 CoT 更简洁（Madaan &amp; Yazdanbakhsh 2022）、在关键 token 前多想一会儿（Quiet-STaR, Zelikman 2024）——都还困在语言空间里。</li>
+<li><code>&lt;pause&gt;</code> token（Goyal 2023）、filler token &quot;...&quot;（Pfau 2024）——给模型加&quot;空转&quot;算力，但 Pfau 自己承认这类方法<strong>不扩展表达力</strong>（不像 CoT 把输出回环成输入、增加有效深度），只对高度可并行的问题有用。</li>
+<li>显式树搜索（ToT, RAP）——外挂搜索算法，不是模型自己学出来的，且仍在语言空间枚举。</li>
+</ul>
+</li>
+</ul>
+<blockquote class="card card-info">
+<p>埋个伏笔：这个动机很漂亮，但注意它把&quot;语言对推理不最优&quot;（神经科学结论）悄悄接到了&quot;连续 hidden state 就是更好的推理载体&quot;。这两者之间有 gap，后面看证据能不能补上。</p>
+</blockquote>
+<h2 id="3-关键方法-把最后一层-hidden-state-直接当下一步的输入-embedding-continuous-thought-配一个多阶段课程把语言-cot-逐步-退火-成连续思考">3. 关键方法：把最后一层 hidden state 直接当下一步的输入 embedding（&quot;continuous thought&quot;），配一个多阶段课程把语言 CoT 逐步&quot;退火&quot;成连续思考</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+还是 &quot;Is Alex a bompus or …?&quot; 那道题，走一遍 Coconut：</p>
+<ol>
+<li>输入问题 token → 紧跟着插一个 <code>&lt;bot&gt;</code>（begin of thought）。</li>
+<li>进入 <strong>latent mode</strong>：模型做一次 forward，拿到最后一层 hidden state $h$。<strong>不过 language head、不 decode 成词</strong>，直接把 $h$ 当下一步的输入 embedding 喂回去。这就是第 1 个 continuous thought。</li>
+<li>关键点：这个 $h$ <strong>不是一个确定的选择</strong>，而是能同时编码&quot;lempus / zhorpus / grimpus 都有可能&quot;的叠加态。把 $h$ 强行探针回语言空间（Section 5.3），四个孩子的隐式&quot;价值&quot;分别是 lempus=0.33、grimpus=0.32、zhorpus=0.16、sterpus=0.01——<strong>模型第一步就几乎排除了死胡同 sterpus，但在剩下三个之间保留了不确定性</strong>（这就是&quot;不把话说死&quot;）。</li>
+<li>再喂回去做第 2 个 continuous thought：搜索前沿推进到孙子节点，分布收窄、聚焦到 rorpus。相当于在连续空间里做了一层&quot;软&quot; BFS——先广撒网、再逐层剪枝。</li>
+<li>攒够设定数量的 continuous thought 后，插 <code>&lt;eot&gt;</code>（end of thought），切回 <strong>language mode</strong>，把答案（或剩余推理链）用词写出来。</li>
+</ol>
+<p>对照 Figure 6：CoT 幻觉出假边；Coconut(k=1) 走到错误终点；Coconut(k=2) 正确解出。<strong>多想一步 latent thought，就把&quot;过早承诺&quot;往后推一步，等搜索树展开到更接近叶子、更容易判断对错时再决策。</strong></p>
+</blockquote>
+<p><img src="../../assets/source-images/coconut/fig4-case-study.png" alt="图4: ProsQA 案例对比——CoT 幻觉出不存在的边，Coconut(k=1) 走到错误目标，Coconut(k=2) 正确解出" /></p>
+<p>下面是形式化和工程细节。</p>
+<h3 id="3-1-数学形式化">3.1 数学形式化</h3>
+<p>标准 LLM（记号）：</p>
+<p>$$H_t = \text{Transformer}(E_t)$$
+$$\mathcal{M}(x_{t+1}\mid x_{\le t}) = \text{softmax}(W h_t)$$</p>
+<ul>
+<li>$E_t = [e(x_1), ..., e(x_t)]$：位置 1..t 的 token embedding 序列，$e(\cdot)$ 是 embedding 查表函数。</li>
+<li>$H_t \in \mathbb{R}^{t\times d}$：所有位置的最后一层 hidden state 矩阵；$h_t = H_t[t,:]$ 是位置 t 的最后一层 hidden state。</li>
+<li>$W$：language model head（hidden → vocab logits）。</li>
+</ul>
+<p><strong>Coconut 的唯一改动</strong>：latent mode 里，用上一个位置的 hidden state 替换本该查表得到的 input embedding。设 latent 段落在位置 $i$ 到 $j$（$x_i=$<code>&lt;bot&gt;</code>, $x_j=$<code>&lt;eot&gt;</code>）：</p>
+<ul>
+<li>
+<p>当 $i &lt; t &lt; j$（latent mode 内）：
+$$E_t = [e(x_1), ..., e(x_i), \; h_i, h_{i+1}, ..., h_{t-1}]$$
+即从 <code>&lt;bot&gt;</code> 之后，输入不再是 token embedding，而是前一步的 hidden state。</p>
+</li>
+<li>
+<p>当 $t \ge j$（退出 latent mode）：恢复用 token embedding
+$$E_t = [e(x_1), ..., e(x_i), \; h_i, ..., h_{j-1}, \; e(x_j), ..., e(x_t)]$$</p>
+</li>
+</ul>
+<p>符号细节 / 复现要点：</p>
+<ul>
+<li>latent 段落里 $\mathcal{M}(x_{t+1}\mid x_{\le t})$ <strong>是没有定义的</strong>（不打算映射回语言）——但 $\text{softmax}(W h_t)$ 仍可算出来，Section 5 的探针分析全靠这个。</li>
+<li>$h_t$ <strong>已经过最后的 normalization 层</strong>，量级不会爆——这是能直接当 embedding 喂回去而不炸的关键工程前提。[复现时如果 base model 的 final norm 位置不同要注意]</li>
+</ul>
+<h3 id="3-2-训练流程-多阶段课程-借自-icot-deng-2024">3.2 训练流程：多阶段课程（借自 iCoT / Deng 2024）</h3>
+<p><img src="../../assets/source-images/coconut/fig2-training-curriculum.png" alt="图2: 多阶段训练课程——Stage 0 是完整 CoT，之后每个 Stage 把前 k 个语言推理步替换成 continuous thought，逐步&quot;退火&quot;到全 latent" /></p>
+<p>核心难点：continuous thought 没有直接监督信号（它不对应任何词）。解法是<strong>借语言 CoT 数据搭梯子</strong>，分阶段把语言步替换成 latent 步。</p>
+<ul>
+<li>数据形态：<code>问题 + 语言推理链（分步）+ 答案</code>。</li>
+<li><strong>Stage 0</strong>：普通 CoT，全程语言。</li>
+<li><strong>Stage k</strong>：把 CoT 的<strong>前 k 个推理步</strong>替换成 $k\times c$ 个 continuous thought。
+<ul>
+<li>$c$ = 一个语言推理步换成几个连续思考（超参）。</li>
+<li>若某条链短于 k 步，就把语言步全删光。</li>
+<li><code>&lt;bot&gt;</code>/<code>&lt;eot&gt;</code> 包裹连续思考，且<strong>不计入 c</strong>。</li>
+</ul>
+</li>
+<li><strong>切换阶段时重置 optimizer 状态</strong>（跟 iCoT 一致，重要 trick）。</li>
+<li><strong>损失</strong>：普通 NLL，但<strong>mask 掉问题和 latent thought 上的 loss</strong>，只在连续思考之后剩余的 token 上算交叉熵。
+<ul>
+<li>关键设计判断（原文强调）：目标<strong>不是</strong>让 continuous thought 去压缩/重建被删掉的那句语言推理，而是<strong>facilitate the prediction of future reasoning</strong>——所以模型可能学出比人类语言更高效的推理表示。这是 Coconut 和&quot;把 CoT 蒸馏进 hidden&quot;这类工作的本质区别。</li>
+</ul>
+</li>
+</ul>
+<p><strong>训练算力细节（复现关键，容易踩坑）</strong>：</p>
+<ul>
+<li>当前阶段安排了 $n$ 个 latent thought，就要做 $n+1$ 次 forward pass：每次 forward 产出一个新的 latent thought，最后再多做一次在剩余文本上算 loss。</li>
+<li>continuous thought 全程可微，梯度能 back-prop 穿过这 $n$ 次 forward。</li>
+<li>可以用 KV cache 省重复计算，但这 $n+1$ 次 forward <strong>本质是串行的</strong>、难并行——作者明说这是训练效率瓶颈，留作 future work。</li>
+</ul>
+<p><strong>实验超参（全部实验）</strong>：base model = <strong>预训练 GPT-2</strong>（Radford 2019，参数量原文未给，GPT-2 small 通行值 124M [?]）；lr = $1\times10^{-4}$；effective batch = 128；greedy decoding。</p>
+<ul>
+<li>Math（GSM8k）：$c=2$，初始阶段外 3 个 stage + 1 个额外 stage（去掉全部语言链、处理 &gt;3 步长尾），初始 6 epoch，其余每 stage 3 epoch。</li>
+<li>Logic（ProntoQA/ProsQA）：$c=1$，初始外 6 个 stage（最大 6 步），每 stage 5 epoch。</li>
+<li>所有数据集跑到第 50 epoch，按验证集选 checkpoint。</li>
+</ul>
+<h3 id="3-3-推理流程">3.3 推理流程</h3>
+<ul>
+<li>问题 token 之后立刻插 <code>&lt;bot&gt;</code>，进入 latent mode。</li>
+<li><strong>何时插 <code>&lt;eot&gt;</code>（退出 latent）？</strong> 两个策略：(a) 训一个二分类器在 latent thought 上决定何时停；(b) 直接 pad 到固定长度。作者说两者效果<strong>相当</strong>（未给具体数字对比），为简单起见实验用 (b)：latent thought 数量手动设成跟最终训练阶段一致。</li>
+<li>全程 greedy decoding。</li>
+</ul>
+<h3 id="3-4-与已有方法的本质区别-tradeoff">3.4 与已有方法的本质区别 / tradeoff</h3>
+<ul>
+<li><strong>vs CoT</strong>：CoT 把 hidden→token→embedding 绕一圈（离散、要 argmax/采样、把话说死）；Coconut 直接 hidden→embedding（连续、可微、能保叠加态）。代价：latent thought 不可读、训练要串行多次 forward。</li>
+<li><strong>vs <code>&lt;pause&gt;</code>/filler token</strong>：pause token 只是加&quot;空转算力&quot;、参数是共享的固定 embedding；Coconut 的 continuous thought 是<strong>依赖上下文、每步不同的动态表示</strong>。GSM8k 上 Coconut(34.1) 远超 pause-as-thought(24.1)，说明对步间强依赖的问题，&quot;内容&quot;比&quot;纯算力&quot;重要。</li>
+<li><strong>vs iCoT（Deng 2024）</strong>：iCoT 也逐步删语言链把 CoT&quot;内化&quot;，但它删到最后<strong>什么中间表示都不留、直接出答案</strong>；Coconut 在删掉的位置<strong>填入连续思考</strong>作为显式（但不可读）的推理状态。两者训练课程理念相近，Coconut 借了 iCoT 的&quot;分阶段 + 重置 optimizer&quot;。作者也承认 iCoT 更细粒度（逐 token 删）可能让训练更稳，&quot;combining iCoT and Coconut&quot; 是 future work。</li>
+</ul>
+<h2 id="4-数据集-一个真实数学-gsm8k-两个合成逻辑-prontoqa-自建-prosqa-后者专门为-需要大量规划搜索-设计">4. 数据集：一个真实数学（GSM8k）+ 两个合成逻辑（ProntoQA + 自建 ProsQA），后者专门为&quot;需要大量规划搜索&quot;设计</h2>
+<ul>
+<li><strong>训练数据</strong>
+<ul>
+<li><strong>GSM8k</strong>（Cobbe 2021）：小学数学应用题，唯一&quot;真实/开放域&quot;的任务。训练用 Deng et al. 2023 生成的合成 CoT 数据。规模：train 385,620 / val 500 / test 1319（Table 3）。</li>
+<li><strong>ProntoQA</strong>（Saparov &amp; He 2022）：5-hop、虚构概念名，树状本体用自然语言描述成已知条件，判断陈述真假。规模：9,000 / 200 / 800。</li>
+<li><strong>ProsQA（本文自建，Proof with Search QA）</strong>：作者认为 ProntoQA&quot;干扰分支太小、不太需要复杂规划&quot;，于是用随机生成的 DAG 重构，强迫模型在图上做实质性搜索。规模：17,886 / 300 / 500。</li>
+</ul>
+</li>
+<li><strong>ProsQA 构造细节（Algorithm 1，复现要点）</strong>
+<ul>
+<li>二元问题：&quot;Is [Entity] a [Concept A] or [Concept B]?&quot;，保证从 Entity 到 A 有路径、到 B 没有。</li>
+<li>增量建 DAG，每加一个新节点用 <code>poisson(1.5)</code> 决定入边数。</li>
+<li>用 label 的<strong>按位 OR</strong> 追踪每个节点是&quot;节点0后代(1)/节点1后代(2)/都是(3)/都不是(0)&quot;，并以概率强制新节点不能同时是 0 和 1 的后代——<strong>防止 model shortcut</strong>、保持两族节点分离且规模平衡。</li>
+<li>采样权重 <code>depth_to_root(c)*1.5+1</code>，<strong>偏向更深的节点</strong>，让解链更长（更难）。</li>
+<li>无父节点的分实体名，其余分概念名；node0 当 Entity，叶子 label1/label2 当 Concept A/B，A/B 随机置换避免位置偏差。</li>
+<li>图统计（Table 2）：平均 23 节点、36 边、最短路径长 3.8、最短路径数 1.6。</li>
+</ul>
+</li>
+<li><strong>评估</strong>：主指标 = 最终答案 accuracy；辅指标 = 每题新生成 token 数（效率）；Appendix 8 给了 A100 上 batch=1 的墙钟时间。Section 5 的细粒度分析额外定义了 6 类推理过程标签（Correct Path / Longer Path / Hallucination / Wrong Target / Correct Label / Incorrect Label），只在 ProsQA 上做。</li>
+</ul>
+<blockquote class="card card-info">
+<p>审稿人重点：<strong>核心 claim（&quot;latent 在规划密集任务上赢 CoT&quot;）唯一强证据来自作者自己造的 ProsQA</strong>。而且 ProsQA 的构造明确&quot;偏向更深节点、让推理链更长&quot;——数据集是朝着&quot;利于展示 planning 优势&quot;的方向设计的，不是中立 benchmark。</p>
+</blockquote>
+<h2 id="5a-关键结果-主实验-连续思考能像-cot-一样-链式-增强推理-规划密集任务上甚至超过-cot-且-token-少得多-但连续推理必须靠课程学习引导-端到端学不出来">5a. 关键结果（主实验）：连续思考能像 CoT 一样&quot;链式&quot;增强推理；规划密集任务上甚至超过 CoT 且 token 少得多；但连续推理必须靠课程学习引导，端到端学不出来</h2>
+<p><strong>主表（Table 1，Acc.% ± std / 平均生成 token 数）：</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GSM8k Acc</th>
+<th>GSM8k Tok</th>
+<th>ProntoQA Acc</th>
+<th>ProntoQA Tok</th>
+<th>ProsQA Acc</th>
+<th>ProsQA Tok</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CoT</td>
+<td>42.9±0.2</td>
+<td>25.0</td>
+<td>98.8±0.8</td>
+<td>92.5</td>
+<td>77.5±1.9</td>
+<td>49.4</td>
+</tr>
+<tr>
+<td>No-CoT</td>
+<td>16.5±0.5</td>
+<td>2.2</td>
+<td>93.8±0.7</td>
+<td>3.0</td>
+<td>76.7±1.0</td>
+<td>8.2</td>
+</tr>
+<tr>
+<td>iCoT</td>
+<td>30.0*</td>
+<td>2.2</td>
+<td>99.8±0.3</td>
+<td>3.0</td>
+<td><strong>98.2±0.3</strong></td>
+<td>8.2</td>
+</tr>
+<tr>
+<td>Pause Token</td>
+<td>16.4±1.8</td>
+<td>2.2</td>
+<td>77.7±21.0</td>
+<td>3.0</td>
+<td>75.9±0.7</td>
+<td>8.2</td>
+</tr>
+<tr>
+<td><strong>Coconut (Ours)</strong></td>
+<td>34.1±1.5</td>
+<td>8.2</td>
+<td>99.8±0.2</td>
+<td>9.0</td>
+<td>97.0±0.3</td>
+<td>14.2</td>
+</tr>
+<tr>
+<td>- w/o curriculum</td>
+<td>14.4±0.8</td>
+<td>8.2</td>
+<td>52.4±0.4</td>
+<td>9.0</td>
+<td>76.1±0.2</td>
+<td>14.2</td>
+</tr>
+<tr>
+<td>- w/o thought</td>
+<td>21.6±0.5</td>
+<td>2.3</td>
+<td>99.9±0.1</td>
+<td>3.0</td>
+<td>95.5±1.1</td>
+<td>8.2</td>
+</tr>
+<tr>
+<td>- pause as thought</td>
+<td>24.1±0.7</td>
+<td>2.2</td>
+<td>100.0±0.1</td>
+<td>3.0</td>
+<td>96.6±0.8</td>
+<td>8.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>（*iCoT 的 GSM8k 30.0 是从 Deng et al. 2024 直接引的，非本文复现。）</p>
+<ul>
+<li><strong>结论 1：连续思考可以&quot;链式&quot;增强推理。</strong> GSM8k 上把 $c$ 从 0→1→2 性能单调上升（Figure 3），说明 CoT 那种&quot;输出回环成输入、增加有效深度&quot;的 chaining 效应在 latent 空间也成立。Coconut(34.1) &gt; iCoT(30.0) &gt; pause-as-thought(24.1) &gt; No-CoT(16.5)，对&quot;步间强依赖&quot;的数学题，动态连续表示比纯加算力有效。
+<ul>
+<li>注意 $c=3$ 会掉点且方差变大：一次加 3 个连续思考（尤其最后阶段切换时）会让 training loss 尖峰、不稳定（Appendix 9 &quot;Using More Continuous Thoughts&quot;）。</li>
+</ul>
+</li>
+<li><strong>结论 2：规划密集任务上 latent &gt; language。</strong> ProsQA 上 CoT(77.5) 相比 No-CoT(76.7) 几乎没提升——因为 CoT 是语言的、短视的；而 Coconut(97.0)、iCoT(98.2)、甚至各变体都大幅提升。GSM8k/ProntoQA 分支简单、下一步好猜，所以差距不明显；ProsQA 的随机 DAG 才真正考验规划。</li>
+<li><strong>结论 3：LLM 学 latent reasoning 仍需引导。</strong> Coconut w/o curriculum（直接拿最后阶段&quot;只有问答&quot;的数据端到端训）在所有任务上都≈No-CoT（GSM8k 14.4，ProntoQA 崩到 52.4），<strong>说明梯度下降自己学不出有用的连续思考，多阶段课程是必需的</strong>。这是全文最强的一条 ablation。</li>
+<li><strong>结论 4：Coconut(k=0) 都比 CoT 强。</strong> 即使强制 Coconut 全用语言输出完整链，ProsQA 上仍比 CoT 准、幻觉更少。作者归因于&quot;混合各阶段数据&quot;的训练让模型学会 plan ahead，而 CoT 的目标永远聚焦&quot;下一步&quot;、导致短视（呼应 multi-token prediction, Gloeckle 2024）。</li>
+<li><strong>效率（Appendix 8, Table 4，A100 batch=1，秒/题）</strong>：No-CoT 0.03–0.08；CoT 0.26–0.85；Coconut 0.09–0.15。墙钟时间大致正比于生成 token 数，Coconut 显著快于 CoT。</li>
+</ul>
+<blockquote class="card card-info">
+<p>[?] <strong>Section 5 用的是重训变体</strong>：Section 5.1 为解决&quot;遗忘早期 stage&quot;，把训练改成&quot;以 p=0.3 概率混合其他 stage 数据&quot;重训了一个变体，Figure 5 的插值结果来自这个变体、<strong>不是主表模型</strong>。论文自己没把这个区别讲清楚，容易让人以为 Figure 5 就是主模型。</p>
+</blockquote>
+<h2 id="5b-关键结果-可解释性-bfs-机制-探针-隐式-value-function-节点高度相关性-把-latent-为什么利于规划-做成了机制解释">5b. 关键结果（可解释性 / BFS 机制）：探针 → 隐式 value function → 节点高度相关性，把&quot;latent 为什么利于规划&quot;做成了机制解释</h2>
+<p>这一段是全文最有意思的部分，本质是一条递进链：把不可读的 latent thought 探回语言空间 → 定义出隐式价值函数 → 用图论量（节点高度）解释优势来源。</p>
+<ul>
+<li><strong>连续思考 = 高效推理表示（Figure 4 case）</strong>：GSM8k 一道题 $3\times3\times60=540$，第一个 continuous thought 探回语言 top token 是 &quot;180&quot;/&quot;9&quot; 这类中间变量——它同时编码了 $3\times180$ 和 $9\times60$ 两条 trace 的分布。</li>
+</ul>
+<p><img src="../../assets/source-images/coconut/fig9-math-case.png" alt="图9: GSM8k 数学案例——latent thought 探回语言空间 top token 为 &quot;180&quot;(0.22)、&quot; 180&quot;(0.20)、&quot;9&quot;(0.13)，同时编码多条计算路径" /></p>
+<ul>
+<li><strong>插值分析（Figure 5）</strong>：手动设 <code>&lt;eot&gt;</code> 位置控制用 $k$ 个 latent thought（$k\in 0..6$），在&quot;全 latent&quot;和&quot;全语言&quot;之间插值。随 $k$ 增大，ProsQA 准确率和&quot;正确路径率&quot;上升，幻觉/错误终点率下降。（注意：来自上面 [?] 的 p=0.3 重训变体。）</li>
+<li><strong>隐式 value function（Figure 7）</strong>：把 latent thought 探针回语言空间，得到每个前沿节点的隐式&quot;价值&quot;。第一步四个孩子：lempus 0.33、grimpus 0.32、zhorpus 0.16、sterpus 0.01——模型第一步就排除叶子 sterpus，其余保留不确定。
+<ul>
+<li>探针方式 = &quot;强制 $k=1$ 切回语言、看 [Concept] 填空概率&quot;。</li>
+</ul>
+</li>
+</ul>
+<p><img src="../../assets/source-images/coconut/fig5-latent-search-tree.png" alt="图5: 隐式 value function 可视化——k=1 时模型对四个孩子赋不同概率（排除死胡同 sterpus）；k=2 时搜索展开到孙子节点，rorpus 概率飙升到 0.87" /></p>
+<ul>
+<li><strong>并行性分析（Figure 8）</strong>：第一步 top-1/2/3 候选累积价值的 gap 大（保留多路探索），第二步 gap 收窄（转向聚焦）——量化了&quot;先广后窄&quot;的搜索行为。</li>
+<li><strong>为什么 latent 更利于规划（Section 5.4, Figure 9）</strong>：定义节点&quot;高度&quot;= 到最近叶子的距离。模型对<strong>低高度节点</strong>（探索潜力有限、好判断）赋值准确；高度越高越难判。所以&quot;推迟决策、把 latent 推理展开到更接近叶子&quot;让对错更容易区分——这是 latent BFS 优势的机制解释。
+<ul>
+<li>[?] <strong>原文内部矛盾</strong>：Figure 7 caption 写高度是 &quot;the longest distance to any leaf nodes&quot;，Section 5.4 正文写 &quot;the shortest distance to any leaf node&quot;。两处定义相反，论文自身瑕疵。本笔记取正文的&quot;shortest&quot;。</li>
+</ul>
+</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>对这套机制分析的定性判断</strong>（融合两版分歧后的裁定）：这是漂亮的分析框架，但要清醒——它是<strong>事后探测 + 单 case + 相关性</strong>的。value function 那组数字（0.33/0.16/0.32/0.01）来自 Figure 7 <strong>一个</strong> case；探针方式用语言空间的输出反推 latent 里有什么，本身带循环论证味道（你没法证明 latent 真在做 BFS，只能证明&quot;此刻切回语言分布长这样&quot;）；Figure 8/9 是聚合相关，不能排除&quot;模型只是对简单节点更自信&quot;这个更平凡的解释。所以&quot;BFS emerges&quot;是很强的叙事，证据是 correlational 的，不是因果的。</p>
+</blockquote>
+<h2 id="5c-审稿人视角-最强攻击点-按杀伤力排序">5c. 审稿人视角：最强攻击点（按杀伤力排序）</h2>
+<ol>
+<li><strong>&quot;outperforms CoT&quot; 主要被合成任务撑起。</strong> 唯一真实任务 GSM8k 上 Coconut <strong>34.1 明显输给 CoT 42.9</strong>（差 8.8）。赢 CoT 只发生在 ProntoQA/ProsQA，而 ProsQA 还是作者自造、朝有利方向设计的。不过要公道说：abstract 原话是 &quot;outperforms CoT on <strong>certain</strong> logical reasoning tasks that require substantial search during planning&quot;——用了 &quot;certain&quot; 明确 hedge，所以<strong>技术上没说谎，但标题给人的整体印象比事实乐观</strong>。同时作者确实把负面结果（w/o curriculum 崩、$c=3$ 崩、iCoT ProsQA 反超）都写进了正文，这点算诚实。</li>
+<li><strong>在 Coconut 自己主打的规划任务上，它甚至不是最好的方法。</strong> ProsQA：iCoT 98.2 &gt; Coconut 97.0；ProntoQA：iCoT 99.8 = Coconut 99.8（pause-as-thought 甚至 100.0）。主推的方法在自己设计来展示优势的 benchmark 上被更简单的 iCoT 压一头，正文只用&quot;a small gap ... iCoT 逐 token schedule 更细&quot;轻描淡写带过。</li>
+<li><strong>continuous thought 本身的贡献存疑——真正干活的可能是 curriculum（有原文背书）。</strong> 合成任务上 w/o thought（纯课程、零 continuous thought）ProntoQA 99.9 / ProsQA 95.5，pause-as-thought（固定 pause token）ProsQA 96.6，都几乎追平完整 Coconut。原文自己承认 &quot;the model's computational capacity may not be the bottleneck in these tasks&quot;。<strong>只有 GSM8k 上 continuous thought 才真正拉开差距（34.1 vs w/o thought 21.6 vs pause-as-thought 24.1）——但 GSM8k 上它又整体输给 CoT。核心新颖组件唯一真正有效的场景，恰恰是它整体打不过 baseline 的场景。</strong></li>
+<li><strong>BFS / value function / latent tree search 全是事后探测 + 单 case + 相关性</strong>（详见 5b 末尾的裁定），不是因果证据。</li>
+<li><strong>规模证据不足，但不是&quot;完全没有&quot;。</strong> 主实验全在 GPT-2 上。metadata idx 9 &quot;More Discussion&quot; 显示已扩到 Llama：GSM8k 上 Llama 3.2-3B +31.7%、Llama 3-8B +43.6%（<strong>均为 over no-CoT</strong>，metadata tldr 明说 &quot;modest compared to language-based CoT&quot;）。[?] 我拿到的 fulltext §9 是 &quot;Using More Continuous Thoughts&quot;（讲 $c=3$ 不稳定），<strong>不含这段 Llama 结果</strong>，疑似不同 arXiv 版本差异，数字来自 metadata、未在 fulltext 交叉核到。即便属实，也只给了 over-no-CoT 的增益，<strong>缺同规模 CoT 的公平对比</strong>，所以&quot;latent 能 scale 且超过 CoT&quot;仍未被证明。</li>
+<li><strong>&quot;chaining scales&quot; 的证据止步于 $c=2$。</strong> Figure 3 只到 $c\in\{0,1,2\}$；Appendix 9 承认 $c=3$ 出现 loss spike、掉点、方差变大。所谓&quot;chain more thoughts to solve harder problems&quot;的可扩展性，在 $c=3$ 就断了，与 CoT 能拉很长形成反差。</li>
+<li><strong>效率对比挑了对自己有利的参照物。</strong> &quot;fewer tokens&quot; 只相对 CoT 成立。相对 No-CoT 和 iCoT，Coconut 反而更贵（GSM8k 8.2 vs 2.2；ProsQA 14.2 vs 8.2），而 iCoT 在 ProsQA 上又更准。合成任务上真正的效率-精度前沿点是 iCoT，不是 Coconut。</li>
+<li><strong>训练算力不对等，未做 compute-matched 对比（隐蔽的 confound）。</strong> Coconut 每条样本要 $n+1$ 次前向、梯度穿过全部前向，<strong>每样本训练算力显著高于 CoT/iCoT baseline</strong>。精度增益里有多少来自&quot;方法&quot;、多少来自&quot;更多训练算力&quot;，无法分离。两版原始笔记都只把 $n+1$ forward 当效率短板，没质疑它污染公平性——这比&quot;GPT-2 太小&quot;更隐蔽。</li>
+<li><strong>所有 baseline 都是单次 greedy，CoT 被人为削弱。</strong> 全程 greedy decoding，没有 sampling / self-consistency。CoT 恰恰最擅长用 token 换准确率（self-consistency 在 GSM8k 上通常大涨）。&quot;Coconut 更省 token&quot;的 accuracy-efficiency 前沿，是在&quot;CoT 只准开一枪&quot;的前提下画的。</li>
+<li><strong>统计严谨性中等偏弱。</strong> 有 std（说明多 seed），但<strong>没写具体 seed 数</strong>，无法判断 ±1.5 这类差距的显著性。ProntoQA 上 Coconut 99.8±0.2 vs w/o-thought 99.9±0.1 vs pause-as-thought 100.0±0.1 完全在噪声内，正文却都算作成功。（注：Pause Token 在 ProntoQA 的 ±21.0 大方差是那个 baseline 自己的问题，不算 Coconut 的罪状。）</li>
+</ol>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li><strong>东边西边都撑不起标题（最锋利的一条）</strong>：整篇的证据结构是——&quot;东边（GSM8k）证明 continuous thought 有用，但整体打不过 CoT；西边（ProsQA）打得过 CoT，但证明不了是 continuous thought 的功劳（curriculum 可能才是主力）&quot;。两块证据没法<strong>同时成立</strong>地支撑&quot;latent reasoning 超越语言&quot;这个标题级 claim。审稿要练的直觉：<strong>先看真实任务上的绝对排名，再看合成任务；先看 ablation 里核心组件的独立增量，再看整体数字。</strong></li>
+<li><strong>最反直觉、我大概率想不到的设计</strong>：把 hidden state 直接当 embedding 喂回去，而<strong>不加任何&quot;重建被删语言步&quot;的辅助 loss</strong>。直觉上你会想给 continuous thought 一个监督锚点，但作者明确反对——他们要&quot;预测未来推理&quot;而非&quot;压缩过去&quot;。这个决策放弃了可解释性/可控性，换来&quot;模型自由发明比语言更高效表示&quot;的空间。是有品味的取舍。</li>
+<li><strong>训练时反而更依赖语言，这是最有信息量的负结果</strong>：w/o curriculum 直接崩到不如 No-CoT。等于作者自己承认&quot;让模型端到端用梯度下降学连续推理&quot;这个最优雅版本<strong>不 work</strong>，必须靠语言 CoT 做拐杖一步步退火。反转很妙：<strong>Coconut 是推理时摆脱语言，训练时却更依赖语言监督。</strong></li>
+<li><strong>想不到但要打折扣的分析手法</strong>：用&quot;强制切回语言、读填空概率&quot;把不可读 latent thought 探成隐式 value function，再用 node height 做相关性论证&quot;为什么 latent 利于规划&quot;（5b）。框架很巧，但它是解释性、correlational 的，不能证明 latent 内部真在跑 BFS。典型的&quot;漂亮故事 &gt; 硬证据&quot;。</li>
+<li><strong>要警惕的叙事修辞</strong>：abstract/intro 反复用神经科学&quot;人推理时语言脑区不激活&quot;来 frame。这是很强的 motivation，但和&quot;连续 hidden state 是更好载体&quot;之间<strong>没有逻辑必然</strong>——它论证的是&quot;不该只用语言&quot;，不是&quot;该用 last hidden state 喂回去&quot;。读的时候把动机的说服力和方法的证据分开看。</li>
+<li><strong>两个变量缠在一起（做得不好的地方）</strong>：continuous thought（核心新颖点）和 multi-stage curriculum（借来的）没做干净的分离对照。真正干净的 thought 独立增量只在 GSM8k 显现，而那个任务它整体又输 CoT。作者自己列了&quot;continuous thought + iCoT 细粒度 schedule&quot;为 future work，说明这个 confound 是知道的、只是没解。</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>这条线（latent/continuous reasoning）后续大概率往两个方向走：(a) <strong>在大模型上重做、并给同规模 CoT 的公平对比</strong>——这是本文最大的空缺，谁补上谁定调（Llama 实验只到 over-no-CoT，不够）；(b) 把 curriculum 换成不依赖语言 CoT 的训练信号（作者点名的 &quot;pretraining with continuous thoughts&quot;）。</li>
+<li>训练侧的 $n+1$ 串行瓶颈会催生&quot;并行化 latent thought 训练&quot;的工程工作——looped transformer / 隐式不动点求解那条线可能被接上。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>一个值得警惕的&quot;反面&quot;操作范式</strong>：当方法在唯一真实任务上打不过最强 baseline 时，造一个&quot;专门展示自己优势&quot;的合成 benchmark（ProsQA，还带防 shortcut 的按位 OR 标签机制）+ 一套漂亮的机制解释（BFS/value function/node height），能极大提升说服力和引用（581）。这不是说它作假——ProsQA 的构造很干净、机制分析很巧——而是提醒：<strong>如果本文只报 GSM8k，故事就成了&quot;输给 CoT 的 latent 方法&quot;；ProsQA + Section 5 的存在把它变成了旗帜性工作。</strong> 作为读者要对这种&quot;benchmark + 机制故事&quot;的组合有免疫力。</li>
+<li>与此同时，&quot;为假设定制干净环境&quot;本身是高质量机制研究的正当做法：想验证规划能力，就构造一个必须规划才能解的环境，而不是在脏的真实数据上争论。关键是要同时诚实报告真实任务上的结果——这点作者做到了。</li>
+</ul>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic / Area：</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Latent-Reasoning">MOC-Latent-Reasoning</span> — Topic（核心归属）: Coconut 是&quot;在连续/潜在空间里推理而非语言 token 空间&quot;这条线的奠基性工作，本 MOC 由本次后处理创建收纳该方向。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: Coconut 用 logit lens 把不可读的 continuous thought 探针回语言空间，构造隐式 value function 并用节点高度相关性量化连续空间中涌现的 BFS 搜索，为&quot;latent 推理过程如何在模型内部展开&quot;提供了机制层面的可解释性分析。</li>
+</ul>
+<p><strong>直接论文双链：</strong></p>
+<ul>
+<li><a class="wikilink" href="Dynamic_Large_Concept_Models-自适应语义空间潜在推理.html" title="Dynamic_Large_Concept_Models-自适应语义空间潜在推理">Dynamic_Large_Concept_Models-自适应语义空间潜在推理</a> — 与 Coconut 近乎同源：同样在连续/潜在语义空间里推理，但把&quot;每步用几个 continuous thought&quot;从固定超参改成按语义空间自适应决定推理预算。</li>
+<li><a class="wikilink" href="Language-as-a-Latent-Variable-for-Reasoning-Optimization-polyGRPO.html" title="Language-as-a-Latent-Variable-for-Reasoning-Optimization-polyGRPO">Language-as-a-Latent-Variable-for-Reasoning-Optimization-polyGRPO</a> — 同样把&quot;语言/离散 token&quot;当推理的中间变量来质疑，但 polyGRPO 走的是把语言当 latent variable 优化的路线，与 Coconut&quot;彻底跳过语言&quot;形成对照。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Efficient-Multilingual-Reasoning-Transfer-via-Progressive-Code-Switching-PCS.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</span></a>
+<a class="paper-nav-link next" href="All-Circuits-Lead-to-Rome-Functional-Anisotropy-Circuit-Sheaf-Discovery.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">All Circuits Lead to Rome: Rethinking Functional Anisotropy in Circuit and Sheaf Discovery for LLMs</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: hao2024coconut</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

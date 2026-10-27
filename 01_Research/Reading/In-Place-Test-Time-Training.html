@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-Place Test-Time Training</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">In-Place Test-Time Training</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-已有-ttt-没法-drop-in-接进现成-llm-而且它的学习目标跟语言建模根本对不齐"><span class="toc-num">02</span> 2. 关键问题：已有 TTT 没法 drop-in 接进现成 LLM，而且它的学习目标跟语言建模根本对不齐</a></li>
+<li><a class="toc-link toc-sub" href="#三个必须满足的条件-section-1-2">三个必须满足的条件（Section 1-2）</a></li>
+<li><a class="toc-link" href="#3-关键方法-复用-mlp-的-down-projection-当-fast-weight-ntp-aligned-目标-chunk-wise-并行更新"><span class="toc-num">03</span> 3. 关键方法：复用 MLP 的 down-projection 当 fast weight + NTP-aligned 目标 + chunk-wise 并行更新</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-整体架构-repurposing-mlp-blocks">3.1 整体架构：Repurposing MLP Blocks</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-为什么-in-place-设计能用大-chunk">3.2 为什么 in-place 设计能用大 chunk</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-lm-aligned-objective">3.3 LM-Aligned Objective</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-theorem-1-理论保证">3.4 Theorem 1（理论保证）</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-context-parallel-实现-cp-native">3.5 Context Parallel 实现（CP-native）</a></li>
+<li><a class="toc-link toc-sub" href="#3-6-初始化细节">3.6 初始化细节</a></li>
+<li><a class="toc-link toc-sub" href="#3-7-推理时的稳定性-trick">3.7 推理时的稳定性 trick</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的本质区别">与已有方法的本质区别</a></li>
+<li><a class="toc-link" href="#4-数据集-自建预训练混合-公开长上下文-benchmark"><span class="toc-num">04</span> 4. 数据集：自建预训练混合 + 公开长上下文 benchmark</a></li>
+<li><a class="toc-link" href="#5-关键结果-drop-in-增强-4b-14b-模型在-128k-上下文上稳定提升-外推到-256k-仍领先"><span class="toc-num">05</span> 5. 关键结果：drop-in 增强 4B-14B 模型在 128k 上下文上稳定提升，外推到 256k 仍领先</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-qwen3-4b-drop-in-table-1">5.1 主实验：Qwen3-4B drop-in（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-跨模型泛化-table-2">5.2 跨模型泛化（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-从头预训练对比-figure-2-table-3">5.3 从头预训练对比（Figure 2 + Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-消融实验-figure-3-1-7b-模型-ruler">5.4 消融实验（Figure 3，1.7B 模型，RULER）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-效率-figure-4">5.5 效率（Figure 4）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-训练配置速览">5.6 训练配置速览</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-20</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.06169" target="_blank">arXiv</a>
+    </div>
+    <h1>In-Place Test-Time Training</h1>
+    <p class="authors">Guhao Feng, Shengjie Luo, Kai Hua, Ge Zhang, Di He, Wenhao Huang, Tianle Cai</p>
+    <div class="topic-row"><span class="topic-tag">Test-Time_Training</span> <span class="topic-tag">Long_Context</span> <span class="topic-tag">Fast_Weights</span> <span class="topic-tag">Circuit_Discovery</span> <span class="topic-tag">Exposure_Bias</span> <span class="topic-tag">LLM_Architecture</span> <span class="topic-tag">Online_Learning</span></div>
+</header>
+
+<h1>论文笔记: In-Place Test-Time Training</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>：Guhao Feng, Shengjie Luo（共同一作）, Kai Hua, Ge Zhang, Di He（通讯，北大）, Wenhao Huang（通讯，ByteDance Seed）, Tianle Cai</li>
+<li><strong>团队</strong>：ByteDance Seed + 北京大学（Di He 组，做 Transformer 理论/架构出身，Rethinking Transformer / Long-sky 那条线）</li>
+<li><strong>发表</strong>：arXiv 2604.06169v1，2026-04-07，<strong>ICLR 2026 Oral Presentation</strong> [?]（论文正文和 arXiv 页面未标注，来源待确认）</li>
+<li><strong>代码</strong>：https://github.com/ByteDance-Seed/In-Place-TTT</li>
+</ul>
+<p>一句话定位：把 TTT 从「替换 attention 的专用层」改成「直接复用现有 MLP 的 down-projection 当 fast weight」，配一个跟 next-token prediction 对齐的训练目标。不停训、不拆架构，drop-in 地给已有 LLM 加上「推理时在线适应」。</p>
+<hr />
+<h2 id="2-关键问题-已有-ttt-没法-drop-in-接进现成-llm-而且它的学习目标跟语言建模根本对不齐">2. 关键问题：已有 TTT 没法 drop-in 接进现成 LLM，而且它的学习目标跟语言建模根本对不齐</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+看最经典的 induction 任务：序列里先出现一对 <code>(k*, v*)</code>，比如 <code>... &quot;apple&quot; &quot;red&quot; ... &quot;apple&quot; ?</code>，模型在第二个 <code>apple</code> 要预测下一个 token 是 <code>red</code>。</p>
+<p>现有 attention 靠 KV cache 把 <code>apple→red</code> 存住，query <code>apple</code> 检索回来。但上下文超 window 怎么办？TTT 的思路是在推理时用 fast weight 一边读 token 一边更新，把这些关联压进参数。</p>
+<p>但已有 TTT（TTT-Linear/MLP, LaCT, Titans）把 fast weight 设计成<strong>替换 attention 的循环层</strong>，导致三道坎：</p>
+<ol>
+<li><strong>必须从头重训</strong>——你总不能把 Qwen3 的 attention 整层拆掉重接。</li>
+<li><strong>只能用很小的 chunk</strong>——它当 token mixer 用，chunk 越大 chunk 内 token 之间没法通过 fast weight 交互。小 chunk 严重限制 GPU 并行度。</li>
+<li><strong>训练目标错配</strong>——reconstruction 目标让 <code>f_W(k_i)≈v_i</code>，<code>v_i</code> 来自 <code>x_i</code> 自己。回到上面的 induction 例子：你存进 fast weight 的是 <code>apple</code> 这个 key 自己的表示，等到 query <code>apple</code> 来的时候只能让你想起 <code>apple</code>，而不是 <code>apple→red</code> 里的 <code>red</code>。</li>
+</ol>
+</blockquote>
+<p>所以这篇文章回答的不是&quot;TTT 好不好&quot;，而是&quot;TTT 怎么才能不做伤筋动骨的改造、直接给 LLM 用上&quot;。</p>
+<h3 id="三个必须满足的条件-section-1-2">三个必须满足的条件（Section 1-2）</h3>
+<ol>
+<li><strong>Architectural Compatibility</strong>：能从预训练 checkpoint warm-start，不要求从头训。</li>
+<li><strong>Computational Efficiency</strong>：per-token 更新是串行的、瓶颈 GPU。必须有 chunk-wise、能并行的实现。</li>
+<li><strong>Tailored Learning Objective for LM</strong>：reconstruction 目标只是&quot;记住当前 token&quot;，跟自回归 LM 要&quot;预测下一个 token&quot;在因果上错配——Theorem 1 正式证明了这一点。</li>
+</ol>
+<hr />
+<h2 id="3-关键方法-复用-mlp-的-down-projection-当-fast-weight-ntp-aligned-目标-chunk-wise-并行更新">3. 关键方法：复用 MLP 的 down-projection 当 fast weight + NTP-aligned 目标 + chunk-wise 并行更新</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+沿用上面的 <code>... &quot;apple&quot; &quot;red&quot; ... &quot;apple&quot; ?</code> 例子。In-Place TTT 不动 attention、不换架构，只把（每 6 层中某一层）MLP 的 down-projection <code>W_down</code> 拿出来当 fast weight。</p>
+<p>给定 gated MLP：<code>O = (φ(HW_gate) ⊙ (HW_up)) W_down</code>。冻结 <code>W_up</code>、<code>W_gate</code>，把 <code>W_down</code> 当 fast weight，推理时 chunk-by-chunk 更新。</p>
+<p>走一个 chunk（比如 1024 个 token）：</p>
+<ol>
+<li><strong>Apply</strong>：用当前的 <code>W_down^(i)</code>（= 预训练值 + 之前 chunk 累积的更新）算输出 <code>O_[i] = Z_[i] (W_down^(i))^T</code>。</li>
+<li><strong>Update</strong>：算 NTP-aligned 的 target <code>V̂_[i] = Conv1D(X_0) W_target</code>，然后一步更新 <code>W_down^(i+1) = W_down^(i) + η · V̂_[i]^T Z_[i]</code>（式 1）。</li>
+</ol>
+<p>关键回到 induction：当 chunk 里出现 <code>apple red</code> 时，<code>apple</code> 这个位置的 target <code>V̂</code> 不再是 <code>apple</code> 自己的 embedding，而是（经过 Conv1D 后）混入了下一个 token <code>red</code> 的信息。fast weight 里存的是 <code>apple→red</code> 这种&quot;对预测有用的关联&quot;。等后面再出现 <code>apple</code>，更新过的 <code>W_down</code> 就能把 logit 推向 <code>red</code>。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>注意顺序是<strong>先 apply 再 update</strong>，保证 chunk 内部用的是&quot;上一个状态&quot;，符合因果。</p>
+</blockquote>
+<h3 id="3-1-整体架构-repurposing-mlp-blocks">3.1 整体架构：Repurposing MLP Blocks</h3>
+<p>核心 insight：<strong>MLP 本身就是 key-value memory</strong>（Geva et al. 已指出）。<code>W_down</code> 天然在当&quot;慢权重&quot;存预训练知识，让它兼职当&quot;快权重&quot;存 transient context，是自然的延伸——而且完全不碰模型结构。</p>
+<ul>
+<li><code>W_up</code>、<code>W_gate</code>：冻结，当 slow weights。</li>
+<li><code>W_down ∈ R^{d_model × d_ff}</code>：作为可在线更新的 fast weights。初始 <code>W_down^(0) = W_down</code>（预训练值）。</li>
+<li>只改 <code>W_down</code>，所以叫 &quot;in-place&quot; / &quot;drop-in&quot;。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>为什么选 down-projection？</strong> 论文没有显式做&quot;哪个投影当 fast weight&quot;的消融 [?]。从 state size 看 <code>W_down</code> 参数量是 <code>d_model × d_ff</code>（d_ff 一般 3-4x d_model），容量最大，当 memory bank 最划算。但 <code>W_up</code> 也是同大小的矩阵，为什么不是 <code>W_up</code>？论文没有辩护——这是可以直接追问作者的 missing ablation。</p>
+</blockquote>
+<h3 id="3-2-为什么-in-place-设计能用大-chunk">3.2 为什么 in-place 设计能用大 chunk</h3>
+<p>传统 TTT 当 token mixer 用，chunk 越大 chunk 内 token 之间就无法通过 fast weight 交互，所以必须用小 chunk。但 In-Place TTT 把 TTT 放在 MLP 上、<strong>attention 不动</strong>——chunk 内部的 token 交互交给 attention，fast weight 只负责&quot;跨 chunk 的长程记忆&quot;。所以可以用很大的 chunk（ablation 显示 C=512 和 1024 最优，1024 更高效）。</p>
+<p>这是一个很干净的&quot;职责分离&quot;：<strong>attention 管局部精确交互，fast weight 管长程压缩记忆</strong>。论文没大声喊，但它是整个效率故事的根基。</p>
+<h3 id="3-3-lm-aligned-objective">3.3 LM-Aligned Objective</h3>
+<p><strong>目标定义：</strong></p>
+<div class="math-display">$$\hat{V} = \text{Conv1D}(X_0) W_{target}$$</div>
+<ul>
+<li><code>X_0 ∈ R^{n×d_model}</code>：token embedding（注意是<strong>最原始的 embedding</strong>，不是中间层 hidden state）</li>
+<li><code>Conv1D(·)</code>：<strong>depthwise</strong> 1D 卷积，kernel size=5，causal padding，no bias。参数量极小（<code>d_model × 5</code>）。把局部未来 token 信息混进来。</li>
+<li><code>W_target ∈ R^{d_model×d_model}</code>：可训练投影。</li>
+<li>特例：纯 next-token 目标 = <code>W_target</code> 设为单位阵 + Conv1D 的 kernel 设成&quot;只对下一个 token 为 1、其余为 0&quot;。</li>
+</ul>
+<blockquote class="card card-info">
+<p>最直接的 NTP target 是 <code>V_t = E_{x_{t+1}}</code>。但论文用 Conv1D + W_target 来参数化，好处是可以学一个 multi-token 的加权组合，比只用下一个 token 更灵活。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>这里有个容易卡住的点：target 需要&quot;看未来 token&quot;(t+1)，这跟自回归的因果性怎么不冲突？答案是——<strong>&quot;未来 token 信息&quot;加在 update 的 target（监督信号/label）上，不是加在模型输入上</strong>。就像训练时用 ground-truth next token 当 label 一样，不违反推理时的因果性。模型输入依然严格因果。</p>
+</blockquote>
+<p><strong>Loss 和梯度：</strong> 用负 Frobenius 内积 <code>L(·,·) = −⟨·,·⟩_F</code>，代入 chunk-wise update 直接得到闭式梯度（<strong>式 1，核心公式</strong>）：</p>
+<div class="math-display">$$W_{down}^{(i)} = W_{down}^{(i-1)} + \eta \, \hat{V}_{[i]}^\top Z_{[i]}$$</div>
+<p>物理意义：fast weight 增量 = <code>V̂^T Z</code>，即&quot;未来信息的 target&quot;和&quot;当前 key 激活&quot;的外积。跟 linear attention 的 <code>V K^T</code> 很像，只不过 V 是&quot;预测性目标&quot;而不是&quot;当前 token 的 value&quot;。因为 loss 取负 Frobenius 内积，梯度下降一步恰好是外积、满足结合律——<strong>不需要真的反向传播，直接算外积就行</strong>。</p>
+<h3 id="3-4-theorem-1-理论保证">3.4 Theorem 1（理论保证）</h3>
+<p>先说这个定理回答什么：它不是比两个目标的&quot;最终 loss&quot;，它回答的是一个更窄但更锋利的问题——<strong>做一次 update，对正确答案的 logit 期望贡献是多少？</strong></p>
+<p>设定：经典 induction head。序列里 <code>(x_{t*}, x_{t*+1}) = (k*, v*)</code>，后面 query 位置 <code>n &gt; t*</code> 出现 <code>x_n = k*</code>，模型要预测 <code>x_{n+1} = v*</code>。</p>
+<p>两个假设：</p>
+<ol>
+<li><strong>Embedding 近似正交</strong>：<code>|e_{wi}^T e_{wj}| ≤ ε</code>，且 <code>‖e_w‖² ≥ c_norm² &gt; 0</code>。</li>
+<li><strong>Key-Query 对齐</strong>：query 位置 n 和 key 位置 <code>t*</code> 的中间激活 <code>E[z_{t*}^T z_n] = c_align &gt; 0</code>；对其他位置 <code>t≠t*</code>，<code>E[(V_t Z_t^T) Z_n] = 0</code>。</li>
+</ol>
+<p><strong>结论：</strong></p>
+<p>用 NTP-aligned target（<code>V_t = E_{x_{t+1}}</code>）：</p>
+<ul>
+<li>正确 token v* 的 logit 增量 <strong>≥ λ_lr · c_norm² · c_align</strong>——<strong>显著为正</strong></li>
+<li>其他 token w≠v* 的 logit 增量 <strong>≤ λ_lr · ε · c_align</strong>——<strong>几乎不变</strong></li>
+</ul>
+<p>用 reconstruction target（<code>V_t = E_{x_t}</code>）：</p>
+<ul>
+<li>正确 token v* 的 logit 增量 <strong>≤ λ_lr · ε · c_align</strong>——<strong>也不变！</strong></li>
+</ul>
+<blockquote class="card card-info">
+<p>两句话的极简直觉：NTP target 在 W_down 里写 <code>k*→v*</code> 的映射，query 时刚好查到；reconstruction 写的是 <code>k*→k*</code> 的自环，query 时查不到 v*（因为 k<em>≠v</em> 时 embedding 近似正交）。之前所有 TTT 都默认 reconstruction 是合理的，这篇指出在 LM 场景下它根本不指向预测目标。Figure 3c 的消融直接验证了理论预测——Conv1D 一关掉（=NTP 退化），长上下文就崩。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>⚠️ 这个定理证的是<strong>单步</strong> update 的期望贡献。实际推理时 fast weight 会累积 K 个 chunk 的 update（128k 序列、C=1024 → 125 次）。多步累积下 ε 级干扰项会不会累加成显著噪声？定理的单步界无法回答。假设 2（其他位置无关）在真实长序列里有多个相似 key 时也未必成立。</p>
+</blockquote>
+<h3 id="3-5-context-parallel-实现-cp-native">3.5 Context Parallel 实现（CP-native）</h3>
+<p>式 1 的更新规则是<strong>加性关联</strong>的，所以可以三阶段并行（Appendix Algorithm 1）：</p>
+<ol>
+<li>所有 chunk 并行算 <code>ΔW_[i] = V̂_[i]^T Z_[i]</code></li>
+<li>一次 prefix-sum（cumsum）聚合成 <code>S_i = Σ_{j&lt;i} ΔW_j</code>——GPU 上用 parallel scan 极快</li>
+<li>所有 chunk 并行算有效权重 <code>W_down^(i-1) = W_down^(0) + η S_i</code> 和输出 <code>O_[i]</code></li>
+</ol>
+<blockquote class="card card-info">
+<p>关键设计耦合：<strong>prefix sum 能用，是因为故意选了负 Frobenius 内积当 loss</strong>。这个 loss 选择不只是为了效果，也是为了让梯度恰好是外积、满足结合律。如果换 loss（比如 MSE）或换更复杂的 optimizer（Adam 式自适应），梯度形式变了，prefix sum 就不一定成立。<strong>loss 选择和工程实现是绑死的</strong>。</p>
+</blockquote>
+<p>因果性靠 Conv1D 的 causal padding 保证（让每个 chunk 的 delta 不含自己 chunk 内的未来信息）。<strong>文档边界处 reset fast weight 到预训练值</strong>，防止跨文档 context leakage——这是实际工程中的重要细节。</p>
+<h3 id="3-6-初始化细节">3.6 初始化细节</h3>
+<p>continual training 时，新引入的 Conv1D 和 <code>W_target</code> 初始化成&quot;让 ΔW≈0&quot;，这样初始行为 = 原始预训练模型，不会一上来把预训练能力打坏：</p>
+<ul>
+<li>Conv1D：<strong>零初始化</strong>（depthwise, kernel size 5, causal padding, no bias）</li>
+<li><code>W_target</code>：<strong>稀疏对角矩阵</strong>，对角元从 <code>N(0, σ²)</code> 采样，非对角全 0</li>
+<li>结果：<code>η V̂^T Z ≈ 0</code>，<code>W_down</code> 初始等于预训练值。TTT 能力从零&quot;平滑长出&quot;而非突然加入。<strong>行为兼容比架构兼容更关键</strong>。</li>
+</ul>
+<h3 id="3-7-推理时的稳定性-trick">3.7 推理时的稳定性 trick</h3>
+<p>Qwen3-4B continual 评测时，对每个 chunk 的 fast weight 增量做 Frobenius norm rescaling：如果 <code>‖ΔW_down^(i)‖_F &gt; τ</code>，rescale 到 τ。τ = 1e-5。注意是 <strong>rescale</strong>（等比缩小），不是硬截断。防止超长序列下 update 无限累积导致数值爆炸。</p>
+<blockquote class="card card-info">
+<p>注意：这个 clipping <strong>只在 continual Qwen3-4B 评测时出现，LLaMA-8B、Qwen3-14B 和所有 from-scratch 实验都没提 clipping</strong> [?]。可能的原因：continual 模型是&quot;在预训练权重上叠小增量&quot;（需要 clip 防漂移），from-scratch 是&quot;从头学&quot;（权重在训练里适应了 TTT 更新）。但论文没有解释不同模型的策略差异，也没有 τ 的消融。这是一个 missing ablation。</p>
+</blockquote>
+<h3 id="与已有方法的本质区别">与已有方法的本质区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统 TTT (TTT-Linear/MLP, Titans)</th>
+<th>LaCT</th>
+<th><strong>In-Place TTT</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fast weight 位置</td>
+<td>专用 TTT 层（替换 attention）</td>
+<td>加在 backbone 上的 TTT 层</td>
+<td><strong>复用现有 MLP 的 W_down</strong></td>
+</tr>
+<tr>
+<td>能否 warm-start</td>
+<td>否，必须从头训</td>
+<td>可以 continual</td>
+<td><strong>可以 continual</strong></td>
+</tr>
+<tr>
+<td>与 attention 关系</td>
+<td>替代</td>
+<td>补充</td>
+<td><strong>补充（attention 管局部，fast weight 管长程）</strong></td>
+</tr>
+<tr>
+<td>chunk 大小约束</td>
+<td>必须小（TTT 当 mixer）</td>
+<td>大 chunk</td>
+<td><strong>大 chunk（512-1024）</strong></td>
+</tr>
+<tr>
+<td>目标</td>
+<td>reconstruction</td>
+<td>reconstruction</td>
+<td><strong>NTP-aligned</strong></td>
+</tr>
+<tr>
+<td>并行性</td>
+<td>受限</td>
+<td>较好</td>
+<td><strong>CP-native（prefix-sum）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-数据集-自建预训练混合-公开长上下文-benchmark">4. 数据集：自建预训练混合 + 公开长上下文 benchmark</h2>
+<ul>
+<li><strong>From-scratch 预训练数据</strong>：自建，包含通用中英文、高知识/推理密度数据、代码、数学、多语言。混合配比未给精确数字。</li>
+<li><strong>Continual 预训练数据</strong>（Qwen3-4B）：分两阶段
+<ul>
+<li>Stage 1：~20B tokens，32k 上下文，短文档分布跟预训练一致</li>
+<li>Stage 2：~15B tokens，128k 上下文，长文档 = 自然数据（books、repo 级代码）+ 合成数据（retrieval-augmented、long-context QA）</li>
+</ul>
+</li>
+<li><strong>LLaMA-3.1-8B / Qwen3-14B continual</strong>：~20B tokens，32k 上下文，<strong>单阶段，没有 YaRN</strong></li>
+<li><strong>评估数据</strong>：
+<ul>
+<li>长上下文：<strong>RULER</strong> benchmark（OpenCompass 框架），4k–256k（256k 是外推测试，超出训练的 128k）</li>
+<li>语言建模：<strong>Pile + Proof-Pile-2</strong> 上的 sliding window perplexity（Proof-Pile-2 侧重数学/代码领域长上下文）</li>
+<li>常识推理：HellaSwag, ARC-E, ARC-C, MMLU, PIQA（lm-evaluation-harness）</li>
+<li>效率：prefill throughput + peak memory，8k–128k，batch size=1，H800</li>
+</ul>
+</li>
+</ul>
+<p>数据自建、不开源、配比不公开，对复现是障碍。合成数据的生成方式也没给样本或细节。</p>
+<hr />
+<h2 id="5-关键结果-drop-in-增强-4b-14b-模型在-128k-上下文上稳定提升-外推到-256k-仍领先">5. 关键结果：drop-in 增强 4B-14B 模型在 128k 上下文上稳定提升，外推到 256k 仍领先</h2>
+<blockquote class="card card-info">
+<p>核心结论：In-Place TTT 短上下文基本不丢分，长上下文持续拉开优势，且与 YaRN 正交可叠加。</p>
+</blockquote>
+<h3 id="5-1-主实验-qwen3-4b-drop-in-table-1">5.1 主实验：Qwen3-4B drop-in（Table 1）</h3>
+<p>RULER 平均准确率（%），baseline 和 In-Place TTT 用<strong>完全相同</strong>的 continual training curriculum，唯一变量是是否加 TTT：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Context</th>
+<th>4k</th>
+<th>8k</th>
+<th>16k</th>
+<th>32k</th>
+<th>64k</th>
+<th>128k</th>
+<th>256k (外推)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-4B (Instruct)</td>
+<td>95.1</td>
+<td>93.6</td>
+<td>91.0</td>
+<td>87.8</td>
+<td>77.8</td>
+<td>66.0</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Baseline (continual)</td>
+<td>96.6</td>
+<td>94.1</td>
+<td>92.1</td>
+<td>88.7</td>
+<td>74.3</td>
+<td>74.8</td>
+<td>41.7</td>
+</tr>
+<tr>
+<td><strong>In-Place TTT</strong></td>
+<td>96.1</td>
+<td><strong>95.6</strong></td>
+<td><strong>92.7</strong></td>
+<td><strong>89.3</strong></td>
+<td><strong>78.7</strong></td>
+<td><strong>77.0</strong></td>
+<td><strong>43.9</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>趋势清晰：<strong>短上下文（4k）两者持平甚至 baseline 略高（96.6 vs 96.1，差 0.5），从 8k 开始 TTT 反超</strong>。64k +4.4，128k +2.2，256k 外推 +2.2。</p>
+<blockquote class="card card-info">
+<p>4k 这个点：4k 是唯一落在 SWA window 内或附近的长度，短序列 attention 本身够用，TTT 增量可能是噪声。但 Table 2 里 LLaMA-8B（93.9→94.4）和 Qwen3-14B（96.8→97.2）的 4k 都有提升，所以不是 TTT 的系统性问题，更可能是 Qwen3-4B 短上下文已经太强、边际贡献被淹没。</p>
+<p>256k 绝对分都很低（41.7/43.9），&quot;外推不崩&quot;其实是&quot;都不太行但 TTT 少崩一点&quot;。</p>
+<p>论文还列了 Mistral-7B、GLM3-6B、Phi3-14B、Llama3-8B 做参照，但这些模型训练设置、上下文窗口都不同，横向对比意义有限。其中 Qwen3-4B + TTT 在 128k 上达到 77.0，远超 GLM3-6B 的 42.0 和 Phi3-medium-14B 的 46.1——绝对水平有说服力。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2604.06169v1/x1.png" alt="Figure 1: In-Place TTT 整体框架" /></p>
+<h3 id="5-2-跨模型泛化-table-2">5.2 跨模型泛化（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Base Model</th>
+<th>4k</th>
+<th>8k</th>
+<th>16k</th>
+<th>32k</th>
+<th>64k</th>
+<th>64k+YaRN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA-3.1-8B Baseline</td>
+<td>93.9</td>
+<td>92.1</td>
+<td>92.5</td>
+<td>91.1</td>
+<td>81.6</td>
+<td>–</td>
+</tr>
+<tr>
+<td>LLaMA-3.1-8B <strong>+ I.P. TTT</strong></td>
+<td><strong>94.4</strong></td>
+<td><strong>93.0</strong></td>
+<td><strong>93.3</strong></td>
+<td><strong>91.7</strong></td>
+<td><strong>83.7</strong></td>
+<td>–</td>
+</tr>
+<tr>
+<td>Qwen3-14B-Base Baseline</td>
+<td>96.8</td>
+<td>95.0</td>
+<td>94.6</td>
+<td>90.7</td>
+<td>67.9</td>
+<td>81.3</td>
+</tr>
+<tr>
+<td>Qwen3-14B-Base <strong>+ I.P. TTT</strong></td>
+<td><strong>97.2</strong></td>
+<td><strong>95.7</strong></td>
+<td><strong>95.2</strong></td>
+<td><strong>91.2</strong></td>
+<td><strong>70.6</strong></td>
+<td><strong>82.5</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>64k 处：LLaMA-8B +2.1，Qwen3-14B +2.7。Qwen3-14B 的 64k+YaRN 从 81.3→82.5，说明 <strong>TTT 跟 YaRN 等 RoPE 扩展技术正交</strong>，可叠加。覆盖 4B-14B 两个模型家族，结论一致。LLaMA-8B 和 Qwen3-14B 都只用 ~20B tokens 单阶段 continual training（Table 7），没有 128k stage。</p>
+<h3 id="5-3-从头预训练对比-figure-2-table-3">5.3 从头预训练对比（Figure 2 + Table 3）</h3>
+<ul>
+<li><strong>500M / 1.5B（Figure 2）</strong>：Pile + Proof-Pile-2 上 sliding window perplexity，In-Place TTT 在所有上下文长度（到 32k）都低于所有 baseline（<strong>SWA, GLA, DeltaNet, LaCT</strong>）。perplexity 随上下文增长持续下降——证明 fast weight 确实在压缩利用长程信息。这是论文 claim &quot;优于 prior TTT 方法&quot;的核心证据。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2604.06169v1/x2.png" alt="Figure 2: Sliding Window Perplexity (500M/1.5B)" /></p>
+<ul>
+<li><strong>4B（Table 3）</strong>：常识推理基本持平或略升，长上下文大幅提升。</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>架构</th>
+<th>HellaSwag</th>
+<th>ARC-E</th>
+<th>ARC-C</th>
+<th>MMLU</th>
+<th>PIQA</th>
+<th>RULER-4k</th>
+<th>RULER-8k</th>
+<th>RULER-16k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Attn Baseline</td>
+<td>55.67</td>
+<td>64.52</td>
+<td>33.19</td>
+<td>36.43</td>
+<td>72.63</td>
+<td>45.77</td>
+<td>38.09</td>
+<td>6.58</td>
+</tr>
+<tr>
+<td>Full Attn + I.P.TTT</td>
+<td><strong>55.85</strong></td>
+<td><strong>64.98</strong></td>
+<td>32.34</td>
+<td><strong>37.42</strong></td>
+<td><strong>73.29</strong></td>
+<td><strong>49.98</strong></td>
+<td><strong>43.82</strong></td>
+<td><strong>19.99</strong></td>
+</tr>
+<tr>
+<td>SWA Baseline</td>
+<td>54.92</td>
+<td>64.18</td>
+<td>32.85</td>
+<td>36.06</td>
+<td>72.58</td>
+<td>14.77</td>
+<td>9.91</td>
+<td>5.07</td>
+</tr>
+<tr>
+<td>SWA + I.P.TTT</td>
+<td>55.24</td>
+<td>64.60</td>
+<td><strong>33.70</strong></td>
+<td>36.48</td>
+<td>72.03</td>
+<td><strong>28.33</strong></td>
+<td><strong>26.80</strong></td>
+<td><strong>7.57</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p>常识推理列：<strong>没有一个任务变动超过 1 个点，方向随机</strong>（ARC-C Full Attn 掉 0.85，SWA 涨 0.85）——说明 TTT 对短上下文能力中性，drop-in 不伤老能力。长上下文是数量级提升：Full Attn RULER-16k 从 6.58→19.99（+13.4），SWA RULER-8k 从 9.91→26.80（+16.9）。</p>
+</blockquote>
+<h3 id="5-4-消融实验-figure-3-1-7b-模型-ruler">5.4 消融实验（Figure 3，1.7B 模型，RULER）</h3>
+<p><img src="https://arxiv.org/html/2604.06169v1/x4.png" alt="Figure 3: 关键设计选择的消融" /></p>
+<ol>
+<li><strong>State size（图 a）</strong>：性能随启用 TTT 的层数单调提升。证实&quot;复用大量 MLP state&quot;的合理性。</li>
+<li><strong>Chunk size（图 b）</strong>：C=512 和 1024 最优且接近，1024 效率更佳。太小的 chunk（64/128）和太大的（2048）都不如中间值。证实 in-place 设计能用大 chunk。</li>
+<li><strong>LM-Aligned 目标组件（图 c）</strong>：
+<ul>
+<li>只有 Conv1D（无 W_target）：长上下文好</li>
+<li>只有 W_target（无 Conv1D）：短上下文好</li>
+<li>两者都有：最好</li>
+<li>两者都没有（=reconstruction）：最差</li>
+<li>跟 Theorem 1 完全一致：Conv1D 提供未来 token 信息（长上下文 retrieval 的关键），W_target 做投影适配（短上下文 general performance）。</li>
+</ul>
+</li>
+</ol>
+<h3 id="5-5-效率-figure-4">5.5 效率（Figure 4）</h3>
+<p>4B 模型，8k–128k，SWA 和 Full Attention 两种 backbone。In-Place TTT 在 prefill throughput 和 peak memory 上引入的开销<strong>几乎可忽略</strong>（曲线基本重合）。归功于大 chunk + prefix-sum 的 CP 实现。</p>
+<h3 id="5-6-训练配置速览">5.6 训练配置速览</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>实验</th>
+<th>模型</th>
+<th>tokens</th>
+<th>seq len</th>
+<th>LR</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>From scratch</td>
+<td>500M</td>
+<td>20B</td>
+<td>32k</td>
+<td>5e-4</td>
+<td>SWA=2048</td>
+</tr>
+<tr>
+<td>From scratch</td>
+<td>1.5B</td>
+<td>60B</td>
+<td>32k</td>
+<td>3e-4</td>
+<td>SWA=4096</td>
+</tr>
+<tr>
+<td>From scratch</td>
+<td>1.7B/4B</td>
+<td>120B</td>
+<td>8k</td>
+<td>3e-4</td>
+<td>batch 8M</td>
+</tr>
+<tr>
+<td>Continual</td>
+<td>Qwen3-4B</td>
+<td>~35B (20B@32k + 15B@128k)</td>
+<td>32k→128k</td>
+<td>5e-6</td>
+<td>YaRN, wd=0.1</td>
+</tr>
+<tr>
+<td>Continual</td>
+<td>LLaMA-3.1-8B / Qwen3-14B</td>
+<td>~20B</td>
+<td>32k</td>
+<td>5e-6</td>
+<td>单阶段，无 YaRN</td>
+</tr>
+</tbody>
+</table></div>
+<p>硬件：全部 Nvidia H800。TTT 模块每 6 层加一次（continual 场景）。优化器 AdamW。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>反直觉、做得好的地方：</strong></p>
+<ol>
+<li>
+<p><strong>&quot;复用 MLP 的 down-projection 当 fast weight&quot;这个想法简单到让人怀疑是不是漏了什么。</strong> 直觉上 fast weight 应该是个&quot;额外的小网络&quot;，但 MLP 本身就是 key-value memory（Geva et al.），让它兼职当 fast weight 是自然的。而且 <code>d_ff</code> 很大，state 容量比传统 TTT 的小网络大得多。如果让我做，第一反应一定是&quot;加一个新的小 MLP 当 fast weight&quot;，而不是&quot;直接改现有的&quot;——这个思路转换很有价值。</p>
+</li>
+<li>
+<p><strong>&quot;apply 再 update&quot;的顺序 + 大 chunk 能 work，本质上是因为 attention 兜底了 chunk 内交互。</strong> 传统 TTT 被小 chunk 绑架，是因为它独自承担 token mixing；一旦把 mixing 还给 attention，TTT 就可以&quot;只做长程记忆&quot;，chunk 自然能放大。这是很干净的&quot;职责分离&quot;，论文没大声喊，但它是整个效率故事的根基。</p>
+</li>
+<li>
+<p><strong>Theorem 1 的构造很精巧</strong>：不是比两个目标的&quot;最终 loss&quot;，而是比&quot;一步 update 对正确 token logit 的期望影响&quot;。reconstruction target 在 induction 设定下对正确 logit 的影响 ≤ ε 级（跟错误 token 一样），NTP-aligned 是 c_norm² 级（显著正）。把&quot;为什么 reconstruction 对 LM 不够&quot;讲得非常具体。</p>
+</li>
+<li>
+<p><strong>初始化的精心设计（Conv1D 零初始化 + W_target 稀疏对角）是 drop-in 能成立的关键。</strong> near-zero init 让 TTT 能力从零&quot;平滑长出&quot;——行为兼容比架构兼容更关键，是个以小见大的工程细节。</p>
+</li>
+</ol>
+<p><strong>做得不够、站不住脚的地方：</strong></p>
+<ol start="5">
+<li>
+<p><strong>论文标题叫 &quot;Test-Time Training&quot;，intro 一直在讲&quot;推理时持续适应&quot;，但实验全是&quot;固定长度序列的 LM&quot;。</strong> TTT 真正的卖点是推理时持续适应，但这里只拿它当&quot;更好的长上下文 memory&quot;用了。fast weight 的&quot;持续适应&quot;能力从未被直接验证——没有流式/持续学习的实验。</p>
+</li>
+<li>
+<p><strong>drop-in 卖点和实验设定存在张力。</strong> continual pre-training 用了 ~35B tokens 的两阶段训练（含 128k 长上下文合成数据）。这不算&quot;不重训&quot;，这是&quot;中等规模再训练&quot;。真正的 zero-shot drop-in（只加载预训练权重 + 直接启用 TTT、零额外训练）有没有提升？论文没给。</p>
+</li>
+<li>
+<p><strong>没有&quot;等参数增量&quot;对照。</strong> TTT 模块引入了新参数（Conv1D + W_target + 每隔 6 层的机制）。没有一个对照是&quot;给 baseline 加等量参数 + 同样 35B continual training&quot;。TTT 的提升里有部分可能来自&quot;模型容量增加 + 多训了 35B 长上下文数据&quot;，而非 TTT 机制本身。</p>
+</li>
+<li>
+<p><strong>跟 LaCT 的对比没&quot;解剖&quot;。</strong> 关键区别是&quot;目标&quot;（NTP vs reconstruction）和&quot;fast weight 位置&quot;（MLP down-proj vs 专用层），但 Table 3 直接比 perplexity，没拆开赢在哪个维度。Figure 3c 只消融了自己的 Conv1D/W_target，没在同等位置下做 reconstruction vs NTP 的正面对照。</p>
+</li>
+<li>
+<p><strong>Table 1 的 Baseline 64k 分数存疑。</strong> 74.3 相对于前后列（32k=88.7, 128k=74.8）是个突然的 drop（跌 14.4），可能是 outlier——如果是，那 TTT 的 64k +4.4 可能被高估。</p>
+</li>
+<li>
+<p><strong>Theorem 1 证的是&quot;一步更新&quot;的期望贡献，不是&quot;多步累积&quot;后的效果。</strong> 实际推理时 fast weight 累积上百次 update，ε 级干扰项会不会累加成显著噪声？定理无法回答。</p>
+</li>
+</ol>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ol>
+<li>
+<p><strong>&quot;MLP-down 当 memory bank&quot;接下来很可能和分层/稀疏 attention 合流。</strong> 长上下文模型的分工会变成：attention 负责局部/精确检索，MLP-down 负责长程压缩。这跟 NSA（Native Sparse Attention）等分层记忆思路有合流趋势——两者都在做&quot;用额外存储增强 attention 的长期记忆&quot;，路径不同（动态权重 vs 显式 KV cache 管理），但终点可能重叠。</p>
+</li>
+<li>
+<p><strong>fast weight 的更新规则（目前是单步 SGD + 固定 η）还有很大优化空间，但有一个工程硬约束：更复杂的 optimizer 会破坏式 1 的加法结合律，毁掉 CP 的 prefix-sum 实现。</strong> clipping τ=1e-5 是个临时手段（且只用在 continual），说明 per-step SGD 的 magnitude 控制是个未解决的问题——SGD 本身缺乏自适应 learning rate，但 Adam 又不能用于 prefix-sum。这是一个 fundamental tension。</p>
+</li>
+</ol>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li>
+<p><span class="wikilink unresolved" title="MOC-Test-Time-Training">MOC-Test-Time-Training</span> — Topic: 核心笔记。In-Place TTT 复用预训练 MLP 的 W_down 当 fast weights，配 NTP-aligned 目标和 chunk-wise 并行更新，实现 drop-in 式 TTT 增强，无需从头重训。</p>
+</li>
+<li>
+<p><strong>相关工作（论文间双链）</strong>：</p>
+<ul>
+<li><a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a> — fast weight 跨 session 持久化涉及 continual learning / 灾难性遗忘，是 In-Place TTT 要做成真正&quot;持续学习 LLM&quot;的下一道坎</li>
+<li><a class="wikilink" href="Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a> — 观察到表示在对话中会变化，In-Place TTT 的 fast weight 动态更新提供了一种机制上的解释</li>
+</ul>
+</li>
+</ul>
+<hr />
+<p>#Research #Paper #Test-Time-Training #长上下文 #Fast-Weights #LLM架构 #NTP-aligned
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Automated-Weak-to-Strong-Researcher.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Automated Weak-to-Strong Researcher</span></a>
+<a class="paper-nav-link next" href="Emotion_Concepts_and_their_Function_in_LLM-情绪表示.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Emotion Concepts and their Function in a Large Language Model</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Feng2026InPlaceTTT</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

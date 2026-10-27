@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Distillation Enables Continual Learning</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Self-Distillation Enables Continual Learning</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何在仅有演示数据时获得on-policy学习的好处"><span class="toc-num">02</span> 2. 关键问题: 如何在仅有演示数据时获得on-policy学习的好处</a></li>
+<li><a class="toc-link" href="#3-数据集-涵盖技能学习和知识获取的多样化数据集"><span class="toc-num">03</span> 3. 数据集: 涵盖技能学习和知识获取的多样化数据集</a></li>
+<li><a class="toc-link" href="#4-关键方法-通过自蒸馏实现on-policy持续学习"><span class="toc-num">04</span> 4. 关键方法: 通过自蒸馏实现on-policy持续学习</a></li>
+<li><a class="toc-link" href="#5-关键实验-sdft在所有任务上显著优于sft-同时保持先前能力"><span class="toc-num">05</span> 5. 关键实验: SDFT在所有任务上显著优于SFT,同时保持先前能力</a></li>
+<li><a class="toc-link" href="#6-golden-case-知识获取任务的完整流程示例"><span class="toc-num">06</span> 6. Golden Case: 知识获取任务的完整流程示例</a></li>
+<li><a class="toc-link" href="#7-insights-icl能力是持续学习的关键-演示条件化策略近似最优策略"><span class="toc-num">07</span> 7. Insights: ICL能力是持续学习的关键,演示条件化策略近似最优策略</a></li>
+<li><a class="toc-link" href="#8-q-a-深度讨论"><span class="toc-num">08</span> 8. Q&A 深度讨论</a></li>
+<li><a class="toc-link toc-sub" href="#q1-ema-教师更新的细节是什么-教师需要计算梯度吗">Q1: EMA 教师更新的细节是什么？教师需要计算梯度吗？</a></li>
+<li><a class="toc-link toc-sub" href="#q2-icl-的-demonstration-有什么要求">Q2: ICL 的 demonstration 有什么要求？</a></li>
+<li><a class="toc-link toc-sub" href="#q3-trust-region-在-sdft-中的作用是什么">Q3: Trust Region 在 SDFT 中的作用是什么？</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-01-31</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2601.19897" target="_blank">arXiv</a>
+    </div>
+    <h1>Self-Distillation Enables Continual Learning</h1>
+    <p class="authors">Idan Shenfeld, Mehul Damani, Jonas Hübotter, Pulkit Agrawal</p>
+    <div class="topic-row"><span class="topic-tag">Continual_Learning</span> <span class="topic-tag">Knowledge_Distillation</span> <span class="topic-tag">Catastrophic_Forgetting</span></div>
+</header>
+
+<h1>论文笔记: Self-Distillation Enables Continual Learning</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Idan Shenfeld¹², Mehul Damani¹, Jonas Hübotter³, Pulkit Agrawal¹²</li>
+<li><strong>团队</strong>: ¹MIT, ²Improbable AI Lab, ³ETH Zurich</li>
+<li><strong>发表时间</strong>: 2026年1月27日</li>
+<li><strong>论文编号</strong>: arXiv:2601.19897v1</li>
+<li><strong>领域</strong>: 机器学习 (cs.LG)</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何在仅有演示数据时获得on-policy学习的好处">2. 关键问题: 如何在仅有演示数据时获得on-policy学习的好处</h2>
+<ul>
+<li><strong>研究动机</strong>: 基础模型在部署后是静态的,持续学习对于终身适应至关重要。现有方法面临两难:
+<ul>
+<li>On-policy强化学习可以减少遗忘,但需要奖励信号——在仅有演示数据的场景下不可用</li>
+<li>监督微调(SFT)是off-policy的,会导致灾难性遗忘</li>
+</ul>
+</li>
+<li><strong>核心问题</strong>: &quot;当只有演示数据可用时,我们如何获得on-policy学习的好处?&quot; 即在没有显式奖励信号的情况下,如何实现持续学习而不遗忘先前的能力。</li>
+</ul>
+<h2 id="3-数据集-涵盖技能学习和知识获取的多样化数据集">3. 数据集: 涵盖技能学习和知识获取的多样化数据集</h2>
+<blockquote class="card card-info">
+<p>包含四类任务场景的训练和评估数据</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>训练数据</strong>:</p>
+<ul>
+<li><strong>技能学习任务</strong>:
+<ul>
+<li>Science Q&amp;A: SciKnowEval Chemistry L-3 (本科生科学推理)</li>
+<li>Tool Use: ToolAlpaca (工具API + 用户请求 → 工具调用)</li>
+<li>Medical: HuatuoGPT-o1 stage 1 (临床推理)</li>
+</ul>
+</li>
+<li><strong>知识获取任务</strong>:
+<ul>
+<li>Wikipedia文章: 2025年自然灾难 (如&quot;2025缅甸地震&quot;)</li>
+<li>QA对通过GPT-5生成</li>
+</ul>
+</li>
+<li>采样策略: 每个batch从学生模型on-policy采样 y ∼ πθ(·|x)</li>
+</ul>
+</li>
+<li>
+<p><strong>评估数据</strong>:</p>
+<ul>
+<li><strong>新任务准确率评估</strong>:
+<ul>
+<li>Knowledge任务: 严格匹配/宽松匹配 + OOD间接问题</li>
+<li>Tool Use: 正则表达式匹配</li>
+<li>Science QA: 精确选择匹配</li>
+<li>Medical: GPT-5-mini自动评估</li>
+<li>Pass@k评估 (k最高至128)</li>
+</ul>
+</li>
+<li><strong>先前能力保持评估</strong> (6个标准benchmark的平均值):
+<ul>
+<li>HellaSwag (常识推理)</li>
+<li>TruthfulQA (真实性)</li>
+<li>MMLU (多任务语言理解)</li>
+<li>IFEval (指令遵循)</li>
+<li>Winogrande (常识推理)</li>
+<li>HumanEval (代码生成)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="4-关键方法-通过自蒸馏实现on-policy持续学习">4. 关键方法: 通过自蒸馏实现on-policy持续学习</h2>
+<blockquote class="card card-info">
+<p>核心思想: 使用同一模型的不同条件化版本作为教师和学生,通过反向KL散度优化实现on-policy学习</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>整体架构</strong>: SDFT (Self-Distillation Fine-Tuning) 框架</p>
+<ul>
+<li><strong>学生模型</strong>: πθ(·|x) - 标准的条件生成模型</li>
+<li><strong>教师模型</strong>: π(·|x,c) - 通过专家演示c进行条件化的同一模型</li>
+<li><strong>关键创新</strong>: 教师和学生是同一个模型,仅通过不同的prompt条件化方式区分,利用ICL能力</li>
+</ul>
+</li>
+<li>
+<p><strong>核心模块</strong>:</p>
+<ul>
+<li>
+<p><strong>教师条件化机制</strong>:</p>
+<ul>
+<li>通过prompt将专家演示注入到上下文中</li>
+<li><strong>Prompt完整格式</strong>:<pre><code>&lt;Question&gt;
+This is an example for a response to the question:
+&lt;Demonstration&gt;
+Now answer with a response of your own, including the thinking process:
+</code></pre>
+</li>
+<li><strong>Prompt设计要点</strong>:
+<ul>
+<li>必须包含完整演示(问题+答案)</li>
+<li>明确指示模型&quot;用自己的回答来回应&quot;以触发ICL能力</li>
+<li>要求包含思考过程,促进推理能力</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>教师模型更新策略</strong>:</p>
+<ul>
+<li>使用指数移动平均(EMA)更新教师权重</li>
+<li>EMA系数: α ∈ {0.01, 0.02, 0.05}</li>
+<li>优于冻结基础模型或直接使用学生模型作为教师</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>数学形式化</strong>:</p>
+<ul>
+<li>
+<p><strong>目标函数</strong>: 最小化反向KL散度</p>
+<pre><code>ℒ(θ) = D_KL(πθ(·|x) ∥ π(·|x,c)) = 𝔼_{y∼πθ(·|x)}[log πθ(y|x)/π(y|x,c)]
+</code></pre>
+</li>
+<li>
+<p><strong>梯度估计</strong>: token级别解析估计器</p>
+<pre><code>∇θℒ(θ) = 𝔼_{y∼πθ}[∑_t ∑_{y_t∈𝒱} log(πθ(y_t|y_{&lt;t},x)/π(y_t|y_{&lt;t},x,c)) ∇θ log πθ(y_t|y_{&lt;t},x)]
+</code></pre>
+</li>
+<li>
+<p><strong>符号说明</strong>:</p>
+<ul>
+<li>θ: 学生模型参数</li>
+<li>x: 输入问题</li>
+<li>y: 模型生成的回答</li>
+<li>c: 专家演示数据</li>
+<li>πθ(·|x): 学生模型的输出分布</li>
+<li>π(·|x,c): 教师模型的输出分布(以演示为条件)</li>
+<li>𝒱: 词汇表</li>
+<li>y_{&lt;t}: 位置t之前的token序列</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>训练流程</strong>:</p>
+<ul>
+<li>
+<p><strong>算法特点</strong>:</p>
+<ul>
+<li>每个prompt一次on-policy rollout</li>
+<li>使用解析token级别KL估计器</li>
+<li>单轨迹采样</li>
+<li>Full fine-tuning</li>
+<li>bfloat16精度</li>
+</ul>
+</li>
+<li>
+<p><strong>模型配置</strong>:</p>
+<ul>
+<li>主要模型: Qwen2.5-7B-Instruct</li>
+<li>推理消融: Olmo-3-7B-Think (Section 4.5)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>与已有方法的区别</strong>:</p>
+<ul>
+<li>vs <strong>SFT</strong>: SFT是off-policy的,直接在演示数据上训练,容易遗忘。SDFT通过自蒸馏实现on-policy采样,减少遗忘</li>
+<li>vs <strong>DFT</strong> (Wu et al., 2025b): DFT需要显式的重要性权重估计,SDFT通过教师模型隐式实现</li>
+<li>vs <strong>Re-invocation</strong> (Lu &amp; Lab, 2025): Re-invocation是两阶段方法,SDFT是端到端单阶段</li>
+<li>vs <strong>传统知识蒸馏</strong>: 传统蒸馏使用不同的教师和学生模型,SDFT使用同一模型的不同条件化版本</li>
+<li><strong>核心创新</strong>: 首个利用ICL的on-policy演示学习框架,在trust-region约束下演示条件化模型近似最优策略</li>
+</ul>
+</li>
+<li>
+<p><strong>ICL在此框架中的具体作用</strong> (为什么不直接用正确答案训练?):</p>
+<ul>
+<li><strong>SFT的问题</strong>: 直接在(问题,正确答案)对上做极大似然,强迫模型精确匹配每个token,剧烈改变模型输出分布→灾难性遗忘</li>
+<li><strong>ICL的作用</strong>: 教师模型通过ICL看到demonstration后,生成的是一个**&quot;软&quot;的概率分布**,不是在正确答案上100%概率,而是在语义等价的各种表达上都有概率</li>
+<li><strong>关键区别</strong>: 学生模型on-policy采样自己的回答,然后让自己的分布<strong>接近</strong>教师的分布,而非精确复制</li>
+<li><strong>本质</strong>: ICL充当隐式奖励函数,告诉学生&quot;往这个方向走&quot;,而不是&quot;必须精确复制这个答案&quot;,从而保持模型原有分布结构,减少遗忘</li>
+</ul>
+</li>
+</ul>
+<h2 id="5-关键实验-sdft在所有任务上显著优于sft-同时保持先前能力">5. 关键实验: SDFT在所有任务上显著优于SFT,同时保持先前能力</h2>
+<blockquote class="card card-info">
+<p>实验涵盖知识获取、技能学习、推理能力,均显示SDFT的优越性</p>
+</blockquote>
+<ul>
+<li><strong>主实验结果</strong>:
+<ul>
+<li>
+<p><strong>知识获取</strong> (Table 1):</p>
+<ul>
+<li>Oracle RAG: 91 (OOD), 100 (严格), 100 (宽松)</li>
+<li>CPT: 9 (严格), 37 (宽松), 7 (OOD)</li>
+<li>SFT: 80 (严格), 95 (宽松), 80 (OOD)</li>
+<li><strong>SDFT: 89 (严格), 100 (宽松), 98 (OOD)</strong></li>
+<li><strong>提升</strong>: 严格匹配 +9个百分点, OOD泛化 +18个百分点</li>
+</ul>
+</li>
+<li>
+<p><strong>推理能力</strong> (Table 2, Olmo-3-7B-Think模型):</p>
+<ul>
+<li>Base模型: 31.2% 准确率, 4612 tokens</li>
+<li>SFT: 23.5% 准确率, 3273 tokens</li>
+<li><strong>SDFT: 43.7% 准确率, 4180 tokens</strong></li>
+<li><strong>提升</strong>: 准确率提升 +86% (相对于SFT), +40% (相对于base)</li>
+<li><strong>关键发现</strong>: SFT甚至比base模型更差,SDFT不仅恢复还大幅超越base性能</li>
+</ul>
+</li>
+<li>
+<p><strong>技能学习的先前任务保持</strong> (Table 5):</p>
+<ul>
+<li>Science Q&amp;A: Base 65.5 → SFT 53.4 → <strong>SDFT 64.5</strong> (+11.1 vs SFT)</li>
+<li>Tool Use: Base 65.5 → SFT 56.0 → <strong>SDFT 65.4</strong> (+9.4 vs SFT)</li>
+<li>Medical: Base 65.5 → SFT 60.2 → <strong>SDFT 65.4</strong> (+5.2 vs SFT)</li>
+<li><strong>结论</strong>: SDFT在所有技能学习任务上保持了更好的先前能力,平均提升约10个百分点</li>
+</ul>
+</li>
+<li>
+<p><strong>连续任务学习</strong> (Figure 3):</p>
+<ul>
+<li><strong>SDFT</strong>: 在3个连续任务切换后保持约100%归一化性能</li>
+<li>SFT: 在先前任务上性能降至接近0</li>
+<li><strong>验证</strong>: SDFT有效缓解灾难性遗忘</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://arxiv.org/html/2601.19897v1/x3.png" alt="Figure 3: 连续学习三个任务后，SDFT保持近100%性能，而SFT在先前任务上性能骤降至接近0" /></p>
+<ul>
+<li>
+<p><strong>消融实验</strong> (Appendix A):</p>
+<ul>
+<li>
+<p><strong>A.1 KL估计器对比</strong>:</p>
+<ul>
+<li>解析token级别估计器: 最佳性能和稳定性</li>
+<li>Token-level估计器: 有偏差但可用</li>
+<li>Rao-Blackwellized估计器: 相比收益成本不值</li>
+<li><strong>结论</strong>: 解析token级别估计器是最优选择</li>
+</ul>
+</li>
+<li>
+<p><strong>A.2 教师上下文影响</strong>:</p>
+<ul>
+<li><strong>完整text+answer上下文: 89% 严格准确率</strong> (最佳)</li>
+<li>Text-only (仅问题): 75% 准确率</li>
+<li>Answer-only (仅答案): 中等表现</li>
+<li><strong>关键发现</strong>: 教师模型必须同时看到问题和答案才能有效指导学生</li>
+</ul>
+</li>
+<li>
+<p><strong>A.3 教师类型对比</strong>:</p>
+<ul>
+<li><strong>EMA教师: 最佳性能和稳定性</strong></li>
+<li>冻结基础模型作为教师: 性能较差</li>
+<li>学生作为教师 (self-teacher): 训练发散</li>
+<li><strong>关键发现</strong>: EMA机制对于稳定训练至关重要</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>对比实验</strong>:</p>
+<ul>
+<li><strong>Baseline方法</strong>:
+<ul>
+<li>SFT (标准监督微调)</li>
+<li>DFT (Wu et al., 2025b - 重要性采样的SFT)</li>
+<li>Re-invocation (Lu &amp; Lab, 2025 - 两阶段方法)</li>
+<li>CPT (持续预训练): 9%严格准确率</li>
+<li>Oracle RAG (检索增强): 91%严格准确率</li>
+<li>Pure ICL (纯上下文学习)</li>
+</ul>
+</li>
+<li><strong>SDFT优势</strong>: 在不需要额外模块或两阶段训练的情况下,达到89%准确率,接近Oracle RAG的91%</li>
+</ul>
+</li>
+</ul>
+<h2 id="6-golden-case-知识获取任务的完整流程示例">6. Golden Case: 知识获取任务的完整流程示例</h2>
+<blockquote class="card card-info">
+<p>展示2025年灾难知识学习的典型案例</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>输入样本</strong>:</p>
+<ul>
+<li>问题x: &quot;What disaster happened in 2025 in Myanmar?&quot;</li>
+<li>专家演示c: &quot;In 2025, a major earthquake struck Myanmar, causing widespread damage and humanitarian crisis...&quot;</li>
+</ul>
+</li>
+<li>
+<p><strong>处理流程</strong>:</p>
+<ol>
+<li>
+<p><strong>教师模型处理</strong>:</p>
+<ul>
+<li>输入完整Prompt:<pre><code>&lt;Question&gt;What disaster happened in 2025 in Myanmar?
+This is an example for a response to the question:
+&lt;Demonstration&gt;In 2025, a major earthquake struck Myanmar, causing widespread damage...
+Now answer with a response of your own, including the thinking process:
+</code></pre>
+</li>
+<li>教师模型基于演示生成分布 π(·|x,c)</li>
+</ul>
+</li>
+<li>
+<p><strong>学生模型on-policy采样</strong>:</p>
+<ul>
+<li>输入: 仅问题x (无演示)</li>
+<li>从学生分布采样: y ∼ πθ(·|x)</li>
+<li>生成回答: &quot;In 2025, there was a significant earthquake event in Myanmar...&quot;</li>
+</ul>
+</li>
+<li>
+<p><strong>Token级别梯度计算</strong>:</p>
+<ul>
+<li>对于生成序列y中的每个token t:
+<ul>
+<li>计算学生对数概率: log πθ(y_t|y_{&lt;t},x)</li>
+<li>计算教师对数概率: log π(y_t|y_{&lt;t},x,c)</li>
+<li>计算KL divergence项: log(πθ/π)</li>
+<li>累积梯度: ∇θ log πθ × log(πθ/π)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>参数更新</strong>:</p>
+<ul>
+<li>更新学生参数θ,使其分布接近教师分布</li>
+<li>用EMA更新教师参数</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>关键决策点</strong>:</p>
+<ul>
+<li>教师模型通过ICL从演示中&quot;理解&quot;了2025年缅甸地震的知识</li>
+<li>学生模型通过蒸馏学习到这个知识,同时保持on-policy采样(在自己的生成轨迹上训练)</li>
+<li>EMA教师确保训练稳定性,避免学生和教师相互崩溃</li>
+<li>Trust-region约束: 演示条件化的策略近似最优策略</li>
+</ul>
+</li>
+<li>
+<p><strong>最终输出</strong>:</p>
+<ul>
+<li>学生模型能够准确回答2025年灾难相关问题(89%严格匹配)</li>
+<li>同时保持对先前任务的能力(平均64.5分 vs SFT的53.4-60.2分)</li>
+<li>OOD泛化能力强(98% vs SFT的80%),能回答间接相关问题</li>
+<li>在连续3个任务学习后仍保持100%归一化性能</li>
+</ul>
+</li>
+</ul>
+<h2 id="7-insights-icl能力是持续学习的关键-演示条件化策略近似最优策略">7. Insights: ICL能力是持续学习的关键,演示条件化策略近似最优策略</h2>
+<blockquote class="card card-info">
+<p>核心洞见: 在trust-region约束下,演示条件化的模型可以近似最优策略,无需显式奖励函数</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>理论洞见</strong>:</p>
+<ul>
+<li><strong>演示条件化策略的有效性</strong>: 论文证明了演示条件化的策略π(·|x,c)可以近似最优策略,同时保持与基础模型的低KL散度</li>
+<li><strong>ICL作为隐式奖励</strong>: 上下文学习能力允许模型从演示中隐式推断奖励函数,无需显式定义</li>
+<li><strong>On-policy采样的关键作用</strong>: 即使没有显式奖励信号,on-policy采样也能显著减少灾难性遗忘</li>
+<li><strong>Trust region的自然形成</strong>: 通过EMA和KL散度约束,SDFT自然形成了trust region</li>
+</ul>
+</li>
+<li>
+<p><strong>实践启发</strong>:</p>
+<ul>
+<li>对于持续学习场景,应优先考虑利用模型自身的ICL能力,而非外部教师模型</li>
+<li>EMA机制在自蒸馏中至关重要,可以防止训练崩溃</li>
+<li>Prompt设计必须包含完整演示(问题+答案),才能充分激发ICL能力</li>
+<li>无需CoT数据也能实现有效的持续学习</li>
+</ul>
+</li>
+<li>
+<p><strong>未来方向</strong>:</p>
+<ul>
+<li>探索SDFT在多模态持续学习中的应用</li>
+<li>研究如何自动调整EMA系数α以适应不同任务难度</li>
+<li>结合主动学习,让模型自主选择最有价值的演示数据</li>
+</ul>
+</li>
+</ul>
+<h2 id="8-q-a-深度讨论">8. Q&amp;A 深度讨论</h2>
+<h3 id="q1-ema-教师更新的细节是什么-教师需要计算梯度吗">Q1: EMA 教师更新的细节是什么？教师需要计算梯度吗？</h3>
+<p><strong>EMA 更新公式</strong>：</p>
+<pre><code>θ_teacher = α * θ_teacher + (1-α) * θ_student
+</code></pre>
+<ul>
+<li>α ∈ {0.01, 0.02, 0.05}（典型值）</li>
+<li>每个训练步后更新</li>
+</ul>
+<p><strong>教师不需要计算梯度！</strong></p>
+<p>教师只用于计算 log probability，不参与反向传播：</p>
+<pre><code class="language-python"># 梯度只对学生
+∇_θ L = E_y~π_θ [ log(π_θ(y_t) / π(y_t;teacher)) * ∇_θ log π_θ(y_t) ]
+                                       ↑
+                                   stop gradient
+</code></pre>
+<p><strong>为什么需要 EMA？</strong> 消融实验证明：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>教师类型</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EMA 教师</strong></td>
+<td>✅ 最佳，训练稳定</td>
+</tr>
+<tr>
+<td>冻结基础模型</td>
+<td>❌ 性能差</td>
+</tr>
+<tr>
+<td>学生 = 教师</td>
+<td>❌ 训练发散</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h3 id="q2-icl-的-demonstration-有什么要求">Q2: ICL 的 demonstration 有什么要求？</h3>
+<p><strong>必须满足三个条件：</strong></p>
+<h4>1. 针对当前 prompt 的特定演示</h4>
+<p>论文原文：</p>
+<blockquote class="card card-info">
+<p><em>&quot;the context provided to the teacher is not a fixed prompt prefix but a <strong>specific demonstration chosen for each query</strong>&quot;</em></p>
+</blockquote>
+<p>每个 prompt x 对应一个<strong>特定的</strong> demonstration c，不是随机选择的无关样本。</p>
+<h4>2. 必须是正确的演示</h4>
+<p>论文验证：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>准确率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础模型（无 demonstration）</td>
+<td>42%</td>
+</tr>
+<tr>
+<td>教师（有正确的 demonstration）</td>
+<td><strong>100%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h4>3. 必须能让教师满足 Trust Region 的两个条件</h4>
+<ul>
+<li><strong>Optimality</strong>：教师输出正确（100% 准确率）</li>
+<li><strong>Minimal Deviation</strong>：教师保持与基础模型接近（KL = 0.68 nats vs SFT 的 1.26 nats）</li>
+</ul>
+<p><strong>不能用不相关的样本</strong>，因为：</p>
+<ul>
+<li>ICL 的本质是&quot;推断意图&quot;</li>
+<li>不相关的 demonstration 无法让教师推断出正确的任务意图</li>
+</ul>
+<hr />
+<h3 id="q3-trust-region-在-sdft-中的作用是什么">Q3: Trust Region 在 SDFT 中的作用是什么？</h3>
+<h4>标准形式（来自 TRPO）</h4>
+<div class="math-display">$$\pi_{k+1} = \max_\pi \mathbb{E}_{y\sim\pi}[r(y,x)] - \beta D_{KL}(\pi(\cdot|x) \| \pi_k(\cdot|x))$$</div>
+<p><strong>两个目标</strong>：</p>
+<ol>
+<li>最大化奖励 — 让模型变得更好</li>
+<li>保持接近 — 不要偏离当前策略太远</li>
+</ol>
+<h4>为什么需要 Trust Region？</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>无 Trust Region</th>
+<th>有 Trust Region</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>策略剧烈变化</td>
+<td>策略平滑更新</td>
+</tr>
+<tr>
+<td>可能遗忘已有能力</td>
+<td>保持原有能力</td>
+</tr>
+<tr>
+<td>训练不稳定</td>
+<td>训练稳定</td>
+</tr>
+</tbody>
+</table></div>
+<h4>SDFT 中的 Trust Region</h4>
+<p>论文的核心假设：</p>
+<div class="math-display">$$\pi_{k+1}^*(y|x) \approx \pi(y|x,c)$$</div>
+<p>教师（看到 demonstration）近似最优策略，同时满足：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>验证</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Optimality</td>
+<td>100% 准确率</td>
+</tr>
+<tr>
+<td>Minimal Deviation</td>
+<td>KL = 0.68 nats（SFT 是 1.26 nats）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键洞见</strong>：</p>
+<blockquote class="card card-info">
+<p>教师通过 ICL 理解意图，生成新的、合适的回答，同时保持与基础模型接近。这正是 Trust Region 要求的&quot;在变好的同时不要改变太多&quot;。</p>
+</blockquote>
+<p><strong>从 Trust Region 可推导隐式奖励</strong>：</p>
+<div class="math-display">$$r(y,x,c) = \log \pi(y|x,c) - \log \pi_k(y|x)$$</div>
+<p>这就是 SDFT 损失函数的数学基础。</p>
+<hr />
+<h2 id="9-总结">9. 总结</h2>
+<ul>
+<li>
+<p><strong>核心创新</strong>: 提出SDFT方法,首个利用ICL的on-policy演示学习框架。最有价值的一点是证明了演示条件化策略在trust-region约束下可以近似最优策略,从而实现了在仅有演示数据时的on-policy持续学习,避免了灾难性遗忘同时无需奖励工程。关键创新是利用同一模型的不同条件化版本(有/无演示)作为教师和学生,通过反向KL散度优化实现知识迁移。</p>
+</li>
+<li>
+<p><strong>局限性</strong>:</p>
+<ul>
+<li><strong>ICL依赖</strong>: 依赖模型的ICL能力,对于ICL能力较弱的小模型可能效果有限</li>
+<li><strong>超参数调优</strong>: EMA超参数α需要针对不同任务进行调优</li>
+<li><strong>计算成本</strong>: 相比SFT,训练时需要两次前向传播(学生采样+教师评分),计算成本略高</li>
+<li><strong>演示质量</strong>: 方法效果依赖于演示数据的质量</li>
+</ul>
+</li>
+<li>
+<p><strong>改进方向</strong>:</p>
+<ul>
+<li><strong>自适应EMA</strong>: 设计动态调整α的策略,根据训练阶段和任务难度自动调整</li>
+<li><strong>样本选择</strong>: 引入主动学习或课程学习,优先选择对持续学习最有价值的演示</li>
+<li><strong>扩展到多模态</strong>: 将SDFT应用到视觉-语言模型的持续学习</li>
+<li><strong>理论分析</strong>: 深入分析SDFT的收敛性和泛化界,建立理论保证</li>
+</ul>
+</li>
+</ul>
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<blockquote class="card card-info">
+<p>与本库中的自蒸馏、持续学习相关工作建立联系</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>相关工作</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a>: 同样使用on-policy自蒸馏,但侧重推理能力提升而非持续学习</li>
+<li><a class="wikilink" href="Self-Improving_Pretraining-Post-trained_Models_Bootstrap.html" title="Self-Improving_Pretraining-Post-trained_Models_Bootstrap">Self-Improving_Pretraining-Post-trained_Models_Bootstrap</a>: 通过自举提升预训练模型,与SDFT的自蒸馏思想相通</li>
+</ul>
+</li>
+<li>
+<p><strong>SDFT vs OPSD 详细对比</strong> (两者都使用&quot;教师看到正确答案&quot;的trick):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th><strong>SDFT (本文)</strong></th>
+<th><strong>OPSD (Self-Distilled Reasoner)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>目标</strong></td>
+<td>防止灾难性遗忘</td>
+<td>提升推理能力</td>
+</tr>
+<tr>
+<td><strong>解决的问题</strong></td>
+<td>SFT的分布剧变→遗忘</td>
+<td>GRPO的稀疏奖励</td>
+</tr>
+<tr>
+<td><strong>教师更新</strong></td>
+<td><strong>EMA更新</strong> (关键稳定机制)</td>
+<td>不单独更新（共享参数）</td>
+</tr>
+<tr>
+<td><strong>KL方向</strong></td>
+<td>反向KL: D(p_S || p_T)</td>
+<td>正向KL: D(p_T || p_S)</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>任何持续学习场景</td>
+<td>有标准答案的任务（数学、代码）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>共同点</strong>: 都是&quot;教师有特权信息(正确答案),学生没有&quot;的结构,本质上是同一个trick</li>
+<li><strong>核心区别</strong>: SDFT的EMA教师更新是防止遗忘的关键；OPSD不需要EMA因为目标是提升性能而非保持能力</li>
+</ul>
+</li>
+<li>
+<p><strong>共同主题</strong>: 三篇论文都利用了&quot;自我改进&quot;的思想,通过模型自身的不同版本或状态来提升性能,避免了对外部教师模型或人工标注的依赖</p>
+</li>
+<li>
+<p><strong>相关 MOC</strong>:</p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span></li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</span></a>
+<a class="paper-nav-link next" href="Dynamic_Large_Concept_Models-自适应语义空间潜在推理.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Dynamic Large Concept Models: Latent Reasoning in an Adaptive Semantic Space</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Shenfeld2026SDFT</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

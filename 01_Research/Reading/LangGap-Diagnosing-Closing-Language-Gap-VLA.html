@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：LangGap: Diagnosing and Closing the Language Gap in Vision-Language-Action Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：LangGap: Diagnosing and Closing the Language Gap in Vision-Language-Action Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型不看语言-但没人能说清它到底不看哪个部分"><span class="toc-num">02</span> 2. 关键问题：模型不看语言，但没人能说清它到底不看哪个部分</a></li>
+<li><a class="toc-link" href="#3-关键方法-固定住视觉-只让语言变"><span class="toc-num">03</span> 3. 关键方法：固定住视觉，只让语言变</a></li>
+<li><a class="toc-link toc-sub" href="#①-四维语义扰动-笛卡尔积-物理可行性过滤">① 四维语义扰动：笛卡尔积 + 物理可行性过滤</a></li>
+<li><a class="toc-link toc-sub" href="#②-1-k-上界-强制语言依赖的量化说法">② 1/k 上界：强制语言依赖的量化说法</a></li>
+<li><a class="toc-link toc-sub" href="#③-instruction-level-split">③ instruction-level split</a></li>
+<li><a class="toc-link toc-sub" href="#④-无形式化目标">④ 无形式化目标</a></li>
+<li><a class="toc-link" href="#4-数据集与训练配置"><span class="toc-num">04</span> 4. 数据集与训练配置</a></li>
+<li><a class="toc-link" href="#5-关键结果-诊断可信-补数据能弥合-不可信"><span class="toc-num">05</span> 5. 关键结果：诊断可信，"补数据能弥合"不可信</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-诊断侧-四个维度崩得极不均匀-这部分挑不出毛病">5.1 诊断侧：四个维度崩得极不均匀（这部分挑不出毛病）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-训练侧-核心张力是-规模越大越学不动-但这条曲线本身不可比">5.2 训练侧：核心张力是"规模越大越学不动"，但这条曲线本身不可比</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-全基准上-增益落在噪声内-且有一处未报告的显著退化">5.3 全基准上：增益落在噪声内，且有一处未报告的显著退化</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-规模越大越学不动-四种解释与我的判断">5.4 "规模越大越学不动"：四种解释与我的判断</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-证据边界-复现前必须补的四件事">5.5 证据边界：复现前必须补的四件事</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-22</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.00592" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：LangGap: Diagnosing and Closing the Language Gap in Vision-Language-Action Models</h1>
+    <p class="authors">['Yuchen Hou', 'Lin Zhao']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Language_Grounding</span> <span class="topic-tag">Robot_Manipulation</span> <span class="topic-tag">Benchmark</span> <span class="topic-tag">Compositional_Generalization</span></div>
+</header>
+
+<h1>论文笔记：LangGap: Diagnosing and Closing the Language Gap in Vision-Language-Action Models</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<ul>
+<li><strong>作者 / 团队</strong>：Yuchen Hou、Lin Zhao，National University of Singapore 电子与计算机工程系（NUS ECE）。</li>
+<li><strong>版本</strong>：arXiv:2603.00592v1，2026-02-28，7 页（含附录 Table IX–XII）。本文按该预印本记录。</li>
+<li><strong>代码</strong>：<code>github.com/YC11Hou/langgap</code> —— 该链接来自 arXiv 元数据，<strong>PDF 全文没有 <code>github</code> 字样，论文未背书</strong>，内容与可用性无法从原文核对 <code>[?]</code>。</li>
+</ul>
+<p><strong>一句话裁决</strong>：这篇论文设计了一个可信的诊断工具，并用它跑出了一个不支持自己结论的训练实验。诊断侧（四维语义扰动 + 99 任务 benchmark）数据扎实、可逐格复核；训练侧（&quot;定向数据能弥合语言鸿沟&quot;）在全基准上不显著，且有一处显著退化未被报告。</p>
+<p><strong>值得记住的五点</strong>：</p>
+<ol>
+<li>设计支点是 <strong>same-scene 多任务 + instruction-level split</strong>：视觉记忆这条捷径在测试时完全可用，但完全无用。</li>
+<li>诊断结果可信：π0.5 原始任务 93.8% → 扩展任务 21.4%（−72.4pp），且四个维度崩得极不均匀（Change Target 13 任务 260 episode 全 0，Change Object 29.3%）。</li>
+<li>训练侧真正同条件可比的只有两对对照，全 59 任务基准上最好的 45-task 只比不微调高 <strong>+1.4pp（z≈0.8，p≈0.43）</strong>；56-task 的 Drawer 从 19/60 退到 2/60（Fisher p≈5.5e-5），论文只字未提。</li>
+<li>&quot;规模越大越学不动&quot;这条曲线<strong>本身不可比</strong>；第一候选解释是等效 epoch（6-task 那个 28% 是每条演示被看约五千遍取得的）。</li>
+<li>落地判断：作为<strong>诊断基准</strong>值得关注（same-scene 扰动设计可直接抄）；作为<strong>训练方法</strong>不值得复现（增益在噪声内、配置不可比、无方差）。</li>
+</ol>
+<h2 id="2-关键问题-模型不看语言-但没人能说清它到底不看哪个部分">2. 关键问题：模型不看语言，但没人能说清它到底不看哪个部分</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+同一张桌子，同一个碗。&quot;put the bowl on the plate&quot;，π0.5 成功率 <strong>95.5%</strong>（Fig. 1）。
+只改一个词，物体没换、动作没换：<strong>&quot;put the bowl on the stove&quot; → 0%</strong>（Fig. 1 的 Change Target 维度；Table IX 里 spatial plate→stove 4 个任务 0/80、plate→cabinet 4 个任务 0/80、stove→plate 2 个 0/40、stove→cabinet 2 个 0/40、goal plate→stove 1 个 0/20，<strong>13 个任务 260 个 episode 全部失败</strong>）。
+模型从不改道。缺的不是&quot;抓起碗、放下碗&quot;的操作能力，是&quot;读指令决定去哪儿&quot;的能力。</p>
+</blockquote>
+<p>（Fig. 1 顶部的 95.5% 口径不明：全文声明每任务评 20 episode，20 ep 下成功率只能是 5% 的整数倍；Table III 中 40 个原始任务的聚合值是 93.8%。95.5% 疑为跨场景平均或笔误 <code>[?]</code>。这不影响的下面那个更硬的数字：0/260。）</p>
+<p><strong>为什么这个问题重要，之前卡在哪</strong>：</p>
+<ul>
+<li><strong>Benchmark 层</strong>：LIBERO 一个桌面布局只配一条任务，同一视觉输入永远对应同一动作输出，靠视觉记忆就能过。Table IV 里 LIBERO 的 same-scene tasks 只有 10。</li>
+<li><strong>诊断层</strong>：现有工作只给粗粒度结论（&quot;语言被忽略&quot;），或只做表层 paraphrase 扰动（LIBERO-Plus 的 7 类扰动里只有 1/7 是语言，Table IV 注 †）。不知道模型是不懂物体名词、不懂目标位置，还是不懂空间关系。</li>
+<li><strong>解法层</strong>：现有方案集中在架构侧改模态权重（BayesVLA、LangForce、Zhan et al.），而 Wanna et al. 审计发现训练数据中 &lt;2% 的指令是语言唯一的 —— 论文据此主张根因在数据层。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2603.00592v1/perturbation_types.svg" alt="Figure 1：四种语义扰动" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.00592v1#S3.F1">原文 Figure 1</a>。横向比较物体、目标、空间描述和动作变化，关键是场景保持一致而指令改变。图中 headline 成功率的口径疑问仍按上文保留，不能用配图消除这个证据缺口。</em></p>
+<h2 id="3-关键方法-固定住视觉-只让语言变">3. 关键方法：固定住视觉，只让语言变</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+把 plate / stove / cabinet 三个版本做成<strong>三个共享同一初始视觉状态的任务</strong>，并且 train/test 切的是<strong>指令</strong>而不是场景。于是&quot;记住这张桌子该干什么&quot;这条捷径在测试时依然开着、但完全没用 —— 唯一能区分该干哪件的信号就是语言。</p>
+</blockquote>
+<h3 id="①-四维语义扰动-笛卡尔积-物理可行性过滤">① 四维语义扰动：笛卡尔积 + 物理可行性过滤</h3>
+<p>对每个 LIBERO scene 穷举四类语义槽位 —— 可操作物体类别 × 可达目标位置 × 区分同类多实例的空间描述 × 合法动作类型（pick-and-place / drawer open-close），生成<strong>笛卡尔积后在 LIBERO 模拟器里过滤</strong>，不是人工逐条写。过滤三条：目标物体可抓取、放置位置可达、成功条件可被检测器判定（消除&quot;任务本身做不到&quot;这个混淆项）。产物 59 个扩展任务，每个任务单标签归一个维度（38+13+5+3=59）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>改什么</th>
+<th>测试的语义成分</th>
+<th>π0.5 SR（Table III）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Change Object Category</td>
+<td>pick bowl → pick ramekin</td>
+<td>物体类别名词</td>
+<td>29.3%</td>
+</tr>
+<tr>
+<td>Change Target</td>
+<td>place on plate → place on stove</td>
+<td>空间目标槽</td>
+<td><strong>0.0%</strong></td>
+</tr>
+<tr>
+<td>Spatial Description</td>
+<td>&quot;bowl to the right of the ramekin&quot; → &quot;…of the plate&quot;</td>
+<td>同类多实例的指代消歧</td>
+<td>11.0%</td>
+</tr>
+<tr>
+<td>Drawer Action</td>
+<td>put bowl → open drawer</td>
+<td>动作语义</td>
+<td>31.7%</td>
+</tr>
+</tbody>
+</table></div>
+<p>59 = spatial 28 + goal 9 + object 22（四个维度只在 spatial suite 能全做，object/goal 只能做 Ch.Obj，goal 另能做 Ch.Tgt；Table II）。加上 40 个原始任务 = <strong>99 任务</strong>，共 1980 episode（99×20）。</p>
+<h3 id="②-1-k-上界-强制语言依赖的量化说法">② 1/k 上界：强制语言依赖的量化说法</h3>
+<p>原文：忽略语言的模型在同一场景中&quot;最多拿到 1/k 成功率（k = 该场景的任务数）&quot;。逻辑是：同一初始状态 + 不看语言 → 同一条确定性轨迹；同场景 k 个任务的成功条件互斥 → 最多命中 1 个。</p>
+<p><strong>但 k 的实际值全文未给，也没有任何&quot;屏蔽语言输入&quot;或&quot;恒做原任务&quot;的实测基线 <code>[?]</code>。</strong> 这个上界是设计动机的论证，不是被测量过的量 —— 它是&quot;by design 强制语言依赖&quot;这一核心卖点的唯一量化支撑。</p>
+<h3 id="③-instruction-level-split">③ instruction-level split</h3>
+<p>从 59 个扩展任务中挑 16 个做训练集（spatial 9 / goal 3 / object 4，覆盖四维度），其余 43 个作 held-out，<strong>与训练任务共享同一视觉场景、只换语义指令</strong>。这是 &quot;forcing language reliance by design&quot; 的确切含义，也是它区别于 task-level / episode-level split 的地方。注意：Table VII/VIII 报告的是全 59 个扩展任务（含这 16 个训练任务），不是纯 held-out，原文未明确说明 <code>[?]</code>。</p>
+<h3 id="④-无形式化目标">④ 无形式化目标</h3>
+<p>全文没有写出训练目标、flow matching 损失或 LoRA 更新式；指标就是 per-episode 二值成功率（SR = 成功 episode 数 / 总 episode 数）。这是一篇 benchmark + data-centric 短文的定位使然 —— 找建模细节会落空。</p>
+<h2 id="4-数据集与训练配置">4. 数据集与训练配置</h2>
+<ul>
+<li><strong>采集</strong>：robosuite + waypoint 控制器 + OSC POSE（操作空间阻抗控制）的<strong>脚本化演示</strong>，行为克隆范式。约 150 条/任务，16 个训练任务 ≈ 2,400 条。</li>
+<li><strong>微调</strong>：π0.5 上 LoRA，单张 RTX 4090，lr 1×10⁻⁴，<strong>batch size 8（全文统一，无例外）</strong>。</li>
+<li><strong>Table V 的 <code>r</code> 列取 32/64（推断为 LoRA rank <code>[?]</code>）</strong>：表头只有一个字母 <code>r</code>，正文从未定义它。LoRA alpha、target modules、optimizer、warmup、checkpoint 选取（last/best/固定步数）均未给。</li>
+<li><strong>Exp5 的 4,093 条演示无法拆成 2,000（官方）+2,400（扩展）=4,400</strong>，原文未解释 <code>[?]</code>。最可能是脚本演示按成功率过滤；Exp1 单任务只有 56 条（约 150 的 37%）是旁证。</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Exp</th>
+<th>Tasks</th>
+<th>Demos</th>
+<th>r <code>[?]</code></th>
+<th>Steps</th>
+<th>Eval Tasks</th>
+<th>Ep</th>
+<th>行文别名</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1 ext</td>
+<td>56</td>
+<td>32</td>
+<td>20K</td>
+<td>1</td>
+<td>10</td>
+<td>Single-task</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1+5 ext</td>
+<td>300</td>
+<td>64</td>
+<td>200K</td>
+<td>5 ext</td>
+<td>10</td>
+<td>6-task</td>
+</tr>
+<tr>
+<td>3</td>
+<td>40+5 ext</td>
+<td>~2,000</td>
+<td>64</td>
+<td>200K</td>
+<td>5 ext</td>
+<td>10</td>
+<td>45-task</td>
+</tr>
+<tr>
+<td>4</td>
+<td>16 ext</td>
+<td>~2,400</td>
+<td>64</td>
+<td>200K</td>
+<td>16 ext</td>
+<td>5</td>
+<td>16-task</td>
+</tr>
+<tr>
+<td>5</td>
+<td>40+16 ext</td>
+<td>4,093</td>
+<td>64</td>
+<td>200K</td>
+<td>16 ext</td>
+<td>5</td>
+<td>56-task</td>
+</tr>
+</tbody>
+</table></div>
+<p>别名来历：6-task = 1 个 libero spatial 原始任务 + 它的 5 个扩展变体；45-task = 40 官方 + 同样这 5 个；16-task = 跨三 suite 的 16 个扩展（纯扩展数据）；56-task = 40 官方 + 16 扩展。<strong>Exp2/Exp3 与 Exp4/Exp5 是两对&quot;扩展数据 only vs 扩展+官方&quot;的对照</strong>，差别只在扩展数据的来源范围（单 suite 5 个 vs 跨 suite 16 个）。</p>
+<h2 id="5-关键结果-诊断可信-补数据能弥合-不可信">5. 关键结果：诊断可信，&quot;补数据能弥合&quot;不可信</h2>
+<h3 id="5-1-诊断侧-四个维度崩得极不均匀-这部分挑不出毛病">5.1 诊断侧：四个维度崩得极不均匀（这部分挑不出毛病）</h3>
+<p>Table III：Original 40 任务 750/800 = <strong>93.8%</strong>；Extended 59 任务 253/1180 = <strong>21.4%</strong>；gap −72.4pp。逐维度（附录 Table IX–XII 的逐任务细目与之逐格对应，加总 223+0+11+19=253、38+13+5+3=59，内部完全自洽）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>任务数</th>
+<th>成功/总</th>
+<th>SR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Change Object</td>
+<td>38</td>
+<td>223/760</td>
+<td>29.3%</td>
+</tr>
+<tr>
+<td>Change Target</td>
+<td>13</td>
+<td>0/260</td>
+<td><strong>0.0%</strong></td>
+</tr>
+<tr>
+<td>Spatial Description</td>
+<td>5</td>
+<td>11/100</td>
+<td>11.0%</td>
+</tr>
+<tr>
+<td>Drawer Action</td>
+<td>3</td>
+<td>19/60</td>
+<td>31.7%</td>
+</tr>
+</tbody>
+</table></div>
+<p>更有信息量的是<strong>同一维度内部的离散度</strong>（Finding 2）：Change Object 跨任务从 0% 到 80%；同维度内 spatial suite 3/160（1.9%）与 object suite 166/440（37.7%）差 20 倍。Change Target 则一律是 0。跨模型也一致（Table VIII：π0 0.0%、SmolVLA 0.0%、π0-FAST 2.3%）。</p>
+<p><strong>但样本量必须看</strong>：按 20 ep/task 口径，Spatial Description 的 n=100，95% CI 是 <strong>[5.6%, 18.8%]</strong>；Drawer 的 n=60，95% CI 是 <strong>[20.3%, 45.0%]</strong>（Clopper–Pearson，笔记者算）。除 Change Target 外，其余三个维度两两之间都不显著 —— &quot;31.7% &gt; 29.3% &gt; 11.0% &gt; 0%&quot; 这个排序里，只有 0% 那个位置是钉死的。</p>
+<p><img src="https://arxiv.org/html/2603.00592v1/perturbation_results.svg" alt="Figure 2：语义扰动后的成功率下降" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.00592v1#S3.F2">原文 Figure 2</a>。重点比较原任务与四类扰动，尤其是 Change Target 的失败。这张图支持语言依赖的诊断，不直接证明后续补数据训练已经弥合差距。</em></p>
+<h3 id="5-2-训练侧-核心张力是-规模越大越学不动-但这条曲线本身不可比">5.2 训练侧：核心张力是&quot;规模越大越学不动&quot;，但这条曲线本身不可比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Experiment</th>
+<th>Training Config</th>
+<th>Eval Tasks</th>
+<th>Baseline</th>
+<th>Ours</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single-task</td>
+<td>1 ext</td>
+<td>1</td>
+<td><strong>3.75</strong></td>
+<td>90.0</td>
+</tr>
+<tr>
+<td>6-task</td>
+<td>1 orig + 5 ext</td>
+<td>5 ext</td>
+<td>0.0</td>
+<td>28.0</td>
+</tr>
+<tr>
+<td>45-task</td>
+<td>40 orig + 5 ext</td>
+<td>5 ext</td>
+<td>0.0</td>
+<td>4.0</td>
+</tr>
+<tr>
+<td>16-task</td>
+<td>16 ext only</td>
+<td>16 ext</td>
+<td>26.2</td>
+<td><strong>6.2</strong></td>
+</tr>
+<tr>
+<td>56-task</td>
+<td>40 orig + 16 ext</td>
+<td>16 ext</td>
+<td>26.2</td>
+<td>27.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>（Table VI。Baseline = 预训练 π0.5 在对应任务集上的成绩。）</p>
+<p>先把三个坑标出来，否则会被这条曲线带跑：</p>
+<ul>
+<li><strong>单任务 baseline 用 3.75%，不是摘要的 0%。</strong> Table VI 与 Finding 5 写的都是 3.75%→90%，只有摘要写 &quot;0% to 90%&quot;（四舍五入口径）。</li>
+<li><strong>这五个点的实验条件各不相同</strong>：基线 3.75/0/26.2、评测集 1/5/16 个任务、评测 episode 10/50/80、训练预算（r=32 + 20K steps + 56 条演示 vs r=64 + 200K + 300~4,093 条）。把它们排成一条&quot;规模-性能曲线&quot;是 Discussion 第一句干的，不是一组可比实验。</li>
+<li><strong>评测 episode 数论文自相矛盾</strong>：正文 III-A 与 Table VII/VIII/IX–XII 表头写 20 ep/task，Table V 的 Ep 列写 10/10/10/5/5。交叉验算支持后者 —— Table VI 五个数字全部能被 10/5 整除（90.0=9/10、28.0=14/50、4.0=2/50、6.2≈5/80、27.5=22/80）。<strong>即摘要的头号数字 90% 基于 10 个 episode，28% 基于 50 个</strong>，而论文未作任何说明。</li>
+</ul>
+<p>真正同条件可比的只有两对：</p>
+<ul>
+<li><strong>Exp2 vs Exp3</strong>（同 5 个 spatial 扩展任务、同 r=64、同 200K steps、同 10 ep）：掺入 40 个官方任务后 <strong>28.0% → 4.0%</strong>。在这组里官方数据是<strong>有害</strong>的。</li>
+<li><strong>Exp4 vs Exp5</strong>（同 16 个跨 suite 任务、同 5 ep）：<strong>6.2% → 27.5%</strong>，而 baseline 是 26.2%。在这组里官方数据是<strong>有益</strong>的 —— 但只是把它拉回&quot;不微调&quot;的水平（+1.3pp）。</li>
+</ul>
+<p>方向相反，论文却用 &quot;pattern matching&quot; 同一套叙事解释了两边（那 5 个 spatial 任务与官方无 pattern match，所以 baseline 0%、可以涨；16 个里有部分与官方 pattern match，所以 baseline 26.2%、只训扩展数据会掉）。这个自洽是编排出来的：<strong>先按 baseline 高低把任务分成两类，再各配一套机制。</strong> 可检验的判据论文手头就有 —— 若在 16 个任务内部按 baseline 是否为 0 拆分，该假说预测 baseline&gt;0 的那些下降更多、baseline=0 的那些上升。Table VI 没给这个拆分。</p>
+<h3 id="5-3-全基准上-增益落在噪声内-且有一处未报告的显著退化">5.3 全基准上：增益落在噪声内，且有一处未报告的显著退化</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Ch.Obj (38)</th>
+<th>Ch.Tgt (13)</th>
+<th>Sp.Desc (5)</th>
+<th>Drawer (3)</th>
+<th>总 Ext (59)</th>
+<th>Orig total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>π0.5</td>
+<td>29.3</td>
+<td>0.0</td>
+<td>11.0</td>
+<td>31.7</td>
+<td>21.4</td>
+<td>93.8</td>
+</tr>
+<tr>
+<td>π0.5-Ours (45-task)</td>
+<td>28.4</td>
+<td>6.2</td>
+<td>25.0</td>
+<td>20.0</td>
+<td><strong>22.8</strong></td>
+<td>89.5</td>
+</tr>
+<tr>
+<td>π0.5-Ours (56-task)</td>
+<td>27.5</td>
+<td>5.0</td>
+<td>17.0</td>
+<td>3.3</td>
+<td><strong>20.4</strong></td>
+<td>85.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>（Table VIII / VII，20 ep/task。π0 8.6%、π0-FAST 2.7%、SmolVLA 6.4% 是零样本 checkpoint 在 Ext 上的成绩，与微调过的 Ours 不是同类比较，放在一张表里容易误读。）</p>
+<p>笔记者复核的显著性（<strong>非论文数字</strong>，两比例 z 检验 / Fisher 精确检验）：</p>
+<ul>
+<li>45-task 总 Ext 22.8% vs π0.5 21.4%：<strong>z≈0.8，p≈0.43，不显著</strong>（+1.4pp）。56-task 总 Ext 20.4%：z≈−0.6，方向为负。</li>
+<li>45-task vs 56-task：Spatial Ext 10.2 vs 7.1 → z≈1.85，p≈0.064；总 Ext 22.8 vs 20.4 → z≈1.42，p≈0.156。<strong>Finding 4 的两条&quot;优于&quot;都不显著。</strong></li>
+<li>真正显著的改善只有两处：Ch.Tgt 0/260 → 16/260（Fisher p≈2.4e-5）、45-task Sp.Desc 11/100 → 25/100（Fisher p≈0.016）。</li>
+<li>以及一处<strong>论文完全没提的显著退化</strong>：56-task Drawer 19/60 → 2/60（Fisher p≈5.5e-5）。</li>
+</ul>
+<p>净效应核算：45-task 是 Ch.Tgt +6.2pp、Sp.Desc +14.0pp 对 Drawer −11.7pp；56-task 是 +5.0 / +6.0 对 <strong>−28.4pp</strong>。论文没有在任何地方做这个核算。</p>
+<p><strong>必须同时呈现、不能只报好看的几处</strong>：</p>
+<ul>
+<li>摘要的 &quot;0%→28% multi-task&quot; 挑的是 <strong>6-task</strong> 那一行；同一张表里 <strong>16-task 是 26.2%→6.2%，下降 20pp</strong>，45-task 是 0%→4%。</li>
+<li>56-task 的 spatial 数字论文自己矛盾：正文 IV-B 与 Finding 3 写 <strong>6.7%</strong>，Table VII 写 <strong>7.1%</strong> <code>[?]</code>。</li>
+<li>Discussion 的 &quot;Spatial Description 60%、Change Target 10–40%、Change Object 10–20%&quot; 确实印在第 5 页，<strong>但 Table VI–XII 任何一张表都找不到对应</strong>，且 Table VIII 中 45-task 的 Sp.Desc 只有 25.0% <code>[?]</code>。这三个数是 Discussion &quot;语义距离越远越难&quot;这一论证的唯一依据。按 5 任务×10 ep 粗算，单维度子集只有 10–20 个 episode。</li>
+</ul>
+<h3 id="5-4-规模越大越学不动-四种解释与我的判断">5.4 &quot;规模越大越学不动&quot;：四种解释与我的判断</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>候选解释</th>
+<th>依据</th>
+<th>我的判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>等效 epoch 被摊薄</strong></td>
+<td>名义都是 200K×8=1.6M 样本，但数据集 300 / ~2,000 / ~2,400 / 4,093 条 → 等效 epoch 约 5,300 / 800 / 670 / 390</td>
+<td><strong>第一候选</strong>。6-task 那个 28% 是每条演示被看约五千遍的条件下取得的，与论文自己&quot;90% 是 memorization&quot;的判断同源</td>
+</tr>
+<tr>
+<td><strong>数据稀释</strong>（论文主张）</td>
+<td>6-task 28 → 45-task 4</td>
+<td>与上一项在数据上<strong>完全等价</strong>，现有实验无法区分。它是混淆变量，不是已被证实的机制</td>
+</tr>
+<tr>
+<td><strong>擦掉预训练的视觉-语言捷径</strong>（论文对 16-task 的主张）</td>
+<td>26.2 → 6.2</td>
+<td>更简单的解释是 16 个窄任务上跑 200K 步导致灾难性遗忘。区分两者只需一个&quot;同预算只微调 16 个官方任务&quot;的对照，论文没做。<strong>补这个对照之前，6.2% 只能当现象，不能当机制</strong></td>
+</tr>
+<tr>
+<td><strong>任务本身更难</strong></td>
+<td>Ch.Tgt 的目标位置（stove / cabinet）可能需要更长轨迹、更窄的放置容差</td>
+<td>未排除，但也不该被完全采信：π0.5 在 Object Ext 上能到 37.7%，说明&quot;换物体&quot;这类不简单的任务它做得对。真正的缺口是论文<strong>没报告脚本演示在这些扩展任务上的成功率上界</strong> —— 若 waypoint 脚本在 stove 上只有 60–70%，BC 学不好就不能归因于语言</td>
+</tr>
+</tbody>
+</table></div>
+<p>还有一个结构性混淆：16 个训练扩展任务的 baseline 是 26.2%，全 59 个是 21.4% → 被选中的 16 个系统性更容易（剩余 43 个约 19.7%）。Table VI 的 27.5% 与 Table VII 的 20.4% 之差被论文当&quot;泛化差距&quot;讨论，<strong>实际主要是任务难度差</strong>。</p>
+<h3 id="5-5-证据边界-复现前必须补的四件事">5.5 证据边界：复现前必须补的四件事</h3>
+<ol>
+<li><strong>无语言基线</strong>：屏蔽语言输入 / 恒做原任务重测一遍，并报告每场景 k 的分布。这是 1/k 上界唯一需要的实测，成本最低。（顺带可以用论文自己的上界反检：按 suite 粗估 spatial k≈2.8 → 1/k≈36%，而 Spatial Ext 只有 5.9%，<strong>远低于上界</strong>。若模型真如论文所说&quot;忽略语言、稳定执行原任务&quot;，它应该拿到 ≈1/k。所以失败不能只用&quot;忽略语言&quot;解释 —— 要么扩展任务物理更难/更 OOD，要么模型读了新指令后行为被扰乱，而后者恰恰是&quot;读了语言&quot;的证据。k 未报告，此为粗估，仅作示意 <code>[?]</code>。）</li>
+<li><strong>同预算官方数据对照</strong>：区分 pattern matching 与灾难性遗忘。</li>
+<li><strong>多种子误差棒</strong>：全文 <code>seed</code> / <code>std</code> / <code>confidence</code> / <code>ablation</code> 各出现 0 次；Table VI 用 5/10 episode 评测，单个 episode 就是 10–20 个百分点。</li>
+<li><strong>扩展任务的演示成功率上界</strong>：区分&quot;难&quot;与&quot;不懂语言&quot;。</li>
+</ol>
+<p>阻塞级复现缺口：π0.5 的具体 checkpoint 与权重来源未说明（<strong>参考文献 [7] 是 π0 原始论文 arXiv:2410.24164，不是 π0.5 论文</strong>，论文用 [7] 指代 π0.5 系列）；代码链接来自 arXiv 元数据而非论文；LoRA 配套超参与 checkpoint 选取未给；episode 是否独立（评估时物体初始位姿是否随机化）未说明 —— 若评估也用固定初始状态，20 个 episode 近似重复采样，有效样本量远小于 20。</p>
+<h2 id="6-insights">6. Insights</h2>
+<p><strong>1. 诊断工具可信，训练结论不可信 —— 论文用前者卖了后者。</strong>
+观察：Table III 与附录 IX–XII 可逐格复核、内部完全自洽；而 Table VI 的头号数字（90%）来自 10 个 episode、任务未指名、且与其余四组不同构（r=32 vs 64、20K vs 200K、56 条演示）。
+推理：两者在贡献列表里被并列为贡献 1/2/3，读者会默认它们同等强度。
+判断：采信范围应切在诊断侧。&quot;targeted data augmentation 能部分弥合语言鸿沟&quot;在全基准上不成立（+1.4pp，p≈0.43），摘要的三个头号数字分别是 10 个、50 个、50 个 episode。</p>
+<p><strong>2. &quot;视觉记忆这条捷径在测试时完全可用，但完全无用&quot; —— 这是 instruction-level split 与 task-level split 的分界线。</strong>
+观察：LangGap 的 train/test 共享同一视觉场景和同一初始状态，只切指令；而常见的跨 suite / 切演示条数 split 下，train/test 的视觉场景也不同。
+推理：只有把无关模态固定住、只变目标模态，才能测出目标模态是否真被使用。LIBERO-Plus 的 7 类扰动里只有 1/7 是语言且多为表层 paraphrase，缺的正是这一步。
+判断：这个设计原则可迁移到任何&quot;要测某个模态是否真被使用&quot;的场景 —— 加更多扰动类型不如先把其他通道堵死。</p>
+<p><strong>3. 论文主张根因在数据层，但它自己的训练实验恰好是这个主张的反例。</strong>
+观察：论文引用 Wanna et al.（&lt;2% 指令是语言唯一的）论证数据层根因，然后投喂 4,093 条&quot;必须读语言才能做对&quot;的演示。
+推理：如果缺这类监督信号是唯一瓶颈，补上它应当有效。
+判断：全基准 +1.4pp、16-task 反而掉 20pp 说明 —— 数据里缺这种信号是<strong>必要条件，补上它不是充分条件</strong>。这条把论文的结论从&quot;数据能补&quot;改写成&quot;补了也没用，得去别处找原因&quot;。</p>
+<p><strong>4. 「组合泛化失败」与「忽略语言」是两种机制，论文把它们混用了。</strong>
+观察：Finding 2 自己说 Change Object 的成功&quot;是因为恰好匹配训练 pattern&quot;。
+推理：这已经是 OOD 解释，与 &quot;ignore language&quot; 是不同的机制 —— 前者是没见过这种组合，后者是根本不看。
+判断：两者要求的修复手段不同（前者靠数据覆盖，后者靠架构强制模态使用），混用会让读者在选方案时选错。区分实验很便宜：同一场景下比较&quot;训练时见过的组合&quot;与&quot;没见过的组合&quot;的成功率差。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Author/Team</strong>：无（知识库中不存在该作者与 NUS ECE 的任何笔记）。</p>
+<p><strong>Topic/Area</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic/Area：把 VLA 的失效模式从&quot;成功率不够&quot;定位到&quot;语言模态被架空&quot;，补上该 MOC 五条线都未覆盖的语言条件轴；其诊断证据（强）与修复证据（弱）的分层可直接对上 MOC 已有开放问题中的&quot;验证强度分层&quot;。</li>
+<li><span class="wikilink unresolved" title="EmbodiedAI-入门资源调研">EmbodiedAI-入门资源调研</span> — Topic/Area：该调研已记录&quot;SOTA VLA 遇扰动从 95% 跌到 &lt;30%、基本忽略语言指令&quot;，LangGap 是这条观察的系统化诊断与归因，两者构成&quot;现象记录 ↔ 因果诊断&quot;的互补。</li>
+</ul>
+<p><strong>Concept</strong></p>
+<ul>
+<li><a class="wikilink" href="Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a> — Concept：同一问题（语言条件是否被真正使用）的两种打法对照：该文用空指令/否定/对象替换的反事实干预，LangGap 用 benchmark 化 + LoRA 修复；互为证据强度参照。</li>
+<li><a class="wikilink" href="Qwen-RobotManip-Alignment-Unlocks-Scale-VLA.html" title="Qwen-RobotManip-Alignment-Unlocks-Scale-VLA">Qwen-RobotManip-Alignment-Unlocks-Scale-VLA</a> — Concept：都测&quot;语言跟随的真实性&quot;，Qwen 侧靠新增 benchmark（RoboTwin-IF）测、LangGap 侧靠语义扰动诊断 + 微调修复，结论可互相校准。</li>
+<li><a class="wikilink" href="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界.html" title="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界">Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界</a> — Concept：完全相同的实验栈（LIBERO 四 suite + LoRA 微调 π0.5），其&quot;机器人动作连贯却执行了另一条任务&quot;为 LangGap 的语言失效主张提供了表示层平行证据，也提示并非所有失败都能归因到语言。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="When-and-why-VLMs-behave-like-bags-of-words-ARO组合性评测.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">When and Why Vision-Language Models Behave like Bags-Of-Words, and What to Do About It?</span></a>
+<a class="paper-nav-link next" href="HumanCLAW-VLM-通过物理身体行动.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">HumanCLAW: Can Vision-Language Models Act Through a Body?</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: hou2026langgap</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

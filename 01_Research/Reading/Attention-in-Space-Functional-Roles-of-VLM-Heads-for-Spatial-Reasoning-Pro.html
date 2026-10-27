@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Attention in Space: Functional Roles of VLM Heads for Spatial Reasoning（Pro）</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Attention in Space: Functional Roles of VLM Heads for Spatial Reasoning（Pro）</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-认得狗和马-为什么仍可能判断错-狗是否朝向马"><span class="toc-num">02</span> 2. 关键问题：认得狗和马，为什么仍可能判断错“狗是否朝向马”？</a></li>
+<li><a class="toc-link" href="#3-关键方法-从答案-token-的头输出预测功能-按归因选头-再干预模型"><span class="toc-num">03</span> 3. 关键方法：从答案 token 的头输出预测功能，按归因选头，再干预模型</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-探针读什么-重要性又是谁的梯度">3.1 探针读什么，重要性又是谁的梯度？</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-从候选定位到行为检验-抑制与增强是两种操作">3.2 从候选定位到行为检验：抑制与增强是两种操作</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-sha-改的是视觉输入-给模型额外物体线索">3.3 SHA 改的是视觉输入，给模型额外物体线索</a></li>
+<li><a class="toc-link" href="#4-数据集-答案引导分解-人工审核-探针只看各模型答对的子问题"><span class="toc-num">04</span> 4. 数据集：答案引导分解、人工审核，探针只看各模型答对的子问题</a></li>
+<li><a class="toc-link" href="#5-关键结果-选中头对空间回答重要-可靠能力增强的证据还有限"><span class="toc-num">05</span> 5. 关键结果：选中头对空间回答重要，可靠能力增强的证据还有限</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-负干预给出最直接的行为证据">5.1 负干预给出最直接的行为证据</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-sha-的组合线索有用-mask-单独加入也会退步">5.2 SHA 的组合线索有用，mask 单独加入也会退步</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-正向-steering-是小幅可操控性结果">5.3 正向 steering 是小幅可操控性结果</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-02</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/html/2603.20662v1" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Attention in Space: Functional Roles of VLM Heads for Spatial Reasoning（Pro）</h1>
+    <p class="authors">['Xueqi Ma', 'Shuo Yang', 'Yanbei Jiang', 'Shu Liu', 'Zhenzhen Liu', 'Jiayang Ao', 'Xingjun Ma', 'Sarah Monazam Erfani', 'James Bailey']</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">VLM</span> <span class="topic-tag">Spatial_Reasoning</span> <span class="topic-tag">Attention_Heads</span> <span class="topic-tag">Causal_Intervention</span></div>
+</header>
+
+<h1>论文笔记：Attention in Space: Functional Roles of VLM Heads for Spatial Reasoning（Pro）</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<p>作者来自墨尔本大学、澳大利亚国立大学、复旦大学和蒙纳士大学，Xueqi Ma 与 Shuo Yang 共同一作。本文版本为 arXiv:2603.20662v1，2026-03-21；该版本未给出会议录用信息。来源为<a href="https://arxiv.org/html/2603.20662v1">官方全文</a>与<a href="https://arxiv.org/pdf/2603.20662v1">官方 PDF</a>，数字和公式按 PDF 核对。</p>
+<p>这篇最值得读的是把<strong>功能标签探针接上实际头消融</strong>：先找到能辨认空间子任务的头特征，再验证压低这些头的输出是否损害回答。它提供了候选组件影响行为的证据；把这些组件解释为专门的认知模块，还需要更强的功能选择性对照。研究对象是 VLM 语言模型部分的头输出向量，不只是注意力权重落在什么图像区域。</p>
+<h2 id="2-关键问题-认得狗和马-为什么仍可能判断错-狗是否朝向马">2. 关键问题：认得狗和马，为什么仍可能判断错“狗是否朝向马”？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>Table 1 要求判断 “The dog is facing the horse.” 的真伪。图中狗在右、马在左，狗头朝左，正确答案是 True。作者拆出五步：①图里是什么动物？狗和马；②狗相对马在哪？右侧；③狗头朝哪？左；④这个朝向是否指向马的位置？Yes；⑤原句是真是假？True。</p>
+<p>五步标签依次是高层视觉感知、空间感知兼高层视觉感知、空间感知兼高层视觉感知、关系推理、决策。识别动物、读取位置与朝向、整合关系是不同操作，但任何一步出错都可能只表现为最终真伪判断错误。</p>
+</blockquote>
+<p>此前视觉 grounding 研究主要定位图文对齐和目标关注的头，作者进一步问：复杂空间题中，能否找到与这些不同操作相关、并实际影响回答的头？CogVSR 用带功能标签的子问题把这个问题变得可测（§2、§4）。这条五步链是外部模型根据已知答案生成、经人工审核的<strong>任务分解</strong>，原文没有证明目标 VLM 自由推理时也按这条链执行。</p>
+<h2 id="3-关键方法-从答案-token-的头输出预测功能-按归因选头-再干预模型">3. 关键方法：从答案 token 的头输出预测功能，按归因选头，再干预模型</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>仍看狗和马。在回答“狗头朝哪”时，目标 VLM 接收图像、当前子问题，以及前两步子问题和它们的正确答案；当前答案仍由模型自行生成。若当前回答正确，研究者提取关键答案 token 的各层头输出，平均并拼接本层平均表示。这条记录与其他答对子问题共同训练功能分类器；分类器归因最后产生<strong>每种功能的头重要性图和候选头集合</strong>。随后在测试题上抑制选定集合，与等量随机头比较损害程度（§5、§6.2）。</p>
+<p>这解释该例怎样进入研究流程。Table 1 没有报告狗马单例的逐头分数或干预前后答案；候选集合由许多样本汇聚得到，也不是每条测试题临时训练一次探针。</p>
+</blockquote>
+<h3 id="3-1-探针读什么-重要性又是谁的梯度">3.1 探针读什么，重要性又是谁的梯度？</h3>
+<p>提供正确历史会隔离此前错误的传播；作者只保留当前回答正确的激活用于训练和评估探针（§5.1–5.2）。因此分析针对成功完成子操作的条件，不能直接代表自然自由 CoT 或失败时的完整电路。</p>
+<p>Gemini2.5-Flash 从生成答案中选出最重要的 $k=3$ 个 token。设 $x_l^h(t)$ 是第 $l$ 层、第 $h$ 个头在 token $t$ 处投影到 residual stream 的输出，$H$ 为每层头数：</p>
+<div class="math-display">$$
+\bar x_l^h=\frac{1}{k}\sum_{t\in\mathcal I_k}x_l^h(t),\qquad
+\bar x_l=\frac{1}{H}\sum_{h=1}^{H}\bar x_l^h,\qquad
+z_l^h=[\bar x_l^h;\bar x_l].
+$$</div>
+<p>第一项保留某头在答案关键语义位置的输出，第二项补入层深相关的整体状态。所有头的 $z_l^h$ 经共享线性层降到 64 维，再拼接进入隐藏层 512 维的 MLP；仅训练探针，VLM 权重保持不变。附录 §12 给出 ReLU、dropout 0.3、Adam、学习率 $10^{-4}$、100 epochs。<strong>主文写 multi-label，Table 1 也有双标签，附录却写 multi-class 和 cross-entropy；实际标签编码与损失实现未澄清 [?]。</strong></p>
+<p>功能 $c$ 的头重要性使用 gradient × activation（Eq. 4）：</p>
+<div class="math-display">$$
+I_j^{(c)}=\mathbb E_{(\bar x,c)\sim\mathcal D_{\rm probe}}
+\left[\frac{\partial\hat y_c}{\partial\bar x_j}\cdot\bar x_j\right].
+$$</div>
+<p>$j$ 表示层与头的组合索引，$\bar x_j$ 在该式中指上述头输入特征，$\hat y_c$ 是<strong>功能分类器的 logit</strong>。梯度回答的是哪些特征帮助探针辨认标签，而非哪些头提高 VLM 正确答案的概率。作者报告 Qwen7B 功能标签测试 accuracy 为 82.15%（Table 7）；其多标签计分口径未清楚说明 [?]，该分数也不是因果定位准确率。</p>
+<p><img src="../../assets/papers/2603.20662/figure2.png" alt="Figure 2：Qwen7B 的八功能头重要性图" /></p>
+<p><em>原文 Figure 2（PDF p.5）：横轴为头，纵轴为层，颜色是探针归因分数。重点看右下角空间感知和相邻关系推理，亮点比高层视觉等功能少。§6.1 按 importance &gt; 0.001 统计，八功能高分头合计少于 9%，空间与关系各不足 1%；这是阈值下的分数分布，不能直接解释为空间能力的资源上限。</em></p>
+<p>每个头输入都含同层共享均值，归到某个头的分数也可能利用其他头的层级信号；原文没有拆开 head-only 与 layer-only 的贡献。因而热图首先是候选定位结果。关键 token 的具体选择 Prompt、token 对齐和头输出 hook，以及下一步 elbow 的算法和实际头列表，仍是复现缺口 [?]。</p>
+<h3 id="3-2-从候选定位到行为检验-抑制与增强是两种操作">3.2 从候选定位到行为检验：抑制与增强是两种操作</h3>
+<p>消融选头采用各功能 importance 降序曲线的 <strong>elbow 之前的头</strong>（§6.2、Figure 14），与上面统计稀疏性的 0.001 阈值是两套规则。负干预将选定头输出缩小，即 $x_l^h\leftarrow\epsilon x_l^h$；正文举 $\epsilon=0.001$ 为例，未把它明确写成所有实验的固定值（Eq. 5 的文字定义）。再抑制等数量随机头作为对照，检验排序找到的集合是否更影响目标功能。</p>
+<p>正干预则在 CogVSR 上取同类任务答对与答错样本的激活均值差（Eq. 6、§6.5）：</p>
+<div class="math-display">$$
+d_l^h=\mathbb E_{i\in\mathcal D_{\rm correct}}[x_l^h(i)]
+-\mathbb E_{i\in\mathcal D_{\rm incorrect}}[x_l^h(i)],\qquad
+x_l^h(i)\leftarrow x_l^h(i)+\alpha\sigma_l^h d_l^h.
+$$</div>
+<p>$\sigma_l^h$ 是沿该方向的激活标准差，所有数据集用 $\alpha=0.1$；下游同时增强空间感知与关系推理头。直觉是向答对样本的激活状态移动，但这个方向也可能带入难度、置信度或答案表达信号。方向统计使用哪个切分、是否单位化及在哪些 token 上施加，原文未交代充分 [?]。</p>
+<h3 id="3-3-sha-改的是视觉输入-给模型额外物体线索">3.3 SHA 改的是视觉输入，给模型额外物体线索</h3>
+<p>另一条探索是 SHA：正文称 Spatial Head Activation，附录称 Spatial Head Augmentation。Gemini2.5-Flash 给相关对象提供框、实例 mask 和对象名，再把这些线索加到图像上（§6.4、附录 §7.6）。若用于狗马例子，可以理解为先替模型标出狗和马，再让模型读取位置与朝向；这是流程示意，不是该单例的实测结果。</p>
+<p>SHA Prompt 中决定信息条件的原文片段是：</p>
+<pre><code class="language-text">Question: {question}
+Answer: {answer}
+</code></pre>
+<p>其余要求是检测问题与答案中明确提到的突出对象，输出 JSON 列表：<code>box_2d</code> 按 <code>[ymin, xmin, ymax, xmax]</code> 给出归一化到 0–1000 的框，<code>mask</code> 是 base64 编码 PNG，<code>label</code> 是对象描述；只能标注明确对象，不能用“它”“那个东西”等含糊指代（附录 §7.6）。<strong>Answer 来自真值还是模型预测，原文未说明 [?]</strong>；这决定测试时能否取得同样辅助信息，不能自行认定已泄漏答案，也不能忽略答案条件。</p>
+<p><img src="../../assets/papers/2603.20662/figure3.png" alt="Figure 3：SHA 加入对象框、名称与彩色实例覆盖" /></p>
+<p><em>原文 Figure 3（PDF p.7）：看右侧猫与键盘、左侧车辆的框和文字标签。mask 是半透明彩色覆盖，纹理仍可见；输入同时增加了对象身份和位置先验。作者希望减轻高层识别负担，是否因此调动特定空间头，要由后续证据判断。</em></p>
+<h2 id="4-数据集-答案引导分解-人工审核-探针只看各模型答对的子问题">4. 数据集：答案引导分解、人工审核，探针只看各模型答对的子问题</h2>
+<p>CogVSR 从 VSR、SpatialEval、3DSRBench、Spatial457 各取 400 道主问题，共 1,600 道，用 GPT-o4-mini 在已知正确答案条件下生成 CoT，再转成子问题—答案—功能三元组。三名专家审核分解与标签、协作处理分歧，另由一人核对并更正答案（§4、附录 §10）。八类包括空间感知、关系推理、低层/高层视觉感知、信息提取与理解、知识回忆、数学推理、决策。</p>
+<p>作者报告最终 <strong>1,142 主问题 / 3,759 子问题</strong>；训练部分为 <strong>909 / 2,969</strong>，测试部分为 <strong>233 / 790</strong>（§5.2）。每个 VLM 只取自己答对的子问题，过滤后的实际数量和类别组成未报 [?]。实验覆盖 InternVL3-2B/8B、Qwen2.5-VL-3B/7B-Instruct、Llama3.2-11B/90B-Vision，后文采用 Intern2B、Qwen7B、Llama90B 等简称。</p>
+<p>Table 8 报告空间感知 1,026 条（27.29%），所以空间标签本身并不少。该表八类计数合计 <strong>3,755</strong>、百分比合计 <strong>99.89%</strong>，而 Total 行为 <strong>3,759 / 100.00%</strong>；表内算术不一致确定存在，统计口径或录入成因未解 [?]。保留作者报告的总规模，不能从此表反推单标签实现。</p>
+<p>下游评估在上述四个来源各抽 200 题。作者称其为 out-of-domain，但它们仍是 CogVSR 的原始来源；题目或图像与构建集是否隔离未说明 [?]。这里稳妥的结论是从带标签子问题迁移到原 benchmark 题目，尚不足以确认新领域泛化。</p>
+<h2 id="5-关键结果-选中头对空间回答重要-可靠能力增强的证据还有限">5. 关键结果：选中头对空间回答重要，可靠能力增强的证据还有限</h2>
+<h3 id="5-1-负干预给出最直接的行为证据">5.1 负干预给出最直接的行为证据</h3>
+<p>Table 2 的代表结果如下，指标为 LLM-Judge accuracy（%，Gemini2.5-flash-lite）。数值是<strong>干预后剩余表现</strong>，越低意味着损害越大：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Qwen7B 子任务</th>
+<th style="text-align:right">等量随机头抑制</th>
+<th style="text-align:right">候选功能头抑制</th>
+<th style="text-align:right">候选相对随机的变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空间感知</td>
+<td style="text-align:right">80.04</td>
+<td style="text-align:right">57.69</td>
+<td style="text-align:right">−22.35 个百分点</td>
+</tr>
+<tr>
+<td>关系推理</td>
+<td style="text-align:right">82.11</td>
+<td style="text-align:right">63.85</td>
+<td style="text-align:right">−18.26 个百分点</td>
+</tr>
+</tbody>
+</table></div>
+<p>这说明定位到的集合比随机集合更影响狗马例子中的“位置/朝向”类操作和“整合关系”类操作。<strong>random 是原表的对照名称</strong>；其 80.04/82.11 与 Table 5 的未干预值恰好相同，原文未说明原因 [?]，不能自行把随机行改名为 baseline。另一列 integrated accuracy 用 BLEU&gt;0.8、或 ROUGE/语义相似度&gt;0.6 判定输出“未受影响”（§6.2）；文本相似与空间答对不同，例如 left 改成 right 只差一个词，所以本笔记采用 LLM-Judge 列。</p>
+<p>影响也延伸到主问题：Qwen7B 在 VSR 上抑制空间感知头后，62.47 → 21.76，下降 40.71 个百分点（Table 4）。该表没有随机头对照；结合 Table 2，它支持候选组件对任务输出重要，尚未证明这些头只负责空间功能。</p>
+<p>关键 token 选择有行为层面的消融支持：Qwen7B 用全答案 token 定位后，空间头抑制的剩余分数为 67.46；top-3 为 57.69（Table 6，Lower is Better）。这支持 top-3 找到更敏感的集合，不是 top-3 让原模型答得更准。</p>
+<h3 id="5-2-sha-的组合线索有用-mask-单独加入也会退步">5.2 SHA 的组合线索有用，mask 单独加入也会退步</h3>
+<p>Table 3 中 Intern2B 的 LLM-Judge accuracy（%）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>子任务</th>
+<th style="text-align:right">原图</th>
+<th style="text-align:right">+BBox</th>
+<th style="text-align:right">+Mask</th>
+<th style="text-align:right">+BBox+Mask</th>
+<th style="text-align:right">组合相对原图</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空间感知</td>
+<td style="text-align:right">61.37</td>
+<td style="text-align:right">65.84</td>
+<td style="text-align:right">59.70</td>
+<td style="text-align:right">71.82</td>
+<td style="text-align:right">+10.45 个百分点</td>
+</tr>
+<tr>
+<td>关系推理</td>
+<td style="text-align:right">63.25</td>
+<td style="text-align:right">64.95</td>
+<td style="text-align:right">66.82</td>
+<td style="text-align:right">70.12</td>
+<td style="text-align:right">+6.87 个百分点</td>
+</tr>
+</tbody>
+</table></div>
+<p>组合优于各单项，但空间题只加 mask 反而退步，说明视觉改造有代价。较大模型也有收益：Llama90B 空间感知 86.21 → 92.90，增加 6.69 个百分点（Table 3）。</p>
+<p><img src="../../assets/papers/2603.20662/figure4.png" alt="Figure 4：SHA 前后的空间与关系头重要性" /></p>
+<p><em>原文 Figure 4（PDF p.8）：上排为 Qwen3B，下排为 Llama90B；每种功能的 before/after 共享图例，增强后总体更亮。Table 3 测的是 Intern2B 与 Llama90B，只有后者同时出现在热图和性能表。</em></p>
+<p>图与表支持辅助输入有效、功能归因随输入改变；没有给出新增头的必要性干预，也未明确前后是否固定同一探针 [?]，因而不能确认增益由潜在空间头的激活所介导。“高分头少导致空间能力弱”同样缺少控制了分数尺度和任务难度的头数量—能力实验。</p>
+<h3 id="5-3-正向-steering-是小幅可操控性结果">5.3 正向 steering 是小幅可操控性结果</h3>
+<p>Table 5 中，Qwen7B 空间感知 80.04 → 81.89（+1.85 个百分点），关系推理 82.11 → 83.76（+1.65）；VSR 原题为 62.47 → 63.72（+1.25），其他三项下游增益为 +0.44 至 +0.79 个百分点。同表也有退步：Qwen7B 低层视觉 84.39 → 84.10。它展示了定向修改头输出可以调整行为，尚不是全功能统一提升。SHA 与 steering 的性能表使用不同模型和任务设置，不能据变化幅度直接比较两种方法的优劣。</p>
+<p>没有多 seed、置信区间或配对检验。Table 5 标明每外部数据集 200 题，但两位小数分数不符合一次 200 题二元准确率的 0.5 个百分点步长，具体汇总方式未解释 [?]。这不能证明结果无效，却使这些小增益的稳定性仍待验证。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li>**狗马例子也暴露了“功能”被答案形式替代的可能。**空间题常输出 left/right，关系题输出 Yes，决策题输出 True；探针恰好读答案 token。若仅看问题或答案文本也能预测相近标签，头图可能主要辨认题型。复现时先统一答案形式、改写子问题，再检查头集合和消融效应是否保持，比直接扩展更多认知标签更能检验功能解释。</li>
+<li>**当前消融证明任务重要性，下一步应检验功能选择性。**同一个空间头集合是否同样损害非空间任务？需要“抑制功能 A 的头、评估功能 B”的矩阵，并用层深与规模匹配的集合比较。如果所有功能都受损，结论应收窄为通用答题瓶颈；若损害集中于目标功能，才更接近作者想说明的内部分工。</li>
+<li>**SHA 的机制应由“增益是否消失”来判断。**Figure 3 直接增加对象身份和位置线索，Figure 4 的归因增强不足以区分感知负担减轻与特定头中介。先澄清 Answer 来源，保持同一辅助输入，再抑制增强后新增的高分头；若改善随之消失，才补上“辅助输入 → 候选头 → 行为收益”的关键一环。</li>
+</ol>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic / Area</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 将带功能标签的空间子任务、头输出 probe 与 gradient×activation 候选定位接上实际输出消融和 steering，补充组件关联与行为贡献之间的证据区分。</li>
+<li><span class="wikilink unresolved" title="MOC-Multimodal-LLM-Reasoning">MOC-Multimodal-LLM-Reasoning</span> — Topic: 提供空间子任务的选择性头干预及 SHA 框/掩码输入增强；两者分别改变内部输出和测试输入，其收益与机制证据应分别判断。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="A-family-of-large-language-models-for-materials-research-with-insights-into-model-adaptability-in-continued-pretraining-LLaMat适应僵化.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</span></a>
+<a class="paper-nav-link next" href="Vision-and-Language-Navigation-R2R与未见环境泛化.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Vision-and-Language Navigation：R2R把“听懂路线”变成未见建筑中的闭环行动</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: ma2026attentioninspace</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

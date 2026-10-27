@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust-Region Adaptive Policy Optimization (TRAPO)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Trust-Region Adaptive Policy Optimization (TRAPO)</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-sft-和-rl-的两阶段训练互相伤害-直接合并更是灾难"><span class="toc-num">02</span> 2. 关键问题：SFT 和 RL 的两阶段训练互相伤害，直接合并更是灾难</a></li>
+<li><a class="toc-link" href="#3-关键方法-用-trust-region-驯服-sft-用-micro-group-自适应分配专家指导"><span class="toc-num">03</span> 3. 关键方法：用 trust-region 驯服 SFT，用 micro-group 自适应分配专家指导</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-1-trust-region-sft-trsft">核心模块 1: Trust-Region SFT (TrSFT)</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-2-micro-group-sampling-自适应专家指导">核心模块 2: Micro-group Sampling（自适应专家指导）</a></li>
+<li><a class="toc-link toc-sub" href="#训练更新">训练更新</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的关键区别">与已有方法的关键区别</a></li>
+<li><a class="toc-link toc-sub" href="#工程细节">工程细节</a></li>
+<li><a class="toc-link" href="#4-数据集-基于-deepseek-r1-的-46k-数学推理-trajectory-配对第二条-trajectory"><span class="toc-num">04</span> 4. 数据集：基于 DeepSeek-R1 的 46k 数学推理 trajectory + 配对第二条 trajectory</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#5-关键结果-数学推理平均-56-6-超过-sft-then-rl-2-3-个点-通用推理也是最优"><span class="toc-num">05</span> 5. 关键结果：数学推理平均 56.6，超过 SFT-then-RL 2.3 个点，通用推理也是最优</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-table-1-qwen2-5-math-7b">主实验（Table 1, Qwen2.5-Math-7B）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-table-2">消融实验（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#训练动态-figure-4">训练动态（Figure 4）</a></li>
+<li><a class="toc-link toc-sub" href="#prefix-使用动态-appendix-f-figure-8">Prefix 使用动态（Appendix F, Figure 8）</a></li>
+<li><a class="toc-link toc-sub" href="#test-time-scaling-figure-6">Test-time Scaling（Figure 6）</a></li>
+<li><a class="toc-link toc-sub" href="#泛化性-figure-5">泛化性（Figure 5）</a></li>
+<li><a class="toc-link toc-sub" href="#计算开销-table-6-7-appendix-e">计算开销（Table 6-7, Appendix E）</a></li>
+<li><a class="toc-link toc-sub" href="#case-study-appendix-g-figure-9">Case Study（Appendix G, Figure 9）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-18</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2512.17636" target="_blank">arXiv</a>
+    </div>
+    <h1>Trust-Region Adaptive Policy Optimization (TRAPO)</h1>
+    <p class="authors">Mingyu Su, Jian Guan, Yuxian Gu, Minlie Huang, Hongning Wang</p>
+    <div class="topic-row"><span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Knowledge_Distillation</span> <span class="topic-tag">Exposure_Bias</span> <span class="topic-tag">LLM_Post-Training</span> <span class="topic-tag">Mathematical_Reasoning</span> <span class="topic-tag">Trust-Region_Optimization</span> <span class="topic-tag">SFT-RL_Fusion</span></div>
+</header>
+
+<h1>论文笔记: Trust-Region Adaptive Policy Optimization (TRAPO)</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Mingyu Su, Jian Guan, Yuxian Gu, Minlie Huang (通讯), Hongning Wang</li>
+<li><strong>机构</strong>: 清华大学 CoAI Group（Mingyu Su, Yuxian Gu, Minlie Huang, Hongning Wang）+ 蚂蚁集团（Jian Guan）</li>
+<li><strong>时间</strong>: 2025-12-19, arXiv preprint</li>
+<li><strong>代码</strong>: https://github.com/Su-my/TRAPO</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-sft-和-rl-的两阶段训练互相伤害-直接合并更是灾难">2. 关键问题：SFT 和 RL 的两阶段训练互相伤害，直接合并更是灾难</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>拿 Qwen2.5-Math-7B 做数学推理增强。标准做法：先用 DeepSeek-R1 的 trajectory 做 SFT，再跑 GRPO。听起来合理——先学后练。</p>
+<p>结果呢？SFT-then-RL 只比纯 RL 高了 3.9 个点（54.3 vs 50.4, Table 1），远没发挥&quot;既有专家知识、又能自主探索&quot;的潜力。更惨的是，如果你想&quot;聪明一点&quot;——在每个 batch 里同时优化 SFT loss 和 RL loss——直接崩盘：<strong>从 50.4 暴跌到 32.3，掉了 18 个点</strong>（Table 2）。</p>
+</blockquote>
+<p>问题出在两层：</p>
+<p><strong>SFT 的 mode-covering 效应对 RL 有毒。</strong> 标准 SFT 最小化 forward KL，本质是让 target policy 覆盖 expert 的所有 mode。用论文的 GMM 实验来说（Figure 3）：两峰的 target 分布去拟合三峰的 expert 分布时，在两个 mode 之间的&quot;空白区&quot;也被填上了概率质量——这就是 distribution blending。</p>
+<p><img src="https://arxiv.org/html/2512.17636v1/x3.png" alt="Figure 3: SFT 训练动态——两峰 target 拟合三峰 expert，void region 出现概率质量泄漏" /></p>
+<p>在标准 SFT 里这只是暂时现象（Phase 4 能收敛回来），但 SFT 和 RL 交替时就致命了——那些 void region 的概率质量立刻导致退化输出（重复、乱码），RL rollout 废掉。</p>
+<p><strong>SFT 梯度的数学根源。</strong> 标准 NLL loss 的梯度有个 $\frac{1}{p_T^\theta(y_n)}$ 项（Eq. 2）。expert token 在当前 policy 下概率很低时（$p_T = 0.001$），梯度权重就是 1000——一步更新就把模型推进 void region。</p>
+<p><strong>两阶段串行的根本矛盾。</strong> SFT loss 低不代表 RL 起点好，SFT 过度训练还会灾难性遗忘。但到底 SFT 该训多少才&quot;刚好&quot;？没有信号能告诉你。</p>
+<p>核心挑战：<strong>怎么在单次训练中同时获得 SFT 的知识蒸馏和 RL 的自我探索，而不让两者互相干扰？</strong></p>
+<h2 id="3-关键方法-用-trust-region-驯服-sft-用-micro-group-自适应分配专家指导">3. 关键方法：用 trust-region 驯服 SFT，用 micro-group 自适应分配专家指导</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>一道数学题进来，TRAPO 的处理流程：</p>
+<ol>
+<li><strong>Micro-group 1</strong>（4 个 rollout，无 prefix）：模型先自己做 4 次。假设全错，pass rate = 0。</li>
+<li><strong>Micro-group 2</strong>（2 个 rollout，prefix 20%）：pass rate 0 &lt; 阈值 0.5，触发。截取 DeepSeek-R1 轨迹前 20% 作为 prefix，模型续写。假设对了 1 次，累计 pass rate ≈ 0.17。</li>
+<li><strong>Micro-group 3</strong>（1 个 rollout，prefix 50%）：0.17 &lt; 0.7，继续加码。</li>
+<li><strong>Micro-group 4</strong>（1 个 rollout，prefix 100%）：还不够 &lt; 0.9，给完整 expert trajectory。</li>
+</ol>
+<p>现在有 8 条 trajectory。对 expert prefix 部分，用 TrSFT loss 学习；对模型自己生成的部分，用 GRPO loss 学习。两个 loss 直接加起来更新参数。</p>
+<p>如果模型一上来就做对了（micro-group 1 就有正确答案），后续 micro-group 全部做纯 RL——这就是&quot;自适应&quot;。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2512.17636v1/x1.png" alt="Figure 1: TRAPO 框架概览——左边 TrSFT 的 gradient clipping，右边 micro-group 自适应指导" /></p>
+<h3 id="整体架构">整体架构</h3>
+<p>TRAPO 就两件事：<strong>TrSFT</strong> 解决&quot;怎么从 expert 学而不崩&quot;，<strong>Micro-group Sampling</strong> 解决&quot;给多少 expert 指导&quot;。两个加起来实现&quot;边学边练&quot;（learn-while-practicing）。</p>
+<h3 id="核心模块-1-trust-region-sft-trsft">核心模块 1: Trust-Region SFT (TrSFT)</h3>
+<p><strong>问题</strong>：直接加 SFT loss 到 RL loss 上崩 18 个点（Table 2），根源是 SFT 梯度中 $\frac{1}{p_T^\theta}$ 在低概率 token 上爆炸。</p>
+<p>标准 SFT loss 梯度：</p>
+<div class="math-display">$$\nabla_\theta L_{\text{SFT}} = -\frac{1}{N}\sum_{i=1}^{N}\sum_{n=1}^{|\mathbf{y}^i|} \frac{1}{p_T^\theta(y_n^i | \mathbf{x}^i, \mathbf{y}_{&lt;n}^i)} \nabla_\theta p_T^\theta(y_n^i | \mathbf{x}^i, \mathbf{y}_{&lt;n}^i)$$</div>
+<p>TrSFT 的做法——clip 这个权重：</p>
+<div class="math-display">$$\nabla_\theta L_{\text{TrSFT}}^\alpha = -\frac{1}{N}\sum_{i=1}^{N}\sum_{n=1}^{|\mathbf{y}^i|} \frac{1}{\max(p_T^\theta(y_n^i | \mathbf{x}^i, \mathbf{y}_{&lt;n}^i), \alpha)} \nabla_\theta p_T^\theta(y_n^i | \mathbf{x}^i, \mathbf{y}_{&lt;n}^i)$$</div>
+<p>$\alpha \in [0,1]$ 定义 trust region 边界，论文用 $\alpha = 0.1$。</p>
+<p>一句话理解：模型觉得某个 expert token 挺合理的（$p \geq \alpha$），正常学；觉得这个 token 很陌生（$p &lt; \alpha$），把梯度权重封顶到 $1/\alpha$，别硬拉。</p>
+<p><strong>理论性质（Proposition 1）</strong>——TrSFT 最优解：</p>
+<div class="math-display">$$p_T^*(c) = \begin{cases} \frac{p_E(c)}{\lambda}, &amp; \text{if } p_E(c) &gt; \alpha\lambda \\ 0, &amp; \text{otherwise} \end{cases}$$</div>
+<p>其中 $S(\lambda) = \{c \mid p_E(c) &gt; \alpha\lambda\}$，$\lambda = \sum_{c \in S(\lambda)} p_E(c)$。</p>
+<p>效果：自动<strong>砍掉</strong> expert policy 中概率低于 $\alpha\lambda$ 的 token（置零），<strong>放大</strong>剩余的高概率 mode。从 forward KL 的 mode-covering 转成了 reverse KL 的 mode-seeking——只学 expert 最核心的模式，不在边缘 mode 上浪费概率。</p>
+<p><strong>$\alpha$ 选择</strong>（Figure 7b / Appendix D）：在 {0, 0.05, 0.1, 0.2, 0.5, 1.0} 中 $\alpha=0.1$ 最优。$\alpha=0$ 退化为标准 SFT（崩）；$\alpha=1$ 所有 token 等权（丢失差异化学习能力）。</p>
+<h3 id="核心模块-2-micro-group-sampling-自适应专家指导">核心模块 2: Micro-group Sampling（自适应专家指导）</h3>
+<p><strong>问题</strong>：给每道题多少 expert prefix？简单题给 prefix 浪费探索机会，难题不给 prefix 则 rollout 全废。</p>
+<p><img src="https://arxiv.org/html/2512.17636v1/x2.png" alt="Figure 2: 不同长度 DeepSeek-R1 前缀对 Qwen2.5-3B-Instruct 推理能力的影响" /></p>
+<p>做法：把 8 次 rollout 分成 4 个 micro-group，按顺序执行：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Micro-group $g_i$</th>
+<th>采样数 $n_i$</th>
+<th>Prefix 比例 $L_i$</th>
+<th>激活阈值 $t_i$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$g_1$</td>
+<td>4</td>
+<td>0（无指导）</td>
+<td>-1（总是执行）</td>
+</tr>
+<tr>
+<td>$g_2$</td>
+<td>2</td>
+<td>0.2</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>$g_3$</td>
+<td>1</td>
+<td>0.5</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td>$g_4$</td>
+<td>1</td>
+<td>1.0（完整 trajectory）</td>
+<td>0.9</td>
+</tr>
+</tbody>
+</table></div>
+<p>关键设计约束（消融 Table 3/5 验证）：</p>
+<ol>
+<li>$L_1 = 0$：第一组必须无指导——保证自由探索</li>
+<li>$L_N = 1$：最后一组可以给完整 expert trajectory——兜底</li>
+<li>阈值必须递增（Table 4 验证）：constant 或递减都差。prefix 越长带来的 pass rate 自然越高，后面的 group 要用更高阈值避免过度依赖</li>
+</ol>
+<p>注意：Appendix D 的消融表（Tables 3/4/5）用的是 6 个 math benchmark 且只训 100 步，跟主实验（5 benchmarks, full training）条件不同。不影响设计原则的结论，但具体数值不可直接跟 Table 1/2 对比。</p>
+<h3 id="训练更新">训练更新</h3>
+<p>每个 batch 的总梯度 = TrSFT 梯度（只算 expert prefix token）+ GRPO 梯度（只算模型自己生成的 token），直接相加更新。</p>
+<div class="math-display">$$\nabla_\theta L = \nabla_\theta L_{\text{TrSFT}}^\alpha + \nabla_\theta L_{\text{GRPO}}$$</div>
+<h3 id="与已有方法的关键区别">与已有方法的关键区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>做法</th>
+<th>问题 / 限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT-then-RL</td>
+<td>串行两阶段</td>
+<td>SFT 锁死探索能力，遗忘预训练知识</td>
+</tr>
+<tr>
+<td>LUFFY</td>
+<td>每 8 个 rollout 掺 1 条 expert trajectory，用 importance ratio 校正分布偏移</td>
+<td>只做 offline RL 不做 SFT，增益有限</td>
+</tr>
+<tr>
+<td>ReLIFT</td>
+<td>收集差样本存 buffer，定期切换到 SFT</td>
+<td>SFT 和 RL 在不同 batch 交替，粒度太粗</td>
+</tr>
+<tr>
+<td>Prefix-RFT</td>
+<td>用 prefix 指导 + entropy 选 token 做 SFT</td>
+<td>与 TRAPO 最相似，但 Table 1 中未作为 baseline [?] 可能是 concurrent work</td>
+</tr>
+<tr>
+<td><strong>TRAPO</strong></td>
+<td>同一条 trajectory 内切分：prefix → TrSFT，completion → GRPO</td>
+<td>最细粒度的 SFT-RL 融合</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="工程细节">工程细节</h3>
+<ul>
+<li>基座模型：Qwen2.5-Math-7B，rope theta 从 10000 调到 40000（因 DeepSeek-R1 轨迹长度到 8k，原始模型只支持 4096）</li>
+<li>RL 算法：Dr.GRPO（去掉 length normalization 和 std regularization），无 KL penalty</li>
+<li>RL/TRAPO 框架：verl；SFT 框架：OpenRLHF</li>
+<li>Rollout 推理：vLLM，temperature = 1.0</li>
+<li>训练：batch size 128，max prompt 1024，max response 8192</li>
+<li>[?] <strong>学习率矛盾</strong>：主文 Section 3.1 说 5e-6（constant），Appendix C.2 RL 部分说 1e-6。相差 5 倍，不清楚哪个是实际使用的</li>
+<li>SFT baseline：92k pairs，2 epochs，lr 5e-5，warmup 0.1，batch size 32，seq length 16384</li>
+<li>Expert prefix 截断：不是按 token 硬切，而是找到指定比例位置后的第一个推理步骤分隔符（DeepSeek-R1 风格的双换行），保证推理步骤完整</li>
+<li>评估：temperature 0.6，max 8192 tokens，Math-Verify + OAT-Grader</li>
+<li>Prompt 模板：SimpleRL 的最简模板</li>
+</ul>
+<h2 id="4-数据集-基于-deepseek-r1-的-46k-数学推理-trajectory-配对第二条-trajectory">4. 数据集：基于 DeepSeek-R1 的 46k 数学推理 trajectory + 配对第二条 trajectory</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li><strong>来源</strong>: OpenR1-Math-46k-8192，从 OpenR1-Math-200k 过滤掉错误 trajectory 和超 8192 token 的</li>
+<li><strong>规模</strong>: ~46k prompts，每个 prompt 配两条 DeepSeek-R1 的 trajectory（共 ~92k）</li>
+<li><strong>预处理</strong>: 只保留 <code>&lt;think&gt;</code> 和 <code>&lt;/think&gt;</code> 之间的 token，去掉 answer 部分</li>
+<li><strong>Prefix 采样</strong>: 每个 micro-group 随机选两条 trajectory 中的一条作为 guidance source，确保 expert 数据多样性</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>类型</th>
+<th>评估方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AIME2024</td>
+<td>竞赛数学（30 题）</td>
+<td>avg@32</td>
+</tr>
+<tr>
+<td>AMC</td>
+<td>竞赛数学</td>
+<td>avg@32</td>
+</tr>
+<tr>
+<td>MATH-500</td>
+<td>综合数学</td>
+<td>pass@1</td>
+</tr>
+<tr>
+<td>Minerva</td>
+<td>数学科学</td>
+<td>pass@1</td>
+</tr>
+<tr>
+<td>OlympiadBench</td>
+<td>奥赛</td>
+<td>pass@1</td>
+</tr>
+<tr>
+<td>ARC-c</td>
+<td>通用推理</td>
+<td>pass@1</td>
+</tr>
+<tr>
+<td>MMLU-Pro</td>
+<td>通用推理</td>
+<td>pass@1</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键结果-数学推理平均-56-6-超过-sft-then-rl-2-3-个点-通用推理也是最优">5. 关键结果：数学推理平均 56.6，超过 SFT-then-RL 2.3 个点，通用推理也是最优</h2>
+<h3 id="主实验-table-1-qwen2-5-math-7b">主实验（Table 1, Qwen2.5-Math-7B）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>AIME2024</th>
+<th>AMC</th>
+<th>MATH-500</th>
+<th>Minerva</th>
+<th>Olympiad</th>
+<th>数学 Avg.</th>
+<th>ARC-c</th>
+<th>MMLU-Pro</th>
+<th>通用 Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRPO</td>
+<td>24.0</td>
+<td>59.0</td>
+<td>84.0</td>
+<td>39.3</td>
+<td>45.8</td>
+<td>50.4</td>
+<td>80.5</td>
+<td>47.2</td>
+<td>63.9</td>
+</tr>
+<tr>
+<td>SFT</td>
+<td>27.7</td>
+<td>56.0</td>
+<td>84.8</td>
+<td>38.2</td>
+<td>44.7</td>
+<td>50.3</td>
+<td>51.5</td>
+<td>33.1</td>
+<td>42.3</td>
+</tr>
+<tr>
+<td>SFT-then-RL</td>
+<td>33.5</td>
+<td>62.3</td>
+<td>86.6</td>
+<td>41.2</td>
+<td>47.6</td>
+<td>54.3</td>
+<td>52.9</td>
+<td>36.1</td>
+<td>44.5</td>
+</tr>
+<tr>
+<td>ReLIFT</td>
+<td>28.2</td>
+<td>64.9</td>
+<td>87.4</td>
+<td>33.8</td>
+<td>52.5</td>
+<td>53.4</td>
+<td>76.2</td>
+<td>52.5</td>
+<td>64.4</td>
+</tr>
+<tr>
+<td>LUFFY</td>
+<td>29.4</td>
+<td>65.5</td>
+<td>88.4</td>
+<td>38.2</td>
+<td>56.0</td>
+<td>55.5</td>
+<td>80.5</td>
+<td>53.0</td>
+<td>66.7</td>
+</tr>
+<tr>
+<td><strong>TRAPO</strong></td>
+<td><strong>28.3</strong></td>
+<td><strong>66.2</strong></td>
+<td><strong>89.2</strong></td>
+<td><strong>41.5</strong></td>
+<td><strong>57.6</strong></td>
+<td><strong>56.6</strong></td>
+<td><strong>83.7</strong></td>
+<td><strong>52.8</strong></td>
+<td><strong>68.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>提升幅度：vs GRPO +6.2，vs SFT +6.3，vs SFT-then-RL +2.3，vs LUFFY +1.1。</p>
+<p>注意：TRAPO 在 OlympiadBench 上 57.6 vs GRPO 45.8 高了 12 个点——expert guidance 对难题帮助显著。但 AIME2024 上 TRAPO 28.3 不如 SFT-then-RL 33.5——AIME 只有 30 题，avg@32 噪声大，且 TrSFT 的 mode-seeking 性质可能剪掉了一些 rare but critical 的推理策略（见 Insights）。</p>
+<h3 id="消融实验-table-2">消融实验（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRPO baseline</td>
+<td>50.4</td>
+</tr>
+<tr>
+<td>+ Micro-group sampling（不学 prefix）</td>
+<td>52.7 (+2.3)</td>
+</tr>
+<tr>
+<td>+ Micro-group + 标准 SFT loss</td>
+<td><strong>32.3</strong> (-18.1) ← 崩了</td>
+</tr>
+<tr>
+<td>+ Micro-group + LUFFY loss</td>
+<td>53.6 (+3.2)</td>
+</tr>
+<tr>
+<td>+ Micro-group + TrSFT loss（完整 TRAPO）</td>
+<td><strong>56.6</strong> (+6.2)</td>
+</tr>
+</tbody>
+</table></div>
+<p>这组消融非常 clean——每行只变一个变量：(1) 光给 prefix 做 in-context guidance 就有 +2.3；(2) 加标准 SFT 直接崩，验证 forward KL 对 RL 的毒性；(3) LUFFY 的 offline RL loss 能用但增益有限；(4) TrSFT 是关键，额外贡献 +3.0 over LUFFY loss。</p>
+<h3 id="训练动态-figure-4">训练动态（Figure 4）</h3>
+<p><img src="https://arxiv.org/html/2512.17636v1/x4.png" alt="Figure 4: TRAPO vs GRPO 的训练动态——reward、生成长度、entropy" /></p>
+<p>三个观察：</p>
+<ol>
+<li>TRAPO reward 全程高于 GRPO，最终收敛也更高</li>
+<li>TRAPO 早期快速增加输出长度（学到了 expert 的长推理模式），GRPO 始终短</li>
+<li>两者 entropy 都先降，但 TRAPO 稳定在更高 entropy——保持了探索多样性</li>
+</ol>
+<h3 id="prefix-使用动态-appendix-f-figure-8">Prefix 使用动态（Appendix F, Figure 8）</h3>
+<p>训练过程中 expert-guided trajectory 的数量<strong>持续下降</strong>，而 unguided trajectory 始终占主导。说明 TRAPO 的自适应机制在&quot;自我淘汰&quot;——模型变强后自然减少对 expert 的依赖。这也引出一个问题：既然指导主要在早期有用，一个简单的&quot;随训练 anneal prefix 概率&quot;的 schedule 是否就够了？micro-group 机制是否 overkill？[?]</p>
+<h3 id="test-time-scaling-figure-6">Test-time Scaling（Figure 6）</h3>
+<p><img src="https://arxiv.org/html/2512.17636v1/x6.png" alt="Figure 6: AIME2024 上 pass@k 对比" /></p>
+<p>k 足够大时，<strong>base model Qwen2.5-Math-7B 的 pass@k 超过了 GRPO 训练后的模型</strong>。论文解读是纯 RL 主要在帮模型&quot;选&quot;已有的好解，而不是教它新技能。TRAPO 和 SFT 系方法的 pass@k 随 k 增长更快，说明 solution space 确实被扩展了。</p>
+<p>不过这里有一个替代解释（见 Insights 6.1）：TRAPO 的 pass@k 优势可能只是 distributional shift 向 R1 风格推理，不一定是&quot;模型内在能力扩展&quot;。</p>
+<h3 id="泛化性-figure-5">泛化性（Figure 5）</h3>
+<p><img src="https://arxiv.org/html/2512.17636v1/x5.png" alt="Figure 5: 在 Qwen2.5-7B-Instruct 上五个数学 benchmark 的平均准确率" /></p>
+<p>在通用模型 Qwen2.5-7B-Instruct 上 TRAPO 仍然最优。但注意这两个模型都是 Qwen 系列，跨架构（Llama、Mistral）验证缺失。</p>
+<h3 id="计算开销-table-6-7-appendix-e">计算开销（Table 6-7, Appendix E）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>GPU hours</th>
+<th>Expert Tokens/traj</th>
+<th>Target Tokens/traj</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRPO</td>
+<td>68×8</td>
+<td>0</td>
+<td>1189</td>
+</tr>
+<tr>
+<td>SFT-then-RL</td>
+<td>(42+105)×8 = 147×8</td>
+<td>0</td>
+<td>4760</td>
+</tr>
+<tr>
+<td>LUFFY</td>
+<td>81×8</td>
+<td>519</td>
+<td>2439</td>
+</tr>
+<tr>
+<td>TRAPO</td>
+<td>89×8</td>
+<td>501</td>
+<td>2545</td>
+</tr>
+</tbody>
+</table></div>
+<p>TRAPO 比 GRPO 贵 ~31%（主要因为 micro-group 串行推理），比 SFT-then-RL 总量省约 40%。</p>
+<p>关于 wall-clock 对齐（Table 7）：TRAPO 在 30×8 GPU-hours 之后 reward 超过 GRPO 和 LUFFY。但在 10×8 和 20×8 时，SFT-then-RL 的 reward 更高（0.650 vs 0.601, 0.712 vs 0.684）——因为 SFT-then-RL 的 Table 7 只计 RL 阶段，不含 42×8 的 SFT 成本。考虑到 SFT 阶段的总成本，TRAPO 的效率优势更明显。</p>
+<h3 id="case-study-appendix-g-figure-9">Case Study（Appendix G, Figure 9）</h3>
+<p>多项式因式分解题上，GRPO 用 forward reasoning + code verification 但缺乏自我纠错；SFT 过度模仿 R1 导致超长输出截断；TRAPO 同时具备 expert 的 verification/reflection 模式和 base model 的简洁分步规划。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>TRAPO 的 pass@k 优势可能被过度解读。</strong> 论文说 TRAPO &quot;effectively expands the model's underlying solution space&quot;，但有一个更简单的解释：TRAPO 通过 SFT prefix 引入了 DeepSeek-R1 的推理模式（backtracking、verification），这些模式在高 k 下自然更容易覆盖到正确答案——这是 distributional shift，不一定是 capability expansion。区分两者需要一个对照实验：在不做 TrSFT、只提供 prefix 做 in-context guidance 的设定下看 pass@k scaling（Table 2 的 &quot;Micro-group without SFT&quot; 配置）。论文没做这个分析。</p>
+<p><strong>AIME2024 的弱项跟 TrSFT 的理论直接相关，但论文没提。</strong> TrSFT 的 mode-seeking 性质会剪掉 expert 分布中概率低于 $\alpha\lambda$ 的 mode。AIME 是最难的 benchmark，可能恰好需要那些 rare reasoning strategies（比如非标准的构造方法）。换句话说，TRAPO 在 AIME 上 28.3 vs SFT-then-RL 33.5 可能不是噪声，而是 mode-seeking 的结构性代价。</p>
+<p><strong>论文没 ablate 更简单的替代方案。</strong> SFT 梯度在低概率 token 上爆炸——这确实是问题。但 global gradient norm clipping 或 label smoothing 也能缓解。论文直接跳到 TrSFT 而没有对比这些 trivial baselines，削弱了&quot;TrSFT 是必要的&quot;这个论证。</p>
+<p><strong>统计严谨性不足。</strong> 全文没有报告任何 std/variance/confidence interval。TRAPO vs LUFFY 只差 1.1 个点，AIME2024 只有 30 题用 avg@32 评估。没有多 seed 实验，差异是否显著完全无法判断。</p>
+<p><strong>Micro-group 串行执行的开销被轻描淡写。</strong> 4 个 micro-group 按顺序执行，意味着每个 prompt 最多 4 次串行推理 pass。这是 TRAPO 比 GRPO 贵 31% 的主要原因，但论文没有分析这个串行瓶颈是否可以放松——比如用训练统计学到的 fixed schedule 替代 online pass-rate 决策。</p>
+<p><strong>TrSFT 的 idea 非常优雅。</strong> 就是在 SFT 梯度权重上加个 max——一行代码的改动。但 Proposition 1 证明这个 clipping 隐式地把优化目标从 forward KL 的 mode-covering 转成了 reverse KL 的 mode-seeking。如果让我来做这个问题，大概率会直接用 reverse KL 或者 JSD，而不是通过 clip 操作隐式实现。TrSFT 的简洁性和理论优雅性是这篇文章最有价值的地方。</p>
+<p><strong>$\alpha$ 的选择缺乏理论指导。</strong> Proposition 1 证明了给定 $\alpha$ 下的最优解性质，但怎么选 $\alpha$ 完全靠 grid search。$\alpha = 0.1$ 对 Qwen + DeepSeek-R1 这个组合最优，但换了模型/数据，最优 $\alpha$ 几乎一定会变——因为它本质上取决于 teacher-student 分布距离。如果 student 已经很接近 teacher，小 $\alpha$ 可能就够；如果差距大（比如 Llama 蒸馏 R1），$\alpha = 0.1$ 可能把有用的东西都剪了。</p>
+<p><strong>Micro-group 触发信号太粗。</strong> 用 binary correctness（pass rate）决定是否给更多 prefix。对于有部分正确推理但最后一步算错的情况，pass rate = 0 和完全不会做 pass rate = 0 无法区分。如果用 process reward model 或 soft reward signal 做触发，可能效果更好。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>SFT-RL 融合 2025 年极其拥挤（LUFFY, ReLIFT, SRFT, AMFT, HPT, Prefix-RFT... 半年至少 6 篇）。TRAPO 的 TrSFT 指出了关键洞察：问题不在&quot;SFT 多少 RL 多少&quot;的配比，而在 SFT 的优化目标本身不适合和 RL 共存。接下来大概率会看到更多从 KL divergence 视角重新设计 SFT objective 的工作——比如直接用 $\alpha$-divergence 或 Renyi divergence 替代 forward KL，获得可控的 mode-covering/seeking 平衡。</p>
+<p>TrSFT 的&quot;clip 梯度权重&quot;思路足够简单，有可能成为标准工具箱的一部分——类似 PPO 的 clipping 从 RL 论文变成通用组件。但 micro-group sampling 超参太多（每组大小、prefix 比例、阈值），在不同任务上大概率需要重调，实际落地阻力不小。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic/Area:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reinforcement-Learning">MOC-Reinforcement-Learning</span> — Topic: TrSFT 将 forward KL 转为 mode-seeking，解决 SFT+RL 联合训练不稳定问题；配合 micro-group 自适应专家指导，在数学推理上超越纯 RL 和 SFT-then-RL 流水线</li>
+<li><span class="wikilink unresolved" title="MOC-Distillation">MOC-Distillation</span> — Topic: TrSFT 作为新型蒸馏目标，通过裁剪梯度权重使专家轨迹蒸馏可以与 RL 在同一训练实例内共存而不崩溃</li>
+</ul>
+<p><strong>Concept:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Exposure-Bias">MOC-Exposure-Bias</span> — Concept: TrSFT 将 forward KL 朝 mode-seeking 方向偏移，底层动力与 MiniLLM 用 reverse KL 缓解 exposure bias 同源</li>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span> — Topic: TrSFT 解决 SFT+RL 联合训练中的能力遗忘问题，trust-region clipping 防止策略剧变</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Emotion_Concepts_and_their_Function_in_LLM-情绪表示.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Emotion Concepts and their Function in a Large Language Model</span></a>
+<a class="paper-nav-link next" href="Token-Importance_Guided_Direct_Preference_Optimization-TI-DPO.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Token-Importance Guided Direct Preference Optimization (TI-DPO)</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: su2025trapo</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

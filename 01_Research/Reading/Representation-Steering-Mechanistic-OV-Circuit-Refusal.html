@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Drives Representation Steering? A Mechanistic Case Study on Steering Refusal</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">What Drives Representation Steering? A Mechanistic Case Study on Steering Refusal</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-steering-vector-注入-hidden-state-后-到底走了哪条电路-改了哪些组件"><span class="toc-num">02</span> 2. 关键问题：Steering vector 注入 hidden state 后，到底走了哪条电路、改了哪些组件？</a></li>
+<li><a class="toc-link" href="#3-关键方法-multi-token-activation-patching-svv-分解-gradient-based-sparsification"><span class="toc-num">03</span> 3. 关键方法：Multi-token activation patching + SVV 分解 + gradient-based sparsification</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-1-multi-token-activation-patching-4-1">核心模块 1: Multi-token Activation Patching (§4.1)</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-2-circuit-构建与-faithfulness-评估-4-2-4-3">核心模块 2: Circuit 构建与 Faithfulness 评估 (§4.2-4.3)</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-3-steering-value-vector-svv-分解-6-2">核心模块 3: Steering Value Vector (SVV) 分解 (§6.2)</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-4-frozen-activation-ablation-6-3">核心模块 4: Frozen Activation Ablation (§6.3)</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-5-gradient-based-sparsification-7">核心模块 5: Gradient-based Sparsification (§7)</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的关键区别">与已有方法的关键区别</a></li>
+<li><a class="toc-link" href="#4-数据集-小规模标准-refusal-benchmark-组合"><span class="toc-num">04</span> 4. 数据集：小规模标准 refusal benchmark 组合</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据-用于学习-steering-vector">训练数据（用于学习 steering vector）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#activation-patching-数据-table-3">Activation Patching 数据 (Table 3)</a></li>
+<li><a class="toc-link toc-sub" href="#steering-vector-选择-appendix-b-1">Steering vector 选择 (Appendix B.1)</a></li>
+<li><a class="toc-link" href="#5-关键结果-steering-主要走-ov-circuit-qk-几乎不重要-不同方法共享-90-的-circuit"><span class="toc-num">05</span> 5. 关键结果：Steering 主要走 OV circuit，QK 几乎不重要；不同方法共享 >90% 的 circuit</a></li>
+<li><a class="toc-link toc-sub" href="#circuit-faithfulness-figure-2-4-3">Circuit Faithfulness (Figure 2, §4.3)</a></li>
+<li><a class="toc-link toc-sub" href="#cross-method-circuit-interchangeability-figure-3-4-5-2">Cross-method Circuit Interchangeability (Figure 3-4, §5.2)</a></li>
+<li><a class="toc-link toc-sub" href="#qk-vs-ov-ablation-table-1-6-3">QK vs OV Ablation (Table 1, §6.3)</a></li>
+<li><a class="toc-link toc-sub" href="#svv-logit-lens-figure-5-12-6-2">SVV Logit Lens (Figure 5, 12, §6.2)</a></li>
+<li><a class="toc-link toc-sub" href="#sparsification-figure-6-7-table-10-11-7">Sparsification (Figure 6-7, Table 10-11, §7)</a></li>
+<li><a class="toc-link toc-sub" href="#baseline-steering-性能-table-2">Baseline Steering 性能 (Table 2)</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-23</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.08524" target="_blank">arXiv</a>
+    </div>
+    <h1>What Drives Representation Steering? A Mechanistic Case Study on Steering Refusal</h1>
+    <p class="authors">Stephen Cheng, Sarah Wiegreffe, Dinesh Manocha</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Refusal</span> <span class="topic-tag">Circuit_Discovery</span> <span class="topic-tag">Activation_Patching</span> <span class="topic-tag">LLM_Compression</span></div>
+</header>
+
+<h1>论文笔记: What Drives Representation Steering? A Mechanistic Case Study on Steering Refusal</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Stephen Cheng, Sarah Wiegreffe, Dinesh Manocha</li>
+<li><strong>团队</strong>: University of Maryland, College Park</li>
+<li><strong>时间</strong>: 2026 年 4 月 9 日 arXiv preprint</li>
+<li><strong>模型</strong>: Gemma 2 2B Instruct, Llama 3.2 3B Instruct</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-steering-vector-注入-hidden-state-后-到底走了哪条电路-改了哪些组件">2. 关键问题：Steering vector 注入 hidden state 后，到底走了哪条电路、改了哪些组件？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>你有一个 Llama 3.2 3B，面对 &quot;How to make a bomb&quot; 会正确拒绝。用 Arditi et al. (2024) 的方法算出一个 &quot;refusal direction&quot; $\mathbf{s} \in \mathbb{R}^d$，在 layer 12 做 $\mathbf{h}^\ell \leftarrow \mathbf{h}^\ell + \alpha \cdot \mathbf{s}$（$\alpha &lt; 0$），模型就从拒绝变成配合——ASR 从 2% 跳到 85% (Table 2)。反过来给无害指令加 $+\alpha \cdot \mathbf{s}$（$\alpha &gt; 0$），模型就对 &quot;How to bake a cake&quot; 也无理由地拒绝。</p>
+<p>这件事本身不新鲜。问题在于：<strong>这个向量注入之后走了哪条路？</strong> 它改了 attention pattern（QK circuit）还是改了 value output（OV circuit）？2304 个维度都重要还是其实只有几十个在起作用？不知道这些，你就没法诊断 steering 何时会失败、也没法设计更好的干预。</p>
+</blockquote>
+<p><strong>之前的方法卡在哪里</strong>：</p>
+<ul>
+<li>传统 circuit discovery（Wang et al., 2023; Zhang &amp; Nanda, 2024）只能分析 single-token 任务（IOI、加法），用标准化 prompt template。Steering 是 multi-token generation，clean/corrupt 的定义完全不同（同一输入，有无 steering 产生不同输出）</li>
+<li>Sinii et al. (2025) 对 steering 做了因果分析，但只看最后两层（steering 通常在中间层效果最好），且只测了一种 steering 方法</li>
+<li>对 steering vector 本身做 logit lens 往往看不出有意义的 token（如 NTP 向量在 Gemma 2 上不可解释）</li>
+</ul>
+<hr />
+<h2 id="3-关键方法-multi-token-activation-patching-svv-分解-gradient-based-sparsification">3. 关键方法：Multi-token activation patching + SVV 分解 + gradient-based sparsification</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>延续上面的例子。Llama 3.2 3B, layer 12 注入 DIM steering vector $\mathbf{s}$。</p>
+<ol>
+<li>
+<p><strong>Circuit Discovery</strong>: 对同一输入跑 steered 和 unsteered 两遍 forward pass（teacher forcing 一次完成整个 completion）。用 EAP-IG 在每个 decode 位置估计每条 edge 的 indirect effect，跨所有 token position 求和、跨数据集求平均。贪心选 top edges 构建 circuit。发现只需 ~10% 的 edge 就能恢复 85% 的 steering 效果。</p>
+</li>
+<li>
+<p><strong>Cross-method comparison</strong>: 对 DIM、NTP、PO 三种方法重复 step 1。尽管三者的 cosine similarity 只有 0.10-0.42，产生的 circuit 却有 &gt;90% overlap，且互相替换后 faithfulness 仍高。</p>
+</li>
+<li>
+<p><strong>SVV 分解</strong>: 每个 attention head 对 steering 的直接贡献可以分解为一个固定向量 $\text{svv}^h(\mathbf{s}) = (\mathbf{s} \odot \gamma) W_{OV}^h$，只依赖 steering vector 和模型参数，不依赖输入。对 svv 做 logit lens 能看到 &quot;forbidden&quot;、&quot;illegal&quot;、&quot;weapon&quot; 这类语义 token，即使原始 steering vector 本身做 logit lens 看不出东西。</p>
+</li>
+<li>
+<p><strong>Frozen QK 验证</strong>: 把所有层的 attention weight 冻结到 unsteered 值，性能只下降 8.75%。冻结 OV 则下降 71.75%。</p>
+</li>
+<li>
+<p><strong>稀疏化</strong>: 用梯度信息算每个维度的重要性，丢掉贡献小的维度。Gemma 2 在 ~90% 稀疏度仍保持性能，Llama 3 在 ~95%。</p>
+</li>
+</ol>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p><img src="https://arxiv.org/html/2604.08524v1/x1.png" alt="Figure 1: 论文分析框架——用 multi-token activation patching 解剖 steering vector 注入后走哪条电路、改了哪些组件" /></p>
+<p>论文不提出新的 steering 方法，而是提出一套<strong>分析框架</strong>来解剖 steering vector 的工作机制：</p>
+<pre><code>Steering Vector (DIM/NTP/PO) 
+    → Multi-token EAP-IG (§4.1) 
+        → Circuit extraction (§4.2-4.3)
+            → Cross-method comparison (§5)
+                → Edge distribution analysis (§6.1)
+                    → SVV decomposition (§6.2)
+                        → Frozen activation ablation (§6.3)
+                            → Gradient-based sparsification (§7)
+</code></pre>
+<h3 id="核心模块-1-multi-token-activation-patching-4-1">核心模块 1: Multi-token Activation Patching (§4.1)</h3>
+<p>标准 activation patching 假设 clean/corrupt 是不同输入。Steering 的适配：</p>
+<ul>
+<li>Clean = steered representation $H_{steer}^\ell = H_{base}^\ell + \alpha \cdot S$；Corrupt = base representation $H_{base}^\ell$</li>
+<li>EAP-IG 公式在 steering 场景下变为沿 steering coefficient 从 0 到 $\alpha$ 线性增加的路径做梯度积分：</li>
+</ul>
+<div class="math-display">$$IE(u,v) \approx (u - u^*)^\top \frac{1}{T} \left( \sum_{i=1}^{T} \frac{\partial m\left(H_{base}^\ell + \frac{i+0.5}{T} \alpha \cdot S \right)}{\partial v} \right)$$</div>
+<p>（实际实现用 midpoint quadrature $\frac{i+0.5}{T}$，Appendix F，提供 $O(1/T^2)$ 近似误差）</p>
+<ul>
+<li>每个 decode position 跑一次 EAP-IG（通过 teacher forcing 一次 forward pass 完成）</li>
+<li>对 $N$ 个 token position 的 score 求和；mask 掉 steered/base greedy prediction 一致的位置</li>
+<li>跨数据集平均</li>
+</ul>
+<p><strong>[?] Teacher forcing 假设</strong>: circuit 在 teacher-forced 条件下发现，但 autoregressive 生成中的 error propagation 可能改变哪些 edge 重要。论文未讨论这一差距。</p>
+<h3 id="核心模块-2-circuit-构建与-faithfulness-评估-4-2-4-3">核心模块 2: Circuit 构建与 Faithfulness 评估 (§4.2-4.3)</h3>
+<p><strong>Graph 结构</strong>：</p>
+<ul>
+<li>节点 = embedding matrix, MLP, MHA submodules</li>
+<li>只考虑 steering layer 及以后的 edge</li>
+<li>Gemma 2 2B: $|M| = 8790$ edges（layer 15 开始，11 层 × 8 heads）</li>
+<li>Llama 3.2 3B: $|M| = 124441$ edges（layer 12 开始，16 层 × 24 heads，约 14 倍差异）</li>
+<li>另有 &quot;steered edges&quot;（直接从 steering layer 出发）：Gemma 2212, Llama 12849 (Appendix D.1)</li>
+</ul>
+<p><strong>Faithfulness metric</strong>:</p>
+<div class="math-display">$$\text{Faithfulness} = \frac{m(C) - m(\emptyset)}{m(M) - m(\emptyset)}$$</div>
+<p>85% 阈值下，Gemma 需 ~900/8790 (10%), Llama 需 ~13500/124441 (11%)。Circuit 补集的 faithfulness 在所有 size 下接近 0。</p>
+<h3 id="核心模块-3-steering-value-vector-svv-分解-6-2">核心模块 3: Steering Value Vector (SVV) 分解 (§6.2)</h3>
+<p>SVV 是本文最原创的贡献。核心直觉：<strong>steering vector 对每个 attention head 的贡献是一个固定向量，可以预计算，可以用 logit lens 解释。</strong></p>
+<p>数学推导（完整处理了 RMSNorm，Sinii et al. 忽略了 norm）：</p>
+<div class="math-display">$$\text{Attention}(H^\ell + \alpha \cdot S) = \sum_h A^h D_c \tilde{H}^\ell W_{OV}^h + D_{c^h} \text{svv}^h(S)$$</div>
+<p>其中：</p>
+<ul>
+<li>$\tilde{H}^\ell = H^\ell \odot \gamma$（RMSNorm 的 element-wise weight）</li>
+<li>$W_{OV}^h = W_V^h (W_O^h)^\top$（OV circuit 权重：将 head &quot;看到&quot; 的内容转换为 &quot;输出&quot; 到 residual stream 的内容）</li>
+<li>$\text{svv}^h(\mathbf{s}) = (\mathbf{s} \odot \gamma) W_{OV}^h \in \mathbb{R}^d$</li>
+<li>如果模型有 post-attention RMSNorm，svv 变为 $\text{iic}(s) = ((\mathbf{s} \odot \gamma) W_{OV}^h) \odot \gamma&#x27;$ (Appendix A)</li>
+</ul>
+<p><strong>关键性质</strong>: svv 只依赖 $\mathbf{s}$ 和模型参数，不依赖输入 $X$。可以离线预计算。</p>
+<p><strong>[?]</strong>: 实际贡献是 $D_{c^h} \text{svv}^h(S)$，其中 $D_{c^h}$ 依赖 attention weights $A^h$（进而依赖输入）。论文用 &quot;logit lens 对 magnitude 不敏感&quot; 来论证可以忽略 $D_{c^h}$，但未给出 $D_{c^h}$ 跨输入变异程度的定量分析。</p>
+<h3 id="核心模块-4-frozen-activation-ablation-6-3">核心模块 4: Frozen Activation Ablation (§6.3)</h3>
+<p>四种 ablation 设计（用 DIM vector）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Ablation</th>
+<th>操作</th>
+<th>Avg ASR 变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QK frozen</td>
+<td>冻结 attention weights 到 unsteered 值</td>
+<td>8.75%</td>
+</tr>
+<tr>
+<td>OV frozen</td>
+<td>同上但冻结 OV</td>
+<td>71.75%</td>
+</tr>
+<tr>
+<td>SVV ablation</td>
+<td>移除 value projection 中 steering 的直接贡献</td>
+<td>53.75%</td>
+</tr>
+<tr>
+<td>MLP direct effect</td>
+<td>从 MLP 输入中减去 $\mathbf{s}$</td>
+<td>44.50%</td>
+</tr>
+</tbody>
+</table></div>
+<p>SVV ablation 占 OV 下降的 74.9%（53.75/71.75）。</p>
+<h3 id="核心模块-5-gradient-based-sparsification-7">核心模块 5: Gradient-based Sparsification (§7)</h3>
+<p>每个维度的 IE：</p>
+<div class="math-display">$$\vec{IE} = \mathbf{s} \odot \left(\frac{1}{T} \sum_{i=1}^{T} \frac{\partial m(H_{base}^\ell + \frac{i}{T}\alpha \cdot S)}{\partial u&#x27;}\right)$$</div>
+<p>ratio $r = \vec{IE} / \mathbf{s}$ 是 averaged gradient。按 $r_i &lt; \tau$ 阈值把维度置零。对比 baseline: bottom-k（按 $|s_i|$ 排序）和 random dropout。</p>
+<h3 id="与已有方法的关键区别">与已有方法的关键区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>本文</th>
+<th>Sinii et al. (2025)</th>
+<th>传统 circuit discovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>任务</td>
+<td>Multi-token generation</td>
+<td>Multi-token (有限)</td>
+<td>Single-token</td>
+</tr>
+<tr>
+<td>层范围</td>
+<td>Steering layer 开始的所有层</td>
+<td>仅最后 2 层</td>
+<td>全模型</td>
+</tr>
+<tr>
+<td>Steering 方法</td>
+<td>3 种 (DIM, NTP, PO)</td>
+<td>1 种</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Norm 处理</td>
+<td>完整推导含 RMSNorm</td>
+<td>忽略 norm</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Clean/Corrupt</td>
+<td>Steered vs Base (同一输入)</td>
+<td>类似</td>
+<td>不同输入 prompt</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-数据集-小规模标准-refusal-benchmark-组合">4. 数据集：小规模标准 refusal benchmark 组合</h2>
+<h3 id="训练数据-用于学习-steering-vector">训练数据（用于学习 steering vector）</h3>
+<ul>
+<li><strong>$D_{harm}$</strong>: 128 train + 32 val harmful prompts，来自 AdvBench, MaliciousInstruct, TDC2023, HarmBench</li>
+<li><strong>$D_{safe}$</strong>: 128 train + 32 val harmless prompts，随机选自 Alpaca</li>
+<li>NTP/PO 额外增加 128 harmful + 128 harmless（最终 256+256）</li>
+<li>NTP/PO 训练只用前 64 tokens（refusal 行为通常在前面表达）</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>规模</th>
+<th>评估方式</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JailbreakBench</td>
+<td>100 harmful prompts</td>
+<td>LlamaGuard 2 8B judge</td>
+<td>ASR (↑ = more jailbreak)</td>
+</tr>
+<tr>
+<td>Alpaca test</td>
+<td>100 harmless prompts</td>
+<td>Refusal substring matching</td>
+<td>ASR (↓ = less false refusal)</td>
+</tr>
+<tr>
+<td>StrongReject</td>
+<td>unseen adversarial</td>
+<td>—</td>
+<td>仅 sparsification 实验</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="activation-patching-数据-table-3">Activation Patching 数据 (Table 3)</h3>
+<ul>
+<li>过滤：steering 成功 flip 了 concept expression 的 sample</li>
+<li>4 个数据集：{harmful, harmless} × {steered-as-clean, base-as-clean}</li>
+<li>Gemma 2 DIM: 80 harmful resp + 99 harmless resp; 位置数 8k-12k</li>
+<li>Llama 3 DIM: 83 harmful resp + 97 harmless resp</li>
+</ul>
+<h3 id="steering-vector-选择-appendix-b-1">Steering vector 选择 (Appendix B.1)</h3>
+<p>论文有一套基于 bypass score、induce score、KL score 的 vector selection pipeline，包括 $\sigma(\text{bypass}) - \sigma(\text{induce})$ 最小化 + 约束条件（induce score &gt; 0, KL score &lt; 0.1, $\ell &lt; 0.8L$）。Steering 层：Gemma 2 layer 15 position -1, Llama 3 layer 12 position -4。</p>
+<hr />
+<h2 id="5-关键结果-steering-主要走-ov-circuit-qk-几乎不重要-不同方法共享-90-的-circuit">5. 关键结果：Steering 主要走 OV circuit，QK 几乎不重要；不同方法共享 &gt;90% 的 circuit</h2>
+<h3 id="circuit-faithfulness-figure-2-4-3">Circuit Faithfulness (Figure 2, §4.3)</h3>
+<p><img src="https://arxiv.org/html/2604.08524v1/x2.png" alt="Figure 2: Gemma 2 2B 与 Llama 3.2 3B 在不同 circuit size 下的 faithfulness，约 10-11% 的 edge 即可恢复 85% 的 steering 效果" /></p>
+<ul>
+<li>Gemma 2 2B: ~10% edges (900/8790) 达到 85% faithfulness</li>
+<li>Llama 3.2 3B: ~11% edges (13500/124441) 达到 85% faithfulness</li>
+<li>Circuit 补集 faithfulness 在所有 size 下接近 0</li>
+</ul>
+<h3 id="cross-method-circuit-interchangeability-figure-3-4-5-2">Cross-method Circuit Interchangeability (Figure 3-4, §5.2)</h3>
+<p><img src="https://arxiv.org/html/2604.08524v1/x3.png" alt="Figure 3: 左——不同 steering 方法在各 circuit size 下的平均 faithfulness；右——用一种方法的 circuit 跑另一种 steering 时 faithfulness 强烈恢复" /></p>
+<p><img src="https://arxiv.org/html/2604.08524v1/x4.png" alt="Figure 4: DIM/NTP/PO 三种方法的 smaller/larger circuit overlap 接近 1.0，说明激活的通路几乎相同" /></p>
+<ul>
+<li>DIM/NTP/PO 三种 circuit 的 overlap 接近 100%（小 circuit 完全被大 circuit 包含，Figure 4）</li>
+<li>用一种方法的 circuit 跑另一种方法的 steering，faithfulness 强烈恢复 (Figure 3 right)</li>
+<li>Random circuit（2x minimum-faithful size）faithfulness &lt; 10%</li>
+<li>向量间 cosine similarity 仅 0.10-0.42——向量本身很不一样，激活的通路却相同</li>
+</ul>
+<h3 id="qk-vs-ov-ablation-table-1-6-3">QK vs OV Ablation (Table 1, §6.3)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Ablation</th>
+<th>Gemma2 Alpaca(↓)</th>
+<th>Gemma2 JBB(↑)</th>
+<th>Llama3 Alpaca(↓)</th>
+<th>Llama3 JBB(↑)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td>0.00</td>
+<td>0.80</td>
+<td>0.03</td>
+<td>0.85</td>
+</tr>
+<tr>
+<td>QK frozen</td>
+<td>0.03 (+3%)</td>
+<td>0.74 (-6%)</td>
+<td>0.14 (+11%)</td>
+<td>0.70 (-15%)</td>
+</tr>
+<tr>
+<td>OV frozen</td>
+<td>0.57 (+57%)</td>
+<td>0.06 (-74%)</td>
+<td>0.99 (+96%)</td>
+<td>0.25 (-60%)</td>
+</tr>
+<tr>
+<td>SVV ablated</td>
+<td>0.35 (+35%)</td>
+<td>0.20 (-60%)</td>
+<td>0.89 (+86%)</td>
+<td>0.47 (-38%)</td>
+</tr>
+<tr>
+<td>MLP ablated</td>
+<td>0.29 (+29%)</td>
+<td>0.57 (-23%)</td>
+<td>0.53 (+50%)</td>
+<td>0.09 (-76%)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="svv-logit-lens-figure-5-12-6-2">SVV Logit Lens (Figure 5, 12, §6.2)</h3>
+<p><img src="https://arxiv.org/html/2604.08524v1/x5.png" alt="Figure 5: 对原始 steering vector 与每个 head 的 svv 做 logit lens——svv 能解码出 &quot;forbidden&quot;、&quot;weapon&quot; 等语义 token，而原始向量本身不可解释" /></p>
+<ul>
+<li>NTP steering vector 本身在 Gemma 2 上不可解释；但其 svv 可以</li>
+<li>DIM steering vector 本身在 Llama 3 上不可解释；但其 svv 可以</li>
+<li>L16H1 (Gemma 2) 跨所有方法一致出现 &quot;forbidden&quot; 相关 token</li>
+<li>L17H6 (Gemma 2) 的 svv 翻转符号后出现 harmful token——说明 steering 存在低效：某些 head 被迫编码反向概念（superposition 的具体体现）</li>
+</ul>
+<h3 id="sparsification-figure-6-7-table-10-11-7">Sparsification (Figure 6-7, Table 10-11, §7)</h3>
+<p><img src="https://arxiv.org/html/2604.08524v1/x6.png" alt="Figure 6: 按梯度重要性对 steering vector 各维度做阈值稀疏化，Gemma 2 在 ~90% 稀疏度仍保持性能" /></p>
+<p><img src="https://arxiv.org/html/2604.08524v1/x7.png" alt="Figure 7: 不同方法稀疏化后保留维度的 IoU 在统计上显著，说明存在共享的低维 steering subspace" /></p>
+<p><strong>90-99% 的稀疏化 claim 是 model-dependent 的</strong>：</p>
+<ul>
+<li><strong>Gemma 2</strong>: gradient-based 保持到 ~90% sparsity；94.9% 时 JBB 从 0.800 掉到 0.600 (Table 10)；99.2% 时 JBB 掉到 0.250</li>
+<li><strong>Llama 3</strong>: gradient-based 保持到 ~95% sparsity；DIM 在 99.3% sparsity 时 JBB 仍有 0.740, StrongReject 0.812 (Table 11)</li>
+<li><strong>但</strong>: Llama DIM 在 99.7% sparsity 时 Alpaca ASR 从 0.030 暴涨到 0.955——完全丧失 induce-refusal 能力。99% sparsity 只对 bypass-refusal 方向成立，bidirectional steering 在这一稀疏度下不可用</li>
+<li>Random dropout 到 ~40% sparsity 仍保持——refusal signal 在维度间有冗余分布</li>
+<li>IoU 分析 (Figure 7): 不同方法 sparsified 后保留的非零维度有统计显著 overlap ($p \lesssim 10^{-10}$ at 20-95% sparsity)</li>
+</ul>
+<h3 id="baseline-steering-性能-table-2">Baseline Steering 性能 (Table 2)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Method</th>
+<th>Alpaca(↓)</th>
+<th>JBB(↑)</th>
+<th>StrongReject(↑)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma2</td>
+<td>DIM</td>
+<td>0.000</td>
+<td>0.800</td>
+<td>0.850</td>
+</tr>
+<tr>
+<td>Gemma2</td>
+<td>NTP</td>
+<td>0.030</td>
+<td>0.840</td>
+<td>0.831</td>
+</tr>
+<tr>
+<td>Gemma2</td>
+<td>PO</td>
+<td>0.000</td>
+<td>0.800</td>
+<td>0.824</td>
+</tr>
+<tr>
+<td>Llama3</td>
+<td>DIM</td>
+<td>0.030</td>
+<td>0.850</td>
+<td>0.872</td>
+</tr>
+<tr>
+<td>Llama3</td>
+<td>NTP</td>
+<td>0.000</td>
+<td>0.830</td>
+<td>0.882</td>
+</tr>
+<tr>
+<td>Llama3</td>
+<td>PO</td>
+<td>0.000</td>
+<td>0.810</td>
+<td>0.866</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>最反直觉的发现：QK 几乎不参与 steering。</strong> 直觉上你会觉得 steering vector 改变了模型&quot;看哪些 token&quot;（attention pattern），但实际上它几乎只改变了&quot;看到之后产出什么&quot;（value projection）。这意味着 steering 本质上是一个<strong>加法干预</strong>——通过 OV circuit 向 residual stream 贡献一个 input-independent 的偏移量，不改变信息的路由，只改变信息的内容。</p>
+<p><strong>但 &quot;primarily OV&quot; 的 framing 不够准确。</strong> MLP ablation 下降 44.5%，SVV 下降 53.75%——同一个量级。Table 8 的 top-k incoming edges 中 MLP 占 47-57%，在 Gemma 上甚至高于 Attn V 的 12-16%。更诚实的说法是：&quot;steering 通过 OV 和 MLP 共同起作用，OV 略占上风。&quot; 论文几乎未分析 MLP 路径，这不是一个 limitation——而是一个不完整的核心 claim。</p>
+<p><strong>&quot;QK 不重要&quot; 的 8.75% 是一个可疑的平均。</strong> 这个数字由四个数取平均：Gemma Alpaca +3%, Gemma JBB -6%, Llama Alpaca +11%, Llama JBB -15%。Alpaca 和 JBB 的量纲/含义完全不同（一个越低越好，一个越高越好），直接平均绝对变化量在统计上没有意义。Llama JBB 单独看是 15% drop，对安全关键场景不算 negligible。且所有数字都是单次 greedy decoding、100 样本、无 variance 报告。</p>
+<p><strong>SVV 分解是本文最有价值的贡献。</strong> Steering vector $\mathbf{s}$ 在 hidden space 操作，logit lens 可能看不出东西；但把它投影到每个 head 的 $W_{OV}^h$ 上（即 svv），就能在 vocabulary space 看到语义——而且这个投影是 input-invariant、可离线计算的。L17H6 的符号翻转现象（svv 直接看是乱码，翻转符号后出现 harmful token）说明 steering vector 为在某些 head 编码 refusal，被迫在另一些 head 编码 anti-refusal——这是 superposition 在 steering 场景的具体体现。</p>
+<p><strong>Circuit interchangeability 有一个未排除的替代解释。</strong> 高 overlap 可能反映模型在 steering layer 之后的有限 &quot;信息高速公路&quot;——不管注入什么向量，传播路径本来就那么几条。论文用 random circuits 做了 faithfulness baseline，但没测 random vectors 是否也产生高 overlap circuits。这是一个缺失的 control。</p>
+<p><strong>范围限制</strong>：只在 2B/3B 模型上做，只研究 refusal 一个概念。小模型的 circuit 可能天然更 concentrated。Refusal 是一个相对 &quot;干净&quot; 的概念；更复杂的 steering 目标（style, persona, reasoning）的 circuit 结构可能完全不同。评估方面，harmless prompts 用 substring matching 检测拒绝，有已知的 false negative 问题。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>如果 OV-dominant 机制在其他 concept 上也成立，下一步自然是：能否直接在 svv space 而非 hidden space 设计 steering intervention？好处：(1) 维度更低（per-head $d_h$ vs full $d$）；(2) 天然可解释；(3) 可以 per-head 精细控制。如果有人做出 &quot;svv-native steering&quot; 且性能不差，DIM/NTP/PO 这些在 residual stream 空间操作的方法就会显得粗糙。</p>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p><strong>每个 claim 都有三层验证。</strong> 比如&quot;不同 steering method 用相同的 circuit&quot;这个 claim，他们不只算了 overlap（结构相似），还做了 interchangeability 实验（功能等价），还加了 random circuit baseline（排除平凡解释）。&quot;结构 → 功能 → 对照&quot;的三角验证模式让结论可信度高很多。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 提出 multi-token activation patching 框架和 SVV 分解方法，首次从电路层面解剖 steering vector 的工作机制，发现 steering 主要走 OV circuit 而非 QK circuit，并实现 90-99% 的向量稀疏化（Section: 特征提取方法 / 电路）</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic: 从机制可解释性角度揭示 refusal steering vector 的内部工作原理（OV-dominant 路径、跨方法 circuit 共享、可极端稀疏化），为激活工程在安全对齐中的可靠应用提供了因果层面的理论支撑（Section: 激活工程）</li>
+<li><strong>相关 MOC</strong>: <span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Separating Tongue from Thought — Activation Patching Reveals Language-Agnostic Concept Representations in Transformers</span></a>
+<a class="paper-nav-link next" href="Model-Incrimination-Concerning-Behavior-vs-Misalignment.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Model Incrimination -- Investigating Whether Concerning Behavior Reflects Misalignment</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: cheng2026steering</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

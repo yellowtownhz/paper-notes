@@ -1,0 +1,3009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed-X: Building Strong Multilingual Translation LLM with 7B Parameters</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Seed-X: Building Strong Multilingual Translation LLM with 7B Parameters</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何用-7b-参数量构建媲美闭源大模型的多语言翻译能力"><span class="toc-num">02</span> 2. 关键问题：如何用 7B 参数量构建媲美闭源大模型的多语言翻译能力？</a></li>
+<li><a class="toc-link" href="#3-数据集-6-万亿-tokens-多语言数据-迭代增强的平行语料"><span class="toc-num">03</span> 3. 数据集：6 万亿 tokens 多语言数据 + 迭代增强的平行语料</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-三阶段预训练-cot-微调-rl-强化"><span class="toc-num">04</span> 4. 关键方法：三阶段预训练 + CoT 微调 + RL 强化</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块">核心模块</a></li>
+<li><a class="toc-link toc-sub" href="#prompt-模板-table-3">Prompt 模板 (Table 3)</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-empirical-insights-五个关键实证洞察"><span class="toc-num">05</span> 5. Empirical Insights：五个关键实证洞察</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-monolingual-data-shapes-core-language-capabilities">5.1 Monolingual Data Shapes Core Language Capabilities</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-parallel-data-quality-and-usage-matter">5.2 Parallel Data Quality and Usage Matter</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-translation-entails-thinking">5.3 Translation Entails Thinking</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-mono-parallel-balance-promotes-language-transfer">5.4 Mono-Parallel Balance Promotes Language Transfer</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-overfitting-risks-in-multilingual-instruction-data">5.5 Overfitting Risks in Multilingual Instruction Data</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-empirical-insights-总结">5.6 Empirical Insights 总结</a></li>
+<li><a class="toc-link" href="#6-关键实验-7b-模型达到闭源大模型水平"><span class="toc-num">06</span> 6. 关键实验：7B 模型达到闭源大模型水平</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果-table-4">主实验结果 (Table 4)</a></li>
+<li><a class="toc-link toc-sub" href="#各翻译方向详细结果-table-4">各翻译方向详细结果 (Table 4)</a></li>
+<li><a class="toc-link toc-sub" href="#figure-6-分语言方向的详细对比">Figure 6: 分语言方向的详细对比</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验">消融实验</a></li>
+<li><a class="toc-link toc-sub" href="#预训练阶段效果-table-2">预训练阶段效果 (Table 2)</a></li>
+<li><a class="toc-link" href="#7-golden-case-一条数据的完整流程"><span class="toc-num">07</span> 7. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link" href="#8-insights-小模型通过精心设计可达到大模型水平"><span class="toc-num">08</span> 8. Insights：小模型通过精心设计可达到大模型水平</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-论文评价">8.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-领域启发">8.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#8-3-方法论启发">8.3 方法论启发</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+<li><a class="toc-link" href="#不确定点标注"><span class="toc-num">11</span> 不确定点标注</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-03-10</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2507.13618" target="_blank">arXiv</a>
+    </div>
+    <h1>Seed-X: Building Strong Multilingual Translation LLM with 7B Parameters</h1>
+    <p class="authors">Shanbo Cheng, Yu Bao, Qian Cao, Luyang Huang, Liyan Kang, Zhicheng Liu, Yu Lu, Wenhao Zhu, Jingwen Chen, Zhichao Huang, Tao Li, Yifu Li, Huiying Lin, Sitong Liu, Ningxin Peng, Shuaijie She, Lu Xu, Nuo Xu, Sen Yang, Runsheng Yu, Yiming Yu, Liehao Zou, Hang Li, Lu Lu, Yuxuan Wang, Yonghui Wu</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_Translation</span> <span class="topic-tag">LLM</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">CoT</span> <span class="topic-tag">Machine_Translation</span></div>
+</header>
+
+<h1>论文笔记: Seed-X: Building Strong Multilingual Translation LLM with 7B Parameters</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Shanbo Cheng, Yu Bao, Qian Cao 等 26 位作者</li>
+<li><strong>团队</strong>: ByteDance Seed（字节跳动）</li>
+<li><strong>发表时间</strong>: 2025 年 7 月 18 日提交 arXiv (v1)，最后修订于 2025 年 8 月 21 日 (v4)</li>
+<li><strong>会议/期刊</strong>: arXiv 预印本，尚未发表在会议或期刊</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何用-7b-参数量构建媲美闭源大模型的多语言翻译能力">2. 关键问题：如何用 7B 参数量构建媲美闭源大模型的多语言翻译能力？</h2>
+<ul>
+<li><strong>动机</strong>: 多语言翻译对 LLM 是极具挑战的任务，需要处理复杂的语言模式和机器翻译中常见的生硬表达。现有的闭源模型（GPT-4o、Gemini）翻译能力强，但开源模型在同等参数规模下差距明显。</li>
+<li><strong>未解决的问题</strong>:
+<ol>
+<li>如何在有限参数规模（7B）下实现强大的多语言翻译能力</li>
+<li>如何有效利用多语言数据进行预训练</li>
+<li>如何通过 RL 和 CoT 推理提升翻译质量</li>
+<li>习语、俚语、网络流行语的翻译仍是难点</li>
+</ol>
+</li>
+</ul>
+<h2 id="3-数据集-6-万亿-tokens-多语言数据-迭代增强的平行语料">3. 数据集：6 万亿 tokens 多语言数据 + 迭代增强的平行语料</h2>
+<h3 id="训练数据">训练数据</h3>
+<h4>单语数据 (Monolingual Data)</h4>
+<ul>
+<li><strong>规模</strong>: 6 万亿 tokens，覆盖 28 种语言</li>
+<li><strong>质量分层</strong>:
+<ul>
+<li>High: 直接保留</li>
+<li>Medium: 通过 LLM 改写（paraphrasing）增强</li>
+<li>Low: 丢弃</li>
+</ul>
+</li>
+<li><strong>处理流程</strong>: 文档级别质量评估 + 迭代精炼</li>
+</ul>
+<p><strong>语言分布</strong> (Table 1):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言</th>
+<th>比例 (%)</th>
+<th>Tokens (T)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>English</td>
+<td>12.94</td>
+<td>0.78</td>
+</tr>
+<tr>
+<td>Chinese</td>
+<td>10.54</td>
+<td>0.63</td>
+</tr>
+<tr>
+<td>Russian</td>
+<td>8.32</td>
+<td>0.49</td>
+</tr>
+<tr>
+<td>French</td>
+<td>7.36</td>
+<td>0.44</td>
+</tr>
+<tr>
+<td>Spanish</td>
+<td>7.04</td>
+<td>0.42</td>
+</tr>
+<tr>
+<td>German</td>
+<td>6.39</td>
+<td>0.38</td>
+</tr>
+</tbody>
+</table></div>
+<h4>双语数据 (Bilingual Data)</h4>
+<ul>
+<li><strong>初始种子数据</strong>: ~200B tokens，来自公开网络数据</li>
+<li><strong>迭代增强流程</strong> (Progressive Weak-to-Strong):
+<ol>
+<li>使用严格语言识别和对齐指标收集种子双语数据</li>
+<li>基于种子数据训练初始翻译模型</li>
+<li>数据增强与精炼：翻译单语数据 → 改写/释义 → 评估过滤</li>
+<li>用更先进版本替换模型，重复迭代</li>
+</ol>
+</li>
+</ul>
+<h4>SFT 数据</h4>
+<ul>
+<li><strong>规模</strong>: 236K instruction-tuning 实例</li>
+<li><strong>来源</strong>: FLORES devset + 人工标注翻译对</li>
+<li><strong>质量控制</strong>: G-DIG 消除问题样本 + rejection sampling</li>
+<li><strong>CoT 数据</strong>: 专业语言学家标注推理过程（整体含义、难点元素、目标语言习惯）</li>
+</ul>
+<h4>CoT 数据标注详解</h4>
+<h5>1. 标注者身份</h5>
+<p>论文原文：</p>
+<blockquote class="card card-info">
+<p>&quot;To capture this reasoning process, we engage <strong>professional linguists</strong> to document their thought process when handling challenging translation cases.&quot;</p>
+</blockquote>
+<p><strong>标注者</strong>：专业语言学家（而非众包标注者）</p>
+<p>这与其他论文常见的&quot;众包标注&quot;不同，Seed-X 选择专业人士而非普通标注者。</p>
+<h5>2. 标注内容</h5>
+<p>语言学家需要标注三个组成部分：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>英文术语</th>
+<th>标注内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>Summary</td>
+<td>整体句子含义总结</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Explain difficult words</td>
+<td>疑难词汇解释（俚语、网络流行语、诗意表达）</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Give proper translation</td>
+<td>目标语言地道表达 + 常见翻译陷阱</td>
+</tr>
+</tbody>
+</table></div>
+<p>具体包括：</p>
+<ul>
+<li>整体句子含义</li>
+<li>挑战性语言元素（俚语、网络流行语、诗意表达）的解释和翻译</li>
+<li>目标语言的显著表达和使用习惯</li>
+<li>常见翻译陷阱和错误</li>
+</ul>
+<h5>3. 质量控制方法</h5>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+<th>论文描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>专业语言学家</strong></td>
+<td>标注者资质</td>
+<td>而非众包工作者，确保思考深度</td>
+</tr>
+<tr>
+<td><strong>G-DIG</strong></td>
+<td>消除问题样本</td>
+<td>基于梯度的数据选择，剔除导致翻译错误的样本</td>
+</tr>
+<tr>
+<td><strong>Rejection Sampling</strong></td>
+<td>精炼数据</td>
+<td>特别针对低资源语言</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>G-DIG 详解</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;To ensure data quality, we employ <strong>G-DIG</strong> to eliminate problematic examples that contribute most significantly to translation errors.&quot;</p>
+</blockquote>
+<p>G-DIG（Gradient-based Diverse and High-Quality Instruction Data Selection）是一种基于梯度的数据选择方法：</p>
+<ul>
+<li>计算每个样本对模型错误的梯度贡献</li>
+<li>剔除贡献最大的&quot;问题样本&quot;</li>
+<li>保留高质量样本</li>
+</ul>
+<h5>4. 为什么选择语言学家而非众包？</h5>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>对比</th>
+<th>众包标注</th>
+<th>语言学家标注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成本</td>
+<td>低</td>
+<td>高</td>
+</tr>
+<tr>
+<td>速度</td>
+<td>快</td>
+<td>慢</td>
+</tr>
+<tr>
+<td>质量</td>
+<td>需要大量后处理</td>
+<td>直接可用</td>
+</tr>
+<tr>
+<td>CoT 思考深度</td>
+<td>浅层、模板化</td>
+<td>深层、有洞见</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>CoT 标注的特殊性</strong>：思考过程的质量直接决定模型推理能力，不能妥协。</p>
+<h5>5. 论文未公开的关键细节</h5>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>未公开内容</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>标注流程</strong></td>
+<td>具体的标注 SOP、培训过程未描述</td>
+</tr>
+<tr>
+<td><strong>标注指南</strong></td>
+<td>没有公开详细的标注规范文档</td>
+</tr>
+<tr>
+<td><strong>质量控制标准</strong></td>
+<td>没有说明如何判定 CoT 是否高质量</td>
+</tr>
+<tr>
+<td><strong>Inter-annotator Agreement</strong></td>
+<td>没有报告标注者间一致性</td>
+</tr>
+<tr>
+<td><strong>CoT 数据规模</strong></td>
+<td>仅提及 236K 总实例，未说明其中 CoT 数据比例</td>
+</tr>
+<tr>
+<td><strong>标注成本</strong></td>
+<td>未披露语言学家标注的时间和费用</td>
+</tr>
+</tbody>
+</table></div>
+<h5>6. 实践建议：构建 CoT 翻译数据</h5>
+<p><strong>标注者选择</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>标注者类型</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最高</td>
+<td>专业翻译 + 语言学家</td>
+<td>预算充足，追求最高质量</td>
+</tr>
+<tr>
+<td>次之</td>
+<td>翻译专业研究生</td>
+<td>预算有限，质量要求高</td>
+</tr>
+<tr>
+<td>再次</td>
+<td>双语能力强的众包</td>
+<td>预算紧张，需要大量数据</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>标注流程设计</strong>：</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  Step 1: 标注培训                                           │
+│  - 学习 CoT 标注示例                                         │
+│  - 理解三个标注步骤的目标                                     │
+├─────────────────────────────────────────────────────────────┤
+│  Step 2: 试标注 + 反馈                                       │
+│  - 小规模试标注                                              │
+│  - 专家审核反馈                                              │
+│  - 修正标注标准                                              │
+├─────────────────────────────────────────────────────────────┤
+│  Step 3: 正式标注                                           │
+│  - 批量标注                                                  │
+│  - 双人独立标注（关键样本）                                   │
+│  - 一致性检查                                                │
+├─────────────────────────────────────────────────────────────┤
+│  Step 4: 质量过滤                                           │
+│  - G-DIG 剔除问题样本                                        │
+│  - Rejection sampling 精炼                                  │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>标注质量标准（建议）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>高质量标准</th>
+<th>低质量信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Summary</td>
+<td>准确捕捉句子主旨，不遗漏关键信息</td>
+<td>遗漏关键信息，理解偏差</td>
+</tr>
+<tr>
+<td>Explain</td>
+<td>深入解释文化/语言差异，给出翻译建议</td>
+<td>表面解释，无洞见</td>
+</tr>
+<tr>
+<td>Translation</td>
+<td>解释翻译选择理由，指出陷阱</td>
+<td>仅给出译文，无解释</td>
+</tr>
+</tbody>
+</table></div>
+<h4>RL 偏好数据</h4>
+<ul>
+<li><strong>人类偏好数据</strong>: 约 20K 对（高资源语言对）</li>
+<li><strong>Dual-based Reward</strong>: 无需标注数据或参考翻译</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li><strong>FLORES-200</strong>: 多语言翻译基准，756 个翻译对，覆盖 28 种语言</li>
+<li><strong>WMT-25</strong>: 英语到 25 种目标语言的翻译</li>
+<li><strong>Seed-X-Challenge</strong>: 自建挑战集，包含多样化语言元素（网络俚语、古典文学、习语、专有名词）</li>
+</ul>
+<h2 id="4-关键方法-三阶段预训练-cot-微调-rl-强化">4. 关键方法：三阶段预训练 + CoT 微调 + RL 强化</h2>
+<h3 id="整体架构">整体架构</h3>
+<p>模型系列包含：</p>
+<ul>
+<li><strong>Seed-X-base</strong>: 预训练基础模型</li>
+<li><strong>Seed-X-Instruct</strong>: 通过 CoT 推理微调</li>
+<li><strong>Seed-X-PPO</strong>: 通过 PPO 强化学习进一步增强</li>
+<li><strong>Reward Model</strong>: 奖励模型</li>
+</ul>
+<p><strong>模型架构细节</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>规格</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础架构</td>
+<td>Mistral-7B</td>
+</tr>
+<tr>
+<td>Transformer 层数</td>
+<td>32</td>
+</tr>
+<tr>
+<td>注意力头数</td>
+<td>32</td>
+</tr>
+<tr>
+<td>嵌入维度</td>
+<td>4,096</td>
+</tr>
+<tr>
+<td>FFN 维度</td>
+<td>14,336</td>
+</tr>
+<tr>
+<td>位置编码</td>
+<td>RoPE</td>
+</tr>
+<tr>
+<td>最大序列长度</td>
+<td>2,048</td>
+</tr>
+<tr>
+<td>词表大小</td>
+<td>65,269 (BPE, 从 32,000 扩展)</td>
+</tr>
+<tr>
+<td>压缩率</td>
+<td>3.74 字符/token (基线: 3.17)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="核心模块">核心模块</h3>
+<h4>1. 三阶段预训练</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>名称</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>General Stage</td>
+<td>大规模单语数据训练，主要语言为中英文</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Multilingual-dominant Stage</td>
+<td>增加多语言数据比例，纳入低资源语言和双语语料</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Parallel-Only Stage</td>
+<td>高质量双语数据微调，使用语言标签，无额外指令</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>预训练超参数</strong>:</p>
+<ul>
+<li>Batch size: 2M tokens</li>
+<li>Learning rate: 3e-4</li>
+<li>Warm-up: 2,000 steps</li>
+<li>LR schedule: cosine decay to 10%</li>
+</ul>
+<p><strong>关键设计决策</strong>: 排除 STEM/代码数据，专注多语言翻译能力——这牺牲了代码能力换取更强的翻译能力。</p>
+<h4>2. 语言标签设计 (Language Tags)</h4>
+<p><strong>格式</strong>: <code>&lt;LANG_CODE&gt;</code>（如 <code>&lt;EN&gt;</code>, <code>&lt;ZH&gt;</code>, <code>&lt;JA&gt;</code>, <code>&lt;DE&gt;</code>, <code>&lt;FR&gt;</code>）</p>
+<p><strong>注意</strong>: 论文原文描述中写的是小写 <code>&lt;en&gt;</code>，但实际示例和训练中使用的是<strong>大写</strong> <code>&lt;EN&gt;</code>, <code>&lt;ZH&gt;</code> 等。</p>
+<p><strong>示例</strong>:</p>
+<pre><code>&lt;EN&gt; This is English text &lt;ZH&gt; 这是中文文本
+</code></pre>
+<p><strong>消融实验对比</strong> (Table 7):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Delimiter</th>
+<th>EN→XX BLEURT</th>
+<th>XX→EN BLEURT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;SEP&gt;</code></td>
+<td>53.39</td>
+<td>74.97</td>
+</tr>
+<tr>
+<td><code>&lt;NL&gt;</code></td>
+<td>74.81</td>
+<td>75.47</td>
+</tr>
+<tr>
+<td><code>&lt;Language&gt;</code></td>
+<td>77.66</td>
+<td>77.75</td>
+</tr>
+<tr>
+<td><strong><code>&lt;Lang Code&gt;</code></strong></td>
+<td><strong>78.31</strong></td>
+<td><strong>77.86</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 显式语言标签 (<code>&lt;Lang Code&gt;</code>) 显著优于分隔符方案，比 <code>&lt;SEP&gt;</code> 高出 <strong>+24.92 BLEURT</strong>。这揭示了一个重要设计原则：<strong>多语言模型需要显式的语言区分信号</strong>。</p>
+<h4>四种分隔符格式详解</h4>
+<p>以一个中英翻译对为例说明四种格式的区别：</p>
+<p><strong>原文</strong>：<code>The development of artificial intelligence has transformed many industries.</code>
+<strong>译文</strong>：<code>人工智能的发展改变了许多行业。</code></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>格式</th>
+<th>示例</th>
+<th>语言身份信息</th>
+<th>Token 效率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;SEP&gt;</code></td>
+<td><code>English text &lt;SEP&gt; 中文文本</code></td>
+<td>✗ 无，模型需自行推断</td>
+<td>高</td>
+</tr>
+<tr>
+<td><code>&lt;NL&gt;</code></td>
+<td><code>English text\n中文文本</code></td>
+<td>✗ 无，换行符语义模糊</td>
+<td>最高</td>
+</tr>
+<tr>
+<td><code>&lt;Language&gt;</code></td>
+<td><code>&lt;English&gt; English text &lt;Chinese&gt; 中文文本</code></td>
+<td>✓ 完整语言名称</td>
+<td>低（标签长）</td>
+</tr>
+<tr>
+<td><code>&lt;Lang Code&gt;</code></td>
+<td><code>&lt;EN&gt; English text &lt;ZH&gt; 中文文本</code></td>
+<td>✓ ISO 语言代码</td>
+<td>高</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么 <code>&lt;Lang Code&gt;</code> 效果最好？</strong></p>
+<ol>
+<li><strong>显式语言信号</strong>：模型不需要猜测&quot;这是什么语言&quot;，直接获得语言身份信息</li>
+<li><strong>任务意图明确</strong>：<code>&lt;EN&gt; ... &lt;ZH&gt; ...</code> 清晰传达&quot;这是翻译对&quot;，而非&quot;混合语言文本&quot;</li>
+<li><strong>Token 效率与语义平衡</strong>：比 <code>&lt;Language&gt;</code> 更短，但同样提供语言身份信息</li>
+</ol>
+<p><strong>直观理解</strong>——想象模型看到的信息：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>格式</th>
+<th>模型感知</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;SEP&gt;</code></td>
+<td>&quot;这里有分隔，但不知道两边是什么语言&quot;</td>
+</tr>
+<tr>
+<td><code>&lt;NL&gt;</code></td>
+<td>&quot;这里换行了，可能是段落分隔，也可能是翻译对&quot;</td>
+</tr>
+<tr>
+<td><code>&lt;Language&gt;</code></td>
+<td>&quot;左边是英语，右边是中文，这是翻译对&quot;</td>
+</tr>
+<tr>
+<td><code>&lt;Lang Code&gt;</code></td>
+<td>&quot;左边是 EN，右边是 ZH，这是翻译对&quot; ✓</td>
+</tr>
+</tbody>
+</table></div>
+<h4>3. Chain-of-Thought (CoT) 翻译</h4>
+<p>CoT 推理分解翻译过程为三个步骤：</p>
+<ol>
+<li><strong>整体句意总结</strong> (Summary): 理解源句整体含义</li>
+<li><strong>难点元素解析</strong> (Explain difficult words): 处理俚语、习语、诗歌等难点</li>
+<li><strong>目标语言适配</strong> (Proper translation): 按目标语言习惯生成翻译</li>
+</ol>
+<p><strong>CoT 数据标注</strong>（由专业语言学家完成）:</p>
+<ul>
+<li>整体句子含义</li>
+<li>挑战性语言元素（俚语、网络流行语、诗意表达）的解释和翻译</li>
+<li>目标语言的显著表达和使用习惯</li>
+<li>常见翻译陷阱和错误</li>
+</ul>
+<h4>4. 强化学习 (RL)</h4>
+<p><strong>PPO (Proximal Policy Optimization)</strong>:</p>
+<ul>
+<li>使用大批量 + 每个查询多次 rollout 提高训练效率</li>
+<li>用 reward model 初始化 critic model 确保训练稳定性</li>
+<li>[?] 论文未给出具体的 PPO loss 函数和 clipping 参数</li>
+</ul>
+<p><strong>Reward Model 设计</strong>:</p>
+<ul>
+<li><strong>人类偏好奖励</strong>: 基于约 20K 高资源语言对偏好数据训练</li>
+<li><strong>DuPO (Dual Preference Optimization)</strong>: 无偏好数据时使用
+<ul>
+<li>方法: 执行 A→B→Ã，测量 A 和 Ã 的相似度作为 A→B 的奖励</li>
+<li>[?] 论文未明确相似度计算方式和奖励归一化方法</li>
+</ul>
+</li>
+</ul>
+<p><strong>重要设计决策</strong>: 不使用自动评估指标（BLEU、BLEURT、COMET）作为奖励，因为这些指标无法完全等同于人类判断。</p>
+<p><strong>训练超参数</strong>:</p>
+<ul>
+<li>SFT batch size: 64 sentences</li>
+<li>SFT learning rate: 3e-6</li>
+<li>Inference: beam search (beam size 4)</li>
+</ul>
+<h3 id="prompt-模板-table-3">Prompt 模板 (Table 3)</h3>
+<p><strong>Standard 类型</strong>:</p>
+<pre><code>Translate the following text from &lt;src&gt; to &lt;trg&gt;:
+What does this sentence mean in &lt;trg&gt; from &lt;src&gt;:
+How do you translate this sentence into &lt;trg&gt; from &lt;src&gt;:
+Translate the following text to &lt;trg&gt;:
+</code></pre>
+<p><strong>CoT 类型</strong>:</p>
+<pre><code>Translate the following &lt;src&gt; sentence into &lt;trg&gt; and explain it in detail:
+First translate the &lt;src&gt; text into &lt;trg&gt; and then give the explanation:
+Translate the following sentence into &lt;trg&gt; and try to explain this translation. The input is:
+</code></pre>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方面</th>
+<th>传统方法</th>
+<th>Seed-X</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预训练数据</td>
+<td>多平行语料</td>
+<td>单语 + 双语分离训练</td>
+</tr>
+<tr>
+<td>语言区分</td>
+<td>分隔符或无</td>
+<td>显式语言标签</td>
+</tr>
+<tr>
+<td>翻译方式</td>
+<td>直接翻译</td>
+<td>CoT 推理 + RL 强化</td>
+</tr>
+<tr>
+<td>参数规模</td>
+<td>大模型 (100B+)</td>
+<td>仅 7B</td>
+</tr>
+<tr>
+<td>RL 奖励</td>
+<td>自动指标（BLEU/COMET）</td>
+<td>人类偏好 + Dual-based reward</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键创新点</strong>:</p>
+<ol>
+<li>避免 multi-parallel 数据导致的过拟合，依赖 LLM 泛化能力</li>
+<li>Parallel-only continued training 最大化翻译效果</li>
+<li>CoT 推理显式分解翻译过程</li>
+<li>语言标签设计优于传统分隔符方案</li>
+</ol>
+<h2 id="5-empirical-insights-五个关键实证洞察">5. Empirical Insights：五个关键实证洞察</h2>
+<p>论文第五章系统性地揭示了多语言翻译 LLM 训练中的五个关键发现，这些发现对于复现和改进翻译模型至关重要。</p>
+<h3 id="5-1-monolingual-data-shapes-core-language-capabilities">5.1 Monolingual Data Shapes Core Language Capabilities</h3>
+<p><strong>核心问题</strong>：大规模单语数据到底对翻译任务有什么贡献？</p>
+<p><strong>实验设计</strong>：在 1.3B 参数模型上进行对照实验，四个配置：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th style="text-align:center">Mono.</th>
+<th style="text-align:center">CoT</th>
+<th style="text-align:center">BLEURT ZH→EN</th>
+<th style="text-align:center">BLEURT EN→ZH</th>
+<th style="text-align:center">事实准确性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td style="text-align:center">✗</td>
+<td style="text-align:center">✗</td>
+<td style="text-align:center">62.22</td>
+<td style="text-align:center">64.00</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td>②</td>
+<td style="text-align:center">✗</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">63.22</td>
+<td style="text-align:center">64.70</td>
+<td style="text-align:center">59.1%</td>
+</tr>
+<tr>
+<td>③</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✗</td>
+<td style="text-align:center">63.55</td>
+<td style="text-align:center">65.88</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td>④</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">✓</td>
+<td style="text-align:center">64.59</td>
+<td style="text-align:center">66.62</td>
+<td style="text-align:center"><strong>67.7%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>发现</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>知识库丰富</strong></td>
+<td>200B 单语数据将事实准确性从 59.1% 提升到 <strong>67.7%</strong>（+8.6%）</td>
+</tr>
+<tr>
+<td><strong>推理能力提升</strong></td>
+<td>Mono. + CoT 组合效果最佳，说明单语数据增强了对源句的理解能力</td>
+</tr>
+<tr>
+<td><strong>非指令学习来源</strong></td>
+<td>遵循自然语言指令的能力<strong>并非仅从单语数据获得</strong>，需要指令微调</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>深层含义</strong>：</p>
+<ul>
+<li>单语数据的主要贡献是<strong>增强知识库</strong>，而非直接学习翻译技能</li>
+<li>翻译质量提升来自于对源句更准确的理解（事实知识）和更好的推理能力</li>
+<li>这解释了为什么 S1 阶段（大规模单语预训练）是必要的</li>
+</ul>
+<h3 id="5-2-parallel-data-quality-and-usage-matter">5.2 Parallel Data Quality and Usage Matter</h3>
+<p><strong>核心问题</strong>：双语数据的质量和使用方式如何影响翻译性能？</p>
+<h4>5.2.1 三个关键发现</h4>
+<p><strong>1. 简单词映射句子对有害</strong></p>
+<p>论文指出开源双语数据集存在三大问题：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>表现</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>领域局限</td>
+<td>新闻/政府文档为主</td>
+<td>泛化能力差</td>
+</tr>
+<tr>
+<td>语义对齐不足</td>
+<td>逐词翻译，缺乏语境理解</td>
+<td>译文生硬</td>
+</tr>
+<tr>
+<td>表达不自然</td>
+<td>机器生成痕迹明显</td>
+<td>不地道</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>2. 纯平行数据持续训练效果最佳</strong></p>
+<p>论文原文：</p>
+<blockquote class="card card-info">
+<p>&quot;Continue training on pure parallel data maximizes translation effectiveness. While this approach is generally avoided due to the risk of catastrophic forgetting, our experiments demonstrate its effectiveness when combined with high-quality parallel data and <strong>optimized learning rate scheduling</strong>.&quot;</p>
+</blockquote>
+<p><strong>Parallel-Only Stage (S3)</strong> 的设计原理：</p>
+<pre><code>S1 (General) → S2 (Multilingual) → S3 (Parallel-Only)
+                                    ↑
+                           高质量双语数据 + 优化学习率调度
+</code></pre>
+<p><strong>3. 过拟合风险</strong></p>
+<p><strong>监控指标</strong>：翻译性能趋势（自动指标 + 人类评估）</p>
+<p>论文警告：过度训练双语数据可能导致自动指标提升但人类评估下降（模型学会&quot;骗&quot;指标）</p>
+<h4>5.2.2 学习率优化细节</h4>
+<p><strong>已公开的学习率设置</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>Batch Size</th>
+<th>Learning Rate</th>
+<th>Warmup</th>
+<th>Decay</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pretraining (S1-S3)</strong></td>
+<td>2M tokens</td>
+<td>3e-4</td>
+<td>2,000 steps (linear)</td>
+<td>Cosine decay to 10%</td>
+</tr>
+<tr>
+<td><strong>SFT</strong></td>
+<td>64 sentences</td>
+<td>3e-6</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>[?] 未公开的细节</strong>：</p>
+<p>论文虽然提到 &quot;optimized learning rate scheduling&quot;，但<strong>没有给出 S3 阶段学习率的具体设置</strong>。可能的情况包括：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>可能的优化方式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>更低的学习率</strong></td>
+<td>S3 使用比 S1/S2 更小的学习率，避免破坏已学到的知识</td>
+</tr>
+<tr>
+<td><strong>更短的 warmup</strong></td>
+<td>从 S2 继承权重，不需要重新 warmup</td>
+</tr>
+<tr>
+<td><strong>不同的 decay 策略</strong></td>
+<td>可能使用更激进的 decay</td>
+</tr>
+</tbody>
+</table></div>
+<p>这属于论文的<strong>未公开细节</strong>，作者没有说明 S3 阶段学习率的具体配置。</p>
+<h3 id="5-3-translation-entails-thinking">5.3 Translation Entails Thinking</h3>
+<p><strong>核心问题</strong>：CoT 推理在翻译中到底起什么作用？</p>
+<h4>5.3.1 CoT 标注框架</h4>
+<p>由专业语言学家标注，包含三个步骤：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>英文术语</th>
+<th>标注内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>Summary</td>
+<td>整体句子含义总结</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Explain difficult words</td>
+<td>疑难词汇解释（俚语、网络流行语、诗意表达）</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Give proper translation</td>
+<td>目标语言地道表达 + 常见翻译陷阱</td>
+</tr>
+</tbody>
+</table></div>
+<h4>5.3.2 完整标注示例（Table 10）</h4>
+<p><strong>原文</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;每次化妆都在跟自己极不对称的脸做斗争，今天拍视频的截图给大家对比下。&quot;</p>
+</blockquote>
+<p><strong>Step 1: Summary</strong></p>
+<blockquote class="card card-info">
+<p>&quot;This is the description of having to deal with facial asymmetry every time the speaker puts on makeup. The speaker shares screenshots from a video to show a comparison.&quot;</p>
+</blockquote>
+<p><strong>Step 2: Explain difficult words</strong></p>
+<blockquote class="card card-info">
+<p>&quot;&quot;做斗争&quot; refers to the speaker uses makeup techniques to adjust asymmetrical face. &quot;做斗争&quot; is a metaphor in this context, not a literal struggle or fight. The phrase &quot;极不对称的脸&quot; means &quot;extremely asymmetrical face&quot;.&quot;</p>
+</blockquote>
+<p><strong>Step 3: Give proper translation</strong></p>
+<blockquote class="card card-info">
+<p>&quot;&quot;做斗争&quot; in this context does not convey a literal struggle but rather the effort to adjust facial asymmetry through makeup techniques. Therefore, &quot;做斗争&quot; should be translated as &quot;try to use makeup techniques to adjust asymmetrical face&quot; instead of &quot;struggle with&quot;.&quot;</p>
+</blockquote>
+<p><strong>最终译文</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;Every time I put on makeup, I'm trying to use makeup techniques to adjust my asymmetrical face. Today, I've taken screenshots from a video to show you all a comparison.&quot;</p>
+</blockquote>
+<h4>5.3.3 四种 Prompt Setting 详解</h4>
+<p><strong>实验目的</strong>：探究不同 prompt 设计策略对翻译性能的影响。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>含义</th>
+<th>Prompt 示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Baseline</strong></td>
+<td>基础 prompt，包含源语言和目标语言标签</td>
+<td><code>Translate the following text from &lt;EN&gt; to &lt;ZH&gt;:</code></td>
+</tr>
+<tr>
+<td><strong>w/ No [src] Lang.</strong></td>
+<td>省略源语言标签，只保留目标语言</td>
+<td><code>Translate the following text to &lt;ZH&gt;:</code></td>
+</tr>
+<tr>
+<td><strong>w/ CoT Prompts</strong></td>
+<td>使用 CoT 风格 prompt，要求模型先解释再翻译</td>
+<td><code>First translate the &lt;EN&gt; text into &lt;ZH&gt; and then give the explanation:</code></td>
+</tr>
+<tr>
+<td><strong>w/ Diversed Prompts</strong></td>
+<td>使用多种不同表述的 prompt 模板</td>
+<td>见下方详细列表</td>
+</tr>
+<tr>
+<td><strong>w/ All</strong></td>
+<td>组合以上所有策略</td>
+<td>多样化 prompt + CoT + 省略源语言标签</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>详细解释</strong>：</p>
+<p><strong>1. Baseline（基线）</strong></p>
+<p><strong>定义</strong>：标准翻译 prompt，明确指定源语言和目标语言。</p>
+<p><strong>Prompt 模板</strong>：</p>
+<pre><code>Translate the following text from &lt;EN&gt; to &lt;ZH&gt;:
+[源文本]
+</code></pre>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>最直接的翻译指令</li>
+<li>显式提供源语言信息</li>
+<li>作为其他配置的对照组</li>
+</ul>
+<p><strong>2. w/ No [src] Lang.（省略源语言标签）</strong></p>
+<p><strong>定义</strong>：在 prompt 中不指定源语言，只指定目标语言。</p>
+<p><strong>Prompt 模板</strong>：</p>
+<pre><code>Translate the following text to &lt;ZH&gt;:
+[源文本]
+</code></pre>
+<p><strong>设计意图</strong>：</p>
+<ul>
+<li>测试模型是否能<strong>自动识别源语言</strong></li>
+<li>提高 prompt 对<strong>混合语言输入</strong>的鲁棒性</li>
+<li>模拟实际场景中用户可能不指定源语言的情况</li>
+</ul>
+<p><strong>实验结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th style="text-align:center">Baseline</th>
+<th style="text-align:center">w/ No [src] Lang.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→XX</td>
+<td style="text-align:center">75.84</td>
+<td style="text-align:center">75.82</td>
+</tr>
+<tr>
+<td>XX→EN</td>
+<td style="text-align:center">75.66</td>
+<td style="text-align:center"><strong>75.89</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>：省略源语言标签对 XX→EN 方向略有提升（+0.23），说明模型能自动识别源语言。</p>
+<p><strong>3. w/ CoT Prompts（链式思考 Prompt）</strong></p>
+<p><strong>定义</strong>：使用引导模型进行推理的 prompt，要求先解释再翻译。</p>
+<p><strong>Prompt 模板</strong>：</p>
+<pre><code>Translate the following &lt;EN&gt; sentence into &lt;ZH&gt; and explain it in detail:
+[源文本]
+
+First translate the &lt;EN&gt; text into &lt;ZH&gt; and then give the explanation:
+[源文本]
+
+Translate the following sentence into &lt;ZH&gt; and try to explain this translation. The input is:
+[源文本]
+</code></pre>
+<p><strong>设计意图</strong>：</p>
+<ul>
+<li>引导模型显式推理翻译过程</li>
+<li>处理隐喻、俚语、文化特定表达</li>
+<li>与人类翻译认知过程一致</li>
+</ul>
+<p><strong>实验结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th style="text-align:center">Baseline</th>
+<th style="text-align:center">w/ CoT Prompts</th>
+<th style="text-align:center">提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→XX</td>
+<td style="text-align:center">75.84</td>
+<td style="text-align:center"><strong>77.48</strong></td>
+<td style="text-align:center"><strong>+1.64</strong></td>
+</tr>
+<tr>
+<td>XX→EN</td>
+<td style="text-align:center">75.66</td>
+<td style="text-align:center"><strong>77.58</strong></td>
+<td style="text-align:center"><strong>+1.92</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>：CoT prompts 带来显著提升，是所有单项改进中效果最明显的。</p>
+<p><strong>4. w/ Diversed Prompts（多样化 Prompt）</strong></p>
+<p><strong>定义</strong>：使用多种不同表述的 prompt 模板进行训练和推理。</p>
+<p><strong>Prompt 模板库（来自 Table 3）</strong>：</p>
+<p><strong>Standard 类型</strong>：</p>
+<pre><code>Translate the following text from &lt;src&gt; to &lt;trg&gt;:
+What does this sentence mean in &lt;trg&gt; from &lt;src&gt;:
+How do you translate this sentence into &lt;trg&gt; from &lt;src&gt;:
+Translate the following text to &lt;trg&gt;:
+Translate the following &lt;src&gt; sentence into &lt;trg&gt; and explain it in detail:
+</code></pre>
+<p><strong>设计意图</strong>：</p>
+<ul>
+<li>避免模型<strong>过拟合到单一 prompt 格式</strong></li>
+<li>提高 prompt 鲁棒性</li>
+<li>增强模型的<strong>指令遵循能力</strong></li>
+</ul>
+<p><strong>实验结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th style="text-align:center">Baseline</th>
+<th style="text-align:center">w/ Diversed Prompts</th>
+<th style="text-align:center">提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→XX</td>
+<td style="text-align:center">75.84</td>
+<td style="text-align:center">77.17</td>
+<td style="text-align:center">+1.33</td>
+</tr>
+<tr>
+<td>XX→EN</td>
+<td style="text-align:center">75.66</td>
+<td style="text-align:center">77.50</td>
+<td style="text-align:center">+1.84</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>：多样化 prompt 同样有效，与 CoT 效果相近。</p>
+<p><strong>5. w/ All（组合所有策略）</strong></p>
+<p><strong>定义</strong>：组合所有改进策略：多样化 prompt + CoT + 省略源语言标签。</p>
+<p><strong>实验结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th style="text-align:center">Baseline</th>
+<th style="text-align:center">w/ All</th>
+<th style="text-align:center">总提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→XX</td>
+<td style="text-align:center">75.84</td>
+<td style="text-align:center"><strong>77.88</strong></td>
+<td style="text-align:center"><strong>+2.04</strong></td>
+</tr>
+<tr>
+<td>XX→EN</td>
+<td style="text-align:center">75.66</td>
+<td style="text-align:center">77.74</td>
+<td style="text-align:center">+2.08</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>：组合策略效果最佳，但提升幅度不是简单的叠加（CoT 单独 +1.64，All +2.04），说明各策略存在一定的重叠效应。</p>
+<p><strong>各策略效果对比总结</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th style="text-align:center">EN→XX</th>
+<th style="text-align:center">XX→EN</th>
+<th>核心机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td style="text-align:center">75.84</td>
+<td style="text-align:center">75.66</td>
+<td>对照组</td>
+</tr>
+<tr>
+<td>w/ No [src] Lang.</td>
+<td style="text-align:center">75.82</td>
+<td style="text-align:center">75.89</td>
+<td>自动语言识别</td>
+</tr>
+<tr>
+<td>w/ CoT Prompts</td>
+<td style="text-align:center">77.48</td>
+<td style="text-align:center">77.58</td>
+<td>显式推理过程</td>
+</tr>
+<tr>
+<td>w/ Diversed Prompts</td>
+<td style="text-align:center">77.17</td>
+<td style="text-align:center">77.50</td>
+<td>Prompt 鲁棒性</td>
+</tr>
+<tr>
+<td><strong>w/ All</strong></td>
+<td style="text-align:center"><strong>77.88</strong></td>
+<td style="text-align:center"><strong>77.74</strong></td>
+<td>组合效应</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键结论</strong>：</p>
+<ol>
+<li><strong>CoT 效果最显著</strong>：单策略中提升最大（+1.6~+1.9 BLEURT）</li>
+<li><strong>多样化 prompt 有效</strong>：避免过拟合到单一格式（+1.3~+1.8 BLEURT）</li>
+<li><strong>省略源语言标签</strong>：对 XX→EN 方向有帮助，说明模型有自动语言识别能力</li>
+<li><strong>组合策略最佳</strong>：但提升不是简单叠加，存在边际递减效应</li>
+</ol>
+<h3 id="5-4-mono-parallel-balance-promotes-language-transfer">5.4 Mono-Parallel Balance Promotes Language Transfer</h3>
+<p><strong>核心问题</strong>：单语-平行数据比例如何影响知识迁移？</p>
+<h4>5.4.1 渐进式训练策略</h4>
+<p><strong>核心原则</strong>：英语作为核心语言（primary language），在训练中保持主导地位。</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  S1: General Stage                                          │
+│  - 大规模单语数据                                            │
+│  - 主要语言：EN, ZH                                          │
+│  - 目的：建立基础语言能力                                      │
+├─────────────────────────────────────────────────────────────┤
+│  S2: Multilingual-dominant Stage                            │
+│  - 增加多语言数据比例                                         │
+│  - 纳入低资源语言和双语语料                                    │
+│  - 目的：扩展语言覆盖                                          │
+├─────────────────────────────────────────────────────────────┤
+│  S3: Parallel-Only Stage                                    │
+│  - 纯双语数据微调                                             │
+│  - 使用语言标签 &lt;LANG_CODE&gt;                                   │
+│  - 目的：最大化翻译能力                                        │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h4>5.4.2 知识迁移机制</h4>
+<p><strong>实验设计</strong>：评估预训练不同阶段的模型性能。</p>
+<p><strong>测试任务</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>具体测试</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识保持</td>
+<td>ARC-easy, ARC-challenge</td>
+</tr>
+<tr>
+<td>语言理解</td>
+<td>OpenBookQA, TNEWS, AFQMC, C3, iFLYTEK</td>
+</tr>
+<tr>
+<td>推理能力</td>
+<td>HellaSwag/COPA, CMNLI</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现（图 5）</strong>：</p>
+<p><img src="https://arxiv.org/html/2507.13618v4/x7.png" alt="Figure 5: 预训练不同阶段在各基准上的性能变化，Stage I 为混合语料、Stage II 为纯平行数据" /></p>
+<pre><code>知识迁移路径：
+
+      EN (核心语言)
+           │
+           ├────→ JA (日语)      持续提升 ✓
+           ├────→ TH (泰语)      持续提升 ✓
+           ├────→ RU (俄语)      持续提升 ✓
+           ├────→ MS (马来语)    持续提升 ✓
+           ├────→ ID (印尼语)    持续提升 ✓
+           └────→ AR (阿拉伯语)  持续提升 ✓
+
+这些语言的共同点：与英语差异较大（远距离语言）
+</code></pre>
+<p><strong>权衡取舍</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th style="text-align:center">核心语言能力</th>
+<th style="text-align:center">边缘语言能力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1→S2</td>
+<td style="text-align:center">轻微下降</td>
+<td style="text-align:center">显著提升</td>
+</tr>
+<tr>
+<td>S2→S3</td>
+<td style="text-align:center">显著下降（推理退化）</td>
+<td style="text-align:center">继续提升</td>
+</tr>
+</tbody>
+</table></div>
+<h4>5.4.3 Multi-parallel 数据消融（Table 11）</h4>
+<p><strong>Multi-parallel 数据定义</strong>：</p>
+<p>同一语义内容有<strong>多种语言的翻译版本</strong>，形成一个多语言平行语料库。</p>
+<pre><code>示例 (multi-parallel):
+English:  &quot;Hello world&quot;
+French:   &quot;Bonjour le monde&quot;
+German:   &quot;Hallo Welt&quot;
+Spanish:  &quot;Hola mundo&quot;
+→ 四种语言共享同一语义
+</code></pre>
+<p><strong>与 Bilingual 数据的区别</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>语言对数量</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bilingual</td>
+<td>1 对</td>
+<td>EN↔FR 单一对应</td>
+</tr>
+<tr>
+<td>Multi-parallel</td>
+<td>多对共享</td>
+<td>EN, FR, DE, ES 共享同一内容</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>实验结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th style="text-align:center">Multi-parallel</th>
+<th style="text-align:center">EN→XX BLEURT</th>
+<th style="text-align:center">XX→EN BLEURT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">✓ 使用</td>
+<td style="text-align:center">71.63</td>
+<td style="text-align:center">75.44</td>
+</tr>
+<tr>
+<td style="text-align:center">✗ 不使用</td>
+<td style="text-align:center"><strong>79.46</strong></td>
+<td style="text-align:center"><strong>77.77</strong></td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>差异</strong></td>
+<td style="text-align:center"><strong>+7.83</strong></td>
+<td style="text-align:center"><strong>+2.33</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>反直觉的结论</strong>：避免 multi-parallel 数据反而效果更好！</p>
+<p><strong>原因分析</strong>：</p>
+<ol>
+<li>Multi-parallel 数据可能导致模型<strong>记忆</strong>而非<strong>泛化</strong></li>
+<li>LLM 的预训练知识可以跨语言迁移，不需要依赖显式的多语言对齐</li>
+<li>传统 NMT 依赖多平行语料，但 LLM 的泛化能力使得单语+双语分离训练效果更好</li>
+</ol>
+<h3 id="5-5-overfitting-risks-in-multilingual-instruction-data">5.5 Overfitting Risks in Multilingual Instruction Data</h3>
+<p><strong>核心问题</strong>：如何获取覆盖广泛语言方向的高质量监督数据？</p>
+<p><strong>困境</strong>：</p>
+<ul>
+<li>获取所有语言对的高质量人工标注几乎不可能</li>
+<li>组合多平行数据看似是解决方案</li>
+</ul>
+<p><strong>实验发现</strong>：</p>
+<pre><code>组合多平行数据扩展方向覆盖
+         ↓
+简化学习模式（记忆而非泛化）
+         ↓
+过拟合（训练集表现好，测试集差）
+         ↓
+实际性能下降
+</code></pre>
+<p><strong>解决方案</strong>：</p>
+<p>论文的建议是<strong>依赖 LLM 的泛化能力</strong>，而非盲目增加语言对覆盖：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>策略</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Multi-parallel 数据扩展</td>
+<td>过拟合风险高</td>
+</tr>
+<tr>
+<td>单语 + 双语分离训练</td>
+<td>泛化能力强 ✓</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-6-empirical-insights-总结">5.6 Empirical Insights 总结</h3>
+<p>五个核心洞察的关系：</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    Empirical Insights                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  5.1 单语数据                                               │
+│      └──→ 塑造核心语言能力（知识库 + 推理）                    │
+│                        │                                    │
+│                        ▼                                    │
+│  5.2 双语数据                                               │
+│      └──→ 质量优于数量，避免低质量句子对                       │
+│                        │                                    │
+│                        ▼                                    │
+│  5.3 CoT 推理                                               │
+│      └──→ 翻译需要思考，显式分解推理过程                       │
+│                        │                                    │
+│                        ▼                                    │
+│  5.4 数据平衡                                               │
+│      └──→ 单语-平行数据比例影响知识迁移                        │
+│                        │                                    │
+│                        ▼                                    │
+│  5.5 过拟合风险                                              │
+│      └──→ 避免通过 multi-parallel 盲目扩展                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>这些洞察形成了一个完整的训练范式：<strong>先建立知识基础（单语），再精炼翻译技能（双语），通过显式推理增强质量，同时注意数据平衡和避免过拟合</strong>。</p>
+<hr />
+<h2 id="6-关键实验-7b-模型达到闭源大模型水平">6. 关键实验：7B 模型达到闭源大模型水平</h2>
+<h3 id="主实验结果-table-4">主实验结果 (Table 4)</h3>
+<p><strong>评估指标说明</strong>:</p>
+<p>论文使用 <strong>BLEURT</strong> 和 <strong>COMET</strong> 作为主要评估指标：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>计算方式</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BLEU</strong></td>
+<td>n-gram 精确匹配统计</td>
+<td>基于字符串匹配，无法处理同义词</td>
+</tr>
+<tr>
+<td><strong>BLEURT</strong></td>
+<td>预训练模型 + 人类偏好学习</td>
+<td>理解语义，与人类判断相关性高</td>
+</tr>
+<tr>
+<td><strong>COMET</strong></td>
+<td>预训练模型 + 质量评估</td>
+<td>基于 cross-lingual embeddings</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>BLEURT vs BLEU 核心区别</strong>:</p>
+<ul>
+<li><strong>BLEU</strong>: <code>BLEU = BP × exp(Σ w_n × log(p_n))</code>，本质是统计词组重叠率</li>
+<li><strong>BLEURT</strong>: 使用 BERT 等预训练模型编码文本，在人类评分数据上微调，能理解语义相似性（&quot;happy&quot; ≈ &quot;glad&quot;）</li>
+</ul>
+<p>论文原文：<em>&quot;We employ neural-based metrics XCOMET-XL and BLEURT, which generally correlate well with human judgements but may be unreliable in detecting certain translation phenomena.&quot;</em></p>
+<h4>不同训练阶段性能对比</h4>
+<p><strong>FLORES-200 &amp; WMT-25 平均性能</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>BLEURT (Avg)</th>
+<th>COMET (Avg)</th>
+<th>阶段说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TowerInstruct-13B</td>
+<td>62.43</td>
+<td>80.38</td>
+<td>基线</td>
+</tr>
+<tr>
+<td>LLaMAX3-8B</td>
+<td>69.77</td>
+<td>82.93</td>
+<td>基线</td>
+</tr>
+<tr>
+<td><strong>Seed-X-Instruct</strong></td>
+<td>75.03</td>
+<td>89.05</td>
+<td>SFT/CoT 微调后</td>
+</tr>
+<tr>
+<td><strong>Seed-X-DuPO</strong></td>
+<td>75.83</td>
+<td>89.96</td>
+<td>DuPO 强化学习</td>
+</tr>
+<tr>
+<td><strong>Seed-X-PPO</strong></td>
+<td><strong>76.25</strong></td>
+<td><strong>90.81</strong></td>
+<td>PPO 强化学习</td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td>75.15</td>
+<td>89.90</td>
+<td>闭源模型</td>
+</tr>
+<tr>
+<td>Claude-3.5-Sonnet</td>
+<td>76.63</td>
+<td>91.07</td>
+<td>闭源模型</td>
+</tr>
+<tr>
+<td>DeepSeek-R1</td>
+<td>76.16</td>
+<td>90.62</td>
+<td>闭源模型</td>
+</tr>
+<tr>
+<td>Gemini-2.5-Pro</td>
+<td>74.68</td>
+<td>88.84</td>
+<td>闭源模型</td>
+</tr>
+<tr>
+<td>Qwen3-235B-A22B</td>
+<td>74.83</td>
+<td>89.13</td>
+<td>闭源模型</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>:</p>
+<ol>
+<li><strong>SFT → DuPO</strong>: +0.80 BLEURT, +0.91 COMET</li>
+<li><strong>SFT → PPO</strong>: +1.22 BLEURT, +1.76 COMET</li>
+<li><strong>DuPO → PPO</strong>: +0.42 BLEURT, +0.85 COMET</li>
+<li>Seed-X-PPO 仅用 7B 参数，BLEURT 和 COMET 均超越 GPT-4o，接近 Claude-3.5-Sonnet 水平（仅落后 0.38 BLEURT 和 0.26 COMET）</li>
+</ol>
+<h4>各翻译方向详细对比 (RL 前后)</h4>
+<p><strong>Seed-X-PPO 在 FLORES-200 各方向表现</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th>BLEURT</th>
+<th>COMET</th>
+<th>vs SFT 提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XX→EN</td>
+<td>79.15</td>
+<td>96.98</td>
+<td>+1.38</td>
+</tr>
+<tr>
+<td>EN→XX</td>
+<td>80.34</td>
+<td>94.60</td>
+<td>+0.88</td>
+</tr>
+<tr>
+<td>XX→ZH</td>
+<td>72.83</td>
+<td>87.24</td>
+<td>+0.67</td>
+</tr>
+<tr>
+<td>ZH→XX</td>
+<td>77.32</td>
+<td>91.80</td>
+<td><strong>+1.81</strong></td>
+</tr>
+<tr>
+<td>XX→XX</td>
+<td>77.98</td>
+<td>91.34</td>
+<td>+1.60</td>
+</tr>
+<tr>
+<td>WMT-25 EN→XX</td>
+<td>69.88</td>
+<td>82.89</td>
+<td>+0.98</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>RL 提升的关键洞察</strong>:</p>
+<ul>
+<li><strong>提升最明显的方向</strong>: ZH→XX (+1.81)、XX→XX (+1.60) —— 低资源语言对和非英语中心方向</li>
+<li><strong>提升相对较小的方向</strong>: XX→ZH (+0.67)、EN→XX (+0.88) —— SFT 阶段已接近饱和</li>
+<li><strong>DuPO 的性价比</strong>: 达到 PPO 约 65% 的提升效果，但不需要人类偏好数据</li>
+</ul>
+<h3 id="各翻译方向详细结果-table-4">各翻译方向详细结果 (Table 4)</h3>
+<p>详见 <span class="wikilink unresolved" title="#不同训练阶段性能对比">#不同训练阶段性能对比</span> 中的详细表格。</p>
+<h3 id="figure-6-分语言方向的详细对比">Figure 6: 分语言方向的详细对比</h3>
+<p><img src="https://arxiv.org/html/2507.13618v4/x10.png" alt="Figure 6: Seed-X-SFT 与 Seed-X-PPO 在 FLORES-200 各翻译方向上的性能对比" /></p>
+<p><strong>Figure 6</strong> (Page 19) 展示了 <strong>Seed-X-SFT vs Seed-X-PPO</strong> 在 FLORES-200 各翻译方向上的性能对比：</p>
+<h4>EN→X 方向（英语到 20 种语言）</h4>
+<pre><code>BLEURT 分数范围：65-95
+观察：PPO 在所有方向上都优于或等于 SFT
+最大提升：en2th (泰语), en2vi (越南语) 等低资源语言
+</code></pre>
+<h4>ZH→X 方向（中文到 20 种语言）</h4>
+<pre><code>BLEURT 分数范围：60-95
+观察：PPO 提升更加明显，尤其在低资源方向
+最大提升：zh2th (泰语), zh2vi (越南语)
+</code></pre>
+<p><strong>Appendix C 原文分析</strong>:</p>
+<blockquote class="card card-info">
+<p><em>&quot;In Figure 6, we present the detailed performance of Seed-X across multiple translation directions after instruction-tuning (SFT) and reinforcement learning (PPO). The results show that, after the SFT stage, the model already achieves strong translation quality, as measured by BLEURT scores. PPO further improves upon the SFT model, pushing the performance ceiling for machine translation.&quot;</em></p>
+</blockquote>
+<p><strong>关键结论</strong>:</p>
+<ul>
+<li>✅ SFT 后已经达到较强的翻译质量</li>
+<li>✅ PPO 在此基础上进一步提升性能天花板</li>
+<li>✅ 提供了分语言方向的详细对比图（40+ 个翻译方向）</li>
+</ul>
+<p><strong>Seed-X-PPO 在 Seed-X-Challenge 上表现</strong> (0-4 分制):</p>
+<ul>
+<li>14 个语言方向中获得 <strong>6 个第一名、1 个第二名</strong></li>
+<li><strong>整体平均分 3.73</strong>，超越 GPT-4o (3.66)、Gemini-2.5-Pro (3.66)、Claude-3.5-Sonnet (3.68)</li>
+</ul>
+<p><strong>各方向具体得分</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th>得分</th>
+<th>排名</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→ES</td>
+<td>3.87</td>
+<td>1st</td>
+</tr>
+<tr>
+<td>EN→FR</td>
+<td>3.88</td>
+<td>1st</td>
+</tr>
+<tr>
+<td>EN→RU</td>
+<td>3.88</td>
+<td>1st</td>
+</tr>
+<tr>
+<td>EN→PT</td>
+<td>3.88</td>
+<td>1st</td>
+</tr>
+<tr>
+<td>EN→DE</td>
+<td>3.61</td>
+<td>-</td>
+</tr>
+<tr>
+<td>EN→IT</td>
+<td>3.55</td>
+<td>-</td>
+</tr>
+<tr>
+<td>EN→AR</td>
+<td>3.78</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="消融实验">消融实验</h3>
+<blockquote class="card card-info">
+<p>详细的 Empirical Insights 分析见 <span class="wikilink unresolved" title="#5. Empirical Insights：五个关键实证洞察">#5. Empirical Insights：五个关键实证洞察</span>。</p>
+</blockquote>
+<h4>单语数据质量 (Table 5a)</h4>
+<p><strong>Filter 方法</strong>（论文原文）:</p>
+<blockquote class="card card-info">
+<p>&quot;We develop a <strong>document-level quality assessment model</strong> that categorizes documents into three tiers: high, medium, and low quality. High-quality documents are retained in their original form, medium-quality documents are enhanced through <strong>LLM-based paraphrasing</strong>, and low-quality content is excluded entirely.&quot;</p>
+</blockquote>
+<p><strong>三档处理策略</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>质量档</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>High</strong></td>
+<td>直接保留原文</td>
+</tr>
+<tr>
+<td><strong>Medium</strong></td>
+<td>LLM 改写（paraphrasing）增强</td>
+</tr>
+<tr>
+<td><strong>Low</strong></td>
+<td>完全丢弃</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Filter 流程</strong>:</p>
+<ol>
+<li>训练文档级质量评估模型</li>
+<li>模型对每个文档打分，划分三档</li>
+<li>[?] 质量模型的具体架构、训练数据、阈值设定未公开</li>
+</ol>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>处理方式</th>
+<th>Loss</th>
+<th>ARC-mm</th>
+<th>Trans.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw Data</td>
+<td>3.23</td>
+<td>25.17</td>
+<td>6.97</td>
+</tr>
+<tr>
+<td>+ Filter</td>
+<td>2.93</td>
+<td>30.18</td>
+<td>8.19</td>
+</tr>
+<tr>
+<td>+ Paraphrasing</td>
+<td>2.81</td>
+<td>32.98</td>
+<td>9.41</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 数据过滤 + LLM 改写显著提升模型性能。</p>
+<h4>数据多样性影响 (Table 5b)</h4>
+<p><strong>多样性度量方法</strong>（论文原文）:</p>
+<blockquote class="card card-info">
+<p>&quot;To measure diversity, we quantify it using <strong>the number of unique tags</strong>&quot;</p>
+</blockquote>
+<p><strong>度量方式</strong>: 统计数据集中 <strong>唯一标签（unique tags）的数量</strong></p>
+<ul>
+<li>Tags 可能指文本的主题标签、领域标签或语言方向标签</li>
+<li>唯一标签数量越多，数据覆盖的主题/领域越广泛</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>多样性</th>
+<th>Loss</th>
+<th>Arc-mm</th>
+<th>Trans.</th>
+<th># Tag (M)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>2.81</td>
+<td><strong>32.98</strong></td>
+<td><strong>9.41</strong></td>
+<td><strong>1.55</strong></td>
+</tr>
+<tr>
+<td>2/3 Diversity</td>
+<td>2.73</td>
+<td>29.71</td>
+<td>8.55</td>
+<td>1.04</td>
+</tr>
+<tr>
+<td>1/3 Diversity</td>
+<td><strong>2.51</strong></td>
+<td>26.51</td>
+<td>7.67</td>
+<td>0.51</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 降低数据多样性虽然降低训练 loss，但会损害推理和翻译能力。数据多样性对模型能力至关重要。</p>
+<h4>Prompt 设计消融 (Table 6)</h4>
+<blockquote class="card card-info">
+<p>四种 Prompt Setting 的详细解释见 <span class="wikilink unresolved" title="#5.3.3 四种 Prompt Setting 详解">#5.3.3 四种 Prompt Setting 详解</span>。</p>
+</blockquote>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>EN→XX</th>
+<th>XX→EN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>75.84</td>
+<td>75.66</td>
+</tr>
+<tr>
+<td>w/ No [src] Lang.</td>
+<td>75.82</td>
+<td>75.89</td>
+</tr>
+<tr>
+<td>w/ CoT Prompts</td>
+<td>77.48</td>
+<td>77.58</td>
+</tr>
+<tr>
+<td>w/ Diversed Prompts</td>
+<td>77.17</td>
+<td>77.5</td>
+</tr>
+<tr>
+<td>w/ All</td>
+<td>77.88</td>
+<td>77.74</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: CoT prompts 带来约 <strong>+1.6 BLEURT</strong> 提升。</p>
+<h4>CoT + 单语数据 (Table 8)</h4>
+<blockquote class="card card-info">
+<p>详见 <span class="wikilink unresolved" title="#5.1 Monolingual Data Shapes Core Language Capabilities">#5.1 Monolingual Data Shapes Core Language Capabilities</span>。</p>
+</blockquote>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Mono.</th>
+<th>CoT</th>
+<th>BLEURT ZH→EN</th>
+<th>BLEURT EN→ZH</th>
+<th>Factual Acc.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✗</td>
+<td>✗</td>
+<td>62.22</td>
+<td>64.00</td>
+<td>-</td>
+</tr>
+<tr>
+<td>✗</td>
+<td>✓</td>
+<td>63.22</td>
+<td>64.70</td>
+<td>59.1%</td>
+</tr>
+<tr>
+<td>✓</td>
+<td>✗</td>
+<td>63.55</td>
+<td>65.88</td>
+<td>-</td>
+</tr>
+<tr>
+<td>✓</td>
+<td>✓</td>
+<td>64.59</td>
+<td>66.62</td>
+<td>67.7%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: CoT + 单语数据协同作用，事实准确性从 59.1% 提升到 67.7%，这是单独使用任一方法无法达到的效果。</p>
+<h4>Multi-parallel 数据消融 (Table 11)</h4>
+<blockquote class="card card-info">
+<p>详见 <span class="wikilink unresolved" title="#5.4.3 Multi-parallel 数据消融（Table 11）">#5.4.3 Multi-parallel 数据消融（Table 11）</span>。</p>
+</blockquote>
+<p><strong>Multi-parallel 数据定义</strong>：</p>
+<p>同一语义内容有<strong>多种语言的翻译版本</strong>，形成一个多语言平行语料库。</p>
+<pre><code>示例 (multi-parallel):
+English:  &quot;Hello world&quot;
+French:   &quot;Bonjour le monde&quot;
+German:   &quot;Hallo Welt&quot;
+Spanish:  &quot;Hola mundo&quot;
+→ 四种语言共享同一语义
+</code></pre>
+<p><strong>与 Bilingual 数据的区别</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>语言对数量</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bilingual</td>
+<td>1 对</td>
+<td>EN↔FR 单一对应</td>
+</tr>
+<tr>
+<td>Multi-parallel</td>
+<td>多对共享</td>
+<td>EN, FR, DE, ES 共享同一内容</td>
+</tr>
+</tbody>
+</table></div>
+<p>论文原文: <em>&quot;Although combining multi-parallel corpora seems like a straightforward solution to expand directional coverage...&quot;</em>（暗示这不是最优解）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Multi-parallel</th>
+<th>BLEURT EN→XX</th>
+<th>BLEURT XX→EN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✓</td>
+<td>71.63</td>
+<td>75.44</td>
+</tr>
+<tr>
+<td>✗</td>
+<td>79.46</td>
+<td>77.77</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 避免 multi-parallel 数据可带来显著提升（<strong>+7.83 EN→XX, +2.33 XX→EN</strong>）。</p>
+<p><strong>反直觉的原因分析</strong>:</p>
+<ol>
+<li>Multi-parallel 数据可能导致模型<strong>记忆</strong>而非泛化</li>
+<li>LLM 的预训练知识可以跨语言迁移，不需要依赖显式的多语言对齐</li>
+<li>传统 NMT 依赖多平行语料，但 LLM 的泛化能力使得单语+双语分离训练效果更好</li>
+</ol>
+<h3 id="预训练阶段效果-table-2">预训练阶段效果 (Table 2)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>INCLUDE</th>
+<th>MMMLU</th>
+<th>XCOPA</th>
+<th>XWinograd</th>
+<th>XStoryCloze</th>
+<th>PAWS-X</th>
+<th>Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama3-8B</td>
+<td>55.27</td>
+<td>50.60</td>
+<td>72.03</td>
+<td>80.25</td>
+<td>65.45</td>
+<td>60.85</td>
+<td>64.08</td>
+</tr>
+<tr>
+<td>Qwen2.5-7B</td>
+<td>61.29</td>
+<td><strong>59.59</strong></td>
+<td>72.73</td>
+<td>79.94</td>
+<td>65.76</td>
+<td>62.88</td>
+<td>67.03</td>
+</tr>
+<tr>
+<td><strong>Seed-X</strong></td>
+<td><strong>61.93</strong></td>
+<td>53.25</td>
+<td><strong>77.37</strong></td>
+<td><strong>82.48</strong></td>
+<td><strong>69.72</strong></td>
+<td><strong>63.83</strong></td>
+<td><strong>68.10</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: Seed-X 在多语言理解任务上优于同等规模开源模型，但 MMMLU（数学推理）表现相对较弱（53.25 vs Qwen2.5-7B 的 59.59），这是专注翻译能力的代价。</p>
+<h2 id="7-golden-case-一条数据的完整流程">7. Golden Case：一条数据的完整流程</h2>
+<p><strong>输入</strong> (中文):</p>
+<blockquote class="card card-info">
+<p>&quot;每次化妆都在跟自己极不对称的脸做斗争，今天拍视频的截图给大家对比下。&quot;</p>
+</blockquote>
+<p><strong>Step 1: Prompt 构造</strong></p>
+<pre><code>Translate the following &lt;ZH&gt; sentence into &lt;EN&gt; and explain it in detail:
+每次化妆都在跟自己极不对称的脸做斗争，今天拍视频的截图给大家对比下。
+</code></pre>
+<p><strong>Step 2: CoT 推理</strong></p>
+<ol>
+<li><strong>(Summary)</strong> 这句话描述说话者每次化妆时都要应对面部不对称的问题。说话者分享了一段视频截图来展示对比效果。</li>
+<li><strong>(Explain difficult words)</strong> &quot;做斗争&quot;（struggle with/fight against）是隐喻，指说话者通过化妆技巧来调整不对称的脸型。&quot;极不对称的脸&quot; 意为 extremely asymmetrical face。</li>
+<li><strong>(Proper translation)</strong> &quot;做斗争&quot; 应翻译为 &quot;try to use makeup techniques to adjust asymmetrical face&quot;，而非直译的 &quot;struggle with&quot;。</li>
+</ol>
+<p><strong>Step 3: 最终输出</strong></p>
+<blockquote class="card card-info">
+<p>&quot;Every time I put on makeup, I'm trying to use makeup techniques to adjust my asymmetrical face. Today, I've taken screenshots from a video to show you all a comparison.&quot;</p>
+</blockquote>
+<p><strong>关键点</strong>: CoT 推理显式处理了隐喻表达 &quot;做斗争&quot;，避免了生硬的直译。</p>
+<h2 id="8-insights-小模型通过精心设计可达到大模型水平">8. Insights：小模型通过精心设计可达到大模型水平</h2>
+<h3 id="8-1-论文评价">8.1 论文评价</h3>
+<p><strong>优点</strong>:</p>
+<ol>
+<li><strong>工程价值高</strong>: 系统性地展示了如何用 7B 模型达到闭源大模型水平</li>
+<li><strong>数据策略清晰</strong>: 三阶段预训练 + 迭代增强双语数据的方法值得借鉴</li>
+<li><strong>消融实验充分</strong>: 对语言标签、CoT、数据质量、数据多样性等关键因素做了详细分析</li>
+<li><strong>开源贡献</strong>: 模型参数公开，有利于社区复现和研究</li>
+<li><strong>新颖测试集</strong>: Seed-X-Challenge 涵盖多样化翻译场景</li>
+</ol>
+<p><strong>不足</strong>:</p>
+<ol>
+<li><strong>数学形式化缺失</strong>: PPO 和 DuPO 的具体公式未给出，复现困难</li>
+<li><strong>计算成本未披露</strong>: 未说明训练 GPU 小时数或碳排放</li>
+<li><strong>低资源语言覆盖有限</strong>: 28 种语言主要是高/中资源语言</li>
+<li><strong>代码能力缺失</strong>: 因排除 STEM/代码数据，基础模型代码能力有限</li>
+</ol>
+<h3 id="8-2-领域启发">8.2 领域启发</h3>
+<ol>
+<li><strong>语言标签优于分隔符</strong>: <code>&lt;LANG_CODE&gt;</code> 格式比 <code>&lt;SEP&gt;</code> 或 <code>&lt;NL&gt;</code> 显著更好（+24.92 BLEURT），说明显式语言信号对多语言模型至关重要</li>
+<li><strong>避免 Multi-parallel 数据</strong>: 传统多语翻译系统依赖多平行语料，但 LLM 可以通过泛化能力跨语言迁移知识，单语+双语分离训练效果更好</li>
+<li><strong>CoT 翻译范式</strong>: 将翻译分解为&quot;理解→分析→生成&quot;三步，与人类翻译认知过程一致</li>
+<li><strong>迭代数据增强</strong>: 弱到强的数据迭代策略（初始模型→生成数据→训练更强模型）可循环应用</li>
+<li><strong>RL 奖励设计</strong>: 不使用自动指标（BLEU/COMET）作为奖励，避免指标与人工评估的不一致</li>
+</ol>
+<h3 id="8-3-方法论启发">8.3 方法论启发</h3>
+<ol>
+<li><strong>预训练阶段设计</strong>: S1→S2→S3 的渐进式多语言训练策略可推广到其他多语言任务</li>
+<li><strong>Reward Model 训练</strong>: 使用人类偏好而非自动指标作为奖励</li>
+<li><strong>DuPO 作为无偏好数据替代</strong>: A→B→A 循环一致性作为质量信号，适用于其他缺乏偏好数据的场景</li>
+<li><strong>训练容量分配</strong>: 排除代码/STEM 数据专注翻译能力的设计决策，展示了能力与数据分配的权衡</li>
+</ol>
+<h2 id="9-总结">9. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p>这篇论文最有价值的一个点是<strong>证明了 7B 模型通过三阶段预训练 + CoT 推理 + RL 强化可以达到 GPT-4o 级别的多语言翻译能力</strong>，核心在于：</p>
+<ol>
+<li>显式语言标签设计（<code>&lt;LANG_CODE&gt;</code> 比 <code>&lt;SEP&gt;</code> 高 +24.92 BLEURT）</li>
+<li>CoT 推理显式分解翻译过程</li>
+<li>人类偏好驱动的 RL 训练</li>
+<li>避免 multi-parallel 数据（+7.83 BLEURT）</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>数学细节缺失</strong>: PPO loss、DuPO 形式化、reward model 架构未公开</li>
+<li><strong>计算成本不明</strong>: 训练资源消耗未披露</li>
+<li><strong>语言覆盖有限</strong>: 28 种语言未覆盖低资源语言</li>
+<li><strong>领域泛化</strong>: 仅评估了通用翻译，未测试专业领域（医疗、法律等）</li>
+<li><strong>代码能力缺失</strong>: 因排除代码数据，基础模型代码能力有限</li>
+<li><strong>CoT 推理开销</strong>: CoT 需要生成额外的推理文本，推理 token 数量可能增加 2-3 倍</li>
+<li><strong>S3 学习率细节缺失</strong>: 论文声称使用 &quot;optimized learning rate scheduling&quot;，但未给出具体配置</li>
+<li><strong>CoT 标注方法论缺失</strong>: 未公开标注流程、培训过程、质量控制标准、标注者间一致性等关键信息</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>补充数学形式化</strong>: 在后续工作中给出 PPO/DuPO 的完整公式</li>
+<li><strong>扩展低资源语言</strong>: 研究如何在有限数据下扩展到更多语言</li>
+<li><strong>领域适配</strong>: 探索专业领域翻译的适配方法</li>
+<li><strong>效率优化</strong>: 研究如何在更少计算资源下达到同等效果，以及 CoT 推理的效率优化</li>
+<li><strong>公开 S3 学习率配置</strong>: 说明 Parallel-Only 阶段的具体学习率调度策略</li>
+<li><strong>完善 CoT 标注文档</strong>: 公开标注流程、培训材料、质量控制标准，便于社区复现</li>
+</ol>
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<blockquote class="card card-info">
+<p>搜索库中相关论文，建立 <span class="wikilink unresolved" title="双链">双链</span></p>
+</blockquote>
+<ul>
+<li><strong>语言标记格式来源</strong>: 本文的 <code>&lt;LANG_CODE&gt;</code> 格式被 <a class="wikilink" href="From_Translation_to_Multilinguality-Revisit_the_Role_of_Parallel_Data.html" title="From_Translation_to_Multilinguality-Revisit_the_Role_of_Parallel_Data">From_Translation_to_Multilinguality-Revisit_the_Role_of_Parallel_Data</a> 引用作为平行数据拼接的标准格式</li>
+<li><span class="wikilink unresolved" title="Chain-of-Thought">Chain-of-Thought</span> 推理范式在翻译任务的应用</li>
+<li><span class="wikilink unresolved" title="PPO">PPO</span> 强化学习在 LLM 对齐中的方法</li>
+<li><span class="wikilink unresolved" title="多语言预训练">多语言预训练</span> 三阶段训练策略</li>
+<li><span class="wikilink unresolved" title="LLM翻译">LLM翻译</span> 大语言模型机器翻译研究</li>
+</ul>
+<hr />
+<h2 id="不确定点标注">不确定点标注</h2>
+<ol>
+<li><strong>[?] PPO loss 函数</strong>: 论文未给出具体的 PPO 损失函数公式，包括 clipping 参数和 KL penalty 系数</li>
+<li><strong>[?] DuPO 数学形式化</strong>: Dual Preference Optimization 仅描述为 A→B→Ã 循环，未给出相似度计算方式和奖励归一化方法</li>
+<li><strong>[?] Reward Model 架构</strong>: 未说明 reward model 是如何初始化和训练的，损失函数是什么</li>
+<li><strong>[?] 计算资源</strong>: 未披露训练使用的 GPU 数量、训练时长和总计算成本</li>
+<li><strong>[?] CoT 数据规模</strong>: 仅提及 236K instruction-tuning 实例，未明确其中 CoT 数据的具体比例</li>
+<li><strong>[?] S3 阶段学习率</strong>: 论文提到 &quot;optimized learning rate scheduling&quot;，但未给出 S3 阶段学习率的具体设置（是否使用更低的学习率、不同的 warmup 策略等）</li>
+<li><strong>[?] CoT 标注流程</strong>: 未公开具体的标注 SOP、培训过程、标注指南、质量控制标准、标注者间一致性等</li>
+</ol>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Video-KTR-Key-Token_Attribution_for_Video_Reasoning.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Video-KTR: Reinforcing Video Reasoning via Key Token Attribution</span></a>
+<a class="paper-nav-link next" href="Searching_for_Needles-Incidental_Bilingualism_PaLM_Translation.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Searching for Needles in a Haystack: On the Role of Incidental Bilingualism in PaLM's Translation Capability</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: cheng2025seedx</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

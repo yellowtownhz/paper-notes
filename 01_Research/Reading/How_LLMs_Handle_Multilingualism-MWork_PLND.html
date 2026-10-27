@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How do Large Language Models Handle Multilingualism?</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">How do Large Language Models Handle Multilingualism?</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-如何在内部处理多语言输入"><span class="toc-num">02</span> 2. 关键问题：LLM 如何在内部处理多语言输入？</a></li>
+<li><a class="toc-link" href="#3-数据集-四大多语言基准测试"><span class="toc-num">03</span> 3. 数据集：四大多语言基准测试</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#分析数据">分析数据</a></li>
+<li><a class="toc-link toc-sub" href="#实验模型">实验模型</a></li>
+<li><a class="toc-link" href="#4-关键方法-mwork-工作流-plnd-神经元检测"><span class="toc-num">04</span> 4. 关键方法：MWork 工作流 + PLND 神经元检测</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构-mwork-三阶段工作流">整体架构：MWork 三阶段工作流</a></li>
+<li><a class="toc-link toc-sub" href="#三阶段详解">三阶段详解</a></li>
+<li><a class="toc-link toc-sub" href="#核心方法-plnd-parallel-language-specific-neuron-detection">核心方法：PLND (Parallel Language-specific Neuron Detection)</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键实验-停用-0-13-神经元导致多语言能力归零"><span class="toc-num">05</span> 5. 关键实验：停用 0.13% 神经元导致多语言能力归零</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果-语言特异性神经元的关键作用">主实验结果：语言特异性神经元的关键作用</a></li>
+<li><a class="toc-link toc-sub" href="#三阶段验证实验">三阶段验证实验</a></li>
+<li><a class="toc-link toc-sub" href="#微调语言特异性神经元的效率">微调语言特异性神经元的效率</a></li>
+<li><a class="toc-link toc-sub" href="#跨任务验证">跨任务验证</a></li>
+<li><a class="toc-link" href="#6-golden-case-中文查询的完整处理流程"><span class="toc-num">06</span> 6. Golden Case：中文查询的完整处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#输入样本">输入样本</a></li>
+<li><a class="toc-link toc-sub" href="#处理流程">处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#最终输出">最终输出</a></li>
+<li><a class="toc-link toc-sub" href="#关键决策点">关键决策点</a></li>
+<li><a class="toc-link" href="#7-insights-多语言能力的稀疏性与可塑性"><span class="toc-num">07</span> 7. Insights：多语言能力的稀疏性与可塑性</a></li>
+<li><a class="toc-link toc-sub" href="#核心洞见">核心洞见</a></li>
+<li><a class="toc-link toc-sub" href="#对未来工作的启发">对未来工作的启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#多语言可解释性论文矩阵">多语言可解释性论文矩阵</a></li>
+<li><a class="toc-link toc-sub" href="#三阶段工作流与其他发现的对应关系">三阶段工作流与其他发现的对应关系</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#方法论联系">方法论联系</a></li>
+<li><a class="toc-link toc-sub" href="#应用方向">应用方向</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-24</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2402.18815" target="_blank">arXiv</a>
+    </div>
+    <h1>How do Large Language Models Handle Multilingualism?</h1>
+    <p class="authors">Yiran Zhao, Wenxuan Zhang, Guizhen Chen, Kenji Kawaguchi, Lidong Bing</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Language_Neurons</span></div>
+</header>
+
+<h1>论文笔记: How do Large Language Models Handle Multilingualism?</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Yiran Zhao, Wenxuan Zhang (通讯作者), Guizhen Chen, Kenji Kawaguchi, Lidong Bing</li>
+<li><strong>团队</strong>: National University of Singapore (新加坡国立大学) + DAMO Academy, Alibaba Group (阿里巴巴达摩院) + Hupan Lab + Nanyang Technological University (南洋理工大学)</li>
+<li><strong>发表时间</strong>: 2024 年 2 月 (arXiv preprint)</li>
+<li><strong>会议</strong>: NeurIPS 2024 (根据论文引用信息)</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-llm-如何在内部处理多语言输入">2. 关键问题：LLM 如何在内部处理多语言输入？</h2>
+<p><strong>核心动机</strong>：
+大型语言模型 (LLMs) 在多种语言上展现出了令人印象深刻的能力，但其内部如何处理多语言输入的机制尚不清楚。本研究旨在揭示这一&quot;黑盒&quot;。</p>
+<blockquote class="card card-info">
+<p>&quot;Large language models (LLMs) have demonstrated impressive capabilities across diverse languages. This study explores how LLMs handle multilingualism.&quot;</p>
+</blockquote>
+<p><strong>未解决的问题</strong>：</p>
+<ol>
+<li>LLM 内部是否存在语言特异性神经元？</li>
+<li>这些神经元如何分布在不同层和结构中？</li>
+<li>能否通过干预这些神经元来增强特定语言能力？</li>
+</ol>
+<p><strong>研究假设 - MWork 三阶段工作流</strong>：
+基于观察到的层间语言比例变化和网络结构与能力的关系，作者提出假设：LLM 的多语言处理遵循三阶段工作流。</p>
+<hr />
+<h2 id="3-数据集-四大多语言基准测试">3. 数据集：四大多语言基准测试</h2>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>任务类型</th>
+<th>语言覆盖</th>
+<th>评估指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MGSM</strong> (Shi et al.)</td>
+<td>数学推理</td>
+<td>多语言</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td><strong>XQuAD</strong> (Artetxe et al.)</td>
+<td>阅读理解</td>
+<td>多语言</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td><strong>X-CSQA</strong> (Lin et al.)</td>
+<td>常识推理</td>
+<td>多语言</td>
+<td>准确率</td>
+</tr>
+<tr>
+<td><strong>XLSum</strong> (Hasan et al.)</td>
+<td>文本摘要</td>
+<td>Fr, Zh, Es, Ru</td>
+<td>ROUGE-L</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="分析数据">分析数据</h3>
+<ul>
+<li><strong>语言特异性神经元检测</strong>: 使用各语言的单语语料，无需标注数据</li>
+</ul>
+<h3 id="实验模型">实验模型</h3>
+<ul>
+<li>Vicuna-7b-v1.5</li>
+<li>Mistral-7b-Instruct-v0.2</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-mwork-工作流-plnd-神经元检测">4. 关键方法：MWork 工作流 + PLND 神经元检测</h2>
+<h3 id="整体架构-mwork-三阶段工作流">整体架构：MWork 三阶段工作流</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│  Stage 1              Stage 2              Stage 3               │
+│  Understanding    →   Task-Solving    →   Generation            │
+│  (理解层)             (任务解决层)         (生成层)               │
+│      ↓                    ↓                    ↓                │
+│  多语言输入          英语推理+            回归原始语言            │
+│  → 英语表示          多语言知识融合        生成响应              │
+│                      │                    │                     │
+│                   自注意力(推理)  FFN(知识)                      │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="三阶段详解">三阶段详解</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>层位置</th>
+<th>核心操作</th>
+<th>语言特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Understanding</strong></td>
+<td>早期层</td>
+<td>将多样化语言特征统一为统一表示</td>
+<td>非英语→英语理解</td>
+</tr>
+<tr>
+<td><strong>Task-Solving</strong></td>
+<td>中间层</td>
+<td>英语推理 (自注意力) + 多语言知识整合 (FFN)</td>
+<td>英语主导</td>
+</tr>
+<tr>
+<td><strong>Generation</strong></td>
+<td>后期层</td>
+<td>生成与原始查询语言对齐的响应</td>
+<td>回归原始语言</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="核心方法-plnd-parallel-language-specific-neuron-detection">核心方法：PLND (Parallel Language-specific Neuron Detection)</h3>
+<p><strong>关键创新</strong>：无需任何标注数据，通过测量神经元对特定语言输入的重要性来识别语言特异性神经元。</p>
+<h4>数学形式化</h4>
+<p><strong>神经元重要性定义</strong>：
+$$\text{Imp}(N^{(i)}|c) = \|T_{i}\backslash N^{(i)}(h_{i}) - T_{i}(h_{i})\|_{2}$$</p>
+<p>其中：</p>
+<ul>
+<li>$N^{(i)}$: 第 i 个神经元</li>
+<li>$c$: 输入上下文</li>
+<li>$T_i$: 第 i 层的变换操作</li>
+<li>$h_i$: 第 i 层的隐藏状态</li>
+</ul>
+<p><strong>FFN 中神经元重要性</strong>：
+$$\text{Imp}(W_{up}[:,k]|c) = \|\hat{\text{FFN}}(x) - \text{FFN}(x)\|_{2}$$</p>
+<p>其中 $W_{up}$ 是 FFN 的上投影矩阵，$\hat{\text{FFN}}$ 表示移除第 k 个神经元后的 FFN 输出。</p>
+<p><strong>自注意力网络中重要性</strong>：
+通过注意力权重差异的近似计算。</p>
+<h4>PLND 算法特点</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>无监督</strong></td>
+<td>不需要任何标注数据</td>
+</tr>
+<tr>
+<td><strong>并行化</strong></td>
+<td>可同时处理 FFN 和自注意力结构</td>
+</tr>
+<tr>
+<td><strong>神经元粒度</strong></td>
+<td>精确到单个神经元级别</td>
+</tr>
+<tr>
+<td><strong>效率</strong></td>
+<td>相比顺序检测大幅加速</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>粒度</th>
+<th>是否需要标注</th>
+<th>可解释性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>探针分类器</td>
+<td>表示级别</td>
+<td>需要</td>
+<td>低</td>
+</tr>
+<tr>
+<td>因果干预</td>
+<td>模块级别</td>
+<td>不需要</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>PLND (本文)</strong></td>
+<td><strong>神经元级别</strong></td>
+<td><strong>不需要</strong></td>
+<td><strong>高</strong></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-关键实验-停用-0-13-神经元导致多语言能力归零">5. 关键实验：停用 0.13% 神经元导致多语言能力归零</h2>
+<h3 id="主实验结果-语言特异性神经元的关键作用">主实验结果：语言特异性神经元的关键作用</h3>
+<p><strong>Table 1 - XLSum 多语言性能 (ROUGE-L)</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Method</th>
+<th>Fr</th>
+<th>Zh</th>
+<th>Es</th>
+<th>Ru</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vicuna</td>
+<td>Original</td>
+<td>14.2</td>
+<td>61.1</td>
+<td>10.4</td>
+<td>20.8</td>
+<td>26.6</td>
+</tr>
+<tr>
+<td>Vicuna</td>
+<td>Deactivate Random</td>
+<td>14.1</td>
+<td>61.6</td>
+<td>10.4</td>
+<td>20.8</td>
+<td>26.7</td>
+</tr>
+<tr>
+<td><strong>Vicuna</strong></td>
+<td><strong>Deactivate Lang-Spec</strong></td>
+<td><strong>0.83</strong></td>
+<td><strong>0.00</strong></td>
+<td><strong>0.24</strong></td>
+<td><strong>0.42</strong></td>
+<td><strong>0.37</strong></td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td>Original</td>
+<td>15.2</td>
+<td>56.4</td>
+<td>10.6</td>
+<td>21.0</td>
+<td>25.8</td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td>Deactivate Random</td>
+<td>15.4</td>
+<td>55.9</td>
+<td>10.2</td>
+<td>21.2</td>
+<td>25.7</td>
+</tr>
+<tr>
+<td><strong>Mistral</strong></td>
+<td><strong>Deactivate Lang-Spec</strong></td>
+<td><strong>0.21</strong></td>
+<td><strong>0.39</strong></td>
+<td><strong>0.15</strong></td>
+<td><strong>0.07</strong></td>
+<td><strong>0.21</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>震撼性发现</strong>：</p>
+<ul>
+<li>停用仅 <strong>0.13%</strong> 的语言特异性神经元，多语言任务性能下降 <strong>98.6%-99.2%</strong></li>
+<li>中文 (Zh) 性能从 61.1% 降至 <strong>0.00%</strong>（完全归零！）</li>
+<li>相比之下，停用随机神经元性能几乎不变</li>
+</ul>
+<h3 id="三阶段验证实验">三阶段验证实验</h3>
+<p><strong>Table 2 - 理解任务结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Deactivating Method</th>
+<th>Eng</th>
+<th>n-Eng</th>
+<th>Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vicuna</td>
+<td>Lang-Spec (Understanding)</td>
+<td>40.9</td>
+<td>38.6</td>
+<td>-0.6</td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td>Lang-Spec (Understanding)</td>
+<td>53.2</td>
+<td>47.0</td>
+<td>+4.8</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：停用理解层的语言特异性神经元，英语和非英语任务均受影响，验证了&quot;非英语输入被转换为英语理解&quot;的假设。</p>
+<h3 id="微调语言特异性神经元的效率">微调语言特异性神经元的效率</h3>
+<p><strong>实验设置</strong>：</p>
+<ul>
+<li>模型：Mistral-7b-v0.1</li>
+<li>训练任务：因果语言建模</li>
+<li>训练语料：{100, 200, 400, 800} 个文档</li>
+<li>微调参数：语言特异性神经元（约 0.1% 参数）</li>
+</ul>
+<p><strong>结果</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>训练文档数</th>
+<th>高资源语言提升</th>
+<th>低资源语言提升</th>
+<th>英语提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>100</td>
+<td>~2.0%</td>
+<td>~1.5%</td>
+<td>~2.5%</td>
+</tr>
+<tr>
+<td>200</td>
+<td>~2.8%</td>
+<td>~1.9%</td>
+<td>~3.1%</td>
+</tr>
+<tr>
+<td><strong>400</strong></td>
+<td><strong>3.6%</strong></td>
+<td><strong>2.3%</strong></td>
+<td><strong>3.7%</strong></td>
+</tr>
+<tr>
+<td>800</td>
+<td>~3.8%</td>
+<td>~2.4%</td>
+<td>~3.9%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ul>
+<li>仅用 <strong>400 个文档</strong>微调 0.1% 参数，即可实现：
+<ul>
+<li>高资源语言平均提升 <strong>3.6%</strong></li>
+<li>低资源语言平均提升 <strong>2.3%</strong></li>
+<li>英语性能意外提升 <strong>3.7%</strong>（无英语训练数据）</li>
+</ul>
+</li>
+<li>相比全参数微调，参数效率提升 <strong>1000 倍</strong></li>
+</ul>
+<h3 id="跨任务验证">跨任务验证</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>数据集</th>
+<th>语言特异性神经元停用后</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学推理</td>
+<td>MGSM</td>
+<td>准确率接近 0</td>
+</tr>
+<tr>
+<td>阅读理解</td>
+<td>XQuAD</td>
+<td>准确率接近 0</td>
+</tr>
+<tr>
+<td>常识推理</td>
+<td>X-CSQA</td>
+<td>准确率接近 0</td>
+</tr>
+<tr>
+<td>文本摘要</td>
+<td>XLSum</td>
+<td>ROUGE-L 接近 0</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="6-golden-case-中文查询的完整处理流程">6. Golden Case：中文查询的完整处理流程</h2>
+<h3 id="输入样本">输入样本</h3>
+<pre><code>语言：中文 (Zh)
+问题：&quot;法国的首都是哪里？&quot;
+任务：问答 (XQuAD 风格)
+</code></pre>
+<h3 id="处理流程">处理流程</h3>
+<p><strong>Stage 1 - Understanding (早期层)</strong>：</p>
+<ol>
+<li>输入 token 序列: [法国, 的, 首都, 是, 哪里, ？]</li>
+<li>早期层检测到中文输入</li>
+<li>中文特异性神经元激活</li>
+<li>将中文表征转换为统一的&quot;概念表示&quot;</li>
+<li><strong>关键发现</strong>：此时表示已接近&quot;巴黎&quot;的语义概念，但以英语为中心</li>
+</ol>
+<p><strong>Stage 2 - Task-Solving (中间层)</strong>：</p>
+<ol>
+<li>自注意力结构：使用英语进行推理
+<ul>
+<li>查询&quot;首都&quot;概念</li>
+<li>关联&quot;法国&quot;和&quot;巴黎&quot;</li>
+</ul>
+</li>
+<li>FFN 结构：整合多语言知识
+<ul>
+<li>从知识库中提取 &quot;Paris&quot; / &quot;巴黎&quot; 信息</li>
+</ul>
+</li>
+<li>中间层表示：英语 &quot;Paris&quot; 概率最高</li>
+</ol>
+<p><strong>Stage 3 - Generation (后期层)</strong>：</p>
+<ol>
+<li>检测原始查询语言为中文</li>
+<li>语言特异性神经元将 &quot;Paris&quot; 概念映射到中文输出</li>
+<li>生成 token: [巴, 黎]</li>
+</ol>
+<h3 id="最终输出">最终输出</h3>
+<pre><code>&quot;巴黎&quot;
+</code></pre>
+<h3 id="关键决策点">关键决策点</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层位置</th>
+<th>决策内容</th>
+<th>神经元类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer 1-10</td>
+<td>检测输入语言</td>
+<td>中文特异性神经元</td>
+</tr>
+<tr>
+<td>Layer 10-20</td>
+<td>语义理解与推理</td>
+<td>语言无关神经元 + 英语偏向</td>
+</tr>
+<tr>
+<td>Layer 20-32</td>
+<td>输出语言选择</td>
+<td>中文特异性神经元</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="7-insights-多语言能力的稀疏性与可塑性">7. Insights：多语言能力的稀疏性与可塑性</h2>
+<h3 id="核心洞见">核心洞见</h3>
+<blockquote class="card card-info">
+<p><strong>&quot;多语言能力由极少数神经元承载，但这些神经元对多语言性能至关重要。&quot;</strong></p>
+</blockquote>
+<p><strong>洞见 1：极端稀疏性</strong></p>
+<ul>
+<li>仅 <strong>0.13%</strong> 的神经元承载多语言能力</li>
+<li>停用这些神经元导致性能归零</li>
+<li>与 <a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a> 的发现一致（~1% 神经元）</li>
+</ul>
+<p><strong>洞见 2：三阶段工作流的普适性</strong></p>
+<ul>
+<li>所有测试模型 (Vicuna, Mistral) 均遵循相同模式</li>
+<li>跨任务（推理、理解、生成）一致性验证</li>
+</ul>
+<p><strong>洞见 3：高效微调的可能性</strong></p>
+<ul>
+<li>微调 0.1% 参数 vs 全参数微调</li>
+<li>400 文档 vs 数百万文档</li>
+<li>参数效率提升 <strong>1000 倍</strong></li>
+</ul>
+<p><strong>洞见 4：英语的&quot;中枢语言&quot;地位</strong></p>
+<ul>
+<li>非英语输入经英语中介处理</li>
+<li>英语性能提升会带动其他语言（训练英语神经元也能提升中文）</li>
+</ul>
+<h3 id="对未来工作的启发">对未来工作的启发</h3>
+<ol>
+<li><strong>定向语言增强</strong>：通过微调语言特异性神经元，可针对特定语言进行高效优化</li>
+<li><strong>多语言偏见缓解</strong>：干预语言特异性神经元可能缓解英语中心主义偏见</li>
+<li><strong>低资源语言支持</strong>：只需少量数据即可增强低资源语言能力</li>
+<li><strong>模型压缩启示</strong>：语言特异性神经元不可剪枝，但其他神经元冗余度高</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>创新点</th>
+<th>贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MWork 三阶段工作流</strong></td>
+<td>首次系统性提出并验证 LLM 多语言处理机制</td>
+</tr>
+<tr>
+<td><strong>PLND 方法</strong></td>
+<td>无监督、神经元粒度的语言特异性检测方法</td>
+</tr>
+<tr>
+<td><strong>极端稀疏性发现</strong></td>
+<td>0.13% 神经元承载核心多语言能力</td>
+</tr>
+<tr>
+<td><strong>高效微调策略</strong></td>
+<td>400 文档 + 0.1% 参数 = 显著提升</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="局限性">局限性</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>局限</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>英语中心假设</strong></td>
+<td>主要验证英语为中心的模型，其他主导语言的模型需进一步验证</td>
+</tr>
+<tr>
+<td><strong>低资源语言支持有限</strong></td>
+<td>极低资源语言的神经元检测可能不准确</td>
+</tr>
+<tr>
+<td><strong>任务范围</strong></td>
+<td>主要在单 token 预测和简单生成任务上验证</td>
+</tr>
+<tr>
+<td><strong>模型规模</strong></td>
+<td>仅在 7B 模型上验证，更大规模的普适性待验证</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>扩展到更大模型</strong>：验证 MWork 在 70B+ 模型上的适用性</li>
+<li><strong>多主导语言研究</strong>：研究中文主导模型（如 Qwen）的工作流是否不同</li>
+<li><strong>复杂任务验证</strong>：在长文本生成、代码生成等复杂任务上验证</li>
+<li><strong>跨语言迁移</strong>：研究语言特异性神经元之间的知识迁移</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="多语言可解释性论文矩阵">多语言可解释性论文矩阵</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>研究问题</th>
+<th>关键发现</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本文 (NeurIPS'24)</strong></td>
+<td>多语言处理流程？</td>
+<td>MWork 三阶段 + 0.13% 神经元</td>
+<td>提出三阶段工作流框架</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>语言特异性在哪？</td>
+<td>~1% FFN 神经元 + U形分布</td>
+<td>共同发现极端稀疏性，互证</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>哪些组件激发翻译？</td>
+<td>&lt;5% attention heads 三类分工</td>
+<td>三类头与三阶段工作流对应</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>中间表示偏向？</td>
+<td>概念空间英语偏向</td>
+<td>Phase 2 与 MWork Task-Solving 阶段对应</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html" title="Group_then_Scale-Dynamic_MoE_Multilingual_LLM">Group_then_Scale-Dynamic_MoE_Multilingual_LLM</a></td>
+<td>多语言诅咒解决方案？</td>
+<td>参数偏差分组 + MoE 架构</td>
+<td>应用方向：分层知识体系验证</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="三阶段工作流与其他发现的对应关系">三阶段工作流与其他发现的对应关系</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>MWork 阶段</th>
+<th>层位置</th>
+<th>Wendler Phase</th>
+<th>Translation Mechanism 头类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Understanding</td>
+<td>早期层</td>
+<td>Phase 1 (输入空间)</td>
+<td>Indicator Heads 激活</td>
+</tr>
+<tr>
+<td>Task-Solving</td>
+<td>中间层</td>
+<td>Phase 2 (概念空间，英语偏向)</td>
+<td>Source Heads + MLP 编码</td>
+</tr>
+<tr>
+<td>Generation</td>
+<td>后期层</td>
+<td>Phase 3 (输出空间)</td>
+<td>Positional Heads + MLP 输出</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="相关工作">相关工作</h3>
+<ul>
+<li><strong><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></strong>：中国人民大学 + 微软亚研院，ACL 2024，从 FFN 神经元粒度分析语言特异性（~1% 神经元），与本文结论高度互补</li>
+<li><strong><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></strong>：哈工大 + 鹏城实验室，NeurIPS 2025，发现 &lt;5% attention heads 驱动翻译，三类功能头与本文三阶段对应</li>
+<li><strong><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></strong>：EPFL，2024，使用 Logit Lens 揭示中间层英语偏向，与本文 Task-Solving 阶段的英语中介发现一致</li>
+<li><strong><a class="wikilink" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html" title="Self-Improving_Multilingual_Long_Reasoning-TRIT">Self-Improving_Multilingual_Long_Reasoning-TRIT</a></strong>：多语言长推理能力提升，与本文的语言特异性神经元微调策略相关</li>
+<li><strong><a class="wikilink" href="MADLAD-400-Multilingual_Document-Level_Dataset.html" title="MADLAD-400-Multilingual_Document-Level_Dataset">MADLAD-400-Multilingual_Document-Level_Dataset</a></strong>：多语言数据集，可用于扩展本文的实验验证</li>
+<li><strong><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a></strong>：翻译模型，与本文的多语言处理机制相关</li>
+</ul>
+<h3 id="方法论联系">方法论联系</h3>
+<ul>
+<li>本文的 PLND 方法与 <a class="wikilink" href="Beyond_Data_Filtering-Knowledge_Localization_SGTM.html" title="Beyond_Data_Filtering-Knowledge_Localization_SGTM">Beyond_Data_Filtering-Knowledge_Localization_SGTM</a> 的知识定位思路相通</li>
+<li>神经元级别的分析与 <a class="wikilink" href="Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a> 的线性表示假设相关</li>
+</ul>
+<h3 id="应用方向">应用方向</h3>
+<ul>
+<li>低资源语言能力增强：仅需 400 文档微调</li>
+<li>多语言偏见缓解：干预语言特异性神经元</li>
+<li>高效模型压缩：保留语言特异性神经元，剪枝其他</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Language-Specific Neurons: The Key to Multilingual Capabilities in Large Language Models</span></a>
+<a class="paper-nav-link next" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhao2024multilingualism</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

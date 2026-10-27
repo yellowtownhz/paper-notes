@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Training Leaves Behavioral Shadows on Unrelated Decisions</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Post-Training Leaves Behavioral Shadows on Unrelated Decisions</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景与问题-不谈代码的回答-能否泄露代码训练的收益"><span class="toc-num">01</span> 1. 背景与问题：不谈代码的回答，能否泄露代码训练的收益？</a></li>
+<li><a class="toc-link" href="#2-方法-把同一个祖先的近边界决策当作测量仪器"><span class="toc-num">02</span> 2. 方法：把同一个祖先的近边界决策当作测量仪器</a></li>
+<li><a class="toc-link toc-sub" href="#从-jacket-tie-走完整个流程">从 jacket/tie 走完整个流程</a></li>
+<li><a class="toc-link toc-sub" href="#为什么要挑近乎平票-而不是随便问">为什么要挑近乎平票，而不是随便问？</a></li>
+<li><a class="toc-link" href="#3-数据与对照-真正隔离的变量是什么"><span class="toc-num">03</span> 3. 数据与对照：真正隔离的变量是什么？</a></li>
+<li><a class="toc-link" href="#4-证据链-哪些结论最牢-哪些仍只是线索"><span class="toc-num">04</span> 4. 证据链：哪些结论最牢，哪些仍只是线索？</a></li>
+<li><a class="toc-link toc-sub" href="#最强结果-真实配对在可执行代码上胜过严格对照">最强结果：真实配对在可执行代码上胜过严格对照</a></li>
+<li><a class="toc-link toc-sub" href="#有来源选择性-但不能写成普遍跨模型蒸馏">有来源选择性，但不能写成普遍跨模型蒸馏</a></li>
+<li><a class="toc-link toc-sub" href="#功能方向恢复-比-能力已被复制-更弱">功能方向恢复，比“能力已被复制”更弱</a></li>
+<li><a class="toc-link toc-sub" href="#失败案例约束了-转移了什么">失败案例约束了“转移了什么”</a></li>
+<li><a class="toc-link" href="#5-我的判断-最值得复用的是测量与对照设计"><span class="toc-num">05</span> 5. 我的判断：最值得复用的是测量与对照设计</a></li>
+<li><a class="toc-link" href="#6-连接与材料边界"><span class="toc-num">06</span> 6. 连接与材料边界</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-28</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2609.29233" target="_blank">arXiv</a>
+    </div>
+    <h1>Post-Training Leaves Behavioral Shadows on Unrelated Decisions</h1>
+    <p class="authors">['Ziyang Zhang', 'Yubin Jing', 'Yuanhao Zeng', 'Yuyao Li', 'Haofan Wang', 'Yichen Gong']</p>
+    <div class="topic-row"><span class="topic-tag">Knowledge_Distillation</span> <span class="topic-tag">Subliminal_Learning</span> <span class="topic-tag">Post_Training</span></div>
+</header>
+
+<h1>Post-Training Leaves Behavioral Shadows on Unrelated Decisions</h1>
+<p><strong>一个做过代码后训练的模型，只回答几千次与代码无关的普通词二选一，竟能让同源学生的代码测试成绩提高。</strong> 本文最有价值的地方是：作者主动寻找基础模型拿不定主意的输入，并用保留词频、难度等因素的对照，检验信息是否藏在“哪个输入对应哪个词”里。</p>
+<p>读完应记住四件事：近乎平票的选择能放大后训练影响；配对关系比输出词表本身重要；最强证据来自同祖先模型上的可执行代码测试；功能方向的恢复、下游能力提高和新知识复制是不同主张。</p>
+<h2 id="1-背景与问题-不谈代码的回答-能否泄露代码训练的收益">1. 背景与问题：不谈代码的回答，能否泄露代码训练的收益？</h2>
+<p>作者来自北京大学、Georgia Tech、上海科技大学、清华大学及 Lovart AI。本文是 2026 年 9 月的技术报告；本笔记依据 <a href="https://arxiv.org/html/2609.29233v1">arXiv v1 全文及附录</a>，不是会议录用版本核验。<a href="https://github.com/myboker/ATD">代码仓库</a>由原文提供，本次未运行复现。</p>
+<p>以往 subliminal learning 已研究过：训练文本表面上不提某种偏好，学生仍可能学到教师的偏好。本文追问更强、也更实用的一步：<strong>隐藏信号能否改善可执行的任务能力，而不只是改变喜欢什么？能否每个查询只读一个词？</strong></p>
+<p>论文 Appendix A 的真实案例很古怪，却恰好说明了问题。提示先问“龙虾与心脏如何出现在同一篇短故事中”，接一串普通词，然后要求只在 <code>jacket</code> 与 <code>tie</code> 中选一个。公开基础模型略偏向 <code>tie</code>；代码后训练的教师却返回 <code>jacket</code>。这不是把程序藏在词义里，而是参数更新也改变了无关上下文中的微小偏好。</p>
+<p>单次翻转当然不证明学到了代码。作者把几千条这样的“提示 → 教师词”交给一个从相同基础模型出发的学生，最后才测试它写程序的能力。</p>
+<h2 id="2-方法-把同一个祖先的近边界决策当作测量仪器">2. 方法：把同一个祖先的近边界决策当作测量仪器</h2>
+<p><img src="https://arxiv.org/html/2609.29233v1/figure1_overview.png" alt="Figure 1：从近乎平票的普通词选择到同源学生的任务评估" /></p>
+<p><em>来源：原文 Figure 1。由左至右看：用公开模型选查询，教师只给一个词，学生学习真实配对或打乱后的配对，最后比较目标任务。图中的关键是两位学生都从同一个公开祖先初始化。仅选此图，因为它完整承载案例和实验逻辑；其余结果用精确表格与文字呈现。</em></p>
+<h3 id="从-jacket-tie-走完整个流程">从 jacket/tie 走完整个流程</h3>
+<ol>
+<li><strong>先选位置，再问教师。</strong> 用公开祖先 $M_0$ 构造无关任务的提示与两个普通单 token 候选词。只保留祖先对二者几乎平票、且全词表 top-1 也落在这两个词中的提示。查询集合在看教师回答前固定。</li>
+<li><strong>每条只问一次。</strong> 教师 $M_T$ 在全词表做 greedy next-token decoding，并非被解码器强制二选一。若输出不在候选对内，丢弃且不重采样。案例中，祖先在候选对内归一化后的 $P(\texttt{tie})=0.5044$，教师却选 <code>jacket</code>，于是记录这条配对。</li>
+<li><strong>从祖先训练学生。</strong> 学生用这些配对做普通全词表交叉熵，只计算回答 token 的 loss，提示只充当上下文。主设置训练 rank-16 LoRA，不接触目标任务数据、教师参数或教师 logits。</li>
+<li><strong>在独立任务上检验。</strong> Appendix A 的 HumanEval/158 要选出“不同字符最多、并列时按字典序最小”的词。基础模型和全部精确对照种子按词长排序而失败；教师和四个信号种子按不同字符数排序而通过。<strong>这是整套数据训练后的个案，不是证明 jacket 这一条样本导致了修正。</strong></li>
+</ol>
+<h3 id="为什么要挑近乎平票-而不是随便问">为什么要挑近乎平票，而不是随便问？</h3>
+<p>对候选 $a_i,b_i$，定义 logit 差 $m_i(\theta)=z_\theta(a_i\mid x_i)-z_\theta(b_i\mid x_i)$。教师参数是 $\theta_0+\delta$，局部一阶近似给出：</p>
+<div class="math-display">$$
+m_i(\theta_0+\delta)\approx m_i(\theta_0)+g_i^\top\delta,
+\qquad g_i=\nabla_\theta m_i(\theta_0).
+$$</div>
+<p>当基础偏好 $m_i(\theta_0)$ 很大时，小更新不容易改变最终词；接近平票时，同样的更新却可能翻转答案。每个保留回答因此提供一个关于更新方向的二元约束，<strong>只告诉偏好符号，不告诉幅度</strong>。不同提示的梯度方向不同，许多约束合起来才可能包含能力相关信息。（§3，Eq. 2–4）</p>
+<p>实际筛选用候选对内归一化概率</p>
+<div class="math-display">$$
+q_i=\frac{e^{z_0(b_i\mid x_i)}}{e^{z_0(a_i\mid x_i)}+e^{z_0(b_i\mid x_i)}},\qquad |q_i-0.5|\leq0.02.
+$$</div>
+<p>这是机制直觉，不是恢复教师参数的保证：与所有查询梯度都正交的更新分量，在这个局部模型里不可见。学生也没有显式求解 $\delta$，只是训练 $-\frac1n\sum_i\log p_\theta(w_i^T\mid x_i)$。（§4）</p>
+<h2 id="3-数据与对照-真正隔离的变量是什么">3. 数据与对照：真正隔离的变量是什么？</h2>
+<p>主实验的公开祖先与学生初始化均为 <strong>Qwen2.5-1.5B-Instruct</strong>。代码教师用 CodeRM-UnitTest 偏好数据做 DPO，并带少量 chosen-token SFT 辅助项；过滤得到 13,607 对，其中训练 12,921、验证 686。作者事先按 exact prompt、entry point 和 5-gram Jaccard 去除与代码评测重叠的数据。这是教师训练数据，学生不接触。（Appendix B）</p>
+<p>学生的采集词表有 128 个普通单 token 词。<strong>17,858 次教师查询留下 5,664 条样本，保留率约 31.7%</strong>；不能把“5,664 个训练 token”写成仅花了 5,664 次查询。作者的固定审计未发现代码、数学、benchmark/任务词或数字；这是表面内容过滤，并不意味着表示空间里与任务独立。学生采用 AdamW，训练日程预先固定为 157 步。</p>
+<p>为什么普通 shuffle 还不够？这里有一个很容易读错的细节：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>对照</th>
+<th>保留什么</th>
+<th>打破什么、排除什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public-label</td>
+<td>同样提示，改用祖先自己的选择</td>
+<td>排查仅对普通提示微调的收益</td>
+</tr>
+<tr>
+<td>Teacher-label shuffle</td>
+<td>打乱“选左还是选右”，保留两侧选择比例</td>
+<td>打破逐提示决策；<strong>不保证实际输出词频相同</strong></td>
+</tr>
+<tr>
+<td>Exact nuisance-matched</td>
+<td>输出词的精确多重集；按祖先 margin 分箱后，与祖先选择不同的次数</td>
+<td>在每条仍选合法候选词的前提下，要求仅一半标签与教师相同，隔离更细的配对信息</td>
+</tr>
+</tbody>
+</table></div>
+<p>精确对照通过整数约束求可行标签配置，而不是随手洗牌。所有对照复用提示、样本数、顺序、优化器与更新预算。（Table 1，Appendix C）</p>
+<p>这个设计直接检验的是：<strong>固定这些因素后，教师逐提示选择是否比重新分配的选择更有用。</strong> 它并不说明学生重建了全部私有权重，或排除了所有可能的训练动力学解释。</p>
+<h2 id="4-证据链-哪些结论最牢-哪些仍只是线索">4. 证据链：哪些结论最牢，哪些仍只是线索？</h2>
+<h3 id="最强结果-真实配对在可执行代码上胜过严格对照">最强结果：真实配对在可执行代码上胜过严格对照</h3>
+<p>HumanEval+ 用 164 道题的 greedy pass@1，经 EvalPlus 执行评分。基础模型为 43.29%，教师和 ATD 学生的汇总分数均为 51.22%。但学生与教师同分，不代表逐题行为完全相同；识别信号的关键是下表。（Table 1–2）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>比较对象</th>
+<th style="text-align:right">对照 pass@1</th>
+<th style="text-align:right">ATD 减对照（百分点，95% CI）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>精确匹配对照</td>
+<td style="text-align:right">45.88%</td>
+<td style="text-align:right"><strong>+5.34 [1.22, 9.60]</strong></td>
+</tr>
+<tr>
+<td>Teacher-label shuffle</td>
+<td style="text-align:right">46.19%</td>
+<td style="text-align:right">+5.03 [0.91, 9.30]</td>
+</tr>
+<tr>
+<td>Public-label</td>
+<td style="text-align:right">46.65%</td>
+<td style="text-align:right">+4.57 [0.91, 8.54]</td>
+</tr>
+</tbody>
+</table></div>
+<p>以上各用四个训练种子；论文通常对配对的逐题差值做跨种子与题目的 bootstrap，而非把对照分数视为无噪声常数。与基础模型相比的提升中，存在普通微调也能获得的部分；因此不能把全部 7.93 个百分点都归因于教师阴影。</p>
+<p>两个补强实验分别回答“是不是偶然采到了一批好数据”和“是不是只是查询得多”：</p>
+<ul>
+<li><strong>重新采集和重训教师：</strong> 五套独立采集 × 三个学生种子，15 对差值全部为正；平均相对精确对照 +4.80 pp，跨采集、种子、题目的 95% CI 为 [1.18, 8.74]。（Figure 2，Table 6）</li>
+<li><strong>去掉近平票筛选：</strong> 在同样教师调用预算下，主动筛选比被动采集高 +4.27 pp [0.30, 8.38]；在同样训练行数下高 +5.03 pp [1.52, 8.84]。这支持查询位置本身有价值。（Table 3a）</li>
+</ul>
+<p>增益也出现在 rank-32、rank-64 LoRA 以及全参数训练设置。不过这些实验同时改变教师和学生的适配方式并重新采集，不能仅凭其间分数差异断言“加大学生 rank 就更好”。（Figure 2b）</p>
+<h3 id="有来源选择性-但不能写成普遍跨模型蒸馏">有来源选择性，但不能写成普遍跨模型蒸馏</h3>
+<p>七种分别训练的任务教师，在各自评测上均胜过 shuffle：除代码外，ScienceQA、OpenBookQA、HellaSwag、RACE-high、CommonsenseQA、PIQA 的增益范围为 0.81–2.90 pp，所报区间均不跨零。<strong>这是七个独立教师—学生设置，不是同一个学生同时学会七类能力。</strong>（Table 2）</p>
+<p>Figure 4 更能回答“传的是不是泛化的微调好处”：代码、科学、数学教师的最大正效应各在匹配任务上；代码→HumanEval+ 为 +5.34 pp，科学→ScienceQA 为 +2.52 pp，数学→GSM8K 仅 +0.47 pp。非对角项小或为负，支持来源选择性，但数学结果明显较弱。</p>
+<p>此外，Qwen3-1.7B、Qwen3-4B、Llama-3.2-1B 的平均效应均为正，<strong>三个额外模型的 95% CI 都包含零</strong>。这些是不同模型各自内部的同祖先实验，不是把 Qwen 教师蒸馏给 Llama 学生。（Figure 3）</p>
+<h3 id="功能方向恢复-比-能力已被复制-更弱">功能方向恢复，比“能力已被复制”更弱</h3>
+<p>作者在另外 512 条无关提示、每条 20 个位置上，记录固定 1,024 词表的 logits，并逐位置去均值。教师相对祖先的 logit 变化是“教师方向”；再看学生变化与它的余弦或投影。<strong>这些是输出函数指纹，不是参数方向，也不是 SAE 特征。教师 logits 仅用于事后诊断，不用于学生训练。</strong>（Appendix F）</p>
+<p>在这种诊断下，正确配对比例越高，方向对齐越强；把数学和代码的单词观测各混一半，学生对两个来源都比 shuffle 更对齐；不同教师 checkpoint 的更新强度次序也能被学生投影恢复。（Tables 7、9、11）</p>
+<p>边界同样清楚：混合比例实验的 GSM8K 端点差异仅 +0.28 pp，区间 [-0.80, 1.37]；这不足以证明两个任务的能力收益可相加。训练早期出现可测的 logit 对齐、较晚才出现显著代码收益，也可能受两个指标统计功效不同影响，不能据此证明先学方向再学能力。（Appendices E–G）</p>
+<h3 id="失败案例约束了-转移了什么">失败案例约束了“转移了什么”</h3>
+<ul>
+<li>记住 HumanEval+ 标准解的教师相对基础模型高 +39.02 pp，但学生从基础的 59.15% 降到 56.56%；注入替换密码知识的教师高约 97 pp，学生仍为 0%。大 teacher gap 并不足以产生迁移。（Table 3b）</li>
+<li>第二个代码端点 MBPP+ 上，教师仅比基础高 2.38 pp；学生相对精确对照为 +0.33 pp [-2.25, 2.91]，未获得可靠增益。（Table 13）</li>
+<li>不兼容祖先的两个教师—学生组合未成功迁移；但模型规模、tokenizer 等也同时不同，不能把失败单独归因于祖先不兼容。（Appendix H）</li>
+</ul>
+<p>作者据此倾向于解释为：信号更容易调动学生已有、可被激发的能力，而非搬运任意新知识。我认为这是合理假说，<strong>但失败也可能来自观测带宽或训练目标不足，尚不是机制定论</strong>。</p>
+<p>§6 的 RPM 损失尝试减掉祖先已有的候选偏好，结果并非全面优于 CE；20-token 扩展在 0.5B 上改善 GSM8K，但不是固定 token 预算的单词与长回答对照。二者适合作为后续实验方向，不应强化主实验之外的确定性。</p>
+<h2 id="5-我的判断-最值得复用的是测量与对照设计">5. 我的判断：最值得复用的是测量与对照设计</h2>
+<p><strong>第一，表面词义过滤不能消除训练信息。</strong> 这里连普通词二选一都携带有用差异，原因是更新作用在共享参数上，而不局限于“与任务语义相关”的输入。对于希望限制教师知识流出的接口，本文说明只审查输出是否含代码远远不够；但它没有证明任意封闭 API 都能如此提取，因为公开祖先和主动选点是强前提。</p>
+<p><strong>第二，近边界只是敏感，不自动等于有用。</strong> 一阶公式解释了为什么容易观测到翻转，却没证明这些梯度覆盖目标能力。值得做的下一步是：固定查询数、保留率和训练行数，在相近 margin 内进一步增加查询梯度的多样性，比较功能指纹恢复与执行成绩。若只提高前者，瓶颈可能是可观测方向与任务方向不重合，而非“训练还不够久”。</p>
+<p><strong>第三，能力迁移的有效基线不是原始模型。</strong> Public-label 自身已经提高代码分数；普通 shuffle 又只匹配左右比例。精确对照把词频、分难度翻转率与逐样本对应拆开，才让“信息来自哪里”成为可检验问题。复用这类实验时应优先移植这套控制，而不是只复制几千条无关文本微调的配方。</p>
+<h2 id="6-连接与材料边界">6. 连接与材料边界</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Distillation">MOC-Distillation</span> — 输入不包含目标任务内容、监督仅为硬标签时，蒸馏信息仍可能来自教师相对共享祖先的决策差异。</li>
+<li>已阅读 v1 正文和附录 A–H，查看 Figure 1 原图，并核对核心表格与公式；本文所有实验数字均为作者报告，未独立复现。官方 HTML 的部分图为内嵌矢量图，额外模型的细分柱高未据文本猜读。</li>
+</ul>
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Understanding-On-Policy-Distillation-Swap-Readout与共享特征重加权.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Understanding On-Policy Distillation：学生学到的是新特征，还是已有特征的新用法？</span></a>
+<a class="paper-nav-link next" href="Diagnosing-the-Sources-of-Compositional-Failure-in-Vision-Language-Models-COMPASS组合失败诊断.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhang2026posttraining</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngiBench — A Benchmark for Evaluating Large Language Models on Engineering Problem Solving</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">EngiBench — A Benchmark for Evaluating Large Language Models on Engineering Problem Solving</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-列得出工程术语-是否就能建立可用的决策模型"><span class="toc-num">02</span> 2. 关键问题：列得出工程术语，是否就能建立可用的决策模型？</a></li>
+<li><a class="toc-link" href="#3-关键方法-闭合题用输入干预-开放题用逐题评分规则"><span class="toc-num">03</span> 3. 关键方法：闭合题用输入干预，开放题用逐题评分规则</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着交通案例走完评测流程">3.1 沿着交通案例走完评测流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-为什么还要把同一道闭合题改写几次">3.2 为什么还要把同一道闭合题改写几次？</a></li>
+<li><a class="toc-link" href="#4-数据集与评分-总规模不等于高阶任务的覆盖范围"><span class="toc-num">04</span> 4. 数据集与评分：总规模不等于高阶任务的覆盖范围</a></li>
+<li><a class="toc-link" href="#5-关键结果-数学抽象能救回不少题-但高阶建模另有缺口"><span class="toc-num">05</span> 5. 关键结果：数学抽象能救回不少题，但高阶建模另有缺口</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-输入干预支持什么结论">5.1 输入干预支持什么结论？</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-开放式任务与人类参照相差多少">5.2 开放式任务与人类参照相差多少？</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-评分一致性有证据-但不等于逐题可靠性已被证明">5.3 评分一致性有证据，但不等于逐题可靠性已被证明</a></li>
+<li><a class="toc-link" href="#6-insights-哪些值得复用-哪些还缺一步"><span class="toc-num">06</span> 6. Insights：哪些值得复用，哪些还缺一步？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://aclanthology.org/2026.findings-acl.1810/" target="_blank">arXiv</a>
+    </div>
+    <h1>EngiBench — A Benchmark for Evaluating Large Language Models on Engineering Problem Solving</h1>
+    <p class="authors">Xiyuan Zhou, Xinlei Wang, Yirui He, Yang Wu, Ruixi Zou, Yuheng Cheng, Yulu Xie, Wenxuan Liu, Huan Zhao, Yan Xu, Jinjin Gu, Junhua Zhao</p>
+    <div class="topic-row"><span class="topic-tag">Engineering_Intelligence</span> <span class="topic-tag">LLM_Evaluation</span> <span class="topic-tag">Mathematical_Reasoning</span> <span class="topic-tag">Open_Ended_Modeling</span></div>
+</header>
+
+<h1>论文笔记: EngiBench — A Benchmark for Evaluating Large Language Models on Engineering Problem Solving</h1>
+<p><strong>这篇最值得读的是评测设计：把“做错一道工程题”拆成不同条件下的失败，再检查开放式答案究竟遗漏了什么。</strong> 它不是新的训练方法，也没有证明 rubric 高分等于工程方案可落地。</p>
+<p>读完应记住四件事：</p>
+<ol>
+<li><strong>会算题与会处理工程目标、约束和不确定性之间有缺口。</strong> 同一模型在标准答案题与开放式任务上的相对位置会变化。</li>
+<li><strong>补知识、给数学表达式都能明显帮助部分模型，但它们也替模型完成了解题工作。</strong> 得分差有诊断价值，不能直接当作彼此独立的能力分量。</li>
+<li><strong>开放式评测的关键是逐题 rubric 与人工校准。</strong> 作者报告的主分数不是直接运行一次自动评分脚本的结果。</li>
+<li><strong>“跨领域工程能力”的外推要克制。</strong> 发布数据的高阶部分只有 43 条任务、15 个竞赛题源，且没有化学与生物工程任务。</li>
+</ol>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Xiyuan Zhou、Xinlei Wang 为共同一作；Yan Xu、Jinjin Gu、Junhua Zhao 为通讯作者。参与机构包括南洋理工大学、悉尼大学、INSAIT、香港中文大学（深圳）等，作者信息以论文 PDF 首页为准。</li>
+<li><strong>版本</strong>：首个 arXiv 版本发表于 2025-09-22；本笔记阅读 <a href="https://arxiv.org/html/2509.17677v2">arXiv v2 全文及附录</a>，并核对 <a href="https://aclanthology.org/2026.findings-acl.1810.pdf">ACL 2026 Findings 正式 PDF</a> 的关键图表与评分协议。正式出版时间为 2026 年 7 月。</li>
+<li><strong>材料边界</strong>：另只读检查了<a href="https://github.com/AI4Engi/EngiBench/tree/9f145ed96230a21bcad0c1b563e7cbfdecb3afbb">作者仓库固定提交 <code>9f145ed</code></a>的两份数据及评测入口；未调用模型重跑实验。下文明确区分论文报告、发布数据核对和笔记者判断。</li>
+</ul>
+<h2 id="2-关键问题-列得出工程术语-是否就能建立可用的决策模型">2. 关键问题：列得出工程术语，是否就能建立可用的决策模型？</h2>
+<p><strong>Golden Case：开放封闭小区，会改善周边交通吗？</strong> 这是论文 Figure 7 的真实案例，对应发布数据中的 2016 年全国大学生数学建模竞赛 B 题。任务要求建立评价体系，研究开放小区对道路交通的影响。开放内部道路可能增加路网连通性，也可能在出入口制造新的冲突；只有“车速更快”一个目标，显然不足以评价整个方案。</p>
+<p>Llama 4 的回答能列出平均通行时间、车速、流量、交叉口延误等指标，也能提到交通仿真工具，但没有明确权衡效率与安全，没把高峰流量变化转成模型或敏感性分析。<strong>看起来懂交通，答案里却缺少从指标走向决策的关键步骤。</strong> GPT-4.1 的答案摘录则覆盖了多层指标、目标权衡、不同流量情景与路网建模。Figure 7 展示的是这种答案内容差异，不是已经验证过的交通治理效果。</p>
+<p>传统数学题通常已替模型选好了目标和抽象方式；很多选择题又把输出压成一个选项。EngiBench 追问的是：在没有唯一答案时，模型能不能自行识别约束、选择假设、组织领域知识，并说明怎样应对不确定性？这对应四个评价维度：<strong>信息提取、领域推理、多目标决策、不确定性处理</strong>（§3.1）。</p>
+<h2 id="3-关键方法-闭合题用输入干预-开放题用逐题评分规则">3. 关键方法：闭合题用输入干预，开放题用逐题评分规则</h2>
+<h3 id="3-1-沿着交通案例走完评测流程">3.1 沿着交通案例走完评测流程</h3>
+<p><strong>输入问题 → 规范化题面与评分规则 → 模型生成答案 → 分维度评分 → 人工校准 → 能力画像。</strong> 整个流程不训练被测模型参数。</p>
+<ol>
+<li><strong>保留问题的工程含义。</strong> 作者把非英文题目译成英文，将简单图表转换为文字或 LaTeX；对 Level 3 再做语义改写，保留逻辑、数值和推理要求。复杂图表、过长输入对应的任务被排除（Appendix D.2、Limitations）。</li>
+<li><strong>把官方竞赛评分要求转成逐题 rubric。</strong> LLM 辅助起草，两个工程背景审阅者独立检查；争议由有建模竞赛获奖经历的专家裁决。每个被覆盖的能力维度满分 10 分，并规定什么行为得几分，而不只给一个抽象的“专业程度”标签（Appendix F.2.1）。</li>
+<li><strong>模型回答后，按同一 rubric 判断。</strong> 交通例子的规则明确区分“提到流量变化”和“建模流量变化”，也区分“列举目标”和“建立多目标权衡”。这使泛泛的工程术语较难直接换成高分（Figure 5b）。</li>
+<li><strong>双模型评分后再人工校准。</strong> 按论文协议，GPT-4.1 与 Gemini 2.5 Flash 独立评分，先取均值，再由工程背景标注者复核校准；论文主结果采用校准后的分数（Appendix F.2.2）。</li>
+</ol>
+<p>交通案例的最终输出如下。它解释了为什么同样是一段流畅回答，仍能暴露不同程度的工程建模缺失。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>评价维度</th>
+<th style="text-align:right">GPT-4.1</th>
+<th style="text-align:right">Llama 4</th>
+<th>Figure 7 中可见的主要区别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>信息提取</td>
+<td style="text-align:right">9.0</td>
+<td style="text-align:right">6.0</td>
+<td>是否同时覆盖交通效率、环境与安全等指标</td>
+</tr>
+<tr>
+<td>多目标决策</td>
+<td style="text-align:right">7.5</td>
+<td style="text-align:right">0.0</td>
+<td>是否显式处理新增通达性、新瓶颈与安全之间的权衡</td>
+</tr>
+<tr>
+<td>不确定性处理</td>
+<td style="text-align:right">8.0</td>
+<td style="text-align:right">4.0</td>
+<td>是否说明不同流量情景和敏感性分析，而不只是提到高峰时段</td>
+</tr>
+<tr>
+<td>领域推理</td>
+<td style="text-align:right">8.5</td>
+<td style="text-align:right">4.0</td>
+<td>是否说明路网表示与模型用法，而不只是报出工具名称</td>
+</tr>
+<tr>
+<td>四维平均</td>
+<td style="text-align:right">8.25</td>
+<td style="text-align:right">3.50</td>
+<td>单个案例得分，不能代替全数据集平均</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="https://arxiv.org/html/2509.17677v2/llama4_example.png" alt="Figure 7：交通案例中两种答案的评分依据" /></p>
+<p><em>来源：论文 Figure 7，正式版 p. 36315。重点看蓝色的多目标权衡和粉色的不确定性处理；右侧灰色文字是扣分说明。截图提供答案摘录，不能据此认定左侧声称的仿真已经实际运行。</em></p>
+<h3 id="3-2-为什么还要把同一道闭合题改写几次">3.2 为什么还要把同一道闭合题改写几次？</h3>
+<p>只知道答案错了，并不知道模型是忘了公式、没读懂工程情境，还是计算失败。对有标准答案的 Level 1/2，作者设计输入变体逐步减少模型需要自行完成的工作。</p>
+<p>Figure 2 给出了一个欧姆定律例子。下表的数值答案由笔记者直接代入核算，用来解释流程；图中没有报告某个模型在这道例题上的实际对错。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>版本</th>
+<th>输入如何变化</th>
+<th>模型还要做什么</th>
+<th>数值答案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原题</td>
+<td>电阻 5 Ω，电流 2 A，求电压</td>
+<td>找到欧姆定律、对应变量、计算</td>
+<td>10 V</td>
+</tr>
+<tr>
+<td>扰动版</td>
+<td>改成电热丝，电阻 4 Ω、电流 3 A</td>
+<td>在新表述与新数值下完成同一类推理</td>
+<td>12 V</td>
+</tr>
+<tr>
+<td>知识增强版</td>
+<td>在扰动题前给出 $V=IR$ 及变量含义</td>
+<td>把题面中的量绑定到公式</td>
+<td>12 V</td>
+</tr>
+<tr>
+<td>数学抽象版</td>
+<td>直接给 $R=4,I=3$，要求算 $V=IR$</td>
+<td>执行已指定的数学运算</td>
+<td>12</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="https://arxiv.org/html/2509.17677v2/EngiBench_Fig_rewritten_problem.png" alt="Figure 2：工程题从扰动到知识增强和数学抽象的变化" /></p>
+<p><em>来源：论文 Figure 2，正式版 p. 36312。应看各版本替模型省掉了哪一步；图中的勾叉表示作者预期需要的能力，不是通过实验测得的能力独立性。</em></p>
+<p>因此，“扰动后仍能答对”支持对表面变化的稳健性；“给公式后恢复”提示知识访问或公式选择可能是瓶颈；“给完整数学表达后才恢复”提示此前的语义解释或形式化过程可能是瓶颈。<strong>这些都是诊断线索，而非唯一归因。</strong> 知识增强同时给了推理提示，数学抽象更直接完成了变量选择、约束表达甚至运算规划。</p>
+<p>一个容易复现错的细节：§3.4 概括为从原题产生变体，但 Figure 2 的知识增强与数学抽象接在扰动题之后；发布 CSV 同时提供原题分支与 <code>rewritten_*</code> 分支，脚本也分别评测。复现实验需要明确使用哪条分支，不能把不同题面上的提升相减后直接解释为“某种能力的贡献”。<strong>Level 3 没有知识增强或数学抽象版，只有原题和语义扰动版。</strong></p>
+<h2 id="4-数据集与评分-总规模不等于高阶任务的覆盖范围">4. 数据集与评分：总规模不等于高阶任务的覆盖范围</h2>
+<p>§3.3 报告三个领域的题目数分别为系统与控制 939、物理与结构 354、化学与生物 467，总计 <strong>1,760 条基础任务</strong>。我对固定版本 CSV 的计数补充了层级分布：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>任务特征与来源</th>
+<th style="text-align:right">基础任务数</th>
+<th>输出评价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Level 1</td>
+<td>基本公式调用、单步计算；公开题库与教学材料</td>
+<td style="text-align:right">568</td>
+<td>有标准答案，按对错计准确率</td>
+</tr>
+<tr>
+<td>Level 2</td>
+<td>单位、物理限制与耦合变量下的多步推理；仍有唯一解</td>
+<td style="text-align:right">1,149</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>Level 3</td>
+<td>竞赛中的开放式建模与决策</td>
+<td style="text-align:right">43</td>
+<td>四维 rubric 分数</td>
+</tr>
+</tbody>
+</table></div>
+<p>以上不把同题的不同变体重复计为基础任务。Level 1/2 数据从通用基准和教学材料中筛选工程相关题，Level 3 则优先保留有官方评分标准的竞赛题；作者报告有 20 名博士生及工程专业人士参与高阶任务和 rubric 审查（§3.3）。</p>
+<p><strong>发布数据核对发现，Level 3 的 43 行只分布于系统与控制 23 行、物理与结构 20 行。</strong> 按 <code>source_detail</code> 去重仅有 15 个来源标签，均指向中国大学生数学建模竞赛，同一来源题拆出多个任务。因此，论文整体覆盖三个领域，不代表开放式任务也覆盖三个领域；附录列出的竞赛采集范围，也不能直接等同于最终发布集的来源构成。计数来源为<a href="https://github.com/AI4Engi/EngiBench/blob/9f145ed96230a21bcad0c1b563e7cbfdecb3afbb/Level3/level3_modeling.csv">固定版本 Level 3 CSV</a>。</p>
+<p>Level 1/2 的评分也比“直接字符串匹配”复杂：论文用两个 LLM 核对数值、等价表达等，分歧交人工处理，并抽查 300 道题；GPT-4.1 与 Gemini 2.5 Flash 的判分准确率分别为 98.67% 和 98.33%。数值题允许 ±2% 容差，<strong>计算类题目即使不写单位也可能判对</strong>，而单位专门题才强制检查单位（Appendix F.1）。因此，这个准确率不能直接解释为严格的工程交付正确率。</p>
+<h2 id="5-关键结果-数学抽象能救回不少题-但高阶建模另有缺口">5. 关键结果：数学抽象能救回不少题，但高阶建模另有缺口</h2>
+<h3 id="5-1-输入干预支持什么结论">5.1 输入干预支持什么结论？</h3>
+<p>作者评测了 16 个模型，论文称采用 zero-shot 设置（§4.1）。下表选择 Figure 4 的 Level 2 结果；同一行固定被测模型，改变输入版本，指标均为准确率。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align:right">Original</th>
+<th style="text-align:right">Perturbed</th>
+<th style="text-align:right">Knowledge-enhanced</th>
+<th style="text-align:right">Math Abstraction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-7B</td>
+<td style="text-align:right">48.7%</td>
+<td style="text-align:right">37.3%</td>
+<td style="text-align:right">53.9%</td>
+<td style="text-align:right">69.4%</td>
+</tr>
+<tr>
+<td>GPT-4.1</td>
+<td style="text-align:right">80.0%</td>
+<td style="text-align:right">81.5%</td>
+<td style="text-align:right">85.3%</td>
+<td style="text-align:right">87.8%</td>
+</tr>
+<tr>
+<td>Gemini 2.5 Flash</td>
+<td style="text-align:right">92.9%</td>
+<td style="text-align:right">91.7%</td>
+<td style="text-align:right">94.1%</td>
+<td style="text-align:right">94.2%</td>
+</tr>
+</tbody>
+</table></div>
+<p>Qwen2.5-7B 扰动后下降 <strong>11.4 个百分点</strong>；知识增强相对扰动版回升 <strong>16.6 点</strong>；数学抽象再比知识增强高 <strong>15.5 点</strong>。这支持一个具体判断：对这个模型，在这些题目上，不能把所有失败归结为算术弱；它把工程题转成可执行数学表达的环节值得单独改善。</p>
+<p>但效果不是所有模型共享的规律。GPT-4.1 在扰动版反而更高，Gemini 2.5 Flash 的版本差异也较小。Appendix G.3 的模型平均准确率为 <strong>66.6% → 61.6% → 68.6% → 79.2%</strong>，支持总体趋势，不能覆盖每个模型的反例，更不能证明“计算能力已经完全解决”。</p>
+<p>我认为这里最强的证据是<strong>模型在不同输入支持条件下的性能变化</strong>；较弱的推断是把变化全部归因为知识缺失、语义困难或数据记忆。没有等长无关知识、等量中间步骤提示等对照，几种解释仍然混在一起。</p>
+<h3 id="5-2-开放式任务与人类参照相差多少">5.2 开放式任务与人类参照相差多少？</h3>
+<p>Figure 5a 与 Table 2 给出人工校准后的 Level 3 平均分，满分 10 分。原题的人类参照来自获奖竞赛作品，扰动版来自优秀学生作答；它们是强人类参照，并非随机抽样工程师的平均表现，也不是与 LLM 同时限、同工具预算的对照（§4.1）。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>被评对象</th>
+<th style="text-align:right">原题</th>
+<th style="text-align:right">扰动题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>人类参照</td>
+<td style="text-align:right">8.728</td>
+<td style="text-align:right">8.736</td>
+</tr>
+<tr>
+<td>GPT-4.1</td>
+<td style="text-align:right">7.108</td>
+<td style="text-align:right">7.002</td>
+</tr>
+<tr>
+<td>Claude 3.7 Sonnet</td>
+<td style="text-align:right">6.656</td>
+<td style="text-align:right">6.445</td>
+</tr>
+<tr>
+<td>Gemini 2.5 Flash</td>
+<td style="text-align:right">6.197</td>
+<td style="text-align:right">6.208</td>
+</tr>
+<tr>
+<td>Llama 4 Maverick</td>
+<td style="text-align:right">3.767</td>
+<td style="text-align:right">3.861</td>
+</tr>
+</tbody>
+</table></div>
+<p>最强模型 GPT-4.1 与人类参照相差 <strong>1.620 分（原题）和 1.734 分（扰动题）</strong>，这里是 rubric 分差，不是准确率差。Llama 4 是跨层级表现不一致的例子：Figure 3 中其扰动版 Level 1/2 准确率为 90.23%/76.33%，到了 Level 3 却低于表中其他大模型。前面的交通案例正好说明，能解决闭合题，并不保证答案包含目标权衡与不确定性建模。</p>
+<p><img src="https://arxiv.org/html/2509.17677v2/model_scores_final_20260105.png" alt="Figure 5a：开放式任务的四维能力与总分" /></p>
+<p><em>来源：论文 Figure 5a，正式版 p. 36315。每个能力分别列出原题/扰动题，最后两列才是平均分。重点看信息提取与不确定性处理的落差：GPT-4.1 扰动版分别为 8.365 与 5.916，人类对应为 9.064 与 8.921。不要把这张图的十分制分数与 Level 1/2 的准确率直接连成同量纲的下降曲线。</em></p>
+<p>这支持“被测模型的开放式回答仍有明显质量缺口”，并把缺口定位到更具体的 rubric 项。它尚不能说明模型在真实工程项目中会以同样比例失败：任务来源、文本化处理、人类作答条件和评分方式都会影响外推。</p>
+<h3 id="5-3-评分一致性有证据-但不等于逐题可靠性已被证明">5.3 评分一致性有证据，但不等于逐题可靠性已被证明</h3>
+<p>作者比较了 LLM-only、human-only、human-calibrated 三套评分（Table 2）。例如 GPT-4.1 原题均分依次为 <strong>7.053、7.208、7.108</strong>，说明其平均分不是完全由某一种评分流程决定。</p>
+<p>但总体均分相近可能掩盖逐题高估与低估相互抵消。这里还需要逐题/逐维度的一致性、评分方差，以及对自家模型评分偏好的检查，才能判断小分差是否稳定。尤其同一竞赛题拆出的任务共享背景，统计不确定性最好按<strong>原始题源分组</strong>估计，而非把每条任务当独立样本。</p>
+<h2 id="6-insights-哪些值得复用-哪些还缺一步">6. Insights：哪些值得复用，哪些还缺一步？</h2>
+<p><strong>1. 最值得复用的是“逐步代做上游环节”的诊断，但应把它做成可检验的干预链。</strong> Figure 2 表明给公式与给完整表达式具有不同帮助。若要研究工程形式化能力，可以在同一扰动题上固定数值与答案，逐步提供“领域知识 → 变量与约束 → 数学模型”，观察哪个阶段恢复性能，再验证模型自行生成的中间表示。这样比根据一次最终分差宣称“定位了知识短板”更有说服力。</p>
+<p><strong>2. 扰动不是训练污染检测器。</strong> Appendix D.3 的改写提示不仅要求保持逻辑，还要求 “Make the answer as difficult as possible while ensuring that the answer is correct.” 这意味着改写意图本身就可能增加表达难度。下降可以来自分布变化，不必然来自记忆失效；反过来，Appendix G.4 以 Level 3 改写前后均分接近推断没有污染迹象，也不足以排除对原题解法的记忆。更稳妥的做法是分别控制措辞与数字变化，并增加新创题或可核验时间边界的题组。</p>
+<p><strong>3. 下一步应验证模型写下的工程承诺，而不只是把 rubric 做得更细。</strong> 交通案例里，“分析安全与效率权衡”“运行交通仿真”都能改善回答得分，但摘录不能证明真的建立并执行了模型。我更关心一个可检验扩展：要求提交可执行模型，在隐藏流量情景下检查约束、效率与风险，再比较 rubric 分数能否预测这些结果。如果相关性弱，就说明 benchmark 主要测到了方案陈述质量，距离工程有效性还有一层。</p>
+<p><strong>复现时的具体提醒。</strong> 我检查的公开版本还不能直接视为论文最终协议的完整实现：<a href="https://github.com/AI4Engi/EngiBench/blob/9f145ed96230a21bcad0c1b563e7cbfdecb3afbb/Level1_2/analyze.py">Level 1/2 入口</a>的答案比较使用单个 Gemini 2.0 Flash，且解题提示包含一个已解的飞机例题，与论文所称 zero-shot 口径需要核对；<a href="https://github.com/AI4Engi/EngiBench/blob/9f145ed96230a21bcad0c1b563e7cbfdecb3afbb/Level3/analyze.py">Level 3 入口</a>让使用者选择一个评分模型，未直接串起双评分器取均值和人工校准。论文图表具体使用的运行配置及输入分支映射 <strong>[?] 尚需作者的运行记录核实</strong>。这不否定论文另行完成过人工评测，但复现时应先锁定题面、prompt、评分器和校准流程，再比较分数。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — Topic/Area：提供“改变输入支持条件＋分维度评分”的失败诊断视角；本文测单轮工程题回答，与该 MOC 中基于执行轨迹或环境反馈的 agent 诊断形成方法对照。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">From Reward-Hack Activations to Agentic Risk States</span></a>
+<a class="paper-nav-link next" href="Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Activation Reward Models for Few-Shot Model Alignment</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhou-etal-2026-engibench</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outcome Accuracy is Not Enough: Aligning the Reasoning Process of Reward Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Outcome Accuracy is Not Enough: Aligning the Reasoning Process of Reward Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-reward-model-的-表面对齐-陷阱-结果正确但理由错误"><span class="toc-num">02</span> 2. 关键问题：Reward Model 的"表面对齐"陷阱——结果正确但理由错误</a></li>
+<li><a class="toc-link toc-sub" href="#什么是-generative-reward-model-genrm">什么是 Generative Reward Model (GenRM)？</a></li>
+<li><a class="toc-link toc-sub" href="#核心问题-deceptive-alignment-欺骗性对齐">核心问题：Deceptive Alignment（欺骗性对齐）</a></li>
+<li><a class="toc-link toc-sub" href="#因果关系">因果关系</a></li>
+<li><a class="toc-link" href="#3-数据集-基于-helpsteer3-的原子化推理基准"><span class="toc-num">03</span> 3. 数据集：基于 HelpSteer3 的原子化推理基准</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估-benchmark-构建">评估 Benchmark 构建</a></li>
+<li><a class="toc-link toc-sub" href="#评估-benchmarks">评估 Benchmarks</a></li>
+<li><a class="toc-link" href="#4-关键方法-metajudge-评估框架-rationale-guided-grpo-训练"><span class="toc-num">04</span> 4. 关键方法：MetaJudge 评估框架 + Rationale-Guided GRPO 训练</a></li>
+<li><a class="toc-link toc-sub" href="#1-metajudge-框架-量化推理过程与人类判断的一致性">(1) MetaJudge 框架：量化推理过程与人类判断的一致性</a></li>
+<li><a class="toc-link toc-sub" href="#2-hybrid-reward-training-rationale-guided-grpo">(2) Hybrid Reward Training: Rationale-Guided GRPO</a></li>
+<li><a class="toc-link toc-sub" href="#3-训练配置">(3) 训练配置</a></li>
+<li><a class="toc-link" href="#5-关键实验-hybrid-reward-训练在-rm-bench-和-judgebench-上达到-sota"><span class="toc-num">05</span> 5. 关键实验：Hybrid reward 训练在 RM-Bench 和 JudgeBench 上达到 SOTA</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#rlhf-下游效果-arena-hard-v2-table-3">RLHF 下游效果 (Arena Hard v2, Table 3)</a></li>
+<li><a class="toc-link toc-sub" href="#rationale-consistency-消融实验-table-4">Rationale Consistency 消融实验 (Table 4)</a></li>
+<li><a class="toc-link toc-sub" href="#rationale-degeneration-分析-figure-4">Rationale Degeneration 分析 (Figure 4)</a></li>
+<li><a class="toc-link toc-sub" href="#七类推理缺陷分析-figure-5">七类推理缺陷分析 (Figure 5)</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条广告评估数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条广告评估数据的完整流程</a></li>
+<li><a class="toc-link" href="#7-insights-过程监督是-reward-model-质量的关键"><span class="toc-num">07</span> 7. Insights：过程监督是 Reward Model 质量的关键</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link" href="#9-讨论-与-bleu-指标的对比"><span class="toc-num">09</span> 9. 讨论：与 BLEU 指标的对比</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-11</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.04649" target="_blank">arXiv</a>
+    </div>
+    <h1>Outcome Accuracy is Not Enough: Aligning the Reasoning Process of Reward Models</h1>
+    <p class="authors">Binghai Wang, Yantao Liu, Yuxuan Liu, Tianyi Tang, Shenzhi Wang, Chang Gao, Chujie Zheng, Yichang Zhang, Le Yu, Shixuan Liu, Tao Gui, Qi Zhang, Xuanjing Huang, Bowen Yu, Fei Huang, Junyang Lin</p>
+    <div class="topic-row"><span class="topic-tag">Reward_Model</span> <span class="topic-tag">Rationale_Consistency</span> <span class="topic-tag">RLHF</span> <span class="topic-tag">Deceptive_Alignment</span></div>
+</header>
+
+<h1>论文笔记: Outcome Accuracy is Not Enough: Aligning the Reasoning Process of Reward Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Binghai Wang, Yantao Liu, Yuxuan Liu, Tianyi Tang, Shenzhi Wang, Chang Gao, Chujie Zheng, Yichang Zhang, Le Yu, Shixuan Liu, Tao Gui, Qi Zhang, Xuanjing Huang, Bowen Yu, Fei Huang, Junyang Lin</li>
+<li><strong>团队</strong>: Qwen Team (Alibaba Group), Fudan University, Tsinghua University</li>
+<li><strong>时间</strong>: 2026年2月4日 (arXiv:2602.04649)</li>
+<li><strong>代码</strong>: https://github.com/QwenLM/RationaleRM</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-reward-model-的-表面对齐-陷阱-结果正确但理由错误">2. 关键问题：Reward Model 的&quot;表面对齐&quot;陷阱——结果正确但理由错误</h2>
+<h3 id="什么是-generative-reward-model-genrm">什么是 Generative Reward Model (GenRM)？</h3>
+<p>传统 Reward Model 只输出一个标量分数，而 GenRM（也叫 LLM-as-a-Judge）会先生成一段推理过程（rationale），再给出最终判断。理论上，这种&quot;先推理后判断&quot;的方式更透明、更可控。</p>
+<h3 id="核心问题-deceptive-alignment-欺骗性对齐">核心问题：Deceptive Alignment（欺骗性对齐）</h3>
+<p><strong>是什么</strong>：GenRM 可以给出<strong>正确的判断</strong>，却是基于<strong>错误的理由</strong>。例如，Table 1 中 o3-mini 正确判断了 Response B 更好（Outcome Accuracy = 100%），但它的理由是&quot;B 使用了 emoji 更有吸引力&quot;&quot;B 明确标注了字符限制&quot;——完全是表面线索。而人类专家关注的是：A 缺少产品名 &quot;Tips&quot;、A 使用了不适合广告的 hashtag 格式、A 超出字符限制、B 缺少 &quot;play in advance&quot; 概念。o3-mini 的 Rationale Consistency 为 0%。</p>
+<p><strong>为什么是问题</strong>：如果 Reward Model 只是&quot;碰巧&quot;答对但理由全错，说明它并没有真正理解评估标准。这种模型在以下场景会崩溃：</p>
+<ol>
+<li><strong>泛化失败</strong>：在训练分布外的新场景中，表面线索不再有效，模型会做出错误判断</li>
+<li><strong>RLHF 中的误导</strong>：当用这样的 RM 做 RLHF 训练时，policy model 会学到&quot;迎合表面特征&quot;的策略，导致生成质量下降</li>
+<li><strong>不可检测性</strong>：仅看 Outcome Accuracy 无法发现这个问题——outcome accuracy 在高性能模型之间几乎没有区分度</li>
+</ol>
+<p><strong>为什么已有方法解决不了</strong>：</p>
+<p>当前 GenRM 的训练和评估都只关注最终判断是否正确（Outcome Accuracy）。这带来两个系统性缺陷：</p>
+<ol>
+<li><strong>评估层面</strong>：Outcome Accuracy 在 frontier model 之间区分度极低——例如 o3 和 o3-mini 的 outcome accuracy 相近，但推理质量差距巨大</li>
+<li><strong>训练层面</strong>：当训练目标只有 outcome reward 时，模型会走&quot;捷径&quot;——放弃高成本的事实核查（evidence verification），转向低成本的表面线索判断（surface cue matching），因为两者都能获得相同的 outcome reward。论文称这一现象为 <strong>Rationale Degeneration（推理退化）</strong></li>
+</ol>
+<h3 id="因果关系">因果关系</h3>
+<p>这三个问题有共同根源：<strong>Outcome Accuracy 作为唯一的监督/评估信号是不够的</strong>。缺少对推理过程的监督 → 模型学会走捷径 → 推理能力退化 → 在新场景中泛化失败。本文提出的 Rationale Consistency 指标和 hybrid reward training 正是从评估和训练两端同时解决这个根源问题。</p>
+<hr />
+<h2 id="3-数据集-基于-helpsteer3-的原子化推理基准">3. 数据集：基于 HelpSteer3 的原子化推理基准</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li><strong>来源</strong>: HelpSteer3（Wang et al., 2025c），一个专家标注的人类偏好数据集</li>
+<li><strong>规模</strong>: 22,116 个样本</li>
+<li><strong>领域覆盖</strong>: 通用对话（general conversation）、代码（code）、STEM、多语言（multilingual）</li>
+<li><strong>数据结构</strong>: 每个实例包含 query $x$、两个 response $(y_1, y_2)$、详细人类 rationale、偏好标签 $l$</li>
+</ul>
+<h3 id="评估-benchmark-构建">评估 Benchmark 构建</h3>
+<p><strong>HelpSteer3-Atomic</strong>:</p>
+<ul>
+<li>从 HelpSteer3 每个领域采样 250 个样本</li>
+<li>使用 GPT-5 将自由文本 rationale $R_{un}$ 分解为原子化 rationale $R_h = \{r_1, ..., r_n\}$</li>
+<li>分解原则：(i) 保留具体的、有证据支撑的 rationale，过滤主观笼统的评论；(ii) 去重，使每个 atomic rationale 构成独立语义单元</li>
+<li>过滤保留 3-7 个 critique points 的样本（太多或太少往往意味着低质量标注）</li>
+<li>手动检查 93 个随机样本，确认 atomic rationales 忠实反映原始人类 rationale</li>
+</ul>
+<p><strong>CW-Atomic</strong>:</p>
+<ul>
+<li>350 个创意写作样本</li>
+<li>由人类标注者按相同 atomic rationale 格式标注</li>
+</ul>
+<h3 id="评估-benchmarks">评估 Benchmarks</h3>
+<ul>
+<li><strong>RM-Bench</strong> (Liu et al., 2024b): 评估模型区分微妙差异和风格偏见的能力</li>
+<li><strong>JudgeBench</strong> (Tan et al., 2024): 强调深度判断和逻辑推理</li>
+<li><strong>Arena Hard v2</strong> (Li et al., 2024b): 用于评估 RLHF downstream 效果</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-metajudge-评估框架-rationale-guided-grpo-训练">4. 关键方法：MetaJudge 评估框架 + Rationale-Guided GRPO 训练</h2>
+<h3 id="1-metajudge-框架-量化推理过程与人类判断的一致性">(1) MetaJudge 框架：量化推理过程与人类判断的一致性</h3>
+<blockquote class="card card-info">
+<p>MetaJudge is a framework for measuring the alignment between LLMs' judgment processes and human reasoning, i.e., Rationale Consistency.</p>
+</blockquote>
+<p><strong>三步流程</strong>：</p>
+<p><strong>Step 1 - Atomic Decomposition</strong>: 将人类自由文本 rationale 分解为互斥的原子单元</p>
+<p><strong>Step 2 - Semantic Matching</strong>: 让模型输出对应的 rationale 列表（按重要性排序），然后使用 LLM 对每个人类 reason $r_i \in R_h$ 进行严格匹配，给出 fulfillment score $s_{ij} \in [0, 1]$：1 表示完全匹配（关键条件/证据一致），0 表示缺失、矛盾或仅泛泛提及</p>
+<p><strong>Step 3 - 计算 Rationale Consistency</strong>:</p>
+<p>为防止模型通过生成一条宽泛理由同时匹配多条人类理由来 game 指标，施加<strong>严格一对一匹配约束</strong>：</p>
+<div class="math-display">$$S_{total} = \max_{\pi} \sum_{(i,j) \in \pi} s_{ij} \quad \text{(Eq. 1)}$$</div>
+<p><strong>直观理解</strong>：想象人类有 4 条理由（R1-R4），模型也生成了若干理由（S1-S5）。每条模型理由 $S_j$ 与每条人类理由 $R_i$ 都有一个匹配分数 $s_{ij}$（0-1）。$S_{total}$ 就是找一种<strong>最佳配对方式</strong>，让总分最高，但每条人类理由只能用一次、每条模型理由也只能用一次。这就像&quot;相亲配对&quot;——每个人只能配对一次，目标是让整体满意度最高。</p>
+<p>Rationale Consistency 定义为 N 个样本上的 mean soft recall：</p>
+<div class="math-display">$$RC = \frac{1}{N} \sum_{k=1}^{N} \frac{S_{total}^{(k)}}{|R_h^{(k)}|} \quad \text{(Eq. 2)}$$</div>
+<p><strong>直观理解</strong>：$S_{total}$ 是模型&quot;命中&quot;的人类理由总分，$|R_h|$ 是人类理由的总数。两者相除就是<strong>命中率</strong>（recall）。如果人类有 4 条理由，模型通过最佳配对拿到了 3 分，那 RC = 3/4 = 75%。这个指标只看&quot;人类理由有多少被模型覆盖&quot;，不看模型是否生成了多余的、人类没有的理由（那是 precision 的事）。</p>
+<p>评估时强制所有模型输出固定长度的 reason 列表（如 Top-5），以测试模型识别关键理由的能力。训练时不施加此约束。</p>
+<p><strong>核心指标</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recall</td>
+<td>人类 rationale 被模型匹配到的比例</td>
+</tr>
+<tr>
+<td>Precision</td>
+<td>模型 rationale 中匹配到人类 rationale 的比例</td>
+</tr>
+<tr>
+<td>F1</td>
+<td>Precision 和 Recall 的调和平均</td>
+</tr>
+<tr>
+<td>Average Precision (AP)</td>
+<td>本文训练中使用的指标</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>评估可靠性验证</strong>：</p>
+<ul>
+<li><strong>对 Evaluator 不敏感</strong>：使用 Qwen-Plus（较弱）和 DeepSeek-R1（较强）两个 evaluator，R² = 0.983, RMSE = 0.006。语义匹配任务相对轻量，非推理模型也能做好</li>
+<li><strong>跨域/跨标注者泛化</strong>：HelpSteer3-Atomic 和 CW-Atomic 之间 Spearman ρ = 0.85</li>
+</ul>
+<p><strong>关键发现</strong>（评估 19 个 frontier models，使用 Qwen3 Plus 作为 MetaJudge evaluator）：</p>
+<ul>
+<li>Outcome Accuracy 在 frontier models 之间区分度很低</li>
+<li>Rationale Consistency 能有效区分强模型（GPT-5, o3, Gemini 3 Pro）和弱模型（Claude 3.5, GPT-4.1）</li>
+<li>典型案例：o3 和 o3-mini outcome accuracy 相近，但 o3-mini 的 rationale consistency 低近 50%</li>
+<li>即使最强模型 rationale consistency 也仅约 0.4，说明对齐模型推理逻辑仍有巨大改进空间</li>
+</ul>
+<h3 id="2-hybrid-reward-training-rationale-guided-grpo">(2) Hybrid Reward Training: Rationale-Guided GRPO</h3>
+<blockquote class="card card-info">
+<p>We train GenRMs with Group Relative Policy Optimization (GRPO) using a hybrid signal that combines rationale consistency with outcome accuracy.</p>
+</blockquote>
+<p><strong>核心思想</strong>：Hierarchical Supervision（层级监督）——模型<strong>只有在同时给出正确的 outcome 和正确的 rationale 时才获得奖励</strong>。</p>
+<p><strong>Reward 设计</strong>：</p>
+<p><strong>Outcome Reward</strong> $R_{outcome}$: 最终判断是否正确（binary, 1 if match human label, 0 otherwise）</p>
+<p><strong>Rationale Reward</strong> $R_{rationale}$: 使用 Average Precision (AP) 衡量模型 rationale 与人类 rationale 的一致性：</p>
+<div class="math-display">$$R_{rationale} = AP = \frac{\sum_{k=1}^{|R_{ai}|} (P@k \times I(k))}{|R_h|} \quad \text{(Eq. 3)}$$</div>
+<p>其中 $P@k$ 是前 k 位的 precision，$I(k)$ 是 indicator function（第 k 条 reason 是否属于最优匹配集 $\pi$）。AP 相比 F1 的<strong>核心优势</strong>在于引入了 <strong>Soft Ranking Constraint</strong>：不仅要求模型检索到全面的理由，还激励将与人类认知对齐的核心理由放在列表顶部，为 RL 提供更平滑、有优先级的梯度信号。</p>
+<p><strong>Hybrid Reward</strong> $R_{final}$: 乘法式 gating mechanism：</p>
+<div class="math-display">$$R_{final} = R_{rationale} \times R_{outcome} \quad \text{(Eq. 4)}$$</div>
+<p>这种乘法形式意味着：outcome 错误时 reward 直接为 0，正确推理是获得高 reward 的<strong>必要条件</strong>。</p>
+<p><strong>Ablation Note</strong>: 论文尝试了仅使用 $R_{rationale}$（不含 outcome reward），结果导致 <strong>reward hacking</strong>——模型在缺乏最终 outcome 激励信号的情况下，生成与自身推理过程不一致的结果。因此 hybrid signal 是必要的。</p>
+<p><strong>GRPO 优化目标</strong>:</p>
+<div class="math-display">$$J(\theta) = \mathbb{E}_{q, \{o_i\}} \left[ \frac{1}{G} \sum_{i=1}^{G} \left( \frac{\pi_\theta(o_i|q)}{\pi_{old}(o_i|q)} \hat{A}_i - \beta D_{KL} \right) \right] \quad \text{(Eq. 5)}$$</div>
+<p>其中 $\hat{A}_i$ 是通过组内 reward 标准化计算的 advantage，$\beta$ 是 KL divergence 系数。</p>
+<p><strong>与 <a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">SDPO</a> 和 <a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">OPSD</a> 的对比</strong>：</p>
+<ul>
+<li>SDPO/OPSD 关注的是 <strong>GRPO 稀疏奖励下的 credit assignment 问题</strong>，通过 self-distillation 提供 token-level 密集信号</li>
+<li>本文关注的是 <strong>reward 信号本身的质量问题</strong>——即使 GRPO 框架不变，只要 reward 信号包含了对推理过程的监督（而非仅 outcome），就能显著改善训练效果</li>
+<li>两个方向是互补的：一个优化&quot;信号如何传播&quot;，一个优化&quot;信号本身的含义&quot;</li>
+</ul>
+<h3 id="3-训练配置">(3) 训练配置</h3>
+<p><strong>GenRM 训练</strong>:</p>
+<ul>
+<li><strong>Base Model</strong>: Qwen3-14B, Qwen3-30B-A3B (MoE)</li>
+<li><strong>训练方法</strong>: GRPO</li>
+<li><strong>训练数据</strong>: HelpSteer3 human checklist (22,116 samples)，所有 rationale 通过 Section 2.1 的 Atomic Decomposition 转化为结构化 atomic rationale checklists</li>
+<li><strong>Training-time MetaJudge</strong>: 使用 Qwen3-Turbo（即 Qwen3-30B-A3B-Instruct-2507）作为快速训练时 reward 评估器</li>
+<li><strong>Hyperparameters</strong>:
+<ul>
+<li>Learning rate: $2 \times 10^{-6}$</li>
+<li>Batch size: 256, Mini-batch size: 128</li>
+<li>Samples per prompt: $n = 8$</li>
+<li>Max generation length: 12K tokens, Max prompt length: 8K tokens</li>
+<li>Positive/Negative clip ratios: $2 \times 10^{-4}$</li>
+<li>Training epochs: 2</li>
+</ul>
+</li>
+</ul>
+<p><strong>Downstream Policy Alignment (RLHF)</strong>:</p>
+<ul>
+<li><strong>Algorithm</strong>: GRPO</li>
+<li><strong>Hyperparameters</strong>: Learning rate $2 \times 10^{-6}$, batch size 512, mini-batch 128, $n=8$ samples/prompt</li>
+<li><strong>Clip ratios</strong>: $2 \times 10^{-4}$</li>
+<li><strong>训练步数</strong>: 90 steps</li>
+<li><strong>流程</strong>: Qwen-30B-A3B-Base → SFT (basic instruction following) → RLHF with trained GenRM</li>
+</ul>
+<hr />
+<h2 id="5-关键实验-hybrid-reward-训练在-rm-bench-和-judgebench-上达到-sota">5. 关键实验：Hybrid reward 训练在 RM-Bench 和 JudgeBench 上达到 SOTA</h2>
+<h3 id="主实验结果">主实验结果</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>RM-Bench</th>
+<th>JudgeBench</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Generative Reward Models</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RM-R1-Distilled-Qwen-32B</td>
+<td>83.9</td>
+<td>78.8</td>
+<td>81.4</td>
+</tr>
+<tr>
+<td>RRM-32B</td>
+<td>73.1</td>
+<td>75.7</td>
+<td>74.4</td>
+</tr>
+<tr>
+<td>Nemotron-Super-49B</td>
+<td>82.7</td>
+<td>77.2</td>
+<td>80.0</td>
+</tr>
+<tr>
+<td>RewardAnything-8B-v1</td>
+<td>83.1</td>
+<td>62.6</td>
+<td>72.9</td>
+</tr>
+<tr>
+<td>GRAM-R²</td>
+<td>85.7</td>
+<td>81.0</td>
+<td>83.4</td>
+</tr>
+<tr>
+<td><strong>Outcome-Only Baselines</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Qwen3-14B (Outcome-Only)</td>
+<td>83.6</td>
+<td>70.0</td>
+<td>76.8</td>
+</tr>
+<tr>
+<td>Qwen3-30B-A3B (Outcome-Only)</td>
+<td>84.9</td>
+<td>75.7</td>
+<td>80.3</td>
+</tr>
+<tr>
+<td><strong>Ours (Outcome + Rationale)</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Qwen3-14B (Ours)</td>
+<td>86.7</td>
+<td>79.1</td>
+<td>82.9</td>
+</tr>
+<tr>
+<td>Qwen3-30B-A3B (Ours)</td>
+<td><strong>87.1</strong></td>
+<td><strong>82.0</strong></td>
+<td><strong>84.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>关键数据：</p>
+<ul>
+<li><strong>Qwen3-14B</strong>: Outcome+Rationale vs Outcome-Only，RM-Bench +3.1, JudgeBench <strong>+9.1</strong>, Avg +6.1</li>
+<li><strong>Qwen3-30B-A3B</strong>: Outcome+Rationale vs Outcome-Only，RM-Bench +2.2, JudgeBench <strong>+6.3</strong>, Avg +4.3</li>
+<li>超越同期最强 GenRM GRAM-R² (85.7/81.0/83.4) 和 Principles-Qwen32B (86.2/81.4/83.8)</li>
+<li><strong>Code 领域提升最显著</strong>：说明 outcome-only 训练不能教会模型可靠的代码正确性概念，而 rationale consistency 训练能让模型真正验证代码逻辑和准确性</li>
+<li>GRAM-R² 依赖 1M+ 外部偏好和推理样本的数据增强，Principles-Qwen32B 依赖 judgment principles 注解降低判别难度，而本文方法仅通过提升<strong>监督信号质量</strong>就实现超越</li>
+</ul>
+<h3 id="rlhf-下游效果-arena-hard-v2-table-3">RLHF 下游效果 (Arena Hard v2, Table 3)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Hard Prompt Score (%)</th>
+<th>Creative Writing Score (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>12.61</td>
+<td>41.12</td>
+</tr>
+<tr>
+<td>Outcome-Only RM</td>
+<td>19.10</td>
+<td>62.00</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td><strong>21.22</strong></td>
+<td><strong>69.08</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Reward-guided alignment 大幅提升 SFT baseline</li>
+<li><strong>Creative Writing 提升 7%</strong>（69.08% vs 62.00%）——创意写作 prompt 常包含隐式约束（如必须包含特定元素、严格字数限制），outcome-only reward 更容易被 game，而 rationale consistency 提供更细粒度的监督</li>
+</ul>
+<h3 id="rationale-consistency-消融实验-table-4">Rationale Consistency 消融实验 (Table 4)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>HelpSteer3-Atomic</th>
+<th>∆</th>
+<th>CW-Atomic</th>
+<th>∆</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Model</td>
+<td>0.2505</td>
+<td>-</td>
+<td>0.2385</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Outcome-Only</td>
+<td>0.2108</td>
+<td>↓0.0397</td>
+<td>0.1677</td>
+<td>↓0.0708</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td><strong>0.3718</strong></td>
+<td>↑0.1213</td>
+<td><strong>0.2526</strong></td>
+<td>↑0.0141</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Outcome-only 训练导致 rationale consistency <strong>下降</strong> 3.97%（in-domain）和 7.08%（out-of-domain）</li>
+<li>Hybrid 训练提升 +12.13%（in-domain）和 +1.4%（out-of-domain）</li>
+</ul>
+<h3 id="rationale-degeneration-分析-figure-4">Rationale Degeneration 分析 (Figure 4)</h3>
+<p><img src="https://arxiv.org/html/2602.04649v1/x5.png" alt="Figure 4: Outcome-only 训练导致推理退化为表面捷径，hybrid 训练成功恢复 Evidence-Grounded 推理" /></p>
+<p>将 atomic rationales 分为三类并追踪训练中的分布变化：</p>
+<ul>
+<li><strong>Evidence-Grounded (EG)</strong>: 引用具体证据（如错误的精确位置）</li>
+<li><strong>Criterion-Grounded (CG)</strong>: 听起来专业但不定位具体问题（如&quot;代码有逻辑错误&quot;）</li>
+<li><strong>Generic/Style (GS)</strong>: 宽泛笼统（如&quot;Response B 更详细&quot;）</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>EG</th>
+<th>CG</th>
+<th>GS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Model</td>
+<td>93.6%</td>
+<td>4.8%</td>
+<td>~1.6%</td>
+</tr>
+<tr>
+<td>Outcome-Only</td>
+<td>45.4%</td>
+<td>32.7%</td>
+<td>21.8%</td>
+</tr>
+<tr>
+<td><strong>Ours (OC+RC)</strong></td>
+<td><strong>98.7%</strong></td>
+<td>~1.3%</td>
+<td>~0%</td>
+</tr>
+</tbody>
+</table></div>
+<p>Outcome-only 训练使 EG 从 93.6% 骤降至 45.4%，因为 evidence checking 是高成本操作，与 binary outcome reward 相关性弱，模型选择走捷径。Hybrid 训练将 EG 恢复到 98.7%。</p>
+<h3 id="七类推理缺陷分析-figure-5">七类推理缺陷分析 (Figure 5)</h3>
+<p><img src="https://arxiv.org/html/2602.04649v1/x6.png" alt="Figure 5: 三种训练设置下各项推理缺陷的发生率，outcome-only 训练放大缺陷而 rationale 监督全面降低缺陷" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Flaw</th>
+<th>Before Training</th>
+<th>Outcome-Only</th>
+<th>Ours</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F4 Single-Sided Praise</td>
+<td>17.8%</td>
+<td><strong>62.0%</strong></td>
+<td>~0.05%</td>
+</tr>
+<tr>
+<td>F1 Style Only</td>
+<td>3.8%</td>
+<td>26.2%</td>
+<td>~3.0%</td>
+</tr>
+<tr>
+<td>F5 Unfalsifiable</td>
+<td>2.3%</td>
+<td>21.2%</td>
+<td>~1.1%</td>
+</tr>
+<tr>
+<td>F2 Generic Correctness</td>
+<td>3.0%</td>
+<td>12.1%</td>
+<td>~1.1%</td>
+</tr>
+<tr>
+<td>F3 Generic Relevance</td>
+<td>~1%</td>
+<td>10.2%</td>
+<td>~1%</td>
+</tr>
+</tbody>
+</table></div>
+<p>最大变化是 <strong>F4 Single-Sided Praise</strong>: 从 17.8% 飙升至 62.0%（Outcome-Only），说明模型先决定赢家再单方面赞美，不做真正对比。加入 rationale supervision 后降至接近 0%。</p>
+<hr />
+<h2 id="6-golden-case-一条广告评估数据的完整流程">6. Golden Case：一条广告评估数据的完整流程</h2>
+<blockquote class="card card-info">
+<p>来自 Table 1 的具体案例</p>
+</blockquote>
+<p><strong>输入样本</strong>:</p>
+<ul>
+<li>User Prompt: &quot;write me powerful ads for Tips, play your game in advance to relieve stress. count limit 100&quot;</li>
+<li>Response A: 4 条带 hashtag 的广告文案</li>
+<li>Response B: 3 条结构化广告文案（标注 &quot;Under 100 Characters&quot;）</li>
+</ul>
+<p><strong>人类专家 Checklist (Ground Truth, 4 points)</strong>:</p>
+<ul>
+<li>[R1] Response A 遗漏产品名 &quot;Tips&quot;；B 包含</li>
+<li>[R2] Response A 使用 hashtag（不适合广告格式）</li>
+<li>[R3] Response A 超出 100 字符限制（hashtag 计入）；B 在限制内</li>
+<li>[R4] Response B 缺少 &quot;play in advance&quot; 概念</li>
+</ul>
+<p><strong>弱模型 (o3-mini) 判断</strong>:</p>
+<ul>
+<li>判断结果: A &lt; B ✓（正确）</li>
+<li>理由: &quot;B 明确标注字符限制&quot;、&quot;B 的 emoji 增强吸引力&quot;、&quot;A 缺少清晰分隔&quot;</li>
+<li>Outcome Score: 100% | Rationale Score: <strong>0%</strong> (0/4 hit)</li>
+<li><strong>分析</strong>: 全部基于表面格式线索，没有进行任何事实核查</li>
+</ul>
+<p><strong>强模型 (o3) 判断</strong>:</p>
+<ul>
+<li>判断结果: A &lt; B ✓（正确）</li>
+<li>理由: &quot;A 超出字符限制&quot;（命中 R3）、&quot;A 缺少产品名 Tips&quot;（命中 R1）、&quot;B 虽缺 'in advance' 但满足更关键约束&quot;（命中 R4）</li>
+<li>Outcome Score: 100% | Rationale Score: <strong>75%</strong> (3/4 hit)</li>
+<li><strong>分析</strong>: 进行了事实核查（数字符数），识别了关键缺失，并能权衡 trade-off</li>
+</ul>
+<p><strong>关键决策点</strong>: 两个模型做出了相同的最终判断，但推理质量天壤之别。Outcome Accuracy 无法区分它们，只有 Rationale Consistency 才能揭示差异。</p>
+<hr />
+<h2 id="7-insights-过程监督是-reward-model-质量的关键">7. Insights：过程监督是 Reward Model 质量的关键</h2>
+<ol>
+<li><strong>&quot;答对&quot;不等于&quot;理解对&quot;</strong>：这个 insight 不仅适用于 Reward Model，也适用于所有 chain-of-thought 推理场景。当我们只验证最终答案时，模型有动机走捷径。</li>
+<li><strong>层级监督的设计哲学</strong>：先保证 outcome 正确，再优化 rationale 质量——这种渐进式监督值得在其他场景（如代码生成、数学推理）中借鉴。</li>
+<li><strong>Rationale Consistency 作为通用评估维度</strong>：不仅适用于 reward model，也可用于评估任何 &quot;reasoning + decision&quot; 系统的推理质量。</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<ul>
+<li>
+<p><strong>核心创新</strong>: 提出 Rationale Consistency 指标和 MetaJudge 框架，首次系统性地量化 GenRM 推理过程与人类判断的对齐程度；设计 hybrid reward (outcome + rationale) 的 GRPO 训练方法，有效解决 &quot;Rationale Degeneration&quot; 问题。</p>
+</li>
+<li>
+<p><strong>局限性</strong>:</p>
+<ul>
+<li>计算 Rationale Consistency 依赖高质量人类标注，限制了可扩展性。即使最强 frontier model 的 rationale consistency 也不到 40%，表明当前 LLM 还不能可靠地替代人类做 rationale 标注</li>
+<li>HelpSteer3 的 Atomic Decomposition 由 GPT-5 完成，CW-Atomic 的 consolidation 由 Gemini-3-Flash 完成——论文验证了 evaluator 间高一致性（R²=0.983），但分解过程本身的偏见未被系统验证</li>
+<li>Hybrid reward 采用简单乘法 $R_{final} = R_{rationale} \times R_{outcome}$，未探索其他组合方式（如加权求和、门控网络等）</li>
+<li><strong>不适用于真正开放、主观的任务</strong>：方法要求有<strong>共识的评判标准</strong>。对于数学题有多种证明方法、或纯粹主观偏好的任务（如&quot;哪种艺术风格更好&quot;），单一标注不够。论文通过<strong>多标注者过滤分歧样本</strong>来回避这个问题，但这也意味着牺牲了任务开放性</li>
+</ul>
+</li>
+<li>
+<p><strong>改进方向</strong>:</p>
+<ul>
+<li>探索不依赖强 LLM 的 rationale consistency 评估方法（降低成本和潜在偏见）</li>
+<li>将 hybrid reward 思想扩展到数学推理、代码生成等 verifiable domain</li>
+<li>研究 rationale consistency 与 process reward model (PRM) 的结合</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="9-讨论-与-bleu-指标的对比">9. 讨论：与 BLEU 指标的对比</h2>
+<p>用户提出一个有趣的类比：Rationale Consistency 与机器翻译中的 BLEU 指标。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>BLEU</th>
+<th>Rationale Consistency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>多参考支持</td>
+<td>✅ 多个 GT 译文</td>
+<td>✅ 多个标注者共识</td>
+</tr>
+<tr>
+<td>基于匹配</td>
+<td>✅ n-gram 匹配</td>
+<td>✅ 语义匹配</td>
+</tr>
+<tr>
+<td>衡量&quot;覆盖度&quot;</td>
+<td>✅ Precision</td>
+<td>✅ Recall（人类理由被覆盖的比例）</td>
+</tr>
+<tr>
+<td><strong>对分歧的处理</strong></td>
+<td>取<strong>最佳匹配</strong>（包容多样性）</td>
+<td><strong>丢弃分歧样本</strong>（要求一致性）</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>任务本身允许多解</td>
+<td>任务要求<strong>共识</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>本质差异</strong>：</p>
+<ul>
+<li>BLEU 说：&quot;这句话可以这样翻，也可以那样翻，都对&quot;</li>
+<li>Rationale Consistency 说：&quot;这 3 个标注者都同意的评判标准，模型必须遵循&quot;</li>
+</ul>
+<p>这也是为什么论文在 Creative Writing 上有效——他们<strong>不是</strong>在评价&quot;哪种写作风格更好&quot;，而是在检测<strong>明确的、有共识的缺陷</strong>（遗漏 prompt 要求、事实错误）。</p>
+<hr />
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li><strong>相关工作</strong>:
+<ul>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a> — SDPO 同样关注 GRPO 的局限性，但从 credit assignment（密集信号 vs 稀疏信号）角度切入，与本文关注 reward 信号质量形成互补</li>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a> — OPSD 指出 GRPO 的稀疏 binary reward 问题，本文从另一维度说明即使是 sequence-level reward，只要包含过程监督也能大幅改善</li>
+<li><a class="wikilink" href="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents.html" title="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents">ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents</a> — 从评估范式角度（相对排序 vs 逐点评分）解决问题，与本文的过程监督视角互补</li>
+</ul>
+</li>
+<li><strong>相关 MOC</strong>:
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span></li>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="PEGRL-Post-Editing_Guided_RL_for_MT.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">PEGRL - Improving Machine Translation by Post-Editing Guided Reinforcement Learning</span></a>
+<a class="paper-nav-link next" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Reinforcement Learning via Self-Distillation</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2602.04649</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

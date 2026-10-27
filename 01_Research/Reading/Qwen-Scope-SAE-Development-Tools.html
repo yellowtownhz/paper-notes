@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-sae-只能让你-看-模型在想什么-没法让你-做-什么"><span class="toc-num">02</span> 2. 关键问题：SAE 只能让你"看"模型在想什么，没法让你"做"什么</a></li>
+<li><a class="toc-link" href="#3-关键方法-sae-作为四个方向的统一接口"><span class="toc-num">03</span> 3. 关键方法：SAE 作为四个方向的统一接口</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-整体架构">3.1 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-sae-training-核心基础设施">3.2 SAE Training (核心基础设施)</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-steering-推理时特征干预">3.3 Steering — 推理时特征干预</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-evaluation-benchmark-特征足迹分析">3.4 Evaluation — Benchmark 特征足迹分析</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-data-classification-sae-特征做毒性分类">3.5 Data Classification — SAE 特征做毒性分类</a></li>
+<li><a class="toc-link toc-sub" href="#3-6-data-synthesis-特征驱动的安全数据合成">3.6 Data Synthesis — 特征驱动的安全数据合成</a></li>
+<li><a class="toc-link toc-sub" href="#3-7-sft-sae-guided-supervised-fine-tuning-sasft">3.7 SFT — SAE-guided Supervised Fine-Tuning (SASFT)</a></li>
+<li><a class="toc-link toc-sub" href="#3-8-rl-sae-guided-rare-negative-augmentation">3.8 RL — SAE-guided Rare Negative Augmentation</a></li>
+<li><a class="toc-link toc-sub" href="#3-9-prompt-细节">3.9 Prompt 细节</a></li>
+<li><a class="toc-link" href="#4-数据集-sae-训练用-pretraining-data-各应用方向各有专门数据"><span class="toc-num">04</span> 4. 数据集：SAE 训练用 pretraining data，各应用方向各有专门数据</a></li>
+<li><a class="toc-link" href="#5-关键结果-sae-特征作为通用接口有效-但各方向证据强度差异大"><span class="toc-num">05</span> 5. 关键结果：SAE 特征作为通用接口有效，但各方向证据强度差异大</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-16</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.11887" target="_blank">arXiv</a>
+    </div>
+    <h1>Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models</h1>
+    <p class="authors">Qwen Team: Boyi Deng, Xu Wang, Yaoning Wang (实验设计); Yu Wan (项目负责人); Yubo Ma, Baosong Yang (共同指导); Haoran Wei, Jialong Tang, Huan Lin, Ruize Gao, Tianhao Li, Qian Cao, Xuancheng Ren, Xiaodong Deng, An Yang, Fei Huang, Dayiheng Liu, Jingren Zhou</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">SAE</span> <span class="topic-tag">Reasoning_Intervention</span> <span class="topic-tag">LLM_Evaluation</span> <span class="topic-tag">Data_Augmentation</span> <span class="topic-tag">LLM_Post-Training</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Code_Switching</span> <span class="topic-tag">Repetition_Suppression</span></div>
+</header>
+
+<h1>论文笔记: Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>团队</strong>: Qwen Team (阿里巴巴通义千问团队), 核心贡献者 Boyi Deng, Xu Wang, Yaoning Wang; 项目负责人 Yu Wan; 共同指导者 Yubo Ma, Baosong Yang</li>
+<li><strong>发表</strong>: arXiv 2605.11887, 2026年5月12日, 技术报告性质（暂无会议/期刊信息）</li>
+<li><strong>本质</strong>: 不止是一个开源 SAE 套件，更是一个&quot;SAE 从事后分析工具变成模型开发通用接口&quot;的论证。14 组 SAE 权重是基础设施，4 个方向的应用才是核心 claim</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-sae-只能让你-看-模型在想什么-没法让你-做-什么">2. 关键问题：SAE 只能让你&quot;看&quot;模型在想什么，没法让你&quot;做&quot;什么</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>你用英文 prompt 问 Qwen3-8B 一个问题，模型回复里突然混进了中文片段。你想知道为什么，还想修掉它。</p>
+<p>传统路子：肉眼看到输出有中文 → 猜测是训练数据中英混杂 → 混洗数据比例 → 重新 SFT → 全量重训。整个流程是&quot;黑箱诊断 + 全量重训&quot;，代价高、定位模糊。</p>
+<p>SAE 能做的是：把模型隐层激活投射到稀疏特征空间 → 排序发现一个中文语言特征 (id: 6159) 被异常激活 → 抑制这个特征方向，中文混入就消失了。更进一步：不只是推理时干预，还可以在 SFT 时加辅助 loss 显式抑制这个特征方向，让模型永久学会不在不该用中文的时候用中文。再进一步：用 SAE 特征做 benchmark 冗余度分析，发现 GSM8K 的能力 63% 被 MATH 覆盖，可以删掉冗余评测。</p>
+<p>这就是论文要证明的：SAE 不只是让你&quot;看到&quot;模型在干什么，而是给你一套<strong>可操作的 knobs</strong>——诊断、控制、评测、训练都能用同一组特征。</p>
+</blockquote>
+<ul>
+<li><strong>动机</strong>: LLM 内部决策过程高度不透明，SAE 能把高维激活分解成稀疏可解释特征，但之前的工作都停在事后分析层面——发现特征、标注特征、画图展示，没跟具体的模型开发流程打通</li>
+<li><strong>为什么之前卡住了</strong>: 之前 SAE 工作流程是&quot;发现 → 观察 → 标注&quot;，停留在理解层面。做 steering 的工作大多用 contrastive activation addition，不依赖 SAE 的结构化特征字典，干预不可解释；做 post-training 的工作更不看内部表征。两边各干各的，缺少一个统一的接口</li>
+<li><strong>因果链条</strong>: opacity → 需要可解释工具 → SAE 提供稀疏特征字典 → 但只做事后分析 → 缺乏连接到实际开发流程 → Qwen-Scope 要打通这条路</li>
+</ul>
+<hr />
+<h2 id="3-关键方法-sae-作为四个方向的统一接口">3. 关键方法：SAE 作为四个方向的统一接口</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>续上面&quot;英文 prompt 产出中文混入&quot;的例子，看看 SAE 在各方向怎么走通：</p>
+<p><strong>Steering</strong>: 输入英文 prompt → 模型前向传播到某层 → 拿到 residual stream 激活 h → 过 SAE encoder → 发现特征 6159 (中文语言特征) 激活值异常高 → 做干预 h' = h - alpha * d_6159（抑制中文方向） → 继续前向 → 输出纯英文。不需要改权重。</p>
+<p><strong>Evaluation</strong>: 把 benchmark 里的样本过模型 + SAE → 每个样本得到一组激活特征 → 整个 benchmark 的特征足迹 F(D) 就是它探测的能力指纹 → 如果两个 benchmark 激活几乎一样的特征集合，说明它们测的是同一种能力。GSM8K 的能力 63% 被 MATH 覆盖（overlap(GSM8K, MATH)=0.63），但反过来只有 10%（overlap(MATH, GSM8K)=0.10）。</p>
+<p><strong>Data Classification</strong>: 拿毒性特征发现思路——在 2000 条标注数据上发现 top-K toxic features，直接用 OR-rule 分类器判读，F1 &gt; 0.90。不需要训练任何 classifier head。</p>
+<p><strong>SFT (SASFT)</strong>: 把特征 6159 的方向编进训练 loss，加一个 auxiliary loss L_reduce，在非中文数据上惩罚中文特征激活超过基线的部分。训练完后模型自己不混中文了——不需要推理时干预。</p>
+</blockquote>
+<h3 id="3-1-整体架构">3.1 整体架构</h3>
+<p>Qwen-Scope = 14 组 SAE 权重（覆盖 7 个 Qwen 模型变体） + 4 个应用方向的实证演示。没有统一的&quot;模型&quot;，而是同一套 SAE 特征在不同场景复用。</p>
+<pre><code>SAE Training (Section 2) → Shared Feature Dictionary
+  ├── Steering (Section 3) — 推理时特征干预
+  ├── Evaluation (Section 4) — benchmark 特征足迹分析
+  ├── Data Classification + Synthesis (Section 5-6) — 基于特征的数据工作流
+  └── SFT + RL (Section 7-8) — 训练时特征信号注入
+</code></pre>
+<h3 id="3-2-sae-training-核心基础设施">3.2 SAE Training (核心基础设施)</h3>
+<p><strong>模型覆盖</strong>: 7 个 backbone（Qwen3: 1.7B, 8B, 30B-A3B; Qwen3.5: 2B, 9B, 27B, 35B-A3B），覆盖 dense + MoE。</p>
+<p><strong>SAE 配置</strong>（Table 1）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Model</th>
+<th>Hidden Size</th>
+<th>SAE Width</th>
+<th>Expansion Factor</th>
+<th>Top-k (L0)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dense</td>
+<td>Qwen3-1.7B-Base</td>
+<td>2048</td>
+<td>32K</td>
+<td>16</td>
+<td>{50, 100}</td>
+</tr>
+<tr>
+<td>Dense</td>
+<td>Qwen3-8B-Base</td>
+<td>4096</td>
+<td>64K</td>
+<td>16</td>
+<td>{50, 100}</td>
+</tr>
+<tr>
+<td>Dense</td>
+<td>Qwen3.5-2B-Base</td>
+<td>2048</td>
+<td>32K</td>
+<td>16</td>
+<td>{50, 100}</td>
+</tr>
+<tr>
+<td>Dense</td>
+<td>Qwen3.5-9B-Base</td>
+<td>4096</td>
+<td>64K</td>
+<td>16</td>
+<td>{50, 100}</td>
+</tr>
+<tr>
+<td>Dense</td>
+<td>Qwen3.5-27B (Instruct)</td>
+<td>5120</td>
+<td>80K</td>
+<td>16</td>
+<td>{50, 100}</td>
+</tr>
+<tr>
+<td>MoE</td>
+<td>Qwen3-30B-A3B-Base</td>
+<td>2048</td>
+<td>32K / 128K</td>
+<td>16 / 64</td>
+<td>50 / 100</td>
+</tr>
+<tr>
+<td>MoE</td>
+<td>Qwen3.5-35B-A3B-Base</td>
+<td>2048</td>
+<td>32K / 128K</td>
+<td>16 / 64</td>
+<td>50 / 100</td>
+</tr>
+</tbody>
+</table></div>
+<p>关键设计决策：</p>
+<ul>
+<li><strong>Expansion factor = 16</strong>: dense 模型统一用 16x 扩展，MoE 额外提供 64x 版本。MoE 的 residual stream 被多专家路由混合，表征更复杂，需要更宽的字典捕捉细粒度结构</li>
+<li><strong>Top-k 激活</strong>: 用 Top-k ReLU（只保留最大的 k 个激活值），k=50 或 100。比 ReLU + L1 sparsity penalty 更稳定、更可控，直接指定稀疏度水平</li>
+<li><strong>训练数据</strong>: in-house pretraining data（没给具体细节）</li>
+<li><strong>Auxiliary loss</strong>: 权重 1/32，减少 dead features（follow Gao et al. 2024）</li>
+<li><strong>Outlier filtering</strong>: 过滤掉 L2 norm 极大的激活值（尤其在首 token 激活中常见），稳定训练</li>
+<li><strong>特殊点</strong>: Qwen3.5-27B 的 SAE 训练在 instruct variant 上（其他都是 base model）</li>
+</ul>
+<h3 id="3-3-steering-推理时特征干预">3.3 Steering — 推理时特征干预</h3>
+<p><strong>核心公式</strong>（Eq. 1）：h' ← h + αd</p>
+<ul>
+<li>h: 原始 hidden state; d: SAE 特征方向（decoder 的某一列向量）; α: 干预强度（正=放大，负=抑制）</li>
+<li>干预后替换 h → h'，模型继续前向传播</li>
+</ul>
+<p><strong>特征发现方法</strong>：两类——</p>
+<ol>
+<li><strong>Contrastive methods</strong>: 构造正例集（有目标属性）和负例集（没有），过 SAE 算各特征的平均激活差，选差异最大的特征</li>
+<li><strong>Automatic interpretation methods</strong>: 对每个特征收集 top-activating contexts → 让更强的 LLM 总结语义描述 → 建立特征语义索引 → 查询时搜索描述</li>
+</ol>
+<p><strong>Case Study</strong>（Figure 3）：</p>
+<ul>
+<li>英文 prompt 混出中文 → SAE 特征排序发现 id:6159 (中文语言特征) 异常激活 → 抑制 → 修复</li>
+<li>现代中文续写 → 激活 id:36398 (古文风格特征) → 输出变成文言风格</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x2.png" alt="Figure 3: SAE特征用于诊断和控制模型行为的示例" /></p>
+<h3 id="3-4-evaluation-benchmark-特征足迹分析">3.4 Evaluation — Benchmark 特征足迹分析</h3>
+<p><strong>Feature extraction</strong>（Eq. 2-3）：</p>
+<ul>
+<li>F(x_i) = {j : z_j(x_i) &gt; 0} — 样本 x_i 的活跃特征集（在 last token position 取）</li>
+<li>F(D) = ∪ F(x_i) — 整个 benchmark 的特征足迹</li>
+</ul>
+<p><strong>Performance-based redundancy</strong>（Eq. 4-6）：</p>
+<p>R(D) = (1/N) Σ τ_n — 用 Kendall's τ 测量子集与全集的排名一致性，取 AUC 作为 redundancy profile</p>
+<p><strong>问题</strong>: 算 R(D) 需要 O(M×N) 模型前向传播，代价太高。原文 Section 4.2 有专门子节讨论这个 limitation——这是提出 feature-based redundancy 的直接动机。</p>
+<p><strong>SAE feature-based redundancy</strong>（Eq. 7-9）：</p>
+<ul>
+<li>c_n = E[|F(S)|/|F(D)|] — 特征覆盖曲线</li>
+<li>R_hat(D) = AUC(c_n) × N/|F(D)| — coverage 饱和快（高 AUC）+ 每样本贡献新特征少（高 N/|F(D)|）→ 更冗余。两个条件必须同时满足</li>
+</ul>
+<p><strong>验证</strong>: 17 个 benchmark 上，Spearman ρ ≈ 0.85 between R(D) 和 R_hat(D)（Figure 5）</p>
+<p><img src="https://arxiv.org/html/2605.11887v1/x4.png" alt="Figure 5: 基于性能的冗余度与基于特征的冗余度在17个benchmark上的Spearman相关性" /></p>
+<p><strong>Inter-Benchmark Similarity</strong>（Eq. 10-12）：</p>
+<ul>
+<li>overlap(D_1, D_2) = |F(D_1) ∩ F(D_2)| / |F(D_1)| — 非对称覆盖</li>
+<li>overlap(GSM8K, MATH) = 0.63, overlap(MATH, GSM8K) = 0.10 — 小学生数学被竞赛数学覆盖，反过来不行</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x5.png" alt="Figure 6: 八个benchmark之间的特征重叠矩阵，展示非对称覆盖关系" /></p>
+<p><strong>Partial correlation</strong>（Eq. 12, Table 2）——控制 general ability (MMLU) 后：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Correlation</th>
+<th>Direct</th>
+<th>Partial (control: MMLU)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pearson</td>
+<td>68.4%</td>
+<td>75.5%</td>
+</tr>
+<tr>
+<td>Spearman</td>
+<td>60.7%</td>
+<td>71.3%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>重要 nuance</strong>: 原文专门解释了&quot;高冗余 ≠ 低质量&quot;——冗余度可以是有益的（降低评测方差）。redundancy metric 适用的场景是&quot;迭代开发中高效排序模型&quot;，而非判断 benchmark 本身的好坏。</p>
+<h3 id="3-5-data-classification-sae-特征做毒性分类">3.5 Data Classification — SAE 特征做毒性分类</h3>
+<p><strong>Feature Discovery</strong>（Eq. 13-14）：</p>
+<ul>
+<li>h_{i,f}^(l) = 1[max_t a_{i,t,f}^(l) &gt; ε] — ε=0, 特征只要在任何 token 位置激活就算&quot;发射&quot;（在 Top-k SAE 里，z_j &gt; 0 本身就意味着 feature 在 top-k 中被选中，所以 ε=0 是合理选择而非&quot;太宽松&quot;）</li>
+<li>Δ_f^(l) = Pr(h=1|y=1) - Pr(h=1|y=0) — 有毒/干净数据上的发射频率差 → 按 Δ 排序选 top-K</li>
+</ul>
+<p><strong>Classification</strong>（Eq. 15）: OR-rule — 任一选中特征在任何 token 位置发射 → 判有毒</p>
+<p><strong>Layer Selection Proxy</strong>（Eq. 16）: top1-diff d^(l) = max_f Δ_f^(l), l* = argmax d^(l) — 不需要跑全层扫描，直接用 feature discovery 时的统计量选最优层</p>
+<p><strong>Multi-Layer Composition</strong>（Eq. 17）: 选 top-m 层，每层只用最佳特征，做 OR-rule 组合。对难语言有提升。</p>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li>英文毒性分类 F1 &gt; 0.90，用极少特征 (K=1,2,5) 就够了（Figure 8）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x7.png" alt="Figure 8: SAE毒性分类器在英文上的逐层F1表现" /></p>
+<ul>
+<li>中间偏后层性能最好</li>
+<li>跨语言迁移：英文发现的毒性特征可迁移到欧洲语言（俄语、法语），远距离语言（阿姆哈拉语、中文）差</li>
+<li>特征共享在中间层最高（Figure 9c）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x8.png" alt="Figure 9: 跨语言毒性SAE特征的重叠与迁移分析" /></p>
+<ul>
+<li>10% discovery data → 99% 分类性能（Figure 12）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x11.png" alt="Figure 12: 不同毒性特征选择数量下的宏平均最佳F1" /></p>
+<h3 id="3-6-data-synthesis-特征驱动的安全数据合成">3.6 Data Synthesis — 特征驱动的安全数据合成</h3>
+<p><strong>Target Feature Discovery</strong>（Eq. 18-20）:</p>
+<ul>
+<li>c_f(D_seed) = 1[∃i ∈ D_seed: h_{i,f}=1] — 特征 f 是否被种子数据触及</li>
+<li>T = {(l,f): s_f ≥ τ} — 语义相关特征候选集（s 是 judge model 给的 relevance score）</li>
+<li>T_miss(D_seed) — 最高优先级：语义相关但未被种子数据触及的特征</li>
+</ul>
+<p><strong>Data Synthesis from Feature Descriptions</strong>（Eq. 21-23）: 三阶段流程：</p>
+<ol>
+<li><strong>Prompt construction</strong>: x_van ~ G_van(e_f) → x_adv ~ G_adv(x_van, η_k)</li>
+<li><strong>Response construction</strong>: y ~ G_resp(x, z), z ∈ {harmful, benign}</li>
+<li><strong>Representation-level verification</strong>: 保留只有满足 h_{i,f}=1 的样本 — 不是&quot;文本看起来相关就行&quot;，必须在特征空间确认激活了目标方向</li>
+</ol>
+<p><strong>Gemini-3-Flash robustness check</strong>: 原文 Section 6.2.3 说用 Gemini-3-Flash 做 prompt 和 response generation 的 robustness check，结果&quot;very close to main setup&quot;——说明增益来自 feature-targeted data construction 本身，不依赖特定 generation model。</p>
+<p><strong>结果</strong>（Table 3, Figure 14）:</p>
+<ul>
+<li>Feature-driven coverage: 99.74%（Figure 14）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x13.png" alt="Figure 14: 不同数据构造策略下目标安全特征的覆盖率增长曲线" /></p>
+<ul>
+<li>4k real + 4k feature-driven → Acc=77.75，接近 120k safety-only (Acc=78.75) 的效果</li>
+<li>4k real + 4k random synth → Acc=72.00 — random synth 是 safety-themed 的（不是&quot;随便用 GPT-4 生成&quot;），只是没有 feature targeting</li>
+<li><strong>反直觉的数据点</strong>: Safety 40k Acc (70.25) 低于 Safety 8k Acc (71.75) — 单纯堆 safety data 量不一定好</li>
+<li>IFEval: feature synth 53.23 &gt; random synth 48.98 &gt; 8k safety only 47.50</li>
+</ul>
+<h3 id="3-7-sft-sae-guided-supervised-fine-tuning-sasft">3.7 SFT — SAE-guided Supervised Fine-Tuning (SASFT)</h3>
+<p><strong>问题</strong>: unexpected code-switching（多语言 LLM 生成不该出现的语言）</p>
+<p><strong>Feature Analysis</strong>:</p>
+<ul>
+<li>中文特征的前激活值在 code-switching 发生前逐渐上升，在切换 token 达峰值（Figure 17a） → 前激活值是 code-switch 的前兆信号</li>
+<li>方向消融 x' = x - λd 有效抑制 code-switching（Figure 17b）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x16.png" alt="Figure 17: 语言特征分析及其在代码切换中的作用" /></p>
+<p><strong>SASFT Method</strong>（Eq. 26-27）:</p>
+<p>Step 1: 用 monolinguality score ν_s^L = μ_s^L - γ_s^L 识别语言 L 的特征（μ: 语言 L 数据上的平均激活，γ: 其他语言上的平均激活）</p>
+<p>Step 2: 辅助 loss:</p>
+<p>L_reduce = E_{D_j~D{D_L}} [E_{x~D_j} [Σ_{s∈S_L} ReLU(f_s(x) - α_j)]]</p>
+<ul>
+<li>f_s(x): 特征 s 对 residual stream x 的前激活值</li>
+<li>S_L: 语言 L 的特征集</li>
+<li>α_j: 语言 j 中特征 s 的预估计平均前激活值（不用 0，因为前激活值可能本身是负数，0 会是过高的基线）</li>
+<li>D_L 排除在外：语言 L 数据生成语言 L 不算 code-switching</li>
+</ul>
+<p>L_training = L_cross-entropy + λ * L_reduce</p>
+<p><strong>关键设计决策的 why</strong>:</p>
+<ul>
+<li>为什么不直接用 inference-time ablation？→ 每步解码都要干预、不治本、可能影响其他任务</li>
+<li>为什么 α_j 不设为 0？→ 前激活值可能负数，0 会是过高的基线</li>
+<li>为什么排除 D_L？→ 合法使用语言 L 的数据不应被惩罚</li>
+</ul>
+<p><strong>结果</strong>（Table 4）— 原文声称&quot;five models spanning three model families (Gemma-2, Llama-3.1, Qwen3)&quot;，但 HTML 版 Table 4 只展示了 Qwen3-1.7B-Base 和 Qwen3-8B-Base 两个模型的数据[?]。可能是 HTML 截断或原文只选部分展示：</p>
+<p>210k setting:</p>
+<ul>
+<li>Qwen3-1.7B: code-switch 到中文 0.81→0.22 (-72%), 到韩语 0.36→0.00 (-100%)</li>
+<li>Qwen3-8B: 到中文 0.96→0.66 (-31%), 到韩语 0.43→0.07 (-83%)</li>
+</ul>
+<p>110k setting:</p>
+<ul>
+<li>Qwen3-1.7B: 到韩语 0.23→0.02 (-93%)</li>
+</ul>
+<p>多语言 benchmark 性能大致持平 (Table 5)，8B 上 MMLU -2.06, HellaSwag -2.88, 但 HumanEval +2.40, MGSM +0.42</p>
+<h3 id="3-8-rl-sae-guided-rare-negative-augmentation">3.8 RL — SAE-guided Rare Negative Augmentation</h3>
+<p><strong>问题</strong>: endless repetition — 低频故障，标准 RL rollout 很少遇到 → 训练信号弱</p>
+<p><strong>早期尝试的教训</strong>: 用 SAE steering 生成高质量 positive rollout → 失败。原因：steering 无法让模型产出正确的多步推理、可能损害文本流畅度 → 模型学到不自然模式 → 反而 degrade 性能。</p>
+<p><strong>转向思路</strong>: 用 steering 生成 negative rollout。坏行为比好行为更容易诱导；流畅度下降无所谓，因为模型学的是避免而不是模仿。</p>
+<p><strong>Feature Analysis</strong>:</p>
+<ul>
+<li>Repetition feature 在重复开始时激活值急剧上升并持续高位（Figure 19）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x19.png" alt="Figure 19: 重复特征与随机特征在重复/非重复响应中的激活值对比" /></p>
+<ul>
+<li>Bidirectional steering: 抑制→减少重复，放大→诱导重复（Figure 20）</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x20.png" alt="Figure 20: SAE特征双向引导控制重复率，放大诱导重复、抑制减少重复" /></p>
+<ul>
+<li><strong>关键发现</strong>: 同一特征在良性重复场景也高激活（Figure 21）——重复用户指令、复述选择题选项——所以不能像 SASFT 那样直接抑制</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x21.png" alt="Figure 21: SAE特征在良性重复场景的激活热图，说明重复特征不能简单抑制" /></p>
+<p><strong>Method</strong>（Algorithm 6, Eq. 28）:</p>
+<p>h' ← h + αd — 每步生成时注入 repetition feature 方向</p>
+<p>Rollout augmentation: 每组 G 个 rollout 中，G-1 个正常采样 + 1 个 SAE-steered negative。Steered rollout 提供明确&quot;避免重复&quot;训练信号。</p>
+<p><strong>为什么不用 SASFT 的辅助 loss</strong>: repetition feature 同时服务于良性重复和病态重复，直接抑制会损害模型正常的重复能力。所以用 RL 路线——只在 reward signal 层面告诉模型&quot;这个重复输出不好&quot;，不直接干预特征激活。</p>
+<p><strong>不使用 Dynamic Sampling</strong>: 原文 footnote 3 说&quot;Dynamic Sampling can make the time cost of each training step longer and less controllable&quot;</p>
+<p><strong>结果</strong>（Figure 22, Table 7）:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Method</th>
+<th>MMLU</th>
+<th>IFEval</th>
+<th>MGSM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.7B</td>
+<td>Before RL</td>
+<td>41.78</td>
+<td>42.29</td>
+<td>46.80</td>
+</tr>
+<tr>
+<td>1.7B</td>
+<td>RL+SAE</td>
+<td>41.67 (-0.10)</td>
+<td>40.42 (-1.88)</td>
+<td>52.36 (+5.56)</td>
+</tr>
+<tr>
+<td>8B</td>
+<td>Before RL</td>
+<td>48.40</td>
+<td>71.04</td>
+<td>70.12</td>
+</tr>
+<tr>
+<td>8B</td>
+<td>RL+SAE</td>
+<td>48.40 (0.00)</td>
+<td>68.96 (-2.08)</td>
+<td>72.40 (+2.28)</td>
+</tr>
+<tr>
+<td>30B-A3B</td>
+<td>Before RL</td>
+<td>51.75</td>
+<td>71.98</td>
+<td>76.56</td>
+</tr>
+<tr>
+<td>30B-A3B</td>
+<td>RL+SAE</td>
+<td>52.23 (+0.48)</td>
+<td>71.25 (-0.73)</td>
+<td>82.40 (+5.84)</td>
+</tr>
+</tbody>
+</table></div>
+<p>IFEval 在三个模型上都下降 1-2 个百分点——&quot;general capability 不受损&quot;的 claim 其实有裂缝。</p>
+<h3 id="3-9-prompt-细节">3.9 Prompt 细节</h3>
+<p>论文没贴出完整 prompt 模板。Data Synthesis 部分提到 G_van, G_adv, G_resp 函数，但没给具体 prompt 文本。Judge model 打 relevance score 的 prompt 没贴。SASFT 的超参 λ 具体值没给（只说&quot;是可调超参&quot;）。RL 的 steering coefficient α 具体值没给。这是一个可复现性缺口。</p>
+<hr />
+<h2 id="4-数据集-sae-训练用-pretraining-data-各应用方向各有专门数据">4. 数据集：SAE 训练用 pretraining data，各应用方向各有专门数据</h2>
+<ul>
+<li><strong>SAE 训练数据</strong>: in-house pretraining data（未公开具体组成/比例/采样策略）</li>
+<li><strong>Steering</strong>: 无特定数据集，用 contrastive examples（正/负例集自行构造）</li>
+<li><strong>Evaluation</strong>: 17 个 benchmark（MMLU, MMLU-Redux, MMLU-Pro, SuperGPQA, C-Eval, CMMLU, GSM8K 1,319题, MATH, GPQA-Diamond, TheoremQA, MBPP, EvalPlus, MultiPL-E, MMMLU, INCLUDE, KOR-Bench, ICLEval）+ 26 个 pre-trained checkpoints 做模型面板；SuperGPQA 有 26,529 题</li>
+<li><strong>Data Classification</strong>: Multilingual Toxicity Corpus (Dementieva et al., 2024), 13 语言各 5000 样本, 4000 discovery (2000 toxic + 2000 clean) + 1000 evaluation (500+500)</li>
+<li><strong>Data Synthesis</strong>: WildJailbreak (vanilla harmful/benign + adversarial harmful/benign) 做 seed + synthesis; Alpaca 50k 做 general SFT; 评估用 WildJailbreak test + IFEval, TruthfulQA, MMLU, GSM8K, BBH</li>
+<li><strong>SASFT</strong>: 210k 和 110k 两个训练数据设定，5 个模型 × 3 种目标语言；评测 6 个多语言 benchmark (MMLU, HumanEval, Flores, HellaSwag, LogiQA, IFEval, MGSM)</li>
+<li><strong>RL</strong>: Qwen3-1.7B/8B/30B-A3B; DAPO (without Dynamic Sampling); ~10k prompts 做 held-out 评测; 6 个通用 benchmark</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-sae-特征作为通用接口有效-但各方向证据强度差异大">5. 关键结果：SAE 特征作为通用接口有效，但各方向证据强度差异大</h2>
+<p><strong>Steering</strong> (Section 3):</p>
+<ul>
+<li>主要是定性 case study，无定量 benchmark 数据</li>
+<li>两个 example: (1) 压制中文 feature → 修复英文输出; (2) 激活古文 feature → 风格迁移</li>
+<li><strong>薄弱点</strong>: 没有任何 systematic evaluation——多少 α 值有效？对多少 prompt 有效？成功率是多少？全都没有数字。对于声称&quot;最广泛采用的 SAE 应用&quot;，这个处理力度偏弱。</li>
+</ul>
+<p><strong>Evaluation</strong> (Section 4):</p>
+<ul>
+<li>Feature redundancy 与 performance redundancy: Spearman ρ ≈ 0.85 (Figure 5) — 但只有 17 个 benchmark 的点，去掉一两个 outlier 可能大幅改变</li>
+<li>overlap(GSM8K, MATH) = 0.63; overlap(MATH, GSM8K) = 0.10 (Figure 6)</li>
+<li>控制 MMLU 后 Pearson: 68.4% → 75.5%; Spearman: 60.7% → 71.3% (Table 2)</li>
+<li>但 75.5% 仍然意味着 feature overlap 只解释了 performance similarity 的一部分</li>
+</ul>
+<p><strong>Data Classification</strong> (Section 5):</p>
+<ul>
+<li>英文毒性 F1 &gt; 0.90，用 top-1 特征就 &gt; 0.80 (Figure 8)</li>
+<li>跨语言迁移: 欧洲语言好，远距离语言差 (Figure 9d)</li>
+<li>10% discovery data → 99% 分类性能 (Figure 12)</li>
+<li><strong>薄弱点</strong>: 没有和任何 baseline toxicity classifier（fine-tuned BERT, fastText 等）对比。F1 &gt; 0.90 没有参照系，你不知道 SAE-based 到底比传统方法好还是差。</li>
+</ul>
+<p><strong>Data Synthesis</strong> (Section 6, Table 3):</p>
+<ul>
+<li>Feature-driven coverage: 99.74% (Figure 14)</li>
+<li>4k real + 4k feature-driven → Acc=77.75; 4k real + 4k random synth → Acc=72.00 → feature-driven +5.75</li>
+<li>4k real + 4k feature-driven ≈ 120k safety-only (Acc=78.75) — 主要价值是 data efficiency 而非绝对性能上限</li>
+<li><strong>反直觉</strong>: Safety 40k Acc (70.25) &lt; Safety 8k Acc (71.75) — 单纯堆量不一定好，但论文没深入分析原因</li>
+<li>Gemini-3-Flash robustness check: 结果与主实验一致</li>
+</ul>
+<p><strong>SFT (SASFT)</strong> (Section 7, Table 4-5):</p>
+<ul>
+<li>210k setting: Qwen3-1.7B CS→中文 0.81→0.22 (-72%), →韩语 0.36→0.00 (-100%)</li>
+<li>110k setting: Qwen3-1.7B CS→韩语 0.23→0.02 (-93%)</li>
+<li>Qwen3-8B 减幅明显更小（CS→中文 -31%）</li>
+<li>对比 SFT+Penalty: SASFT 在多数设定上更好但差距不一定大</li>
+<li>8B 上 MMLU -2.06, HellaSwag -2.88, 但 HumanEval +2.40</li>
+</ul>
+<p><strong>RL</strong> (Section 8, Figure 22, Table 7):</p>
+<ul>
+<li>Repetition ratio 急剧下降，远超 vanilla RL (Figure 22)</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.11887v1/x22.png" alt="Figure 22: RL训练过程中重复率对比，SAE引导的稀有负例增强显著加速重复率下降" /></p>
+<ul>
+<li>30B-A3B: MGSM 76.56→82.40 (+5.84)</li>
+<li>IFEval 在三个模型上都下降: 1.7B -1.88, 8B -2.08, 30B-A3B -0.73 — &quot;general capability 不受损&quot;的 claim 有裂缝</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li>
+<p><strong>Repetition feature 同时编码良性重复和病态重复</strong>（Figure 21）。这直接推翻了&quot;我们可以像处理 code-switching 一样用 SASFT 辅助 loss 抑制 repetition&quot;的直觉路线。论文承认了这个限制并转向 RL 路线（只在 reward 层面提供信号而不直接抑制特征），这个转弯很诚实。如果让我来做，我一开始就会假设良性/病态重复是不同特征，然后被实验数据打脸。</p>
+</li>
+<li>
+<p><strong>Evaluation 方向做得最有说服力</strong>: feature redundancy ρ≈0.85 以及 partial correlation 从 68% 到 75% 的提升（Spearman 60.7→71.3），有力地证明了&quot;特征足迹可以替代模型评测来做 benchmark 分析&quot;。非对称 overlap（GSM8K→MATH=0.63 但反向=0.10）非常直观——小学生数学的能力被竞赛数学几乎全覆盖，反过来不行。TheoremQA 被 MMLU-Pro/SuperGPQA 覆盖 0.56-0.68，也是合理的 containment 关系。</p>
+</li>
+<li>
+<p><strong>Data Synthesis 的 representation-level verification 是关键创新</strong>: 不是&quot;文本看起来是 safety 相关就行&quot;，而是&quot;必须在 SAE 特征空间确认激活了目标方向&quot;。99.74% 的覆盖率和 5.75 的 Acc 提升证明了这步的价值。但核心对比 &quot;feature-driven synth vs random synth&quot; 中，random synth 是 safety-themed 的（只是没有 feature targeting），所以 5.75 的差距反映的是&quot;feature targeting 的价值&quot;而非&quot;合成数据本身的价值&quot;。</p>
+</li>
+<li>
+<p><strong>Safety 40k Acc 反常低于 Safety 8k Acc</strong>（70.25 &lt; 71.75）— 这个数据点暗示 safety data 有&quot;过度训练&quot;效应或数据噪声问题。论文没解释原因，也没做分析。这是一个被忽略的 interesting signal。</p>
+</li>
+<li>
+<p><strong>Steering section 最弱</strong>: 只有两个 qualitative example，没有 alpha sensitivity 曲线、没有 success rate 统计、没有和 activation addition 的 baseline 对比。</p>
+</li>
+<li>
+<p><strong>Data Classification 没有 baseline</strong>: F1 &gt; 0.90 听起来好，但没有和 fine-tuned classifier 对比。一个 simple fine-tuned classifier 在 5000 条标注数据上可能做到 F1 &gt; 0.95。你不知道 SAE-based 到底是更好还是更差。</p>
+</li>
+<li>
+<p><strong>Code-switching ratio 的绝对值 &lt; 1%，这种低频指标的单次实验结果波动可能很大</strong>，对 SASFT 的效果结论需要谨慎解读。</p>
+</li>
+</ol>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>SAE 作为&quot;model development interface&quot;现阶段更像 proof-of-concept exhibition paper，离真正的 production workflow 还有距离。下一步最需要的不是更多应用方向，而是每个方向的 rigorous evaluation——baseline 对比、统计显著性、failure analysis</li>
+<li>Representation-level coverage 作为数据构造的 guiding signal 很可能变成 safety post-training 的标配思路，但关键问题是：谁来定义&quot;target feature inventory&quot;？目前依赖 judge model 的 relevance score，这本身就引入了新的 opacity</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li>早期失败的诚实披露很有价值：RL section 明确说&quot;一开始试了用 SAE steering 生成 positive rollout，失败了，原因是什么，然后转向 negative augmentation&quot;。这种 negative result 的记录比只报 positive result 更有价值</li>
+<li>Repetition feature 同时编码良性/病态重复的发现，以及&quot;所以不能直接抑制&quot;的结论，是一个自反性分析。很多论文会选择性忽略这种 complication</li>
+<li>多方向展示的策略有风险：看起来很全面，但每个方向深度不够。但作为开源 SAE 套件 + 系统论文定位，breadth over depth 是合理选择</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 提出 Qwen-Scope，开源 14 组 SAE 覆盖 7 个 Qwen 模型变体，将 SAE 从事后分析工具扩展为可复用的表征级开发接口（推理引导、评测分析、数据合成、后训练优化）</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic: 展示 SAE 特征在安全方向的三项应用：多语言毒性分类、安全导向数据合成、以及推理时偏好引导控制</li>
+<li><span class="wikilink unresolved" title="MOC-Team-Qwen">MOC-Team-Qwen</span> — Team: Qwen Team (Alibaba)，本研究延续 Qwen 系列模型的开源传统，将可解释性基础设施与模型开发流程打通</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Towards Long-Horizon Interpretability: Efficient and Faithful Multi-Token Attribution for Reasoning LLMs</span></a>
+<a class="paper-nav-link next" href="Patchscopes-Unifying-Framework-Inspecting-Hidden-Representations.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Patchscopes</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: qwen-scope-2026</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

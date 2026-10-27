@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：TacVLA——触觉应该在什么时候参与动作决策？</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：TacVLA——触觉应该在什么时候参与动作决策？</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景与材料范围"><span class="toc-num">01</span> 1. 背景与材料范围</a></li>
+<li><a class="toc-link" href="#2-关键问题-机器人闭合了夹爪-怎样知道真的抓住了"><span class="toc-num">02</span> 2. 关键问题：机器人闭合了夹爪，怎样知道真的抓住了？</a></li>
+<li><a class="toc-link" href="#3-关键方法-固定-token-结构-用接触事件打开触觉通道"><span class="toc-num">03</span> 3. 关键方法：固定 token 结构，用接触事件打开触觉通道</a></li>
+<li><a class="toc-link toc-sub" href="#为什么要同时置零和屏蔽">为什么要同时置零和屏蔽？</a></li>
+<li><a class="toc-link" href="#4-数据与训练-五个小规模-任务专用的真机策略"><span class="toc-num">04</span> 4. 数据与训练：五个小规模、任务专用的真机策略</a></li>
+<li><a class="toc-link" href="#5-关键结果-先看触觉增益-再看门控额外贡献"><span class="toc-num">05</span> 5. 关键结果：先看触觉增益，再看门控额外贡献</a></li>
+<li><a class="toc-link toc-sub" href="#同骨干比较比跨架构排名更关键">同骨干比较比跨架构排名更关键</a></li>
+<li><a class="toc-link toc-sub" href="#视觉被遮挡后-还剩下多少成功率">视觉被遮挡后，还剩下多少成功率？</a></li>
+<li><a class="toc-link toc-sub" href="#人为扰动展示了恢复行为-但没有恢复率">人为扰动展示了恢复行为，但没有恢复率</a></li>
+<li><a class="toc-link" href="#6-insights-下一轮最值得做的三个对照"><span class="toc-num">06</span> 6. Insights：下一轮最值得做的三个对照</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.12665v4" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：TacVLA——触觉应该在什么时候参与动作决策？</h1>
+    <p class="authors">['Kaidi Zhang', 'Heng Zhang', 'Zhengtong Xu', 'Zhiyuan Zhang', 'Md Rakibul Islam Prince', 'Xiang Li', 'Xiaojing Han', 'Yuhao Zhou', 'Arash Ajoudani', 'Yu She']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Tactile_Sensing</span> <span class="topic-tag">Multimodal_Fusion</span></div>
+</header>
+
+<h1>论文笔记：TacVLA——触觉应该在什么时候参与动作决策？</h1>
+<p><strong>最值得记住的是：触觉的价值取决于接触状态，直接增加一种模态不保证更好。</strong> TacVLA 把低维压力阵列接入 π0.5，再用一个二值接触规则控制触觉 token 是否参与融合。真正有说服力的是同骨干的门控消融，而不只是它胜过从头训练的 Diffusion Policy。</p>
+<p>读完应留下四件事：接触前屏蔽触觉、接触后联合融合；触觉输入与门控各有收益；遮挡实验仍保留腕部相机；所有任务各自微调，尚未证明统一策略的跨任务泛化。</p>
+<h2 id="1-背景与材料范围">1. 背景与材料范围</h2>
+<ul>
+<li><strong>论文</strong>：<em>TacVLA: Contact-Aware Tactile Fusion for Robust Vision-Language-Action Manipulation</em>，Purdue University、IIT 与 University of Genoa 团队，Kaidi Zhang、Heng Zhang 等。</li>
+<li><strong>版本</strong>：初稿 2026-03-13；本文依据 <a href="https://arxiv.org/html/2603.12665v4">arXiv v4 全文</a>，修订于 2026-09-06。已阅读正文、三张表及讨论，并检查架构图和遮挡结果图；未运行代码或复现实验。</li>
+<li><strong>发表状态</strong>：作者 <a href="https://zhengtongxu.github.io/website/">Zhengtong Xu 的主页</a>列为 IROS 2026；<a href="https://sites.google.com/view/tacvla">项目页</a>仍标 Under Review，两者更新不同步。实验事实以 v4 为准。</li>
+</ul>
+<h2 id="2-关键问题-机器人闭合了夹爪-怎样知道真的抓住了">2. 关键问题：机器人闭合了夹爪，怎样知道真的抓住了？</h2>
+<p><strong>Golden Case：论文的箱内抓取。</strong> 前置相机看不到箱内，腕部相机又受光照和遮挡限制。任务要求机器人在箱内探索，接触物体后抓取，再放到碗里。作者观察到，纯视觉 π0.5 经常没有抓住物体就执行抬升（§IV-B2）。视觉上完成了“伸入—闭合—抬起”的动作序列，不代表物理上建立了有效接触。</p>
+<p>加触觉似乎很自然，但接触前的传感器读数可能主要是噪声和漂移。把这类 token 始终放进注意力，会让策略在视觉定位阶段也处理不可靠的触觉表示。本文解决的具体问题是：<strong>既利用接触后的压力分布，又避免接触前无条件融合触觉。</strong> 对“无条件融合产生干扰”的解释，作者提供了消融和失败案例，但没有直接测量注意力竞争（§III-B、§IV-D）。</p>
+<h2 id="3-关键方法-固定-token-结构-用接触事件打开触觉通道">3. 关键方法：固定 token 结构，用接触事件打开触觉通道</h2>
+<p>沿箱内抓取走一遍流程：</p>
+<ol>
+<li><strong>输入</strong>：前置/腕部 RGB、任务指令、机器人本体状态，以及一个手指上的 $15\times8$ 触觉阵列。它提供 120 个法向接触力测量值，不能直接等同于完整三维力或高分辨率接触几何。</li>
+<li><strong>接触前</strong>：视觉经 SigLIP 编码；语言与本体状态按论文描述经 PaliGemma tokenizer 处理。触觉先由 MLP 编成 36 个 token，加固定二维正余弦位置编码，但随后被置零并从注意力中屏蔽。</li>
+<li><strong>接触发生</strong>：超出压力阈值的 taxel（触觉单元）数量超过指定计数，接触标志变为 1。触觉 token 开始与视觉、语言 token 共同参与 prefix 内的非因果注意力。</li>
+<li><strong>输出动作</strong>：融合表示作为 π0.5 风格 action expert 的条件，通过 flow matching 训练的动作模块预测连续动作序列。作者观察到策略会在箱中探索、重抓，再抬升和放置（§III-A/B、§IV-B2）。</li>
+</ol>
+<p>这里的第 4 步是<strong>学到的策略行为</strong>：论文没有说门控模块直接写死了“没有接触就禁止抬升”的动作规则，也不能把“检测到接触”自动等同于“已经稳定抓住目标”。</p>
+<p><img src="../../assets/papers/tacvla/fig1-architecture.png" alt="TacVLA 架构与接触门控" /></p>
+<p><em>原文 Fig. 1，来源：<a href="https://arxiv.org/html/2603.12665v4/Main_figure_V2.png">v4 架构图</a>。重点看右侧 (c)：接触前同时关闭 token 表示和 mask，接触后同时开启；左侧 (b) 则说明触觉进入预训练 VLM 的共同前缀，而非只在动作输出后补一个控制器。图中 VLM 标为 Gemma 2.6B，不应把它当成整个策略的总参数量。</em></p>
+<h3 id="为什么要同时置零和屏蔽">为什么要同时置零和屏蔽？</h3>
+<p>论文的核心公式是：</p>
+<div class="math-display">$$
+M_t^{tac}=c_t\mathbf{1},\qquad
+\tilde{\mathbf z}_t^{tac}=c_t\mathbf z_t^{tac},\qquad c_t\in\{0,1\}.
+$$</div>
+<p>$M_t^{tac}$ 是完整注意力 mask 中涉及触觉的子矩阵；$c_t=0$ 表示无接触，$c_t=1$ 表示有接触。前者控制信息能否流入跨模态注意力，后者抑制 embedding 偏置、位置编码以及接触前噪声的影响。仅将输入读数设为零，不等于后续编码表示为零；仅保留零向量，也不等于在注意力归一化中删除该位置。这是双重处理的直觉，但论文没有分别消融两项贡献。</p>
+<p>接触规则可按文字描述写成下面的等价示意，<strong>这是笔记者形式化，不是原文额外公式</strong>：</p>
+<div class="math-display">$$
+c_t=\mathbb{1}\!\left[\sum_i\mathbb{1}[p_{t,i}&gt;\tau]&gt;K\right].
+$$</div>
+<p>$p_{t,i}$ 是第 $i$ 个 taxel 的读数，$\tau$ 是压力阈值，$K$ 是计数阈值。二者决定轻微接触会被过滤还是被接受，正文未给具体取值 <code>[?]</code>。门控规则本身不训练；MLP 触觉编码器与 LoRA 适配参数共同优化。固定位置编码也不训练。</p>
+<p><strong>它保留固定 token 数量，而非动态删除 token。</strong> 因而“抑制无效信息”有直接结构依据；“部署更快”还需要测延迟或 FLOPs，不能从 mask 自动推出。相较静态拼接，最小新增机制就是物理接触条件下的信息路由，而不是新的动作生成目标。</p>
+<h2 id="4-数据与训练-五个小规模-任务专用的真机策略">4. 数据与训练：五个小规模、任务专用的真机策略</h2>
+<p>平台为 Franka Emika Panda 7 自由度机械臂、平行夹爪、双 RGB 相机和单指触觉阵列（§IV-A）。四种拆卸任务分别是紧轴拔出、按夹后拔出、旋转 90° 后拔出、向内滑动后拔出；第五项为箱内抓取，均以放入碗中结束（Table I）。</p>
+<p>每个任务采集 50 条遥操作示范，合计 250 条；视觉、触觉、本体状态和动作以 10 Hz 同步。<strong>每个任务独立微调一个模型</strong>，不是把五类数据训练成同一个多任务策略。TacVLA 在 OpenPI <code>pi05_base</code> 上做 LoRA 微调，训练 10,000 gradient steps，并联合训练触觉编码器（§III-C）。记录频率不等于已测得的部署控制频率。</p>
+<p>箱内指令明确包含先探索直到接触、再抓取放置的顺序（Table I）。因此这一实验不能单独证明模型从任意开放指令中自主发现了探索策略；语言条件是否真正被使用，也缺少改写/移除指令对照。</p>
+<p>复现前还需要补齐：MLP 具体结构及 120 个值到 36 个 token 的映射、LoRA rank/注入位置、学习率与 batch size、action horizon、接触阈值和评估初始化分布 <code>[?]</code>。另有一处设置需澄清：§III-C 说微调 10,000 steps，§IV-A3 在 diffusion baseline 段落又写 all policies 训练 200 epochs；两种口径怎样对应没有说明，不能直接宣称所有方法训练预算严格相同。</p>
+<h2 id="5-关键结果-先看触觉增益-再看门控额外贡献">5. 关键结果：先看触觉增益，再看门控额外贡献</h2>
+<h3 id="同骨干比较比跨架构排名更关键">同骨干比较比跨架构排名更关键</h3>
+<p>下表合并 Table II 主实验和 Table III 消融。每个任务、每种方法均测试 20 次；拆卸均值是四项成功率的算术平均。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">紧轴</th>
+<th style="text-align:right">按夹</th>
+<th style="text-align:right">旋转</th>
+<th style="text-align:right">滑拉</th>
+<th style="text-align:right">拆卸均值</th>
+<th style="text-align:right">箱内抓取</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>微调 π0.5，无触觉</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">13/20</td>
+<td style="text-align:right">6/20</td>
+<td style="text-align:right">63.75%</td>
+<td style="text-align:right">2/20（10%）</td>
+</tr>
+<tr>
+<td>π0.5 + 触觉，无门控</td>
+<td style="text-align:right">18/20</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">12/20</td>
+<td style="text-align:right">11/20</td>
+<td style="text-align:right">71.25%</td>
+<td style="text-align:right">8/20（40%）</td>
+</tr>
+<tr>
+<td>TacVLA，触觉 + 门控</td>
+<td style="text-align:right">20/20</td>
+<td style="text-align:right">18/20</td>
+<td style="text-align:right">14/20</td>
+<td style="text-align:right">15/20</td>
+<td style="text-align:right">83.75%</td>
+<td style="text-align:right">14/20（70%）</td>
+</tr>
+</tbody>
+</table></div>
+<p>这张表支持两个不同结论：</p>
+<ul>
+<li><strong>整个触觉方案对比纯视觉</strong>：拆卸提升 20 <strong>个百分点</strong>，箱内抓取提升 60 <strong>个百分点</strong>。摘要写 20%/60%，这里应按绝对成功率差理解。</li>
+<li><strong>门控的增量收益</strong>：对比已经有触觉的策略，拆卸再提升 12.5 个百分点，箱内抓取再提升 30 个百分点。后者才是门控必要性的主要证据。</li>
+</ul>
+<p>细看任务分布，整个方案最大拆卸增益在滑拉：30%→75%；旋转任务只有 65%→70%。无门控在旋转任务甚至略低于无触觉（60% vs 65%），但这只相差 <strong>1 次成功</strong>，没有多种子或置信区间，不能当成稳定退化的强证据。Fig. 7 的错位、重复重抓、停滞等案例支持作者的干扰解释，但仍是定性佐证。</p>
+<p>Table II 中，带触觉的 Diffusion Policy、3D Diffusion Policy 拆卸均值分别为 48.75%、31.25%，箱取为 0%、5%。它们说明“有同一种传感器”并不足以获得 TacVLA 的结果；由于预训练、架构和训练方式同时变化，不能把这组差距全部归给门控（作者也在 §IV-B3 讨论了预训练优势）。</p>
+<h3 id="视觉被遮挡后-还剩下多少成功率">视觉被遮挡后，还剩下多少成功率？</h3>
+<p>§IV-C1 的干预是<strong>挡住前置相机</strong>，并非关闭所有视觉。Fig. 6 与正文报告：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">紧轴</th>
+<th style="text-align:right">按夹</th>
+<th style="text-align:right">旋转</th>
+<th style="text-align:right">滑拉</th>
+<th style="text-align:right">四项均值（据原文计算）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>微调 π0.5</td>
+<td style="text-align:right">40%</td>
+<td style="text-align:right">40%</td>
+<td style="text-align:right">5%</td>
+<td style="text-align:right">35%</td>
+<td style="text-align:right">30%</td>
+</tr>
+<tr>
+<td>TacVLA</td>
+<td style="text-align:right">70%</td>
+<td style="text-align:right">65%</td>
+<td style="text-align:right">45%</td>
+<td style="text-align:right">70%</td>
+<td style="text-align:right">62.5%</td>
+</tr>
+</tbody>
+</table></div>
+<p>因此摘要的 2.1 倍来自 $62.5/30\approx2.08$；绝对提升为 32.5 个百分点。这支持触觉方案对<strong>前置视觉受损</strong>的补偿作用，不能写成纯触觉盲操作。滑拉任务的视觉 baseline 在这里反而比无遮挡的 30% 高 5 个百分点，也提醒我们小样本结果不能逐项解释成稳定规律。</p>
+<p><img src="https://arxiv.org/html/2603.12665v4/figs/robustness_bar_chart.png" alt="Figure 6：遮挡条件下的触觉与门控消融" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.12665v4#S4.F6">原文 Figure 6</a>。比较纯视觉、无门控触觉、接触门控三组，才能区分增加触觉和增加门控的收益；这组遮挡实验不能替代运行时扰动的恢复率评测。</em></p>
+<h3 id="人为扰动展示了恢复行为-但没有恢复率">人为扰动展示了恢复行为，但没有恢复率</h3>
+<p>在箱内任务中，机器人抓住并开始抬起物体后，人将物体放回箱内。作者展示 TacVLA 返回、重新定位和抓取，而 π0.5 无法恢复（§IV-C2、Fig. 5）。这是一个有意义的闭环案例，但没有重复次数、恢复成功率或扰动强度分布；只能作为定性证据，不能与主实验成功率并列成统计鲁棒性结论。</p>
+<h2 id="6-insights-下一轮最值得做的三个对照">6. Insights：下一轮最值得做的三个对照</h2>
+<p><strong>1. 门控的收益可能部分来自“阶段提示”，不只是去噪。</strong> 接触标志直接决定模型能看到什么，同时与探索→抓取→搬运阶段高度相关。现有无门控对照同时移除了这种阶段结构和噪声过滤，因此没有分清两者。我会增加“只输入 contact bit、不输入压力图”，以及“保留压力图并额外输入 contact bit、但不做 mask”的对照：若前者接近 TacVLA，复杂触觉几何未必是主要信息来源；若后者已足够，硬屏蔽可能并非必要。</p>
+<p><strong>2. 二值门控最危险的地方是弱接触边界。</strong> §V 已承认硬阈值不能渐进调权；结合公式可推出，阈值附近的轻触可能被误判成无接触，刚好删掉首次接触或滑脱前的弱信号。建议固定策略，在压力缩放、零点漂移和短暂接触下扫阈值，并测门控开关抖动；再比较滞回阈值或软门控。这是在检验真实的传感器迁移成本，而非仅重复五项任务成功率。</p>
+<p><strong>3. 最应补的是统一多任务训练，而不是再加一个成功视频。</strong> 当前每任务 50 条示范、单独微调，门控可能只需服务于固定操作阶段。把五任务联合训练，再测试未见几何约束或同一场景下的不同指令，才更接近 VLA 的语义泛化问题。现有结果足以支持它作为接触密集、小数据适配的模块候选，不足以证明通用触觉 VLA 已成立。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic/Area：为 VLA 的模态失衡问题提供一个基于物理接触事件的显式路由方案；阅读时区分传感器增益、路由增益与泛化证据。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Training-Fast-Robot-Policies-with-Slow-Foundation-Models-视觉反馈奖励合成.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Training Fast Robot Policies with Slow Foundation Models</span></a>
+<a class="paper-nav-link next" href="Shallow-π-Knowledge-Distillation-for-Flow-Based-VLAs-联合减深与选择性蒸馏.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Shallow-π：把策略做浅，为什么机器人反而做得更好？</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhang2026tacvla</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

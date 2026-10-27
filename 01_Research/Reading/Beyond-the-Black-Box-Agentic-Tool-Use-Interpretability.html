@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond the Black Box: Interpretability of Agentic AI Tool Use</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Beyond the Black Box: Interpretability of Agentic AI Tool Use</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#一句话判断"><span class="toc-num">01</span> 一句话判断</a></li>
+<li><a class="toc-link" href="#1-背景信息"><span class="toc-num">02</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-日志告诉你做错了什么-但已经太晚"><span class="toc-num">03</span> 2. 关键问题：日志告诉你做错了什么，但已经太晚</a></li>
+<li><a class="toc-link" href="#3-关键方法-在每次行动前截断轨迹-读出两级内部信号"><span class="toc-num">04</span> 3. 关键方法：在每次行动前截断轨迹，读出两级内部信号</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-同一条-step-14-15-如何穿过监控管线">3.1 同一条 step 14 → 15 如何穿过监控管线</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-表征与-probe">3.2 表征与 probe</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-risk-标签实际测量什么">3.3 Risk 标签实际测量什么</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-feature-ablation-到底因果了什么">3.4 Feature ablation 到底因果了什么</a></li>
+<li><a class="toc-link" href="#4-关键证据-先证明信号可读-再问可检查性值不值成本"><span class="toc-num">05</span> 4. 关键证据：先证明信号可读，再问可检查性值不值成本</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-held-out-nemotron-raw-明显更准">4.1 Held-out Nemotron：RAW 明显更准</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-layer-localization-与-probe-ablation">4.2 Layer localization 与 probe ablation</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-runtime-replay-最有用的结果是-omission-auditing">4.3 Runtime replay：最有用的结果是 omission auditing</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-bfcl-有迁移信号-也有严重校准问题">4.4 BFCL：有迁移信号，也有严重校准问题</a></li>
+<li><a class="toc-link" href="#5-证据边界-我会在复现前先补什么"><span class="toc-num">06</span> 5. 证据边界：我会在复现前先补什么</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">07</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-decision-boundary-是这篇论文最有研究品味的选择">6.1 Decision boundary 是这篇论文最有研究品味的选择</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-最合理的产品形态是-dense-detector-sparse-explanation-sidecar">6.2 最合理的产品形态是 dense detector + sparse explanation sidecar</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-tool-need-比-tool-risk-更接近可迁移机制">6.3 Tool-Need 比 Tool-Risk 更接近可迁移机制</a></li>
+<li><a class="toc-link" href="#7-必须记住的五点"><span class="toc-num">08</span> 7. 必须记住的五点</a></li>
+<li><a class="toc-link" href="#8-连接与发现"><span class="toc-num">09</span> 8. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#topic-area">Topic / Area</a></li>
+<li><a class="toc-link toc-sub" href="#直接相关论文">直接相关论文</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-15</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.06890v4" target="_blank">arXiv</a>
+    </div>
+    <h1>Beyond the Black Box: Interpretability of Agentic AI Tool Use</h1>
+    <p class="authors">Hariom Tatsat, Ariye Shater</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Agentic_Tool_Use</span> <span class="topic-tag">Sparse_Autoencoders</span> <span class="topic-tag">Activation_Probing</span></div>
+</header>
+
+<h1>论文笔记: Beyond the Black Box: Interpretability of Agentic AI Tool Use</h1>
+<h2 id="一句话判断">一句话判断</h2>
+<p>这篇论文把 agent observability 的窗口从“工具执行后的日志”前移到 <strong>动作尚未发生的 decision boundary</strong>：读取模型最后 32 个 token 的多层 residual activations，预测此刻是否需要调用工具，以及下一动作属于哪档风险。最可信的结果是 Tool-Need 能提前发现约 75.5% 的漏调；SAE 的价值则不是预测更准，而是把 dense probe 的告警换成可定位、可命名、可消融的 sparse evidence。最大的边界也在这里：消融只改变了 probe，论文没有证明这些 features 因果控制 agent 的真实动作。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>Hariom Tatsat、Ariye Shater，Barclays Quantitative Analytics；arXiv:2605.06890v4，2026 年。</li>
+<li>模型：GPT-OSS 20B 与 Gemma 3 27B IT。</li>
+<li>训练数据：NVIDIA Nemotron function-calling 多步轨迹；跨分布测试：BFCL 的 limited zero-shot slice。</li>
+<li>范围很窄也很清楚：论文不解释 agent 的全部 planning、memory 或长程 reasoning，只监控“下一步回答还是调工具”的瞬间。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2605.06890v4/agent_anatomy_finance.png" alt="Figure 1: Basic anatomy of an AI agent" /></p>
+<blockquote class="card card-info">
+<p><strong>Figure 1 应该看哪里？</strong> Memory 和 planning 被淡化，实验真正覆盖的是右侧 tools-and-action 路径。后文所有结论都不能外推成“解释了 agent 的整体决策过程”。</p>
+</blockquote>
+<h2 id="2-关键问题-日志告诉你做错了什么-但已经太晚">2. 关键问题：日志告诉你做错了什么，但已经太晚</h2>
+<p>长轨迹里的工具错误有三种典型形态：该调却没调、不该调却调了、调用了高后果工具。它们一旦执行，不只造成单步错误，还会把错误 observation 写回上下文，改变后续整条 trajectory。</p>
+<p>传统日志只能看到 <strong>Actual</strong>；论文增加了另外两条线：</p>
+<ul>
+<li><strong>Expected</strong>：gold trajectory 认为这一步是否需要工具；</li>
+<li><strong>Internal</strong>：动作前激活中的 Tool-Need / Tool-Risk 信号；</li>
+<li><strong>Actual</strong>：runtime 最终是否调用、调用什么。</li>
+</ul>
+<p>只有三者放在一起，才能区分“模型内部没意识到需要工具”和“内部已经意识到、但生成动作仍漏掉”这两类完全不同的失败。</p>
+<blockquote class="card card-info">
+<p><strong>Golden Case — Tesla 查询为什么在相邻两步翻转？</strong></p>
+<p>Nemotron trajectory 3344 的 step 14 要查询 Tesla income statement，Tool-Need 为 <strong>0.881</strong>，风险分布为 <strong>(low 0.997, medium 0.003, high 0.000)</strong>；紧接着 step 15 仍在 Tesla 话题中，但只是已有结果上的 follow-up，Tool-Need 降到 <strong>0.202</strong>，风险变为 <strong>(0.438, 0.484, 0.078)</strong>（Table 6；Appendix Table 20）。</p>
+<p>两步主题几乎相同，真正变化的是“是否还需要 fresh retrieval”。如果 probe 只认金融词或 Tesla，它不应产生这种翻转。这个例子因此很适合建立直觉，但作者明确称它为 <strong>illustrative、non-evaluative trace</strong>：表里没有逐步 gold、actual action 和对错列，不能拿它代替正式准确率证据。</p>
+</blockquote>
+<h2 id="3-关键方法-在每次行动前截断轨迹-读出两级内部信号">3. 关键方法：在每次行动前截断轨迹，读出两级内部信号</h2>
+<h3 id="3-1-同一条-step-14-15-如何穿过监控管线">3.1 同一条 step 14 → 15 如何穿过监控管线</h3>
+<ol>
+<li>把 trajectory 按 depth 排序，为当前 step 重建此前全部 transcript；当前输出和未来步骤不能进入输入。</li>
+<li>在若干层读取 pre-action residual states，对最后 <strong>32 个 tokens 做 mean pooling</strong>。</li>
+<li>用每层对应的公开 SAE 编码 pooled vector，再把多层 sparse features 拼接。</li>
+<li>Tool-Need logistic probe 判断“此刻是否需要工具”；若是 tool row，Tool-Risk softmax 再判断 low / medium / high。</li>
+<li>将 Internal 与 Expected、Actual 对照，理论上可映射到 allow、review、sandbox 或 approval。注意：Figure 2 的处置策略只是概念设计，论文没有测部署阈值、误报成本或拦截收益。</li>
+</ol>
+<p><img src="https://arxiv.org/html/2605.06890v4/combined_agent_figure.png" alt="Figure 2: Proposed monitoring framework" /></p>
+<blockquote class="card card-info">
+<p><strong>Figure 2 应该看哪里？</strong> 真正完成实验验证的是 <code>pre-action activation → SAE → probes</code>；右侧 feature family 名称及 allow/review/block 策略部分是 illustrative，并不是已上线的 control policy。</p>
+</blockquote>
+<h3 id="3-2-表征与-probe">3.2 表征与 probe</h3>
+<p>对层 $\ell$ 的 pooled activation $\tilde h^{(\ell)}$，SAE 编码为：</p>
+<div class="math-display">$$
+z^{(\ell)}=\phi\!\left(W_{enc}^{(\ell)}\tilde h^{(\ell)}+b_{enc}^{(\ell)}\right),
+\qquad
+z=[z^{(\ell_1)};\ldots;z^{(\ell_m)}].
+$$</div>
+<p>Tool-Need 是二元 logistic readout：</p>
+<div class="math-display">$$
+p(y=1\mid z)=\sigma(w^\top z+b),
+$$</div>
+<p>Tool-Risk 则在 tool-call rows 上训练三分类 softmax。二者不是并列的两个安全结论：Tool-Need 判断“要不要 delegate”，Tool-Risk 只在准备调用后判断启发式风险档。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Backbone / target</th>
+<th>监控层</th>
+<th style="text-align:right">feature 预算</th>
+<th>正则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-OSS Tool-Need</td>
+<td>L3/7/11/15/19/23 post-residual</td>
+<td style="text-align:right">200</td>
+<td>lasso</td>
+</tr>
+<tr>
+<td>Gemma Tool-Need</td>
+<td>L16/31/40/53 post-block residual</td>
+<td style="text-align:right">2,000</td>
+<td>elastic net</td>
+</tr>
+<tr>
+<td>两模型 Tool-Risk</td>
+<td>同上</td>
+<td style="text-align:right">各 1,000</td>
+<td>elastic net</td>
+</tr>
+</tbody>
+</table></div>
+<p>原文没有交代最终正则强度、elastic-net mixing ratio、seed、分类阈值，以及 SAE checkpoint、latent width、非线性和重构质量。对一项强调可复现监控的工作，这是明显缺口。</p>
+<h3 id="3-3-risk-标签实际测量什么">3.3 Risk 标签实际测量什么</h3>
+<p>Tool-Risk 不是由事故或人工安全判断得到，而是按工具名关键词分层（Appendix Table 18）：</p>
+<ul>
+<li><strong>Low</strong>：920 个 read-only retrieval / lookup / finance-data tools；</li>
+<li><strong>Medium</strong>：27 个有界 write/create tools；</li>
+<li><strong>High</strong>：21 个 authentication、外发通信或危险执行 tools。</li>
+</ul>
+<p>这些是 distinct tool 数，不是样本数。风险显然还取决于 arguments、权限、环境状态和用户策略：<code>send_email</code> 发草稿给自己与外传客户数据不能只靠工具名归为同一个风险。因此 Probe 2 更准确的名字是 <strong>heuristic risk screen</strong>，不是已验证的安全风险模型。</p>
+<h3 id="3-4-feature-ablation-到底因果了什么">3.4 Feature ablation 到底因果了什么</h3>
+<p>作者把 top-ranked SAE coordinates $z_j$ 置零，再运行同一个 probe。如果概率显著变化或标签翻转，可以说明：</p>
+<blockquote class="card card-info">
+<p>probe 的 readout 功能性地依赖这些 sparse coordinates。</p>
+</blockquote>
+<p>但实验没有把 ablated features 解码回 residual stream，也没有重新生成 agent action。因此它不能说明“这些 features 控制模型是否调用工具”。这一区分是读这篇论文最容易滑过去的地方。</p>
+<h2 id="4-关键证据-先证明信号可读-再问可检查性值不值成本">4. 关键证据：先证明信号可读，再问可检查性值不值成本</h2>
+<h3 id="4-1-held-out-nemotron-raw-明显更准">4.1 Held-out Nemotron：RAW 明显更准</h3>
+<p>Appendix Table 13 给出同分布汇总（RAW / SAE）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align:right">GPT-OSS 20B</th>
+<th style="text-align:right">Gemma 3 27B IT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tool-Need accuracy</td>
+<td style="text-align:right"><strong>81.8% / 75.3%</strong></td>
+<td style="text-align:right"><strong>81.0% / 71.4%</strong></td>
+</tr>
+<tr>
+<td>Tool-Need macro-F1</td>
+<td style="text-align:right"><strong>0.817 / 0.753</strong></td>
+<td style="text-align:right"><strong>0.810 / 0.714</strong></td>
+</tr>
+<tr>
+<td>Tool-Risk accuracy</td>
+<td style="text-align:right"><strong>94.0% / 90.3%</strong></td>
+<td style="text-align:right"><strong>96.3% / 88.5%</strong></td>
+</tr>
+<tr>
+<td>Tool-Risk macro-F1</td>
+<td style="text-align:right"><strong>0.799 / 0.699</strong></td>
+<td style="text-align:right"><strong>0.855 / 0.668</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>所以结论不是“SAE 提升了工具决策预测”，而是：<strong>dense residual 中有更强的线性可读信号；SAE 用一部分预测力交换 layer、feature index、自然语言标签和 ablation target。</strong></p>
+<p>这项交换是否划算，论文其实还没测：没有 feature-label fidelity、人工审计速度/准确率、额外 latency 或告警处置收益。SAE 在这里提供的是 inspectability affordance，不是已经证实的 audit utility。</p>
+<p>顺带一提，v4 的 Table 3 把 Risk macro-F1 写成 GPT/Gemma 的 <strong>0.64/0.62</strong>，但 Table 5 confusion matrices 和 Appendix Table 13 对应 <strong>0.699/0.668</strong>。本文按可复算且在附录重复的后者记录，前者应标作表格口径错误 <code>[?]</code>。</p>
+<h3 id="4-2-layer-localization-与-probe-ablation">4.2 Layer localization 与 probe ablation</h3>
+<ul>
+<li>GPT-OSS 的 top-20 Tool-Need features 有 <strong>13 个在 L23</strong>；Gemma 主要集中在 L40/L53（Table 7）。这支持 signal 在动作承诺前的后层更集中，但只在作者选定的少数监控层之间成立。</li>
+<li>GPT-OSS 删除 top-10 features，在 10 个样本中造成 <strong>4 次 probe flip</strong>，平均 $|\Delta p_{tool}|=0.431$；Gemma 删除 top-200 才有 <strong>1 次 flip</strong>，平均变化 0.146（Table 10）。这说明两个 probe 的稀疏程度不同，不说明 GPT 的真实 agent policy 更受这些 features 控制。</li>
+<li>自动 feature labels 确实能找到 numerical/formal-language 与 credential/authentication 概念（Tables 8–9），但没有人工 fidelity 评估。把“password feature”当作经过验证的机制名称仍然太早。</li>
+</ul>
+<h3 id="4-3-runtime-replay-最有用的结果是-omission-auditing">4.3 Runtime replay：最有用的结果是 omission auditing</h3>
+<p>GPT-OSS 在 760 个 held-out Nemotron episodes 上（Table 11）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th style="text-align:right">Step accuracy</th>
+<th style="text-align:right">Missed-tool rate</th>
+<th style="text-align:right">Unnecessary-call rate</th>
+<th style="text-align:right">Tool naming accuracy</th>
+<th style="text-align:right">漏调被 probe 标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">78.6%</td>
+<td style="text-align:right">34.2%</td>
+<td style="text-align:right">7.7%</td>
+<td style="text-align:right">90.8%</td>
+<td style="text-align:right"><strong>约 75.5%（258/343）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>一旦模型决定调用，tool naming 已有 90.8%；真正的瓶颈是“是否 delegate”。而 probe 能在执行前标记约四分之三的 missed calls，这比离线分类分数更直接地支持论文的实际价值：Tool-Need 可以成为高价值 decision points 上的 omission auditor。</p>
+<h3 id="4-4-bfcl-有迁移信号-也有严重校准问题">4.4 BFCL：有迁移信号，也有严重校准问题</h3>
+<p>probes 只在 Nemotron 训练，BFCL 不做 retraining、calibration 或 threshold tuning（Table 12）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align:right">GPT-OSS</th>
+<th style="text-align:right">Gemma</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probe 与 gold Tool-Need agreement</td>
+<td style="text-align:right">87.7% <code>[?]</code></td>
+<td style="text-align:right">77.7%</td>
+</tr>
+<tr>
+<td>runtime missed-tool rate</td>
+<td style="text-align:right">10.8%</td>
+<td style="text-align:right">0.2%</td>
+</tr>
+<tr>
+<td>runtime unnecessary-call rate</td>
+<td style="text-align:right">56.3%</td>
+<td style="text-align:right"><strong>98.5%</strong></td>
+</tr>
+<tr>
+<td>episode success</td>
+<td style="text-align:right">49.2%</td>
+<td style="text-align:right">50.0%</td>
+</tr>
+</tbody>
+</table></div>
+<p>Gemma 的 0.2% missed rate 不是完美 delegation，而是接近“总是调用”：在 no-tool steps 上 98.5% 都多调。这个结果说明新分布上的 threshold 与 tool prior 至少和 representation 一样重要。</p>
+<p>RAW / SAE 在 BFCL 也没有统一胜负：GPT Tool-Need 是 84.7% / 87.6%，Gemma 是 81.9% / 77.7%；Risk 则 RAW 在两个模型都更高（Appendix Table 14）。有限 slice 只能说明两种表征都保留部分 transferable signal，不能给出普适排名。</p>
+<h2 id="5-证据边界-我会在复现前先补什么">5. 证据边界：我会在复现前先补什么</h2>
+<ol>
+<li><strong>先确认 trajectory-level split。</strong> 原文没有报告 train/validation/test 的 trajectory 数和切分单位。相邻 step 共享几乎全部累计上下文；如果按 row 随机切分，会产生严重近重复。这里是潜在风险，不应写成已经泄漏。</li>
+<li><strong>做同样本 RAW–SAE paired comparison。</strong> 附录的 RAW/SAE 行数并不完全一致；当前差异同时混有 representation 与可用样本变化。</li>
+<li><strong>把 risk 改成条件函数。</strong> 至少使用 <code>tool × arguments × permissions × environment state</code>，并报告每档 support、calibration 和真实处置成本。</li>
+<li><strong>做 generation-time intervention。</strong> 修改 feature 后重新生成 tool/no-tool、tool name 与 arguments，才能从“probe explanation”推进到“agent mechanism”。</li>
+<li><strong>真正测审计效用。</strong> 让人类在相同告警上分别看到 raw score 与 SAE evidence，比较诊断时间、正确率、误报接受率和 runtime overhead。</li>
+</ol>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-decision-boundary-是这篇论文最有研究品味的选择">6.1 Decision boundary 是这篇论文最有研究品味的选择</h3>
+<p><strong>观察</strong>：它没有尝试一次解释完整 agent，而是只截取外部副作用发生前的一瞬间。</p>
+<p><strong>推理</strong>：这个切口同时具备明确标签、清楚时序和可执行干预窗口；一旦动作执行，日志虽更完整，却失去预防价值。</p>
+<p><strong>判断</strong>：agent interpretability 不一定要先解决“理解所有 reasoning”。优先找能阻断高代价错误的窄 decision boundaries，可能更快产生实际安全收益。</p>
+<h3 id="6-2-最合理的产品形态是-dense-detector-sparse-explanation-sidecar">6.2 最合理的产品形态是 dense detector + sparse explanation sidecar</h3>
+<p><strong>观察</strong>：RAW 在 held-out Nemotron 全面更准，SAE 的优势是可定位与可命名。</p>
+<p><strong>推理</strong>：强行让同一个 representation 同时负责最高召回和最好解释，没有实验依据。</p>
+<p><strong>判断</strong>：部署时可让 calibrated dense probe 负责第一层告警，仅对告警样本运行 SAE sidecar 生成 layer/feature evidence；再用独立 policy 决定 review、sandbox 或 approval。这样把 detection、explanation 与 control 三个目标分开优化。</p>
+<h3 id="6-3-tool-need-比-tool-risk-更接近可迁移机制">6.3 Tool-Need 比 Tool-Risk 更接近可迁移机制</h3>
+<p>Tool-Need 问的是通用的“内部知识是否足以继续”，跨工具 namespace 仍有相对稳定语义；Tool-Risk 却依赖组织权限、arguments 和环境。论文中 Tool-Need 在 BFCL 仍有信号，而 risk transfer 更弱，不只是数据量问题，也是 target 定义不同。后续工作应把 Tool-Risk 从静态分类改成 context-conditioned policy evaluation。</p>
+<h2 id="7-必须记住的五点">7. 必须记住的五点</h2>
+<ol>
+<li>论文监控的是 pre-action tool-decision boundary，不是完整 agent cognition。</li>
+<li>最后 32 个 tokens 的多层 residual 经 SAE 编码，再由 Tool-Need / Tool-Risk 线性 probes 读出。</li>
+<li>RAW probe 预测更强；SAE 交换来 sparse inspectability，论文尚未证明这种可检查性改善人类审计。</li>
+<li>最强 runtime 证据是 probe 提前标记约 75.5% 的 missed tool calls。</li>
+<li>feature ablation 只因果影响 probe readout；要解释真实 agent policy，仍需 generation-time intervention。</li>
+</ol>
+<h2 id="8-连接与发现">8. 连接与发现</h2>
+<h3 id="topic-area">Topic / Area</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — 将诊断窗口从执行后的 failure trace 前移到 pre-action delegation boundary。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — 展示 residual probe 与 SAE explanation 在预测力、可检查性和因果性之间的边界。</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — 提供动作前筛查原型，同时暴露启发式 risk ontology 不能直接充当安全控制。</li>
+<li><span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span> — Tool-Need / Tool-Risk 可由线性 probe 读取，但可读不等于因果控制。</li>
+</ul>
+<h3 id="直接相关论文">直接相关论文</h3>
+<ul>
+<li><a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> — 本文做 pre-action monitoring，CAR 做 post-failure counterfactual attribution，两者覆盖失败前后两个诊断窗口。</li>
+<li><a class="wikilink" href="Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution.html" title="Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution">Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution</a> — 本文把 last-32 token 均值送入公开 SAE；该工作提醒 turn-level pooling 可能偏离 SAE 的原训练分布。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</span></a>
+<a class="paper-nav-link next" href="Efficient-Multilingual-Reasoning-Transfer-via-Progressive-Code-Switching-PCS.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: TatsatShater2026BeyondBlackBox</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

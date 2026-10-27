@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-长推理模型在多语言场景下的两大挑战"><span class="toc-num">02</span> 2. 关键问题：长推理模型在多语言场景下的两大挑战</a></li>
+<li><a class="toc-link toc-sub" href="#核心挑战">核心挑战</a></li>
+<li><a class="toc-link toc-sub" href="#为什么已有方法解决不了">为什么已有方法解决不了？</a></li>
+<li><a class="toc-link" href="#3-数据集-基于-dapo-math-17k-构建多语言训练数据"><span class="toc-num">03</span> 3. 数据集：基于 DAPO-MATH-17K 构建多语言训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-trit-translation-reasoning-integrated-training"><span class="toc-num">04</span> 4. 关键方法：TRIT（Translation-Reasoning Integrated Training）</a></li>
+<li><a class="toc-link toc-sub" href="#1-整体架构">(1) 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#2-奖励函数设计">(2) 奖励函数设计</a></li>
+<li><a class="toc-link toc-sub" href="#3-核心机制-翻译-推理闭环反馈">(3) 核心机制：翻译-推理闭环反馈</a></li>
+<li><a class="toc-link toc-sub" href="#4-训练细节">(4) 训练细节</a></li>
+<li><a class="toc-link" href="#5-关键实验-trit-平均提升-7-个百分点-语言一致性接近-100"><span class="toc-num">05</span> 5. 关键实验：TRIT 平均提升 7 个百分点，语言一致性接近 100%</a></li>
+<li><a class="toc-link toc-sub" href="#1-主实验结果-table-1">(1) 主实验结果（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#2-out-of-domain-英文性能提升">(2) Out-of-Domain 英文性能提升</a></li>
+<li><a class="toc-link toc-sub" href="#3-翻译质量改进-figure-2">(3) 翻译质量改进（Figure 2）</a></li>
+<li><a class="toc-link toc-sub" href="#4-跨语言问题对齐分析-mexa">(4) 跨语言问题对齐分析（MEXA）</a></li>
+<li><a class="toc-link toc-sub" href="#5-为什么-m-thinker-在强模型上失效">(5) 为什么 M-Thinker 在强模型上失效？</a></li>
+<li><a class="toc-link toc-sub" href="#6-false-negative-噪声分析">(6) False Negative 噪声分析</a></li>
+<li><a class="toc-link" href="#6-golden-case-翻译质量如何影响推理"><span class="toc-num">06</span> 6. Golden Case：翻译质量如何影响推理</a></li>
+<li><a class="toc-link toc-sub" href="#案例-平行四边形问题">案例：平行四边形问题</a></li>
+<li><a class="toc-link" href="#7-insights-翻译-推理集成是多语言能力的突破口"><span class="toc-num">07</span> 7. Insights：翻译-推理集成是多语言能力的突破口</a></li>
+<li><a class="toc-link" href="#8-批判性分析-研究问题有价值-但解决方案存在硬伤"><span class="toc-num">08</span> 8. 批判性分析：研究问题有价值，但解决方案存在硬伤</a></li>
+<li><a class="toc-link toc-sub" href="#核心设计缺陷">核心设计缺陷</a></li>
+<li><a class="toc-link toc-sub" href="#更好的解决方案">更好的解决方案</a></li>
+<li><a class="toc-link toc-sub" href="#总结">总结</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#多语言推理机制论文矩阵">多语言推理机制论文矩阵</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-12</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.05940" target="_blank">arXiv</a>
+    </div>
+    <h1>Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</h1>
+    <p class="authors">Junxiao Liu, Zhijun Wang, Yixiao Li, Zhejian Lai, Liqian Huang, Xin Huang, Xue Han, Junlan Feng, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_Reasoning</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Machine_Translation</span> <span class="topic-tag">RLVR</span></div>
+</header>
+
+<h1>论文笔记: Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Junxiao Liu, Zhijun Wang, Yixiao Li, Zhejian Lai（南京大学）；Liqian Huang（图宾根大学）；Xin Huang, Xue Han, Junlan Feng（中国移动研究院）；Shujian Huang（南京大学，通讯作者）</li>
+<li><strong>团队</strong>: 南京大学软件新技术国家重点实验室 + 图宾根大学 + 中国移动研究院</li>
+<li><strong>时间</strong>: 2026年2月5日 (arXiv:2602.05940)</li>
+<li><strong>代码</strong>: https://github.com/NJUNLP/TRIT</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-长推理模型在多语言场景下的两大挑战">2. 关键问题：长推理模型在多语言场景下的两大挑战</h2>
+<h3 id="核心挑战">核心挑战</h3>
+<p>长推理模型（LRMs，如 DeepSeek-R1、Qwen3 等）在多语言场景下表现不佳，存在两个核心问题：</p>
+<p><strong>问题1：语言不一致性（Language Inconsistency）</strong></p>
+<ul>
+<li>当输入非英文问题时，模型倾向于用英文进行推理</li>
+<li>强制要求用问题语言推理会导致准确率大幅下降，且伴随退化性重复（degenerative repetition）</li>
+<li>说明模型的多语言推理能力不足</li>
+</ul>
+<p><strong>问题2：问题理解偏差（Question Understanding Bias）</strong></p>
+<ul>
+<li>即使将推理语言固定为单一语言（如英文），英文问题的表现仍显著优于非英文问题</li>
+<li>说明模型对不同语言的问题理解存在偏差</li>
+</ul>
+<h3 id="为什么已有方法解决不了">为什么已有方法解决不了？</h3>
+<p><strong>现有方法的局限</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>思路</th>
+<th>局限性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M-Thinker, MAPO</td>
+<td>用外部评估器对齐多语言推理轨迹与英文</td>
+<td>忽略问题理解差异；需要额外反馈模型，计算开销大</td>
+</tr>
+<tr>
+<td>SFT + 翻译CoT数据</td>
+<td>用翻译好的思维链数据进行监督微调</td>
+<td>未能直接增强模型原生多语言推理能力</td>
+</tr>
+<tr>
+<td>QAlign</td>
+<td>两阶段：先训练问题翻译，再训练英文推理</td>
+<td>依赖英文推理解决非英文问题，未提升原生能力</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键洞见</strong>：当问题未被正确理解时，模型从一开始就会朝错误方向推理。此时对齐推理轨迹无法修正理解错误。</p>
+<hr />
+<h2 id="3-数据集-基于-dapo-math-17k-构建多语言训练数据">3. 数据集：基于 DAPO-MATH-17K 构建多语言训练数据</h2>
+<h3 id="训练数据">训练数据</h3>
+<p><strong>数据来源</strong>: DAPO-MATH-17K（英文数学推理数据集）</p>
+<p><strong>数据构造</strong>（使用 DeepSeek-V3.2-Exp 翻译）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据集</th>
+<th>用途</th>
+<th>规模</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cold-start dataset</td>
+<td>热身训练</td>
+<td>3,000 samples/语言</td>
+<td>Qwen3-8B 生成的跨语言推理（Question_en → Response_tgt），过滤语言一致性和正确性</td>
+</tr>
+<tr>
+<td>SFT dataset</td>
+<td>监督微调baseline</td>
+<td>-</td>
+<td>Qwen3-32B 生成，用于对比实验</td>
+</tr>
+<tr>
+<td>RL training data</td>
+<td>强化学习训练</td>
+<td>动态筛选</td>
+<td>通过准确率阈值 θ=1/3 筛选</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<p><strong>主评估基准 - MMATH</strong>:</p>
+<ul>
+<li>多语言数学推理 benchmark</li>
+<li>覆盖语言：French, Portuguese, Japanese, Korean, Thai</li>
+<li>评估指标：准确率（Accuracy）、语言一致性（Language Consistency）</li>
+</ul>
+<p><strong>翻译质量评估</strong>:</p>
+<ul>
+<li><strong>In-domain</strong>: MATH500（数学问题翻译）</li>
+<li><strong>Out-of-domain</strong>: FLORES-200（通用文本翻译）</li>
+<li><strong>指标</strong>: COMET 分数</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-trit-translation-reasoning-integrated-training">4. 关键方法：TRIT（Translation-Reasoning Integrated Training）</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>: 将翻译训练整合到多语言推理中，通过强化学习联合提升多语言问题理解和推理能力，无需外部反馈或额外多语言数据。</p>
+</blockquote>
+<h3 id="1-整体架构">(1) 整体架构</h3>
+<p><img src="https://arxiv.org/html/2602.05940v1/x1.png" alt="Figure 1: TRIT框架" /></p>
+<p><strong>两阶段流程</strong>:</p>
+<p><strong>Stage 1: Cross-Lingual Reasoning（跨语言推理筛选）</strong></p>
+<ul>
+<li>训练模型用目标语言回答英文问题</li>
+<li>按准确率阈值 θ 筛选问题：只有模型能可靠解决的问题进入下一阶段</li>
+<li>目的：确保后续翻译训练的反馈质量</li>
+</ul>
+<p><strong>Stage 2: Translation-Reasoning Integration &amp; Feedback（翻译-推理集成训练）</strong></p>
+<ul>
+<li>联合训练两个任务：
+<ol>
+<li><strong>Translation</strong>: 将英文问题翻译成目标语言</li>
+<li><strong>Target-language Reasoning</strong>: 用目标语言解决翻译后的问题</li>
+</ol>
+</li>
+<li>关键机制：用推理准确率作为翻译质量的代理信号（proxy signal）</li>
+</ul>
+<h3 id="2-奖励函数设计">(2) 奖励函数设计</h3>
+<p><strong>四组件奖励结构</strong>:</p>
+<div class="math-display">$$r_{final} = \begin{cases} 1, &amp; \text{if } C \land (r_{acc}=1) \\ 0.1, &amp; \text{if } C \land (r_{acc}=0) \\ 0, &amp; \text{otherwise} \end{cases}$$</div>
+<p>其中约束条件：</p>
+<div class="math-display">$$C = (r_{fmt}=1 \land r_{lang}=1 \land r_{rep}=1)$$</div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>奖励组件</th>
+<th>说明</th>
+<th>取值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$r_{acc}$</td>
+<td>准确率奖励</td>
+<td>答案正确=1，否则=0</td>
+</tr>
+<tr>
+<td>$r_{lang}$</td>
+<td>语言一致性奖励</td>
+<td>推理过程使用目标语言=1，否则=0（用 langdetect 检测）</td>
+</tr>
+<tr>
+<td>$r_{rep}$</td>
+<td>重复惩罚</td>
+<td>无退化重复=1，否则=0（句子级+n-gram级检测）</td>
+</tr>
+<tr>
+<td>$r_{fmt}$</td>
+<td>格式奖励</td>
+<td>输出遵循 <code>&lt;think&gt;...&lt;/think&gt;</code> 格式=1，否则=0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>设计理念</strong>: 只有在满足所有质量约束（格式正确、语言一致、无重复）时，才给予正确答案奖励。这确保了高质量的多维度响应。</p>
+<h3 id="3-核心机制-翻译-推理闭环反馈">(3) 核心机制：翻译-推理闭环反馈</h3>
+<pre><code>English Question → [Translation] → Translated Question → [Target-language Reasoning] → Answer
+                        ↑                                          ↓
+                        └──────────── Accuracy Reward ─────────────┘
+</code></pre>
+<p><strong>关键洞见</strong>:</p>
+<ul>
+<li>如果模型在 Stage 1 已证明能解决该问题（跨语言推理成功）</li>
+<li>但 Stage 2 中翻译后的问题无法解决</li>
+<li>则说明是<strong>翻译问题</strong>而非推理能力问题</li>
+</ul>
+<p>这样，<strong>推理准确率自然成为翻译质量的监督信号</strong>，无需任何外部反馈。</p>
+<h3 id="4-训练细节">(4) 训练细节</h3>
+<p><strong>模型配置</strong>:</p>
+<ul>
+<li>主实验基座：DeepSeek-Distill-Qwen-1.5B, Qwen3-1.7B, Qwen3-4B</li>
+<li>迭代训练：支持多轮迭代持续提升</li>
+</ul>
+<p><strong>Prompt 设计</strong>（翻译任务）:</p>
+<pre><code class="language-text">You are a professional translator.
+Task: Translate the given English question into {language} with zero loss of mathematical or logical meaning.
+
+Output format (MUST keep tags):
+&lt;TRANSLATION&gt;{language} text only&lt;/TRANSLATION&gt;
+
+Rules:
+1. Re-state any numbers, symbols, units exactly as they appear.
+2. Keep LaTeX ($...$) unchanged; do not translate inside $...$.
+3. If the question contains multiple-choice items (A), (B), ..., keep the same labels.
+4. Use natural {language} wording, but stay one-to-one faithful to the original semantics.
+5. Reply with ONLY the tagged translation—no explanations.
+
+&lt;ENGLISH QUESTION&gt;{question}&lt;/ENGLISH QUESTION&gt;
+Please translate the above English question into {language}.
+</code></pre>
+<hr />
+<h2 id="5-关键实验-trit-平均提升-7-个百分点-语言一致性接近-100">5. 关键实验：TRIT 平均提升 7 个百分点，语言一致性接近 100%</h2>
+<h3 id="1-主实验结果-table-1">(1) 主实验结果（Table 1）</h3>
+<p><strong>MMATH 多语言推理性能对比</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>DeepSeek-Distill-Qwen-1.5B</th>
+<th>Qwen3-1.7B</th>
+<th>Qwen3-4B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive RL</td>
+<td>24.1%</td>
+<td>41.7%</td>
+<td>47.4%</td>
+</tr>
+<tr>
+<td>SLC-RL</td>
+<td>25.3%</td>
+<td>43.8%</td>
+<td>48.9%</td>
+</tr>
+<tr>
+<td>M-Thinker</td>
+<td>26.5%</td>
+<td>44.1%</td>
+<td>49.2%</td>
+</tr>
+<tr>
+<td>External-Translation</td>
+<td>29.8%</td>
+<td>46.2%</td>
+<td>50.8%</td>
+</tr>
+<tr>
+<td><strong>TRIT (Ours)</strong></td>
+<td><strong>33.5%</strong></td>
+<td><strong>50.9%</strong></td>
+<td><strong>54.9%</strong></td>
+</tr>
+<tr>
+<td>TRIT-Iter2</td>
+<td><strong>40.2%</strong></td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>语言一致性</strong>: TRIT 训练后所有模型接近 100%</p>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li>TRIT 平均超越 SLC-RL <strong>7 个百分点</strong></li>
+<li>最大提升在 DeepSeek-Distill-Qwen-1.5B：24.1% → 33.5%（+9.4%）</li>
+<li>迭代训练（TRIT-Iter2）进一步提升至 40.2%</li>
+<li>低资源语言（日语、韩语、泰语）迭代训练后平均提升 7+ 个百分点</li>
+</ul>
+<h3 id="2-out-of-domain-英文性能提升">(2) Out-of-Domain 英文性能提升</h3>
+<p><strong>Qwen3-1.7B 英文准确率</strong>: 41.7% → 53.3%（接近 Naive RL 的 54.5%）</p>
+<p><strong>结论</strong>: 训练模型跨语言一致理解问题，反过来提升了基础问题理解能力。</p>
+<h3 id="3-翻译质量改进-figure-2">(3) 翻译质量改进（Figure 2）</h3>
+<p><strong>In-domain (MATH500)</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Win vs Base</th>
+<th>Tie</th>
+<th>Lose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>51%</td>
+<td>33%</td>
+<td>16%</td>
+</tr>
+<tr>
+<td>DeepSeek-Distill-Qwen-1.5B</td>
+<td>46%</td>
+<td>32%</td>
+<td>21%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Out-of-domain (FLORES-200)</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Base COMET</th>
+<th>TRIT COMET</th>
+<th>提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSeek-Distill-Qwen-1.5B</td>
+<td>43.4</td>
+<td>51.7</td>
+<td><strong>+8.4</strong></td>
+</tr>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>83.2</td>
+<td>85.5</td>
+<td>+2.2</td>
+</tr>
+<tr>
+<td>Qwen3-4B</td>
+<td>88.7</td>
+<td>90.2</td>
+<td>+1.5</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 翻译改进泛化到通用领域，且弱模型受益更大。</p>
+<h3 id="4-跨语言问题对齐分析-mexa">(4) 跨语言问题对齐分析（MEXA）</h3>
+<p><strong>方法</strong>: 用 MEXA 测量英文与目标语言问题对在模型各层的隐藏表示余弦相似度</p>
+<p><strong>结果</strong>: TRIT 相比 External-Translation 提升跨语言问题对齐 <strong>10+ 个百分点</strong>（最佳情况）</p>
+<p><strong>结论</strong>: 翻译训练促使模型学习跨语言一致的问题表示，这是性能提升的内在机制。</p>
+<h3 id="5-为什么-m-thinker-在强模型上失效">(5) 为什么 M-Thinker 在强模型上失效？</h3>
+<p><strong>CTA（Cross-lingual Thinking Alignment）分析</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>CTA Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline (Qwen3-1.7B)</td>
+<td>0.930</td>
+</tr>
+<tr>
+<td>M-Thinker</td>
+<td>0.923</td>
+</tr>
+<tr>
+<td>TRIT</td>
+<td><strong>0.947</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>原因分析</strong>:</p>
+<ul>
+<li>Qwen3-1.7B 基线 CTA 已经高达 0.93</li>
+<li>M-Thinker 的 CTA 奖励接近饱和，无法提供有效判别信号</li>
+<li>TRIT 通过问题级对齐提供额外优化维度，即使基线一致性高仍能继续提升</li>
+</ul>
+<h3 id="6-false-negative-噪声分析">(6) False Negative 噪声分析</h3>
+<p><strong>延迟推理反馈机制的潜在问题</strong>: 推理失败可能被错误归因于翻译问题</p>
+<p><strong>False Negative Rate 对比</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>False-negative Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Before training (θ=1/3)</td>
+<td>7.5%</td>
+</tr>
+<tr>
+<td>θ=1/6</td>
+<td>11.8%</td>
+</tr>
+<tr>
+<td>θ=1/2</td>
+<td>5.8%</td>
+</tr>
+<tr>
+<td>θ=0 (no filtering)</td>
+<td>38.8%</td>
+</tr>
+<tr>
+<td>English-only reasoning</td>
+<td>13.5%</td>
+</tr>
+<tr>
+<td><strong>After TRIT training (θ=1/3)</strong></td>
+<td><strong>3.6%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>:</p>
+<ul>
+<li>θ=1/3 是平衡假阴性和样本保留的最佳阈值</li>
+<li>TRIT 训练后假阴率从 7.5% 降至 3.6%，形成正向反馈循环</li>
+</ul>
+<hr />
+<h2 id="6-golden-case-翻译质量如何影响推理">6. Golden Case：翻译质量如何影响推理</h2>
+<h3 id="案例-平行四边形问题">案例：平行四边形问题</h3>
+<p><strong>原始英文问题</strong>:</p>
+<blockquote class="card card-info">
+<p>指定一个平行四边形 (parallelogram)...</p>
+</blockquote>
+<p><strong>高质量翻译</strong>（保留关键信息）:</p>
+<blockquote class="card card-info">
+<p>正确保留&quot;平行四边形&quot;的数学含义</p>
+</blockquote>
+<p><strong>低质量翻译</strong>（信息丢失）:</p>
+<blockquote class="card card-info">
+<p>将&quot;平行四边形&quot;弱化为&quot;四边形&quot; (quadrilateral)</p>
+</blockquote>
+<p><strong>结果</strong>:</p>
+<ul>
+<li>高准确率翻译：答案正确</li>
+<li>低准确率翻译：答案错误（关键几何信息丢失）</li>
+</ul>
+<p><strong>统计验证</strong>（Figure 5）:</p>
+<ul>
+<li>高准确率翻译 vs 低准确率翻译：Win rate 76% vs 16%</li>
+<li>说明精确翻译关键信息对推理至关重要</li>
+</ul>
+<hr />
+<h2 id="7-insights-翻译-推理集成是多语言能力的突破口">7. Insights：翻译-推理集成是多语言能力的突破口</h2>
+<ol>
+<li><strong>问题理解是多语言推理的瓶颈</strong>：传统方法聚焦推理轨迹对齐，但问题理解差异才是根本</li>
+<li><strong>推理准确率是有效的翻译质量代理信号</strong>：无需外部翻译评估模型</li>
+<li><strong>问题级对齐比轨迹级对齐更根本</strong>：当模型已经高度对齐时，轨迹级优化饱和，问题级优化仍有空间</li>
+<li><strong>弱模型受益更大</strong>：基线能力越弱，TRIT 的改进空间越大</li>
+<li><strong>泛化到通用翻译</strong>：仅在数学问题上训练，翻译能力泛化到通用文本</li>
+</ol>
+<hr />
+<h2 id="8-批判性分析-研究问题有价值-但解决方案存在硬伤">8. 批判性分析：研究问题有价值，但解决方案存在硬伤</h2>
+<h3 id="核心设计缺陷">核心设计缺陷</h3>
+<p><strong>缺陷1：False Negative 归因错误</strong></p>
+<p>论文假设 Stage 2 失败时：</p>
+<pre><code>推理失败 → 翻译问题（论文假设）
+</code></pre>
+<p>但实际可能的失败原因：</p>
+<pre><code>推理失败 → 翻译问题？
+         → 目标语言问题理解能力不足？
+</code></pre>
+<p><strong>问题本质</strong>：</p>
+<ul>
+<li>Stage 1 验证的是&quot;模型能用目标语言回答英文问题&quot;</li>
+<li>但 Stage 1 的输入是<strong>英文问题</strong>，模型可能主要依赖<strong>英文理解</strong></li>
+<li>Stage 2 的输入是<strong>目标语言问题</strong>，这是不同的输入分布</li>
+<li>模型可能没有真正学会&quot;理解目标语言问题&quot;，只是学会了&quot;用目标语言表达推理&quot;</li>
+</ul>
+<p><strong>论文的应对不足</strong>：</p>
+<ul>
+<li>Cross-Lingual Filtering 假设 Stage 1 成功意味着模型能理解目标语言问题</li>
+<li>这个假设未被严格验证</li>
+<li>更好的设计：Stage 1 验证后，额外验证模型能正确回答人工翻译的目标语言问题</li>
+</ul>
+<hr />
+<p><strong>缺陷2：Credit Assignment 不明确</strong></p>
+<p>Stage 2 的训练流程：</p>
+<pre><code>English Question → [Translation] → Translated Question → [Reasoning] → Answer
+                        ↑                    ↑                ↓
+                        └────────── Reward (基于答案正确性) ──────────┘
+</code></pre>
+<p><strong>问题</strong>：奖励信号同时影响翻译和推理两个策略，但无法区分各自贡献。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>奖励</th>
+<th>实际原因</th>
+<th>Credit 归属</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>翻译差 + 推理强 → 答案正确</td>
+<td>高</td>
+<td>推理弥补翻译</td>
+<td>翻译被错误强化</td>
+</tr>
+<tr>
+<td>翻译好 + 推理差 → 答案错误</td>
+<td>低</td>
+<td>推理不足</td>
+<td>翻译被错误惩罚</td>
+</tr>
+<tr>
+<td>翻译好 + 推理强 → 答案正确</td>
+<td>高</td>
+<td>两者都好</td>
+<td>无法区分贡献</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>潜在漏洞</strong>：</p>
+<blockquote class="card card-info">
+<p>如果模型推理能力足够强，即使翻译质量差，也能推理出正确答案 → 翻译策略可能得不到有效优化</p>
+</blockquote>
+<p><strong>为什么论文还能 work</strong>：</p>
+<ul>
+<li>Cross-Lingual Filtering 降低了对推理能力的要求</li>
+<li>两个任务相互促进（翻译提升 → 推理更容易；推理提升 → 反馈更稳定）</li>
+<li>但这归功于<strong>任务本身的联合训练</strong>，而非奖励信号的精确设计</li>
+</ul>
+<hr />
+<h3 id="更好的解决方案">更好的解决方案</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>论文方案</th>
+<th>改进方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>False Negative 归因</td>
+<td>Cross-Lingual Filtering</td>
+<td>增加人工翻译验证环节</td>
+</tr>
+<tr>
+<td>Credit Assignment</td>
+<td>端到端奖励</td>
+<td>分离奖励信号：翻译用翻译评估器，推理用答案正确性</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h3 id="总结">总结</h3>
+<ul>
+<li><strong>研究问题很有价值</strong>：多语言推理的语言不一致性和问题理解偏差是真实存在的挑战</li>
+<li><strong>核心洞见正确</strong>：问题级对齐比轨迹级对齐更根本</li>
+<li><strong>但解决方案存在硬伤</strong>：
+<ol>
+<li>未严格验证&quot;目标语言理解能力&quot;</li>
+<li>Credit Assignment 机制不精确</li>
+</ol>
+</li>
+<li><strong>改进方向</strong>：
+<ul>
+<li>扩展到更多任务类型</li>
+<li>引入更精确的归因机制</li>
+<li>降低对英文数据的依赖</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="多语言推理机制论文矩阵">多语言推理机制论文矩阵</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>研究问题</th>
+<th>关键发现</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本文</strong></td>
+<td>多语言推理不一致？</td>
+<td>TRIT 翻译-推理联合训练</td>
+<td>解决语言不一致问题</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>中间表示偏向？</td>
+<td>概念空间英语偏向</td>
+<td>解释为何模型倾向英文推理</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>翻译组件在哪？</td>
+<td>&lt;5% attention heads</td>
+<td>翻译与推理的组件分离</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html" title="Group_then_Scale-Dynamic_MoE_Multilingual_LLM">Group_then_Scale-Dynamic_MoE_Multilingual_LLM</a></td>
+<td>多语言诅咒？</td>
+<td>参数偏差 + MoE 扩展</td>
+<td>架构层面缓解语言竞争</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="相关工作">相关工作</h3>
+<ul>
+<li><a class="wikilink" href="Probing_RLVR_Training_Instability-Objective-Level_Hacking.html" title="Probing_RLVR_Training_Instability-Objective-Level_Hacking">Probing_RLVR_Training_Instability-Objective-Level_Hacking</a> - RLVR 训练稳定性分析</li>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a> - On-policy 密集监督</li>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a> - 机器翻译专项优化</li>
+<li><a class="wikilink" href="PEGRL-Post-Editing_Guided_RL_for_MT.html" title="PEGRL-Post-Editing_Guided_RL_for_MT">PEGRL-Post-Editing_Guided_RL_for_MT</a> - 翻译+后编辑的 RL 框架</li>
+<li><a class="wikilink" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html" title="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models">Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models</a> - Reward 信号设计</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Whats_the_Plan-Implicit_Planning_LLMs.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">What's the Plan? Metrics for Implicit Planning in LLMs</span></a>
+<a class="paper-nav-link next" href="Reinforced-Attention-Learning-RAL.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Reinforced Attention Learning (RAL)</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2602.05940</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

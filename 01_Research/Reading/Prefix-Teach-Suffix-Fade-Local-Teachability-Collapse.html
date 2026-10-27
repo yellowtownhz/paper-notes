@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prefix Teach, Suffix Fade — Local Teachability Collapse in Strong-to-Weak On-Policy Distillation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Prefix Teach, Suffix Fade — Local Teachability Collapse in Strong-to-Weak On-Policy Distillation</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-dense-opd-监督到底该不该铺满整条-trajectory"><span class="toc-num">02</span> 2. 关键问题：dense OPD 监督到底该不该铺满整条 trajectory？</a></li>
+<li><a class="toc-link" href="#3-数据集-数学推理为主-code-为辅"><span class="toc-num">03</span> 3. 数据集：数学推理为主，code 为辅</a></li>
+<li><a class="toc-link" href="#4-关键方法-teacher-在-student-top-k-上的-top1-top2-margin-当-teachability-信号-bic-检测下降变点"><span class="toc-num">04</span> 4. 关键方法：teacher 在 student top-K 上的 top1-top2 margin 当 teachability 信号，BIC 检测下降变点</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-整体架构">4.1 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-核心模块">4.2 核心模块</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-snr-视角的理论-motivation-appendix-a-2">4.3 SNR 视角的理论 motivation（Appendix A.2）</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-训练设置">4.4 训练设置</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-与已有方法的区别">4.5 与已有方法的区别</a></li>
+<li><a class="toc-link toc-sub" href="#4-6-参考实现">4.6 参考实现</a></li>
+<li><a class="toc-link" href="#5-关键结果-1-7b-student-avg-36-8-40-1-3-3-且更好保住-ood"><span class="toc-num">05</span> 5. 关键结果：1.7B student AVG 36.8% → 40.1%（+3.3），且更好保住 OOD</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-table-1-qwen3-1-7b-student">5.1 主实验（Table 1，Qwen3-1.7B student）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融-table-2">5.2 消融（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-scaling-table-3-4b-8b-student">5.3 Scaling（Table 3，4B / 8B student）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-code-domain-appendix-a-8-table-5">5.4 Code-domain（Appendix A.8，Table 5）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-release-rule-行为统计-figure-3">5.5 Release rule 行为统计（Figure 3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-训练效率-appendix-a-7">5.6 训练效率（Appendix A.7）</a></li>
+<li><a class="toc-link toc-sub" href="#5-7-release-案例详解-appendix-a-4">5.7 Release 案例详解（Appendix A.4）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-05-21</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.13643" target="_blank">arXiv</a>
+    </div>
+    <h1>Prefix Teach, Suffix Fade — Local Teachability Collapse in Strong-to-Weak On-Policy Distillation</h1>
+    <p class="authors">Kaiyuan Liu, Ziyuan Zhuang, Yang Bai, Bing Wang, Rongxiang Weng, Jieping Ye</p>
+    <div class="topic-row"><span class="topic-tag">Knowledge_Distillation</span> <span class="topic-tag">On-Policy_Distillation</span> <span class="topic-tag">Weak-to-Strong_Supervision</span> <span class="topic-tag">BIC_Changepoint_Detection</span> <span class="topic-tag">Qwen3</span></div>
+</header>
+
+<h1>论文笔记: Prefix Teach, Suffix Fade — Local Teachability Collapse in Strong-to-Weak On-Policy Distillation</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者团队</strong>: 浙大 + 美团 LongCat（通讯：翁荣祥）+ 吉林大学；一作 Kaiyuan Liu 是浙大博士在 LongCat 实习。和这个组之前的 <a class="wikilink" href="Tracing-Provenance-in-LLM-Reasoning-Distillation.html" title="Tracing-Provenance-in-LLM-Reasoning-Distillation">Tracing-Provenance-in-LLM-Reasoning-Distillation</a>、<a class="wikilink" href="Step-Length-Confounding-LLM-Reasoning-Data-Selection.html" title="Step-Length-Confounding-LLM-Reasoning-Data-Selection">Step-Length-Confounding-LLM-Reasoning-Data-Selection</a> 是一脉相承的——都是&quot;不是所有 token 都该被监督&quot;这条线。</li>
+<li><strong>发表时间</strong>: 2026/05/13 arXiv preprint（v1，未明确投稿目标）</li>
+<li><strong>领域</strong>: 大模型蒸馏 / on-policy distillation (OPD)</li>
+<li><strong>核心 setting</strong>: 强老师 → 弱学生（teacher Qwen3-30B-A3B-Instruct-2507，student Qwen3-1.7B / 4B / 8B-Non-Thinking），训练数据来自 DeepMath-103k</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-dense-opd-监督到底该不该铺满整条-trajectory">2. 关键问题：dense OPD 监督到底该不该铺满整条 trajectory？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>假设 Qwen3-1.7B（student）在解一道数学题：求 $\lim_{n\to\infty} n^3 x^n(1-x)^4$（for $x \in [0,1]$）。Student roll 出了一条 ~4000 token 的推理链。Teacher（Qwen3-30B-A3B）对每个 token 打分，算出 advantage $A_t = \log p_T(y_t) - \log p_S(y_t)$。</p>
+<p>看 trajectory 前半段：student 把问题正确切成 3 个 case（x=0, x=1, 0&lt;x&lt;1），对 case 3 用 ratio test 算到 $a_{n+1}/a_n = (1+1/n)^3 x \to x &lt; 1$，得出 exponential decay。<strong>这段核心论证里</strong>，teacher 对 student 采样的不同 token 有明显的好坏偏好区分——有些 token teacher 给的 logprob 比 student 高很多，有些只高一点。Advantage 的方差大，teacher 的信号&quot;有区分度&quot;，student 能学到&quot;哪些动作更好&quot;。</p>
+<p>但到后半段：student 开始反复重复同一个论点、出现 &quot;Wait — no, wait.&quot;、&quot;Actually...&quot;、&quot;But is it ∞? Yes... Wait — that's not helpful.&quot; 这种 self-doubt 循环。Teacher 对所有 student 可能选的 token 给的 logprob 差不多——&quot;再说一遍&quot;vs&quot;换个说法再说一遍&quot;对 teacher 来说差不多。</p>
+<p>这里要区分两个概念：<strong>mean advantage</strong> 衡量的是&quot;teacher 还在持有意见&quot;（全局 disagreement），<strong>$\text{std}(A_t)$</strong> 衡量的是&quot;teacher 还能不能指出哪条路更好&quot;（局部区分度）。两个东西可以独立变化。在这条 trajectory 的后半段：mean advantage 大约还在 -0.3（teacher 和 student 还在 disagree），但 $\text{std}(A_t)$ 已经从早期的 1.0+ 跌到了 0.2-0.4 区间（读图估计，Figure 1b）。论文里一个 case：log-prob correlation 从 -0.09（几乎无关）升到 0.93（高度对齐），advantage std 从 2.08 降到 0.61。</p>
+<p>这就是 <strong>local teachability collapse</strong>：teacher 的全局指导信号（mean advantage）还在，但局部的区分能力（advantage dispersion / teacher margin）已经塌缩了。两码事。</p>
+</blockquote>
+<p>下面两张图把&quot;global signal 还在 vs local contrast 已塌&quot;这件事讲得很直白：</p>
+<ul>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_1/fig1_local_teachability_a_global_signal.png" alt="Fig1a Mean advantage 全程不衰减" /></li>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_1/fig1_local_teachability_b_local_contrast.png" alt="Fig1b Local contrast 一路下滑" /></li>
+</ul>
+<p><strong>为什么会这样？</strong></p>
+<p>根因在于 strong-to-weak 的能力差距。当 teacher 比 student 强太多时，到了推理链后半段，student 的 top-K 候选对 teacher 来说&quot;都差不多&quot;——因为 student 的能力决定了它的 reachable action space 本身就比较窄，teacher 在这个窄空间里区分不出明显的好坏。</p>
+<p><strong>为什么已有方法解决不了？</strong></p>
+<ul>
+<li><strong>标准 OPD</strong>：直接对整条轨迹做 dense supervision，默认所有 token 的 teacher signal 都有价值。但上面的例子说明后半段的学习信号接近噪声，优化这些噪声反而会干扰训练。</li>
+<li><strong>FastOPD（prefix OPD）</strong>：只保留前 k 个 token 的 supervision。这是一个全局硬截断，但不同 trajectory 的 teachability collapse 发生位置差异很大（论文数据：mean=0.25, median=0.13），一刀切必然有 suboptimal 的 case。</li>
+<li><strong>ExOPD</strong>：修改 OPD objective（reward extrapolation），但没考虑 signal quality 本身在衰减。</li>
+</ul>
+<p><strong>类比 RL 中的常识</strong>：outcome-driven RL 早就发现&quot;50% 正确率的 prompt 最有用&quot;——全对或全错的 prompt 梯度信号废了。OPD 里 dense supervision 也是同理：teacher 在某个 prefix 已经对 student 的所有候选都一视同仁了，那个位置的监督就是噪声。</p>
+<p>一个自然的想法是：直接用 $\text{std}(A_t)$ 的衰减当截断信号。但后面会看到，这个 realized-path 统计量在训练早期不够稳定（Section 4.2.2），作者最终选了一个 state-local 的替代方案（teacher margin），效果更好（Table 2: 40.1% vs 38.8%）。</p>
+<hr />
+<h2 id="3-数据集-数学推理为主-code-为辅">3. 数据集：数学推理为主，code 为辅</h2>
+<ul>
+<li><strong>训练数据</strong>：DeepMath-103k（He et al. 2025，verifiable math 数据集），prompt length 上限 2048。[? 论文说 training prompts are sampled from DeepMath，没说用了全部 103k 还是子集]</li>
+<li><strong>In-domain 评测</strong>（5 个数学 benchmark，AVG 是无加权平均）：
+<ul>
+<li>AIME25（30 题，每题 32 samples）</li>
+<li>HMMT25-Feb / HMMT25-Nov（竞赛数学，每题 32 samples）</li>
+<li>MATH500（500 题，每题 1 sample）</li>
+<li>Minerva（量化推理，每题 4 samples）</li>
+</ul>
+</li>
+<li><strong>Out-of-domain 评测</strong>：GPQA（研究生级 Google-proof QA，每题 4 samples）—— 单独报告，<strong>不进 AVG</strong>。</li>
+<li><strong>补充 code 域评测</strong>（Appendix A.8）：LiveCodeBench v6, HumanEval/+, MBPP/+，训练 prompt 来自 Eurus-RL-Code。</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-teacher-在-student-top-k-上的-top1-top2-margin-当-teachability-信号-bic-检测下降变点">4. 关键方法：teacher 在 student top-K 上的 top1-top2 margin 当 teachability 信号，BIC 检测下降变点</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>还是用 $\lim_{n\to\infty} n^3 x^n(1-x)^4$ 那条 trajectory。</p>
+<p><strong>Step 1: 计算 teacher margin</strong>。在每个 prefix 位置，拿出 student 的 top-4 候选 token（$C_t$），让 teacher 对这 4 个 token 排名。取 teacher 排名第一和第二的 logprob 差值作为 margin $M_t$。前半段（case split + ratio test）这个 margin 可能是 0.5~1.0，teacher 对&quot;student 该选哪个&quot;有明确偏好。后半段（重复论证 + self-doubt）margin 跌到 0.05~0.1，teacher 基本分不出好坏。</p>
+<p><strong>Step 2: 句子级聚合</strong>。用 NLTK 做 sentence segmentation，把 token-level margin 按句子聚合（取平均再 log 平滑），得到 $S_i$。这条 trajectory 可能被切成 20 个句子，就得到 20 个 $S_i$ 值。</p>
+<p><strong>Step 3: BIC 变点检测</strong>。对 $\{S_1, ..., S_n\}$ 做一个&quot;单点下降&quot;检测——对比&quot;全程一个均值&quot;（$H_0$）和&quot;某个点 $\tau$ 之后均值下降&quot;（$H_1$）。如果 $\text{BIC}_1(\tau^*) &lt; \text{BIC}_0$，就接受变点，保留 $\tau^*$ 之前的 supervision，之后的 mask 掉。在这条 trajectory 里，变点落在 student 写完 case split 和 exponential decay 论证之后——之后 student 开始反复重复论点，margin 曲线在这里显著下降。</p>
+<p><strong>Step 4: 重新加权</strong>。被 mask 掉的 token 不再参与训练，但为了保证每个 sample 的 loss 总量不变，对保留下来的 prefix 做一个 rescale：$A&#x27;_t = A_t \cdot q_t \cdot \frac{\sum l_t}{\sum l_t q_t}$。</p>
+<p>结果：这条 trajectory 的 supervision 只集中在 teachability 高的前半段核心论证。另一条 trajectory 可能保留 40%，全看各自的 margin 曲线。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>核心原则（原文）：
+&quot;supervision should concentrate on trajectory regions where the teacher's feedback remains discriminative, rather than uniformly covering the entire response&quot;</p>
+</blockquote>
+<h3 id="4-1-整体架构">4.1 整体架构</h3>
+<p>方法不改 OPD objective 本身，只改 supervision 的 <strong>覆盖范围</strong>。是在标准 OPD 训练 loop 外面加一层 post-hoc 诊断 + loss mask。注意 release 是 <strong>post-hoc</strong> 的——必须先把整条 rollout 跑完，才能算 BIC、决定要 mask 哪段。所以本文不是 efficiency claim。</p>
+<h3 id="4-2-核心模块">4.2 核心模块</h3>
+<h4>4.2.1 标准 OPD advantage（背景）</h4>
+<div class="math-display">$$A_t = \log p_T(y_t \mid x, y_{&lt;t}) - \log p_S(y_t \mid x, y_{&lt;t})$$</div>
+<ul>
+<li>$A_t &gt; 0$：teacher 比 student 更看好这个 token，student 应该提升概率</li>
+<li>$A_t &lt; 0$：反过来</li>
+<li>Mean advantage 衡量全局 disagreement，std 衡量 token-level 区分度</li>
+</ul>
+<p>注意这是在 <strong>sampled token</strong> $y_t$ 上算的，不是在所有候选上——这是后面 $\text{std}(A_t)$ baseline 输给 margin 的核心理由。</p>
+<h4>4.2.2 Teacher Margin（核心创新）</h4>
+<p><strong>Motivation</strong>：$\text{std}(A_t)$ 有个根本问题——它量的是 student <strong>实际采样到的那一条路径</strong>上的 variance。这太依赖单次采样的随机性了，尤其训练早期 student 还没对齐 teacher，一条 rollout 上的 dispersion 波动很大。</p>
+<p>我们真正想知道的是另一个问题：&quot;在当前 prefix state 下，看 student 的所有可达候选，teacher 能不能做出清晰的排名？&quot; 这是个 state-local 的 ranking question，不依赖采样路径。</p>
+<p><strong>具体做法</strong>：在每个 prefix $(x, y_{&lt;t})$：</p>
+<ol>
+<li>取 student 的 top-K 候选集（student 的&quot;可达 action 空间&quot;）：$\mathcal{C}_t = \text{TopK}_a \; p_S(a \mid x, y_{&lt;t})$</li>
+<li>用 teacher logprob 对 $\mathcal{C}_t$ 排名，取前两名：
+<ul>
+<li>$a_t^{(1)} = \arg\max_{a \in \mathcal{C}_t} \log p_T(a \mid x, y_{&lt;t})$</li>
+<li>$a_t^{(2)} = \arg\max_{a \in \mathcal{C}_t \setminus \{a_t^{(1)}\}} \log p_T(a \mid x, y_{&lt;t})$</li>
+</ul>
+</li>
+<li><strong>Nearest-competitor margin</strong>：$M_t = \log p_T(a_t^{(1)} \mid x, y_{&lt;t}) - \log p_T(a_t^{(2)} \mid x, y_{&lt;t})$</li>
+</ol>
+<p>$M_t$ 问的是一个 state-local 的问题：&quot;在 student 的 reachable action space 里，teacher 还能不能给出清晰的偏好排序？&quot; 如果 $M_t$ 大，说明 teacher 对&quot;student 该选哪个 token&quot;有明确偏好；如果 $M_t$ 小，teacher 对 student 的候选基本无所谓——dense supervision 的 action-dependent signal 就弱了。</p>
+<p>这里有个 subtle 但重要的区分：$\text{std}(A_t)$ 评的是 sampled trajectory 上的 dispersion——<strong>诊断什么有问题</strong>的 symptom；$M_t$ 评的是 state-local 的 ranking question——<strong>诊断如何修复</strong>的 control signal。<strong>对症 ≠ 对因。</strong> 论文 Table 2 验证了：$\text{std}(A_t)$ release 虽然也 beat full OPD（38.8%），但比 teacher margin 差 1.3 点（40.1%），印证了 state-local margin 比 realized-path dispersion 更 robust。</p>
+<p><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2a_topk_margin_curve.png" alt="Fig2 TopK margin curve" /></p>
+<h4>4.2.3 句子级聚合</h4>
+<div class="math-display">$$S_i = \log\left(1 + \frac{1}{|\mathcal{B}_i|} \sum_{t \in \mathcal{B}_i} M_t\right)$$</div>
+<ul>
+<li>$\mathcal{B}_i$：第 $i$ 个句子 segment 的 token 集合</li>
+<li><code>log1p</code> 是为了数值稳定</li>
+<li>用 NLTK sentence segmentation 而不是固定 bin，因为 trajectory 长度差异太大，而且对 reasoning trace 来说&quot;换段落&quot;和&quot;开始新论证&quot;通常重合</li>
+</ul>
+<h4>4.2.4 Profiled RSS-BIC 变点检测</h4>
+<p><strong>Motivation</strong>：需要自动化判断&quot;margin 在哪里开始显著下降&quot;，而不是手动设阈值。</p>
+<p><strong>两模型比较</strong>：</p>
+<ul>
+<li>$H_0$（无变化）：$S_i = \mu + \epsilon_i$，参数数 $k_0 = 1$</li>
+<li>$H_1(\tau)$（单点下降）：$S_i = \mu_{\text{pre}} + \epsilon_i$（$i \le \tau$）或 $S_i = \mu_{\text{post}} + \epsilon_i$（$i &gt; \tau$），参数数 $k_1 = 3$（两个均值 + 一个变点），要求 $\mu_{\text{pre}} &gt; \mu_{\text{post}}$（只接受向下变点）</li>
+</ul>
+<p><strong>BIC 准则</strong>（profiled，noise variance 吸收进 RSS）：</p>
+<div class="math-display">$$\text{BIC}_0 = n \log\left(\frac{\text{RSS}_0 + \epsilon}{n}\right) + k_0 \log n$$</div>
+<div class="math-display">$$\text{BIC}_1(\tau) = n \log\left(\frac{\text{RSS}_1(\tau) + \epsilon}{n}\right) + k_1 \log n$$</div>
+<p>选取满足 $\bar{S}_{&gt;\tau} &lt; \bar{S}_{\le\tau}$ 的 $\tau$ 中 BIC 最小的：</p>
+<div class="math-display">$$\tau^* = \arg\min_{\tau: \bar{S}_{&gt;\tau} &lt; \bar{S}_{\le\tau}} \text{BIC}_1(\tau)$$</div>
+<p>如果 $\text{BIC}_1(\tau^*) &lt; \text{BIC}_0$，接受变点；否则 <strong>fallback 到 full OPD</strong>——这是个保守安全网，避免 BIC 误判时损害训练。</p>
+<h4>4.2.5 Mass-Preserving Rescale</h4>
+<div class="math-display">$$A&#x27;_t = A_t \cdot q_t \cdot \frac{\sum_t l_t}{\sum_t l_t q_t}$$</div>
+<ul>
+<li>$q_t \in \{0, 1\}$：prefix mask（release 之前的 token = 1）</li>
+<li>$l_t$：原始 loss mask</li>
+<li>rescale factor 保证截断后每个 sample 的 loss 总量不变</li>
+</ul>
+<p><strong>关键设计思想</strong>：release 改的是 <strong>supervision 的位置</strong>（where），不是 <strong>supervision 的总量</strong>（how much）。如果不 rescale 直接 mask，被截断的样本贡献的总 loss 会缩小到 prefix 占比，相当于隐式给短样本更低权重，跟 baseline 不公平。</p>
+<p>值得注意的是，rescale 后每个保留 token 的梯度幅度被乘了 $(\sum l_t)/(\sum l_t \cdot q_t) &gt; 1$——等价于&quot;把这条样本应得的总梯度预算压到 prefix 里&quot;。论文没做 mask-only vs mask+rescale 的解耦实验（见 Section 6.1 Comments），所以涨分的 driver 到底是&quot;砍掉垃圾后缀&quot;还是&quot;放大好前缀梯度&quot;，没法区分。</p>
+<h3 id="4-3-snr-视角的理论-motivation-appendix-a-2">4.3 SNR 视角的理论 motivation（Appendix A.2）</h3>
+<p>核心思想很简单：如果 suffix 贡献的噪声比信号多，砍掉它就提升整个 update 的信噪比。下面的形式化是这個直觉的推导。</p>
+<p>用 Cauchy inequality 可以推导：</p>
+<div class="math-display">$$\|\tilde{g}_t\|^2 \le \text{Var}_{a \sim \pi_t}(A_t(a)) \cdot \mathbb{E}_{a \sim \pi_t}\|s_t(a)\|^2$$</div>
+<p>其中 $\tilde{g}_t$ 是去掉 action-independent baseline 后的 informative gradient component。这说的是：如果 teacher 的 advantage 在 student reachable set 上的 variance 小，那 policy update 的 informative part 就小。</p>
+<p>SNR 视角：把 update 拆成 prefix P 和 released suffix R：</p>
+<div class="math-display">$$\text{SNR}_{\text{full}} = \frac{(m_P + m_R)^2}{v_P + v_R}, \quad \text{SNR}_{\text{release}} = \frac{m_P^2}{v_P}$$</div>
+<p>Release 对 SNR 有利，当且仅当 suffix 的 variance/signal ratio 足够差：$v_R/v_P \ge 2(m_R/m_P) + (m_R/m_P)^2$。</p>
+<p>不过这个论证是 hand-wavy 的——Cauchy-Schwarz 是用 $\text{Var}_{\pi_t}(A_t(a))$ 做 upper bound 的，但实际方法用的是 top1-top2 margin，这中间的 theory-to-method gap 没说清楚。而且 SNR 的 sufficient condition 没说什么时候成立。</p>
+<h3 id="4-4-训练设置">4.4 训练设置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt / train resp / test resp length</td>
+<td>2048 / 16384 / 32768</td>
+</tr>
+<tr>
+<td>Train batch size</td>
+<td>1024</td>
+</tr>
+<tr>
+<td>Learning rate</td>
+<td>1e-6</td>
+</tr>
+<tr>
+<td>Total steps</td>
+<td><strong>100</strong></td>
+</tr>
+<tr>
+<td>Rollout samples per prompt</td>
+<td>1 [?]</td>
+</tr>
+<tr>
+<td>Hardware</td>
+<td>1 节点 × 8 GPU (H800)</td>
+</tr>
+<tr>
+<td>K (support set size)</td>
+<td>4（主实验），也测了 2/16/32</td>
+</tr>
+</tbody>
+</table></div>
+<p>只训 100 步，每步 1024 batch——非常轻量的 setup，总 supervision 量 ~1.7B tokens。超参数主要跟随 ExOPD 的设置（Appendix A.5）。100 步够不够、长训练下结论是否还成立，是本文最大的方法学疑虑（见 Section 6.1 Comments）。</p>
+<h3 id="4-5-与已有方法的区别">4.5 与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>改动 OPD 哪里</th>
+<th>是否 trajectory-specific</th>
+<th>核心动机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPD (Agarwal 2024)</td>
+<td>baseline，全序列 dense</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ExOPD (Yang 2026)</td>
+<td>改 objective（reward extrapolation）</td>
+<td>否</td>
+<td>改 feedback 怎么算</td>
+</tr>
+<tr>
+<td>FastOPD (Zhang 2026)</td>
+<td>改 supervision region，固定 prefix</td>
+<td>否，全局 cutoff</td>
+<td>省算力</td>
+</tr>
+<tr>
+<td>Random release</td>
+<td>保 batch-level release 分布，但样本随机配对</td>
+<td>否（解耦 trajectory）</td>
+<td>控制实验</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td>改 supervision region，trajectory-level 自适应</td>
+<td><strong>是</strong></td>
+<td>feedback quality</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="4-6-参考实现">4.6 参考实现</h3>
+<p>附录 A.11 提供了完整的 Python pseudocode（~100 行），核心是 <code>dynamic_prefix_reweight()</code> 函数。参考实现挂在 verl 框架的 <code>verl_topk/verl/trainer/ppo/dynamic_prefix.py</code>。</p>
+<hr />
+<h2 id="5-关键结果-1-7b-student-avg-36-8-40-1-3-3-且更好保住-ood">5. 关键结果：1.7B student AVG 36.8% → 40.1%（+3.3），且更好保住 OOD</h2>
+<h3 id="5-1-主实验-table-1-qwen3-1-7b-student">5.1 主实验（Table 1，Qwen3-1.7B student）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME25</th>
+<th>HMMT-Feb</th>
+<th>HMMT-Nov</th>
+<th>MATH500</th>
+<th>Minerva</th>
+<th><strong>AVG</strong></th>
+<th>GPQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Teacher (30B-A3B)</td>
+<td>61.2</td>
+<td>42.4</td>
+<td>57.9</td>
+<td>98.0</td>
+<td>51.7</td>
+<td><strong>62.2</strong></td>
+<td>70.4</td>
+</tr>
+<tr>
+<td>Student (raw)</td>
+<td>11.4</td>
+<td>6.6</td>
+<td>4.5</td>
+<td>74.0</td>
+<td>27.9</td>
+<td><strong>24.9</strong></td>
+<td>31.1</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>28.4</td>
+<td>16.2</td>
+<td>15.9</td>
+<td>86.2</td>
+<td>37.1</td>
+<td><strong>36.8</strong></td>
+<td>40.7</td>
+</tr>
+<tr>
+<td>ExOPD</td>
+<td>30.8</td>
+<td>16.4</td>
+<td>17.4</td>
+<td>89.2</td>
+<td>41.2</td>
+<td><strong>39.0</strong></td>
+<td>36.6</td>
+</tr>
+<tr>
+<td>Fixed-prefix-1024</td>
+<td>30.1</td>
+<td>18.9</td>
+<td>20.6</td>
+<td>87.8</td>
+<td>35.9</td>
+<td><strong>38.7</strong></td>
+<td>40.7</td>
+</tr>
+<tr>
+<td>Fixed-prefix-2048</td>
+<td>30.6</td>
+<td>18.5</td>
+<td>20.9</td>
+<td>89.2</td>
+<td>37.3</td>
+<td><strong>39.3</strong></td>
+<td>41.2</td>
+</tr>
+<tr>
+<td>Fixed-prefix-4096</td>
+<td>31.6</td>
+<td>19.3</td>
+<td>20.4</td>
+<td>86.8</td>
+<td>38.8</td>
+<td><strong>39.4</strong></td>
+<td>38.6</td>
+</tr>
+<tr>
+<td>Fixed-prefix-8192</td>
+<td>30.7</td>
+<td>17.4</td>
+<td>18.4</td>
+<td>88.8</td>
+<td>37.3</td>
+<td><strong>38.6</strong></td>
+<td>38.6</td>
+</tr>
+<tr>
+<td>Random release</td>
+<td>29.2</td>
+<td>18.0</td>
+<td>18.9</td>
+<td>88.0</td>
+<td>36.0</td>
+<td><strong>38.0</strong></td>
+<td>37.4</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td><strong>31.5</strong></td>
+<td><strong>19.1</strong></td>
+<td><strong>21.9</strong></td>
+<td><strong>89.4</strong></td>
+<td><strong>38.8</strong></td>
+<td><strong>40.1</strong></td>
+<td><strong>42.4</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>几个 take-away：</p>
+<ul>
+<li><strong>Full OPD 不是上限</strong>：所有 fixed-prefix（1024/2048/4096/8192）都比 full OPD 强，说明&quot;砍掉后半段&quot;本身就有帮助。但 fixed-prefix 的最优长度因 benchmark 而异（4096 在 AVG 上最好但 GPQA 比 2048 差），需要全局调参。</li>
+<li><strong>Trajectory-specific 比 fixed prefix 好</strong>：40.1 vs best fixed 39.4，<strong>且不需要调全局 prefix length</strong>。</li>
+<li><strong>Random release 是关键控制实验</strong>：保留了 batch 级 release point 分布，但打乱了&quot;哪条 trajectory 拿哪个 release point&quot;。结果掉到 38.0%，证明 gain 不来自&quot;平均砍多少 token&quot;，而来自 <strong>trajectory-specific 的耦合</strong>。有意思的是 Random release 比 full OPD 还高 1.2 点——说明单纯减少 supervision 量本身就有点用（可能是 SNR 改善或者正则化效应），但比 trajectory-specific 又差 2.1 点，<strong>耦合到 trajectory 才是大头</strong>。</li>
+<li><strong>GPQA（OOD）的 framing 要小心</strong>：
+<ul>
+<li>跟 OPD baseline 比，Ours 42.4 vs 40.7 = +1.7 点，幅度并不戏剧性</li>
+<li>跟 ExOPD 比，Ours 42.4 vs 36.6 = +5.8 点——但这部分主要是 ExOPD 自己 OOD 掉了（&quot;改 objective 易伤 OOD&quot;是个独立 finding）</li>
+<li>所以&quot;better preserves OOD&quot;的准确理解是：&quot;vs OPD 持平略涨；vs ExOPD 这种改 objective 路线则避免了大幅退化&quot;</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-2-消融-table-2">5.2 消融（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>AIME25</th>
+<th>HMMT-Feb</th>
+<th>HMMT-Nov</th>
+<th>MATH500</th>
+<th>Minerva</th>
+<th>AVG</th>
+<th>GPQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPD (full)</td>
+<td>28.4</td>
+<td>16.2</td>
+<td>15.9</td>
+<td>86.2</td>
+<td>37.1</td>
+<td>36.8</td>
+<td>40.7</td>
+</tr>
+<tr>
+<td>std($A_t$) release</td>
+<td>30.3</td>
+<td>17.7</td>
+<td>19.4</td>
+<td>88.4</td>
+<td>38.1</td>
+<td>38.8</td>
+<td>40.9</td>
+</tr>
+<tr>
+<td>K=2 support</td>
+<td>30.1</td>
+<td>18.8</td>
+<td>20.8</td>
+<td>87.2</td>
+<td>36.8</td>
+<td>38.7</td>
+<td>42.2</td>
+</tr>
+<tr>
+<td><strong>K=4 support</strong></td>
+<td><strong>31.5</strong></td>
+<td><strong>19.1</strong></td>
+<td><strong>21.9</strong></td>
+<td><strong>89.4</strong></td>
+<td><strong>38.8</strong></td>
+<td><strong>40.1</strong></td>
+<td><strong>42.4</strong></td>
+</tr>
+<tr>
+<td>K=16 support</td>
+<td>32.3</td>
+<td>18.0</td>
+<td>19.4</td>
+<td>88.8</td>
+<td>38.2</td>
+<td>39.3</td>
+<td>41.6</td>
+</tr>
+<tr>
+<td>K=32 support</td>
+<td>30.4</td>
+<td>18.8</td>
+<td>20.9</td>
+<td>87.6</td>
+<td>37.5</td>
+<td>39.0</td>
+<td>41.9</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>K=4 最好，但 K=2/16/32 也都比 full OPD 好 ≥1.9 点 → robust，不是&quot;调 K 调出来的&quot;</li>
+<li>K=16 在 AIME25 上 32.3 比 K=4 的 31.5 还高——K=4 是靠 HMMT-Nov / MATH500 / Minerva 拉回来的。暗示 K 的最优值跟 benchmark 难度有关</li>
+<li>$\text{std}(A_t)$ release 也有效（38.8%），说明 advantage dispersion decay 确实是真实症状。但比 teacher margin 差 1.3 点，验证了 state-local ranking question 比 realized-path statistic 更 robust</li>
+</ul>
+<h3 id="5-3-scaling-table-3-4b-8b-student">5.3 Scaling（Table 3，4B / 8B student）</h3>
+<p><strong>Qwen3-4B</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME25</th>
+<th>HMMT-Feb</th>
+<th>HMMT-Nov</th>
+<th>MATH500</th>
+<th>Minerva</th>
+<th><strong>AVG</strong></th>
+<th>GPQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Student</td>
+<td>19.4</td>
+<td>11.6</td>
+<td>9.2</td>
+<td>83.6</td>
+<td>39.0</td>
+<td>32.5</td>
+<td>48.7</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>49.9</td>
+<td>30.7</td>
+<td>38.4</td>
+<td>94.4</td>
+<td>44.7</td>
+<td>51.6</td>
+<td>55.6</td>
+</tr>
+<tr>
+<td>ExOPD</td>
+<td>51.8</td>
+<td>30.0</td>
+<td>40.3</td>
+<td>93.4</td>
+<td>45.6</td>
+<td>52.2</td>
+<td>43.9</td>
+</tr>
+<tr>
+<td>FastOPD-2048</td>
+<td>52.3</td>
+<td>32.4</td>
+<td>41.5</td>
+<td>93.0</td>
+<td>43.4</td>
+<td>52.5</td>
+<td>55.1</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td><strong>54.7</strong></td>
+<td><strong>34.9</strong></td>
+<td>40.7</td>
+<td>94.0</td>
+<td>45.2</td>
+<td><strong>53.9</strong></td>
+<td><strong>57.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Qwen3-8B</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME25</th>
+<th>HMMT-Feb</th>
+<th>HMMT-Nov</th>
+<th>MATH500</th>
+<th>Minerva</th>
+<th><strong>AVG</strong></th>
+<th>GPQA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Student</td>
+<td>21.6</td>
+<td>11.8</td>
+<td>9.2</td>
+<td>84.6</td>
+<td>42.1</td>
+<td>33.8</td>
+<td>40.2</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>53.3</td>
+<td>29.3</td>
+<td>42.2</td>
+<td>95.4</td>
+<td>45.2</td>
+<td>53.1</td>
+<td>56.8</td>
+</tr>
+<tr>
+<td>ExOPD</td>
+<td>53.2</td>
+<td>29.1</td>
+<td>45.8</td>
+<td>94.0</td>
+<td>46.3</td>
+<td>53.7</td>
+<td>39.1</td>
+</tr>
+<tr>
+<td>FastOPD-2048</td>
+<td>55.3</td>
+<td>34.5</td>
+<td>44.7</td>
+<td>94.0</td>
+<td>45.0</td>
+<td>54.7</td>
+<td>57.8</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td>55.1</td>
+<td>33.4</td>
+<td>45.7</td>
+<td>95.4</td>
+<td>46.1</td>
+<td><strong>55.2</strong></td>
+<td><strong>58.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>读这些数字几个重要细节：</p>
+<ol>
+<li><strong>gap 单调缩窄，gain 单调缩小</strong>：1.7B 时 gain +3.3 vs OPD；4B 时 +2.3；8B 时 +2.1。<strong>核心受益来自 strong-to-weak setting</strong>。</li>
+<li><strong>8B 上&quot;consistently outperforms&quot;不严格成立</strong>：AIME25 / HMMT-Feb 上 Ours 略输给 FastOPD（55.1 vs 55.3，33.4 vs 34.5），AVG 只赢 +0.5，很可能在 noise 范围内。</li>
+<li><strong>OOD 优势依然稳定</strong>：ExOPD 在两个 scale 上都 GPQA 掉得很惨（4B: 43.9, 8B: 39.1），Ours 都最高（57.3 / 58.6）。&quot;改 objective 路线易伤 OOD&quot;是个独立有价值的 finding。</li>
+<li><strong>FastOPD 的公平性问题</strong>：Scaling 实验里所有 student 大小统一用 prefix=2048。但 8B student 生成的 response 比 1.7B 长很多，2048 可能过于激进地截断了有效 supervision。这人为缩小了 release rule 的优势（8B 上只赢 0.5 pts）。</li>
+</ol>
+<h3 id="5-4-code-domain-appendix-a-8-table-5">5.4 Code-domain（Appendix A.8，Table 5）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>LCB v6</th>
+<th>HumanEval</th>
+<th>HumanEval+</th>
+<th>MBPP</th>
+<th>MBPP+</th>
+<th>AVG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Student</td>
+<td>14.6</td>
+<td>57.2</td>
+<td>52.7</td>
+<td><strong>12.3</strong></td>
+<td>10.7</td>
+<td>29.4</td>
+</tr>
+<tr>
+<td>OPD</td>
+<td>20.3</td>
+<td>59.9</td>
+<td>55.2</td>
+<td>59.5</td>
+<td>49.2</td>
+<td>48.8</td>
+</tr>
+<tr>
+<td>FastOPD</td>
+<td>22.9</td>
+<td>66.0</td>
+<td>61.3</td>
+<td>59.8</td>
+<td>48.4</td>
+<td>51.7</td>
+</tr>
+<tr>
+<td>Ours</td>
+<td>22.9</td>
+<td>67.5</td>
+<td>63.6</td>
+<td>60.3</td>
+<td>49.7</td>
+<td><strong>52.8</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>迁移到 code 域也成立，AVG +4 over OPD。但 MBPP base 12.3% 这个数字很反常——MBPP 通常比 HumanEval 简单，base Qwen3-1.7B 在 HumanEval 都有 57.2%，MBPP 却只有 12.3%。论文没解释，可能是 prompt format 问题。</p>
+<h3 id="5-5-release-rule-行为统计-figure-3">5.5 Release rule 行为统计（Figure 3）</h3>
+<ul>
+<li><strong>BIC gain 平均 24.0</strong>，<strong>79% 的 sample BIC gain &gt; 6（接受 release）</strong>——21% fallback 到 full OPD，是个保守安全网</li>
+<li><strong>Release 相对位置</strong>：mean=0.25，median=0.13 → 大部分 trajectory 在前 1/4 或 1/8 就被释放，且分布右偏（少数样本在后面才释放）。这是论证&quot;trajectory-specific ≠ fixed-prefix 变种&quot;的最直接证据</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2b_bic_gain_distribution.png" alt="Fig3a BIC gain" /></th>
+<th><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2d_bic_release_distribution.png" alt="Fig3c Release distribution" /></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BIC gain 分布</td>
+<td>Release 相对位置分布</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2c_pre_post_margin_shift.png" alt="Fig3b Pre/post margin shift" /> — Pre-release vs post-release margin 对比</li>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2f_topk_support_margin_sensitivity.png" alt="Fig5 K sensitivity" /> — Support-size sensitivity</li>
+</ul>
+<h3 id="5-6-训练效率-appendix-a-7">5.6 训练效率（Appendix A.7）</h3>
+<p>1.7B 100 steps：full OPD 14.28h vs Ours 13.97h（几乎相同，Ours 因为 mean response length 增长更平稳，rollout wall-clock 略低）。</p>
+<p>但要注意：<strong>teacher 是 MoE 模型</strong>（Qwen3-30B-A3B，只有 3B active parameters），所以 teacher forward pass 的额外开销很小。如果 teacher 是 dense 30B，计算开销的故事可能完全不同。论文没讨论这个前提条件。</p>
+<p>另外，作者明确说本文 <em>不是</em> efficiency claim——release 是 post-hoc 计算，必须先跑完整 rollout 再回头 mask，generation 成本没省。</p>
+<ul>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/6_appendix/response_length.jpg" alt="Fig8 Response length during training" /> — 训练过程中 response length 变化</li>
+</ul>
+<hr />
+<h3 id="5-7-release-案例详解-appendix-a-4">5.7 Release 案例详解（Appendix A.4）</h3>
+<p>以 $\lim_{n\to\infty} n^3 x^n(1-x)^4$（$x \in [0,1]$）为例，看 release rule 在一条真实 trajectory 上做了什么。</p>
+<p><strong>Pre-release（蓝色，被监督）</strong>：模型把问题切成 3 个 case（x=0, x=1, 0&lt;x&lt;1），case 3 用 ratio test 算出 exponential decay。核心论证已经搭好，结论 0 已可下。</p>
+<p><strong>Release point</strong>：BIC 检测到 margin curve 在这里显著下降。</p>
+<p><strong>Post-release（红色，被 mask）</strong>：模型开始自言自语——重新写一遍指数衰减论证、反复 toggle &quot;Wait — no, wait.&quot;、把 $x=1/2$, $x=1/10$ 的特殊情况再列一遍、同样的结论 0 说了至少 4 遍。Teacher 对这些&quot;再说一遍&quot;vs&quot;换个说法再说一遍&quot;的候选无法做出锐利偏好排序，margin 塌缩。</p>
+<ul>
+<li><img src="https://arxiv.org/html/2605.13643v1/sections/3_analyse/fig3_2/fig2e_bic_release_case.png" alt="Fig6 release case" /> — BIC release 的可视化案例</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的点</strong>：</p>
+<ol>
+<li>
+<p><strong>&quot;teacher mean advantage 非零 ≠ teacher feedback 有用&quot;</strong>——这是文章最 sharp 的洞见。我自己一开始也会默认&quot;只要 teacher 还在反对 student，监督就有信号&quot;。但 mean advantage 反映的是&quot;全局还有多少 disagreement&quot;，sample-level 的可学习性需要 dispersion 或 margin 这种局部 contrast。Figure 1 (a)(b) 就是把这个&quot;global signal exists&quot;vs&quot;local teachability&quot;分开看，简单粗暴但有说服力。</p>
+</li>
+<li>
+<p><strong>$\text{std}(A_t)$ 是 symptom，$M_t$ 是 control signal</strong>——作者明确区分了 sampled-path dispersion（用来诊断什么有问题）vs state-local margin（用来决策如何修复），并且实验上 $\text{std}(A_t)$ release 比 margin release 差 1.3 点。这个区分很 subtle 但重要。如果让我来做，我大概率会直接用 $\text{std}(A_t)$ 当 release 信号——因为它最直接对应 motivation 里的 dispersion 衰减。但作者意识到 sampled-path dispersion 在训练早期不稳定，改用 state-local 的 top-K margin。<strong>对症 ≠ 对因</strong>。</p>
+</li>
+<li>
+<p><strong>Random release control 的实验设计</strong>——保留了&quot;砍多少&quot;的批次分布，只打乱&quot;哪条 trajectory 拿哪个 release point&quot;。结果掉 2.1 点直接证明耦合到 trajectory 是必要的。当你想证明&quot;X 的具体形式重要&quot;而不只是&quot;X 的存在重要&quot;时，构造一个保留 X 的边际分布、但破坏 X 的实例对应关系的 control——这是一个可以复用的实验范式。</p>
+</li>
+</ol>
+<p><strong>做得不太好 / 可质疑的点</strong>：</p>
+<ol start="4">
+<li>
+<p><strong>只训 100 步</strong>——最大的实证短板。Ours 40.1 vs Fixed-prefix-4096 39.4 仅差 0.7 点，AIME25 / HMMT 这种 32 sample/题的 setup，估计随机波动至少 ±1 分。&quot;consistently outperforms&quot;在 8B 上只差 +0.5 vs FastOPD（AVG），且 AIME25/HMMT-Feb 上还略输——很可能在 noise 范围。而且 100 步是否够也是个问号——长训练可能让 student distribution 跟 teacher 拉近，late-segment 也变得 teachable，跟 $\text{std}(A_t)$ baseline 在训练后期可能更稳是联动的问题。</p>
+</li>
+<li>
+<p><strong>Loss mass rescale 是真正的 driver 吗？</strong> 论文没做 mask-only vs mask+rescale 的解耦实验。更严重的是：median release position 是 0.13，意味着对 median trajectory 来说 rescale factor 约 <strong>8x</strong>——每个保留 token 上的梯度被放大了 8 倍。如果 rescale 才是真正的 driver，那贡献就不是&quot;noise removal&quot;而是&quot;gradient concentration&quot;。</p>
+</li>
+<li>
+<p><strong>MoE teacher 是一个未控制的 confound</strong>：Teacher 是 Qwen3-30B-A3B，只有 3B active parameters。&quot;Local teachability collapse&quot;可能只在 teacher 有效参数量接近 student 时才出现（3B active vs 1.7B student，只差 ~2x），而不是&quot;strong-to-weak OPD&quot;的一般性质。论文没讨论。</p>
+</li>
+<li>
+<p><strong>每个 prompt 只做 1 次 rollout</strong>：release point 基于 N=1 的单次随机采样，没有 stochasticity averaging。</p>
+</li>
+<li>
+<p><strong>为什么是 top1-top2 margin 而不是 Var？</strong> 作者提到可以直接算 $\text{Var}_{C_t}(A_t(a))$，cost 差不多。而且 Appendix A.2 的 Cauchy 不等式是用 $\text{Var}_{\pi_t}(A_t(a))$ 做 upper bound 的——但实际方法用的是 margin。Theory-to-method gap 没说清楚。</p>
+</li>
+<li>
+<p><strong>BIC 的假设</strong>：高斯噪声 + 单点变点。如果 teachability 是渐进式衰减呢？&quot;只检测 single drop&quot;对&quot;先 collapse 再 recover&quot;的 trajectory 会误判。</p>
+</li>
+<li>
+<p><strong>缺少 fixed-50% truncation baseline</strong>：Fixed-prefix-4096 已经拿到 39.4%（只差 0.7 pts），如果简单的 fixed-50% 截断也能涨 ~2 pts，那 BIC + margin 的整套 machinery 可能是 overkill。</p>
+</li>
+</ol>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>暂无</p>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ol>
+<li>
+<p><strong>诊断 → 操作化 → 验证</strong>的链条非常完整。Section 3 先用 Figure 1 把现象说清楚（&quot;global signal vs local contrast&quot;），再 operationalize 成 BIC release rule。Section 4 的实验顺序也好：先证 release 规则有用，再证 trajectory-specific 必要（random release control），再做 sensitivity check，最后 scaling。每一步都在回答一个明确的 what-if 问题，不是堆数据。</p>
+</li>
+<li>
+<p><strong>挑一个反直觉的小 finding 当主线</strong>。&quot;地基&quot;就一个观察：mean advantage 还在但 std 衰减了。围绕这个观察展开整套方法和实验。这种&quot;小切口、深挖掘&quot;的论文形态比&quot;我提出了新 OPD framework with multiple components&quot;更容易让人记住。<strong>有一个 take-home message 比有十个还重要</strong>。</p>
+</li>
+<li>
+<p><strong>BIC 作为 heuristic 的选择比较 pragmatic</strong>——不需要调 threshold，直接比两个模型的好坏。虽然不是理论最优，但足够 simple 和 interpretable。这种&quot;先分析问题，再设计 simple rule，最后 empirical validate&quot;的路径，比一上来就 propose 一个 end-to-end learnable truncation module 要更 solid。</p>
+</li>
+</ol>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li>
+<p><strong>同组先行工作</strong>：</p>
+<ul>
+<li><a class="wikilink" href="Tracing-Provenance-in-LLM-Reasoning-Distillation.html" title="Tracing-Provenance-in-LLM-Reasoning-Distillation">Tracing-Provenance-in-LLM-Reasoning-Distillation</a> —— 同一作者团队，追踪 distilled output 的 Teacher/Student/Boosted provenance。本文延续了&quot;不是所有 token 都该被监督&quot;的思路，从 SFT 数据筛选转到了 OPD rollout 截断。</li>
+<li><a class="wikilink" href="Step-Length-Confounding-LLM-Reasoning-Data-Selection.html" title="Step-Length-Confounding-LLM-Reasoning-Data-Selection">Step-Length-Confounding-LLM-Reasoning-Data-Selection</a> —— 同组 reasoning data selection 工作，同样在&quot;什么 token 值得训&quot;上做选择。</li>
+</ul>
+</li>
+<li>
+<p><strong>OPD / 蒸馏对照</strong>：</p>
+<ul>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a> —— self-distillation 路线（teacher 看 ground-truth），本文是 strong-to-weak 路线（teacher 是更大的 external model），可对比 supervision source。</li>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a> —— 同样基于 on-policy supervision，但 teacher 看 environment feedback。</li>
+<li><a class="wikilink" href="LLM-Post-Training-Unified-Off-Policy-On-Policy.html" title="LLM-Post-Training-Unified-Off-Policy-On-Policy">LLM-Post-Training-Unified-Off-Policy-On-Policy</a> —— theoretical 框架，把 distillation 看作&quot;teacher-guided supervision interface&quot;，本文是这个 interface 上的具体优化。</li>
+</ul>
+</li>
+<li>
+<p><strong>概念 MOC 定位</strong>：<span class="wikilink unresolved" title="MOC-Exposure-Bias">MOC-Exposure-Bias</span> §3.1 + §4.2（&quot;解决 exposure bias 必要但不充分&quot;的核心论证——on-policy rollout 修复分布错配后，仍出现 local teachability collapse 这一二阶失败）</p>
+</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Why Fine-Tuning Encourages Hallucinations and How to Fix It</span></a>
+<a class="paper-nav-link next" href="Automated-Weak-to-Strong-Researcher.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Automated Weak-to-Strong Researcher</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: liu2026prefixteach</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

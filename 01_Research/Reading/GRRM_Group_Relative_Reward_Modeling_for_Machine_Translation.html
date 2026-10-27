@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRRM: Group Relative Reward Modeling for Machine Translation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">GRRM: Group Relative Reward Modeling for Machine Translation</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-sqm-独立评估与-grpo-组内相对优化的结构性错位"><span class="toc-num">02</span> 2. 关键问题：SQM 独立评估与 GRPO 组内相对优化的结构性错位</a></li>
+<li><a class="toc-link toc-sub" href="#动机-grpo-依赖组内排序-但现有-reward-model-无法提供可靠的细粒度区分">动机：GRPO 依赖组内排序，但现有 Reward Model 无法提供可靠的细粒度区分</a></li>
+<li><a class="toc-link toc-sub" href="#核心问题-scalar-quality-metric-sqm-的结构性缺陷">核心问题：Scalar Quality Metric (SQM) 的结构性缺陷</a></li>
+<li><a class="toc-link toc-sub" href="#饱和根因分析">饱和根因分析</a></li>
+<li><a class="toc-link toc-sub" href="#为什么已有方法解决不了">为什么已有方法解决不了</a></li>
+<li><a class="toc-link" href="#3-数据集-gemini-标注的训练数据-多语种人类标注基准"><span class="toc-num">03</span> 3. 数据集：Gemini 标注的训练数据 + 多语种人类标注基准</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-gqm-范式与-grrm-实现"><span class="toc-num">04</span> 4. 关键方法：GQM 范式与 GRRM 实现</a></li>
+<li><a class="toc-link toc-sub" href="#1-gqm-范式定义">(1) GQM 范式定义</a></li>
+<li><a class="toc-link toc-sub" href="#2-group-relative-reward-model-grrm">(2) Group Relative Reward Model (GRRM)</a></li>
+<li><a class="toc-link toc-sub" href="#3-训练流程-sft-cold-start-rlvr-优化">(3) 训练流程：SFT Cold-Start + RLVR 优化</a></li>
+<li><a class="toc-link toc-sub" href="#rlvr-训练详解">RLVR 训练详解</a></li>
+<li><a class="toc-link toc-sub" href="#4-奖励函数设计-eq-2-8">(4) 奖励函数设计（Eq. 2–8）</a></li>
+<li><a class="toc-link toc-sub" href="#5-训练配置">(5) 训练配置</a></li>
+<li><a class="toc-link toc-sub" href="#6-方法定位">(6) 方法定位</a></li>
+<li><a class="toc-link" href="#5-关键实验"><span class="toc-num">05</span> 5. 关键实验</a></li>
+<li><a class="toc-link toc-sub" href="#1-排序准确率主实验-table-1">(1) 排序准确率主实验（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#2-mt-优化主实验-table-2">(2) MT 优化主实验（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#3-消融实验-reward-model-对比-table-3">(3) 消融实验：Reward Model 对比（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#4-消融实验-cross-lingual-generalization">(4) 消融实验：Cross-Lingual Generalization</a></li>
+<li><a class="toc-link toc-sub" href="#5-消融实验-reasoning-的必要性">(5) 消融实验：Reasoning 的必要性</a></li>
+<li><a class="toc-link" href="#6-golden-case-gqm-如何通过比较上下文解决-sqm-的判别失败"><span class="toc-num">06</span> 6. Golden Case：GQM 如何通过比较上下文解决 SQM 的判别失败</a></li>
+<li><a class="toc-link toc-sub" href="#case-1-细粒度词汇差异">Case 1: 细粒度词汇差异</a></li>
+<li><a class="toc-link toc-sub" href="#case-2-本地化错误">Case 2: 本地化错误</a></li>
+<li><a class="toc-link toc-sub" href="#case-3-幻觉-vs-风格生硬">Case 3: 幻觉 vs 风格生硬</a></li>
+<li><a class="toc-link toc-sub" href="#case-4-语义遗漏">Case 4: 语义遗漏</a></li>
+<li><a class="toc-link toc-sub" href="#案例总结">案例总结</a></li>
+<li><a class="toc-link" href="#7-insights"><span class="toc-num">07</span> 7. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#7-1-论文评价">7.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#7-2-领域启发">7.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#7-3-方法论启发">7.3 方法论启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#笔记库内相关论文">笔记库内相关论文</a></li>
+<li><a class="toc-link toc-sub" href="#技术关联">技术关联</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-25</span>
+<span class="header-badge badge-branch">To-Review</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.14028" target="_blank">arXiv</a>
+    </div>
+    <h1>GRRM: Group Relative Reward Modeling for Machine Translation</h1>
+    <p class="authors">Sen Yang, Shanbo Cheng, Lu Xu, Jianbing Zhang, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">Machine_Translation</span> <span class="topic-tag">Reward_Model</span> <span class="topic-tag">GRPO</span> <span class="topic-tag">Reasoning</span> <span class="topic-tag">GQM</span></div>
+</header>
+
+<h1>论文笔记: GRRM: Group Relative Reward Modeling for Machine Translation</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Sen Yang¹, Shanbo Cheng¹, Lu Xu², Jianbing Zhang¹, Shujian Huang¹*</li>
+<li><strong>团队</strong>:
+<ul>
+<li>¹南京大学软件新技术国家重点实验室</li>
+<li>²新加坡科技设计大学</li>
+</ul>
+</li>
+<li><strong>发表时间</strong>: 2026 年 2 月（arXiv:2602.14028）</li>
+<li><strong>通讯作者</strong>: Shujian Huang (huangsj@nju.edu.cn)</li>
+<li><strong>代码</strong>: https://github.com/NJUNLP/GRRM</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-sqm-独立评估与-grpo-组内相对优化的结构性错位">2. 关键问题：SQM 独立评估与 GRPO 组内相对优化的结构性错位</h2>
+<h3 id="动机-grpo-依赖组内排序-但现有-reward-model-无法提供可靠的细粒度区分">动机：GRPO 依赖组内排序，但现有 Reward Model 无法提供可靠的细粒度区分</h3>
+<p><strong>GRPO 的核心机制</strong>：Group Relative Policy Optimization (Shao et al., 2024) 是当前 LLM 后训练的主流框架。对于每个查询 $x$，策略 $\pi_\theta$ 采样一组输出 $Y = \{y_1, ..., y_G\}$，通过组内相对质量计算 advantage：</p>
+<div class="math-display">$$A_i = \frac{r_i - \text{mean}(\{r_1, ..., r_G\})}{\text{std}(\{r_1, ..., r_G\})} \quad \text{(Eq. 1)}$$</div>
+<p><strong>直观理解</strong>：一个候选 $y_i$ 被强化（$A_i &gt; 0$）当且仅当它<strong>优于组内平均</strong>。GRPO 优化的不是绝对分数，而是<strong>相对排名</strong>——任何排序反转都会产生对抗性梯度，主动误导策略优化。因此 GRPO 的有效性<strong>完全依赖于 Reward Model 的组内排序能力</strong>。</p>
+<h3 id="核心问题-scalar-quality-metric-sqm-的结构性缺陷">核心问题：Scalar Quality Metric (SQM) 的结构性缺陷</h3>
+<p><strong>什么是 SQM</strong>：当前生成式 Reward Model (GenRM) 通常作为标量质量评估器运作——$S_{SQM}: X \times Y \rightarrow \mathbb{R}$，对每个候选<strong>独立评分</strong>。</p>
+<p><strong>缺陷一：无法区分细微差异 (Inability to Distinguish Subtle Differences)</strong></p>
+<p>LLM 经常生成仅在细粒度差异上不同的候选（如用词选择、语体风格）。缺乏比较上下文时，SQM 遭遇判别失败。例如 Fig. 5 Case 1 中，三个翻译候选仅在 &quot;status&quot; vs &quot;role&quot; vs &quot;clout&quot; 的选词上有差异，SQM 对全部赋予满分 10 分。</p>
+<p><strong>缺陷二：易受误导性候选欺骗 (Vulnerability to Misleading Candidates)</strong></p>
+<p>独立评估使 Reward Model 容易被表面流畅但语义错误的翻译欺骗。如 Fig. 5 Case 2，&quot;七五折&quot; 在中文里表示 &quot;25% off&quot;（打七五折），但 SQM 将 &quot;75% off&quot; 评为满分——因为它在英语中语法完美，缺乏高质量对照组时，模型无法发现本地化错误。</p>
+<p><strong>缺陷三：评分饱和 (Score Saturation)</strong></p>
+<p>上述两个缺陷最终导致<strong>评分饱和</strong>——SQM 频繁对质量差异显著的候选赋予相同的最高分，导致 advantage 方差消失，梯度信号归零，策略优化停滞。Appendix A 的实证数据：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>SQM 饱和率</th>
+<th>GQM 饱和率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemini-2.5-Pro</td>
+<td>28.24%–64.02%</td>
+<td>22.04%–39.63%</td>
+</tr>
+<tr>
+<td>DeepSeek-R1-0528</td>
+<td>18.58%–47.41%</td>
+<td><strong>3.41%–13.12%</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>DeepSeek-R1 在 GQM 模式下饱和率降至 3.41%–13.12%，说明 GQM 范式对推理能力强的模型效果更显著。</p>
+<h3 id="饱和根因分析">饱和根因分析</h3>
+<p><strong>结构性缺陷是根本原因，判别能力不足是放大器</strong>。关键证据：同样的 Gemini-2.5-Pro，在 SQM 模式下饱和率 28.24%–64.02%，切换到 GQM 后降至 22.04%–39.63%。模型本身没有变化，仅评估范式改变就带来显著改善——问题的核心在于<strong>独立评估范式与 GRPO 组内相对优化的结构性错位</strong>。</p>
+<h3 id="为什么已有方法解决不了">为什么已有方法解决不了</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法类型</th>
+<th>代表工作</th>
+<th>局限性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Discriminative RM (DRM)</strong></td>
+<td>CometKiwi, BT-RM</td>
+<td>缺乏生成推理能力，在挑战场景崩溃（Table 1: CometKiwi 在 Seed-X-Challenge 仅 46.72%）</td>
+</tr>
+<tr>
+<td><strong>Scalar GenRM</strong></td>
+<td>LLM-as-a-Judge (SQM mode)</td>
+<td>独立评估导致评分饱和，无法提供组内细粒度区分</td>
+</tr>
+<tr>
+<td><strong>Pairwise Judge</strong></td>
+<td>PairJudgeRM</td>
+<td>与 GRPO 结构不匹配：需要 tournament-style 评估，计算开销 prohibitive</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键洞见</strong>：问题的根源不在于 Reward Model 的规模或架构，而在于<strong>评估范式</strong>本身。</p>
+<hr />
+<h2 id="3-数据集-gemini-标注的训练数据-多语种人类标注基准">3. 数据集：Gemini 标注的训练数据 + 多语种人类标注基准</h2>
+<h3 id="训练数据">训练数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据集</th>
+<th>语言对</th>
+<th>规模</th>
+<th>标注方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TowerBlocks (Zh-En subset)</td>
+<td>Zh↔En</td>
+<td>18.8K samples</td>
+<td>Gemini-2.5-Pro (GQM mode)</td>
+</tr>
+<tr>
+<td>TowerBlocks (Multilingual)</td>
+<td>10 种语言</td>
+<td>~150K samples</td>
+<td>用于 RLVR 训练</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>数据构建流程</strong>：</p>
+<ol>
+<li><strong>Seed Model 采样</strong>：使用 Qwen2.5-7B (fine-tuned on TowerBlocks) 作为 seed model，温度 T=1.0 采样</li>
+<li><strong>生成候选组</strong>：每个源句采样 N ∈ {2, 3, 4} 个候选（频率比 1:1:3，更多大 group 样本）</li>
+<li><strong>注入人类参考译文</strong>：以 0.5 概率注入人类参考译文到候选池（增强多样性，提供高质量锚点）</li>
+<li><strong>Gemini 标注</strong>：Gemini-2.5-Pro 在 GQM 模式下标注（排序 + 分数 + 推理）</li>
+<li><strong>数据增强</strong>：随机打乱候选顺序 + 从原始组中采样子组</li>
+</ol>
+<p><strong>关键局限性与缓解措施</strong>：</p>
+<p><strong>问题</strong>：Qwen2.5-7B 本身翻译能力有限，可能导致候选质量上限低，影响 GRRM 的判别能力学习。</p>
+<p><strong>证据</strong>：Table 2 显示 Qwen2.5-7B SFT baseline 在 En→Zh 仅 59.99 BLEURT，显著弱于 Gemini-2.5-Pro 的 66.00。</p>
+<p><strong>缓解机制</strong>：</p>
+<ol>
+<li><strong>人类参考译文注入（50% 概率）</strong>：确保候选池始终有高质量锚点，GRRM 可学习&quot;完美翻译&quot;标准</li>
+<li><strong>Gemini 独立标注</strong>：GRRM 向 Gemini 的排序学习，而非向 Qwen2.5-7B 的生成质量学习（类比：老师批改学生作业，评分标准独立）</li>
+<li><strong>RLVR 自我纠正</strong>：RL 阶段使用可验证信号（排序准确率），而非盲从 SFT 结果</li>
+</ol>
+<p><strong>待验证问题</strong>：</p>
+<ul>
+<li>错误类型覆盖是否完整？（Qwen2.5-7B 可能系统性地无法生成某些罕见错误）</li>
+<li>质量分布是否存在偏移？（GRRM 可能擅长中等质量区分，但极端质量场景表现不佳）</li>
+</ul>
+<p><strong>改进方向</strong>：</p>
+<ul>
+<li>多强度混合采样（70% Qwen + 20% Gemini + 10% 对抗样本）</li>
+<li>课程学习式数据构造（简单→困难→对抗）</li>
+<li>迭代式数据优化（用初始 GRRM 发现覆盖不足，针对性补充）</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>语言对</th>
+<th>标注类型</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Held-out test</td>
+<td>Zh↔En (512 samples)</td>
+<td>Gemini-annotated</td>
+<td>模型开发验证</td>
+</tr>
+<tr>
+<td>Newstest2020</td>
+<td>Zh→En</td>
+<td>pSQM (professional SQM)</td>
+<td>域内性能测试</td>
+</tr>
+<tr>
+<td>GeneralMT2022</td>
+<td>En→Zh, Zh→En, En→De, En→Ru</td>
+<td>MQM 人工标注</td>
+<td>跨语言泛化测试</td>
+</tr>
+<tr>
+<td>Seed-X-Challenge</td>
+<td>Zh↔En</td>
+<td>专家标注（习语、俚语、领域术语）</td>
+<td>复杂推理场景压力测试</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Challenge Set 特点</strong>：基于 Seed-X-Challenge 测试集，设计为<strong>二选一排序任务</strong>——从 4 个候选中选择 BLEURT 最优者，与人类专家参考配对，测试 Reward Model 识别人类译文的能力。</p>
+<hr />
+<h2 id="4-关键方法-gqm-范式与-grrm-实现">4. 关键方法：GQM 范式与 GRRM 实现</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>: 从独立评分范式转向组内联合评估范式，通过跨样本比较上下文解决 SQM 的判别瓶颈。</p>
+</blockquote>
+<h3 id="1-gqm-范式定义">(1) GQM 范式定义</h3>
+<pre><code>传统 SQM 范式：
+输入 x → 候选 y₁ → SQM 评估器 → 分数 r₁
+输入 x → 候选 y₂ → SQM 评估器 → 分数 r₂
+...（独立评估，缺乏比较上下文）
+
+GQM 范式：
+输入 x → 候选组 {y₁,y₂,...,yₙ} → GQM 评估器 → 排序 + 分数 {r₁,r₂,...,rₙ}
+（联合评估 &amp; 排序）
+</code></pre>
+<p><strong>形式化定义</strong>：$S_{GQM}: X \times Y^G \rightarrow \mathbb{R}^G$</p>
+<p>与 SQM 的关键区别：GQM 将源输入 $x$ 和<strong>整个候选集 $Y$</strong> 联合映射到分数向量，而非逐个独立评分。</p>
+<p><strong>三大优势</strong>：</p>
+<ol>
+<li>
+<p><strong>比较上下文 (Comparative Context)</strong>：通过联合评估构建跨样本比较，规避 SQM 的判别瓶颈，使模型能够解析独立评估下难以察觉的细微差异</p>
+</li>
+<li>
+<p><strong>对比锚定 (Contrastive Anchoring)</strong>：看似合理但有语义错误的翻译（如幻觉）在与高质量对照组直接比较时变得显著</p>
+</li>
+<li>
+<p><strong>自适应粒度 (Adaptive Granularity)</strong>：GQM 分数本质上是局域的，不映射到全局绝对尺度。这是<strong>设计特性而非局限</strong>——GQM 的组内局域性与 GRPO 的组内归一化（Eq. 1 的 advantage 计算）结构对齐，不影响实际使用。模型可以自适应调整评估粒度——组内方差低时关注风格差异，质量差异显著时优先处理语义问题</p>
+</li>
+</ol>
+<p><strong>信息论视角</strong>：独立评估时，模型只能依赖先验知识（&quot;什么是好翻译&quot;）；联合评估时，模型获得了组内分布的信息（&quot;这些候选之间的相对差异&quot;），这是从&quot;绝对判断&quot;到&quot;相对判断&quot;的范式转换。类似人类在做绝对判断时容易产生&quot;锚定效应&quot;，而在比较判断时更准确。</p>
+<h3 id="2-group-relative-reward-model-grrm">(2) Group Relative Reward Model (GRRM)</h3>
+<p><strong>设计目标</strong>：GQM 范式在前沿 LLM（如 Gemini-2.5-Pro）上有效，但直接集成到 GRPO 训练循环中计算代价过高。GRRM 是一个高效的 GQM 实例化。</p>
+<p><strong>模型架构</strong>：</p>
+<ul>
+<li><strong>Base Model</strong>: Qwen2.5-7B</li>
+<li><strong>输入</strong>: 源文本 $x$ + 完整候选集 $Y$</li>
+<li><strong>输出</strong>: 结构化响应，包含：
+<ol>
+<li>详细的候选比较分析（Chain-of-Thought 推理）</li>
+<li>预测排序</li>
+<li>严格遵循排序的标量分数 $\{r_1, ..., r_G\}$（内部一致性约束）</li>
+</ol>
+</li>
+</ul>
+<h3 id="3-训练流程-sft-cold-start-rlvr-优化">(3) 训练流程：SFT Cold-Start + RLVR 优化</h3>
+<p><strong>Stage 1: SFT Cold-Start</strong></p>
+<ul>
+<li>目标：建立指令遵循和比较逻辑</li>
+<li>数据：Gemini-2.5-Pro 在 GQM 模式下标注的 curated dataset</li>
+</ul>
+<p><strong>Stage 2: RLVR Optimization</strong></p>
+<ul>
+<li>目标：锐化模型区分细微差异的判别能力</li>
+<li>将 GRRM 本身作为待优化的策略</li>
+</ul>
+<p>这是一个有趣的<strong>自指 (self-referential) 设计</strong>——用强化学习来训练奖励模型，以排序准确率作为可验证奖励。RLVR 通常用于训练策略模型，但这里用于训练奖励模型本身，这种&quot;用 RL 来优化评估器&quot;的思路比单纯 SFT 更能 sharpen 模型的判别能力。</p>
+<h3 id="rlvr-训练详解">RLVR 训练详解</h3>
+<h4>核心洞见：为什么可以用 RL 训练 RM？</h4>
+<p>传统思路：<code>训练数据 → SFT → Reward Model（结束）</code></p>
+<p>GRRM 的思路：</p>
+<pre><code>训练数据 → SFT → Reward Model (π_θ) 
+                    ↓
+              用 RL 进一步优化 π_θ
+                    ↓
+              奖励信号：排序准确率
+</code></pre>
+<p><strong>关键</strong>：GRRM 的排序能力可用<strong>可验证信号</strong>（是否排对顺序）评估，天然适合 RL 优化。</p>
+<h4>RL 三要素在 GRRM 中的定义</h4>
+<p><strong>状态（State）</strong>：</p>
+<pre><code>s = (源文本 x, 候选组 {y₁,...,yₙ})
+</code></pre>
+<p><strong>动作（Action）</strong>：</p>
+<pre><code>a = GRRM 生成的完整响应，包括：
+    - 推理文本（CoT reasoning）
+    - 显式排序字符串（如 &quot;A&gt;B&gt;C&quot;）
+    - 标量分数（如 &quot;A:10, B:8, C:6&quot;）
+</code></pre>
+<p><strong>奖励（Reward）</strong>：</p>
+<pre><code>R(a) = R_acc + R_score（如果内部一致）
+     = 0（如果内部不一致）
+</code></pre>
+<h4>训练流程（伪代码）</h4>
+<pre><code class="language-python"># 初始化
+π_θ ← GRRM (SFT cold-start 后的模型)
+D ← 训练数据集 {(x, Y, q)}  # q 是真实质量分数
+
+# RLVR 优化循环
+for each iteration do
+    # Step 1: 采样 rollouts
+    for each sample (x, Y, q) in batch do
+        {a₁, a₂, ..., a₈} ~ π_θ(·|x, Y)  # G=8
+        
+        # Step 2: 计算每个响应的奖励
+        for each rollout aᵢ do
+            rᵢ, ŝᵢ ← parse(aᵢ)  # 提取排序和分数
+            R_acc = (2 / C(G,2)) × Σ I[sgn(rᵢ-rⱼ) = sgnd(qᵢ-qⱼ)]
+            R_score = (2 / C(G,2)) × Σ K(|ŝᵢ-ŝⱼ| - |qᵢ-qⱼ|)
+            C_gate = 1 if τ_text ≡ τ_score else 0
+            R_total = C_gate × (R_acc + R_score)
+        end for
+        
+        # Step 3: 计算 advantage（GRPO 风格）
+        mean_R = mean({R_total₁, ..., R_total₈})
+        std_R = std({R_total₁, ..., R_total₈})
+        Aᵢ = (R_totalᵢ - mean_R) / std_R
+        
+        # Step 4: 策略更新（GSPO 或 GRPO）
+        L(θ) = -E[log(π_θ(aᵢ|x,Y) × Aᵢ)]
+        θ ← θ - α × ∇L(θ)
+    end for
+end for
+</code></pre>
+<h4>关键技术细节</h4>
+<p><strong>1. 为什么不需要 Critic 模型？</strong></p>
+<p>传统 Actor-Critic：需要额外训练 Critic 估计价值</p>
+<p>GRRM 使用 GRPO/GSPO：</p>
+<pre><code>直接对同一组 rollouts 做归一化
+Advantageᵢ = (Rᵢ - mean(R)) / std(R)
+</code></pre>
+<p>优势：不需要额外 Critic，减少显存占用，特别适合&quot;组内比较&quot;场景</p>
+<p><strong>2. Group Size 的选择</strong></p>
+<p>论文配置：<code>G = 8 rollouts per prompt</code></p>
+<ul>
+<li>太小：advantage 估计方差大</li>
+<li>太大：显存消耗线性增长</li>
+<li>8 是折中选择（与 GRPO 原始论文一致）</li>
+</ul>
+<p><strong>3. KL 散度惩罚被禁用</strong></p>
+<pre><code>标准 RLHF：L(θ) = -E[log π × A] + β × KL(π_θ || π_ref)
+GRRM：L(θ) = -E[log π × A]  # β = 0
+</code></pre>
+<p>原因：<strong>鼓励更广泛的推理路径探索</strong></p>
+<p>深层考虑：</p>
+<ul>
+<li>通常 KL 惩罚防止策略偏离参考模型太远</li>
+<li>但 GRRM 需要探索不同的推理方式（如先分析语义再对比 vs 先对比再总结）</li>
+<li>KL 惩罚会抑制探索，导致收敛到局部最优</li>
+</ul>
+<h4>SFT vs RLVR 的学习目标对比</h4>
+<p><strong>SFT 阶段</strong>：</p>
+<pre><code>学习目标：模仿 Gemini 的标注格式
+输入：x + {y₁,y₂,y₃}
+输出：
+  &quot;让我分析一下这三个翻译...
+   A 的'status'最准确...
+   排序：A&gt;B&gt;C
+   分数：A:10, B:9, C:8&quot;
+</code></pre>
+<p>局限：只是机械模仿，判别能力不够锐利</p>
+<p><strong>RLVR 阶段</strong>：</p>
+<pre><code>学习目标：最大化排序准确率
+场景：遇到更难区分的候选组
+挑战：
+  A: &quot;United Nations says...&quot;
+  B: &quot;UN says...&quot;
+  C: &quot;The UN stated that...&quot;
+  
+试错过程：
+  - 某些推理路径能正确区分细微差异 → 高奖励
+  - 某些推理路径忽略关键信息 → 低奖励
+  
+最终学会：
+  &quot;虽然三者都正确，但 A 的'United Nations'
+   最正式，符合原文语体...
+   排序：A&gt;B&gt;C
+   分数：A:10, B:9, C:8.5&quot;
+</code></pre>
+<p><strong>关键区别</strong>：</p>
+<ul>
+<li>SFT：学会&quot;看起来像正确的标注&quot;</li>
+<li>RLVR：学会&quot;真正做对排序判断&quot;</li>
+</ul>
+<h4>类比理解</h4>
+<p><strong>类比 1：学生做题</strong></p>
+<pre><code>SFT 阶段：老师给例题和答案，学生模仿解题格式
+RLVR 阶段：学生大量刷题，立刻知道对错，做对强化思路，做错调整思路
+结果：学生不再依赖模仿，而是真正理解
+</code></pre>
+<p><strong>类比 2：品酒师培训</strong></p>
+<pre><code>SFT 阶段：学徒品尝大师品鉴过的酒，学习大师的品鉴笔记格式
+RLVR 阶段：学徒盲品多杯酒，立刻揭晓哪杯是名庄酒，品对了强化味觉记忆
+结果：学徒发展出自己的敏锐味觉
+</code></pre>
+<h4>消融实验验证</h4>
+<p>回顾 Table 1：</p>
+<pre><code>SQM-GenRM (SFT):   46.74%
+SQM-GenRM (RLVR):  48.56%  (+1.82)
+
+GRRM (SFT):        62.32%
+GRRM (RLVR):       64.01%  (+1.69)
+</code></pre>
+<p><strong>观察</strong>：</p>
+<ul>
+<li>RLVR 带来的提升稳定但不巨大（~1.7%）</li>
+<li>说明主要提升来自 GQM 范式，而非 RL 优化</li>
+<li>RLVR 的作用是&quot;锦上添花&quot;（sharpen），而非&quot;雪中送炭&quot;</li>
+</ul>
+<h3 id="4-奖励函数设计-eq-2-8">(4) 奖励函数设计（Eq. 2–8）</h3>
+<p>GRRM 使用<strong>三层奖励架构</strong>：</p>
+<pre><code>R_total = C_gate × (R_acc + R_score)
+
+第一层：C_gate（内部一致性门控）→ 确保&quot;说一套做一套&quot;
+第二层：R_acc（排序准确率奖励）→ 保证核心排序能力
+第三层：R_score（分数一致性奖励）→ 追求精细判别
+</code></pre>
+<h4>Ranking Accuracy Reward</h4>
+<p>设 $q = \{q_1, ..., q_G\}$ 为真实质量分数，$r = \{r_1, ..., r_G\}$ 为 GRRM 预测分数。定义候选对 $(y_i, y_j)$ 的排序正确性：</p>
+<div class="math-display">$$I_{ij} = \mathbb{I}[\text{sgn}(\hat{r}_i - \hat{r}_j) = \text{sgn}(q_i - q_j)] \quad \text{(Eq. 2)}$$</div>
+<p>最终 ranking accuracy reward：</p>
+<div class="math-display">$$R_{acc} = \frac{2}{\binom{G}{2}} \sum_{1 \leq i &lt; j \leq G} I_{ij} \quad \text{(Eq. 3)}$$</div>
+<p><strong>直观理解</strong>：这是 Kendall's $\tau$ 系数的归一化变体，范围 [0, 1]，显式处理平局。计算所有候选对中排序方向被正确预测的比例。</p>
+<p><strong>关键设计选择</strong>：</p>
+<ol>
+<li>
+<p><strong>成对比较而非列表匹配</strong></p>
+<pre><code>精确匹配整个列表：A&gt;B&gt;C&gt;D vs A&gt;B&gt;D&gt;C → 0 分（太苛刻！）
+成对比较：6 对中错 1 对 → 0.83 分（更合理）
+</code></pre>
+<p>优势：提供稠密梯度，区分&quot;接近正确&quot;和&quot;完全错误&quot;</p>
+</li>
+<li>
+<p><strong>处理平局（Ties）</strong></p>
+<pre><code>真实：A:10, B:10, C:8
+预测：A:9,  B:9,  C:7
+sgn(10-10)=0, sgn(9-9)=0 → I_AB=1 ✓
+</code></pre>
+</li>
+<li>
+<p><strong>归一化到 [0, 1]</strong></p>
+<pre><code>系数 2/C(G,2) 确保不同 group size 下奖励可比较
+</code></pre>
+</li>
+</ol>
+<h4>Score Consistency Reward</h4>
+<p>为补充稀疏的排序信号，确保预测分数良好分布，引入分数一致性奖励。</p>
+<p><strong>动机：为什么需要 R_score？</strong></p>
+<p>仅有 R_acc 的问题：</p>
+<pre><code>场景 1：
+  真实：A:10, B:9, C:8  （细微差异）
+  预测：A:10, B:1, C:0  （排序正确，但分数夸张）
+  R_acc = 1.0  ← 看起来完美！
+  
+  问题：Advantage 方差过大，无法区分&quot;稍微更好&quot;vs&quot;好很多&quot;
+
+场景 2：
+  真实：A:10, B:8, C:4  （质量差距大）
+  预测：A:10, B:9, C:8  （排序正确，但分数保守）
+  R_acc = 1.0
+  
+  问题：低估了 A 和 C 的差距，GRPO 优化时信号不够强
+</code></pre>
+<p><strong>结论</strong>：不仅排序要对，分数分布也要合理！</p>
+<p><strong>内部一致性门控</strong>：</p>
+<div class="math-display">$$C_{gate} = \mathbb{I}(\hat{\tau}_{text} \equiv \hat{\tau}_{score}) \quad \text{(Eq. 4)}$$</div>
+<p>其中 $\hat{\tau}_{text}$ 是模型生成的显式排序字符串，$\hat{\tau}_{score}$ 是由标量分数诱导的排序。只有两者一致时才给予奖励。</p>
+<p><strong>为什么需要这个门控？</strong></p>
+<p>防止&quot;说一套做一套&quot;：</p>
+<pre><code>示例：
+  推理：&quot;...所以排名是 A 第一，B 第二，C 第三&quot;
+  排序字符串：&quot;A&gt;B&gt;C&quot;
+  分数：&quot;A:6, B:8, C:10&quot;  ← 矛盾！
+  
+C_gate = 0 → R_total = 0  # 全部奖励归零
+</code></pre>
+<p>类比：</p>
+<blockquote class="card card-info">
+<p>学生考试答题：解题过程写得很漂亮，但最终答案随便写，老师应该给分吗？不应该！</p>
+</blockquote>
+<p><strong>Margin-Aware Score Reward</strong>：</p>
+<div class="math-display">$$\delta_{ij} = |(\hat{s}_i - \hat{s}_j) - (q_i - q_j)| \quad \text{(Eq. 5)}$$</div>
+<div class="math-display">$$K(\delta) = \begin{cases} 1.0 &amp; \text{if } \delta = 0 \\ 0.6 &amp; \text{if } \delta = 1 \\ 0.2 &amp; \text{if } \delta = 2 \\ 0 &amp; \text{otherwise} \end{cases} \quad \text{(Eq. 6)}$$</div>
+<div class="math-display">$$R_{score} = \frac{2}{\binom{G}{2}} \sum_{1 \leq i &lt; j \leq G} K(\delta_{ij}) \quad \text{(Eq. 7)}$$</div>
+<p><strong>直观理解</strong>：不仅要求排序正确，还要求分数差异的<strong>幅度</strong>与真实质量差异匹配。使用离散核函数惩罚偏差，允许 ±1 的小整数波动。这解决了&quot;排序正确但分数分布不合理&quot;的问题。</p>
+<p><strong>为什么用离散核函数？</strong></p>
+<pre><code class="language-python"># 连续线性惩罚的问题
+K(δ) = max(0, 1 - δ/scale)
+问题：对小数差过度敏感（δ=0.1 和 δ=0.2 的差异真的重要吗？）
+
+# GRRM 的离散核函数（更鲁棒）
+K(0) = 1.0  # 完全匹配 → 完美
+K(1) = 0.6  # 小偏差 → 部分认可（宽容人类标注噪声）
+K(2) = 0.2  # 中偏差 → 少量认可
+K(≥3) = 0   # 大偏差 → 零容忍
+</code></pre>
+<h4>Total Reward</h4>
+<div class="math-display">$$R_{total} = C_{gate} \cdot (R_{acc} + R_{score}) \quad \text{(Eq. 8)}$$</div>
+<p>只有内部一致（排序文本与分数匹配）的输出才获得奖励，否则 $R_{total} = 0$。</p>
+<h4>完整计算示例</h4>
+<pre><code class="language-python">真实标注（Gemini）：A:10, B:8, C:6
+模型预测：
+  推理文本：&quot;A 最准确，B 次之，C 有轻微语义遗漏&quot;
+  排序字符串：&quot;A&gt;B&gt;C&quot;
+  分数：&quot;A:10, B:7, C:5&quot;
+
+Step 1: 检查内部一致性
+  tau_text = ['A', 'B', 'C']  # 从 &quot;A&gt;B&gt;C&quot;
+  tau_score = ['A', 'B', 'C']  # 从分数降序 [10,7,5]
+  C_gate = 1 ✓
+
+Step 2: 计算 R_acc
+  真实质量：q = [10, 8, 6]
+  预测分数：r = [10, 7, 5]
+  (A,B): sgn(10-8)=+1, sgn(10-7)=+1  ✓
+  (A,C): sgn(10-6)=+1, sgn(10-5)=+1  ✓
+  (B,C): sgn(8-6)=+1,  sgn(7-5)=+1   ✓
+  R_acc = (2/3) × (1+1+1) = 1.0
+
+Step 3: 计算 R_score
+  真实质量差：|10-8|=2, |10-6|=4, |8-6|=2
+  预测分数差：|10-7|=3, |10-5|=5, |7-5|=2
+  delta: |3-2|=1, |5-4|=1, |2-2|=0
+  K(1)=0.6, K(1)=0.6, K(0)=1.0
+  R_score = (2/3) × (0.6+0.6+1.0) = 0.733
+
+Step 4: 总奖励
+  R_total = 1 × (1.0 + 0.733) = 1.733
+</code></pre>
+<h4>奖励函数的行为分析</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>情况</th>
+<th>R_acc</th>
+<th>R_score</th>
+<th>R_total</th>
+<th>模型学到</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>完美匹配</strong></td>
+<td>1.0</td>
+<td>1.0</td>
+<td>2.0</td>
+<td>理想状态</td>
+</tr>
+<tr>
+<td><strong>排序对，分数接近</strong></td>
+<td>1.0</td>
+<td>0.7-0.9</td>
+<td>1.7-1.9</td>
+<td>可接受</td>
+</tr>
+<tr>
+<td><strong>排序对，分数离谱</strong></td>
+<td>1.0</td>
+<td>0-0.3</td>
+<td>1.0-1.3</td>
+<td>不鼓励</td>
+</tr>
+<tr>
+<td><strong>排序错，分数接近</strong></td>
+<td>0.5-0.8</td>
+<td>0.5-0.8</td>
+<td>1.0-1.6</td>
+<td>部分正确</td>
+</tr>
+<tr>
+<td><strong>完全错误</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>严厉惩罚</td>
+</tr>
+<tr>
+<td><strong>内部不一致</strong></td>
+<td>-</td>
+<td>-</td>
+<td>0</td>
+<td>直接归零</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>训练动态</strong>：</p>
+<ul>
+<li>训练早期：主要学习 C_gate（避免&quot;说一套做一套&quot;）</li>
+<li>训练中期：主要学习 R_acc（掌握比较逻辑）</li>
+<li>训练后期：优化 R_score（锐化细粒度判别）</li>
+</ul>
+<h4>设计亮点总结</h4>
+<ol>
+<li>
+<p><strong>层次化奖励结构</strong></p>
+<pre><code>C_gate：确保基本诚信（不说谎）
+  ↓
+R_acc：保证核心能力（排得对）
+  ↓
+R_score：追求精细判断（判得准）
+</code></pre>
+</li>
+<li>
+<p><strong>稀疏 + 稠密的平衡</strong></p>
+<pre><code>R_acc：相对稀疏（全对才 1.0）
+  +
+R_score：更加稠密（部分对也有分）
+  =
+R_total：既有方向性，又有指导性
+</code></pre>
+</li>
+<li>
+<p><strong>容错但不纵容</strong></p>
+<pre><code>δ=1（小偏差）→ K=0.6  ← 宽容人类标注噪声
+δ=2（中偏差）→ K=0.2  ← 部分认可
+δ≥3（大偏差）→ K=0   ← 零容忍
+</code></pre>
+</li>
+<li>
+<p><strong>与任务结构对齐</strong></p>
+<pre><code>排序任务本质：相对比较
+  ↓
+GRPO 的 advantage：组内归一化
+  ↓
+R_acc/R_score：都基于成对比较
+  =
+完美匹配！
+</code></pre>
+</li>
+</ol>
+<h4>Total Reward</h4>
+<div class="math-display">$$R_{total} = C_{gate} \cdot (R_{acc} + R_{score}) \quad \text{(Eq. 8)}$$</div>
+<p>只有内部一致（排序文本与分数匹配）的输出才获得奖励，否则 $R_{total} = 0$。</p>
+<h3 id="5-训练配置">(5) 训练配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>设置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>硬件</td>
+<td>16 × Nvidia A100 (80GB)</td>
+</tr>
+<tr>
+<td>SFT 阶段</td>
+<td>3 epochs, batch size 64, LR 6×10⁻⁶ (cosine)</td>
+</tr>
+<tr>
+<td>RLVR 阶段</td>
+<td>GSPO, batch size 512, mini-batch 128, LR 1×10⁻⁵</td>
+</tr>
+<tr>
+<td>每个提示采样</td>
+<td>G = 8 rollouts</td>
+</tr>
+<tr>
+<td>最大生成长度</td>
+<td>4096 tokens</td>
+</tr>
+<tr>
+<td>KL 散度惩罚</td>
+<td><strong>禁用</strong>（鼓励更广泛的推理路径探索）</td>
+</tr>
+</tbody>
+</table></div>
+<p>KL 散度惩罚被禁用是值得注意的设计选择——通常 KL 惩罚用于防止策略偏离参考模型太远，但这里禁用是为了鼓励更广泛的推理路径探索，表明在奖励模型的 RLVR 训练中，<strong>探索比稳定性更重要</strong>。</p>
+<h3 id="6-方法定位">(6) 方法定位</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>评估范式</th>
+<th>推理能力</th>
+<th>与 GRPO 兼容性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DRM (CometKiwi)</td>
+<td>SQM</td>
+<td>无</td>
+<td>兼容但缺乏推理</td>
+</tr>
+<tr>
+<td>SQM-GenRM</td>
+<td>SQM</td>
+<td>有</td>
+<td>结构性错位（评分饱和）</td>
+</tr>
+<tr>
+<td>Pairwise Judge</td>
+<td>Pairwise</td>
+<td>有</td>
+<td>计算开销 prohibitive</td>
+</tr>
+<tr>
+<td><strong>GRRM (本文)</strong></td>
+<td><strong>GQM</strong></td>
+<td><strong>有</strong></td>
+<td><strong>结构对齐</strong></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-关键实验">5. 关键实验</h2>
+<h3 id="1-排序准确率主实验-table-1">(1) 排序准确率主实验（Table 1）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Paradigm</th>
+<th>Held-out</th>
+<th>NT20</th>
+<th>GenMT22 En→Zh</th>
+<th>GenMT22 Zh→En</th>
+<th>GenMT22 En→De</th>
+<th>GenMT22 En→Ru</th>
+<th>Seed-X Challenge</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Random</td>
+<td>-</td>
+<td>43.47</td>
+<td>39.42</td>
+<td>43.82</td>
+<td>38.74</td>
+<td>35.91</td>
+<td>37.64</td>
+<td>44.70</td>
+<td>40.04</td>
+</tr>
+<tr>
+<td><strong>LLM-as-a-Judge</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Gemini-2.5-Pro</td>
+<td>SQM</td>
+<td>70.28</td>
+<td>53.56</td>
+<td>46.41</td>
+<td>61.99</td>
+<td>58.92</td>
+<td>64.88</td>
+<td>51.26</td>
+<td>56.17</td>
+</tr>
+<tr>
+<td>Gemini-2.5-Pro</td>
+<td><strong>GQM</strong></td>
+<td>-</td>
+<td>62.60</td>
+<td>64.58</td>
+<td>67.75</td>
+<td>65.61</td>
+<td>71.23</td>
+<td><strong>88.89</strong></td>
+<td><strong>70.11</strong></td>
+</tr>
+<tr>
+<td>DeepSeek-R1-0528</td>
+<td>SQM</td>
+<td>66.11</td>
+<td>48.42</td>
+<td>43.67</td>
+<td>58.09</td>
+<td>53.64</td>
+<td>59.13</td>
+<td>47.22</td>
+<td>51.69</td>
+</tr>
+<tr>
+<td>DeepSeek-R1-0528</td>
+<td><strong>GQM</strong></td>
+<td>80.92</td>
+<td>61.98</td>
+<td>64.38</td>
+<td>65.79</td>
+<td>63.26</td>
+<td>69.15</td>
+<td>81.82</td>
+<td>67.73</td>
+</tr>
+<tr>
+<td><strong>Discriminative RMs</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CometKiwi-XXL</td>
+<td>SQM</td>
+<td>72.01</td>
+<td>57.82</td>
+<td>66.49</td>
+<td>61.60</td>
+<td>61.20</td>
+<td>67.12</td>
+<td>46.72</td>
+<td>60.16</td>
+</tr>
+<tr>
+<td>BT-RM</td>
+<td>SQM</td>
+<td>82.62</td>
+<td>58.16</td>
+<td>66.49</td>
+<td>64.92</td>
+<td>58.14</td>
+<td>66.10</td>
+<td>58.84</td>
+<td>62.11</td>
+</tr>
+<tr>
+<td><strong>Generative RMs</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SQM-GenRM (SFT)</td>
+<td>SQM</td>
+<td>61.31</td>
+<td>47.18</td>
+<td>37.21</td>
+<td>57.68</td>
+<td>48.37</td>
+<td>51.84</td>
+<td>38.13</td>
+<td>46.74</td>
+</tr>
+<tr>
+<td>SQM-GenRM (RLVR)</td>
+<td>SQM</td>
+<td>64.25</td>
+<td>49.21</td>
+<td>39.42</td>
+<td>60.37</td>
+<td>49.16</td>
+<td>54.82</td>
+<td>38.38</td>
+<td>48.56</td>
+</tr>
+<tr>
+<td>GRRM (SFT)</td>
+<td><strong>GQM</strong></td>
+<td>79.75</td>
+<td>56.77</td>
+<td>59.45</td>
+<td>64.29</td>
+<td>58.65</td>
+<td>64.80</td>
+<td>69.95</td>
+<td>62.32</td>
+</tr>
+<tr>
+<td><strong>GRRM (RLVR)</strong></td>
+<td><strong>GQM</strong></td>
+<td><strong>82.58</strong></td>
+<td><strong>57.77</strong></td>
+<td><strong>62.17</strong></td>
+<td><strong>66.00</strong></td>
+<td><strong>61.04</strong></td>
+<td><strong>66.67</strong></td>
+<td><strong>70.39</strong></td>
+<td><strong>64.01</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ol>
+<li><strong>GQM 全面超越 SQM</strong>：无论使用何种 backbone，GQM 范式一致优于 SQM。Gemini-2.5-Pro 从 56.17% → 70.11%（+14% absolute）</li>
+<li><strong>Challenge Set 提升最显著</strong>：Gemini-2.5-Pro 在 Seed-X Challenge 从 51.26% → 88.89%（+37.6% absolute），证明推理能力对复杂语言现象至关重要</li>
+<li><strong>DRM 在 Challenge Set 崩溃</strong>：CometKiwi 仅 46.72%（接近随机），缺乏生成推理能力限制了其在复杂场景中的表现</li>
+<li><strong>GRRM 展现强跨语言泛化</strong>：仅在 Zh-En 数据上训练，但在 En→De 和 En→Ru 上与 CometKiwi-XXL 持平</li>
+</ol>
+<h3 id="2-mt-优化主实验-table-2">(2) MT 优化主实验（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Zh→En BLEURT</th>
+<th>Zh→En R1-judge</th>
+<th>En→Zh BLEURT</th>
+<th>En→Zh R1-judge</th>
+<th>En→X BLEURT</th>
+<th>En→X R1-judge</th>
+<th>Challenge Zh→En</th>
+<th>Challenge En→Zh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>General LLMs</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Gemini-2.5-Pro</td>
+<td>68.66</td>
+<td>92.92</td>
+<td>66.00</td>
+<td>91.31</td>
+<td>68.87</td>
+<td>90.35</td>
+<td>89.41</td>
+<td>86.06</td>
+</tr>
+<tr>
+<td>DeepSeek-R1-0528</td>
+<td>67.78</td>
+<td>92.34</td>
+<td>64.87</td>
+<td>89.24</td>
+<td>67.72</td>
+<td>88.48</td>
+<td>87.95</td>
+<td>84.40</td>
+</tr>
+<tr>
+<td><strong>Translation-Specialized</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>TowerInstruct-13B</td>
+<td>67.56</td>
+<td>84.83</td>
+<td>62.92</td>
+<td>77.63</td>
+<td>66.61</td>
+<td>82.68</td>
+<td>69.54</td>
+<td>71.17</td>
+</tr>
+<tr>
+<td>SeedX-PPO</td>
+<td>69.02</td>
+<td>90.47</td>
+<td>67.21</td>
+<td>87.98</td>
+<td>68.35</td>
+<td>86.04</td>
+<td>82.47</td>
+<td>80.56</td>
+</tr>
+<tr>
+<td>SSR-X-Zero-7B</td>
+<td>68.30</td>
+<td>88.67</td>
+<td>66.12</td>
+<td>83.78</td>
+<td>-</td>
+<td>-</td>
+<td>81.15</td>
+<td>77.56</td>
+</tr>
+<tr>
+<td><strong>Ours (Qwen2.5-7B)</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SFT baseline</td>
+<td>67.07</td>
+<td>87.78</td>
+<td>59.99</td>
+<td>76.98</td>
+<td>57.14</td>
+<td>67.91</td>
+<td>80.91</td>
+<td>72.42</td>
+</tr>
+<tr>
+<td>+GRPO</td>
+<td>67.41</td>
+<td>92.24</td>
+<td>64.80</td>
+<td>87.80</td>
+<td>64.65</td>
+<td>83.86</td>
+<td>85.90</td>
+<td>82.55</td>
+</tr>
+<tr>
+<td>+GRPO w/ CLA</td>
+<td>67.39</td>
+<td>92.09</td>
+<td>63.91</td>
+<td>88.29</td>
+<td>64.50</td>
+<td>83.71</td>
+<td><strong>88.58</strong></td>
+<td>83.33</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ol>
+<li><strong>En→X 平均提升 +7.5 BLEURT, +15.9 LLM-judge</strong>：验证了 GRRM 的强跨语言泛化能力</li>
+<li><strong>Challenge Set 达到 DeepSeek-R1 水平</strong>：Zh→En 上 88.58 vs 87.95，En→Zh 上 83.33 vs 84.40——7B 模型在挑战场景逼近前沿闭源模型</li>
+<li><strong>BLEURT vs LLM-judge 分歧</strong>：SeedX-PPO 在 BLEURT 上领先，但在 LLM-judge 上显著下降，揭示了判别式指标在挑战场景中的局限</li>
+</ol>
+<h3 id="3-消融实验-reward-model-对比-table-3">(3) 消融实验：Reward Model 对比（Table 3）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Reward Model</th>
+<th>Zh→En BLEURT</th>
+<th>Zh→En judge</th>
+<th>En→Zh BLEURT</th>
+<th>En→Zh judge</th>
+<th>En→X BLEURT</th>
+<th>En→X judge</th>
+<th>Challenge Zh→En</th>
+<th>Challenge En→Zh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT baseline</td>
+<td>67.07</td>
+<td>85.50</td>
+<td>59.99</td>
+<td>76.80</td>
+<td>57.14</td>
+<td>65.71</td>
+<td>80.76</td>
+<td>74.30</td>
+</tr>
+<tr>
+<td>+BLEURT</td>
+<td>68.71</td>
+<td>88.21</td>
+<td>67.09</td>
+<td>85.52</td>
+<td>66.55</td>
+<td>82.00</td>
+<td>83.35</td>
+<td>81.85</td>
+</tr>
+<tr>
+<td>+BT-RM</td>
+<td>68.06</td>
+<td>88.86</td>
+<td>60.20</td>
+<td>76.99</td>
+<td>56.53</td>
+<td>64.93</td>
+<td>85.60</td>
+<td>66.91</td>
+</tr>
+<tr>
+<td>+SQM-GenRM</td>
+<td>68.63</td>
+<td>89.01</td>
+<td><strong>44.28</strong></td>
+<td><strong>45.54</strong></td>
+<td><strong>27.53</strong></td>
+<td><strong>8.15</strong></td>
+<td>84.25</td>
+<td>46.42</td>
+</tr>
+<tr>
+<td><strong>+GRRM</strong></td>
+<td>67.41</td>
+<td>89.85</td>
+<td>64.80</td>
+<td>87.91</td>
+<td>64.65</td>
+<td>83.86</td>
+<td><strong>87.30</strong></td>
+<td><strong>84.36</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ol>
+<li><strong>SQM-GenRM 灾难性 Reward Hacking</strong>：En→X 任务崩溃至 8.15 分（judge），模型生成英语响应而非目标语言——SQM 无法区分指令遵循失败与翻译质量问题。这是整篇论文中最触目惊心的数据</li>
+<li><strong>BT-RM 在 En→Zh 崩溃</strong>：60.20 BLEURT / 76.99 judge，判别式方法在复杂推理场景失效</li>
+<li><strong>GRRM 稳健性</strong>：所有场景均表现良好，无 reward hacking 现象</li>
+</ol>
+<h3 id="4-消融实验-cross-lingual-generalization">(4) 消融实验：Cross-Lingual Generalization</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Training Data</th>
+<th>En→X judge</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Multilingual (150K)</td>
+<td><strong>83.86</strong></td>
+<td>默认配置</td>
+</tr>
+<tr>
+<td>Zh-En only</td>
+<td>79.18</td>
+<td>-4.68</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现：评估泛化 ≠ 生成泛化</strong></p>
+<p><strong>综合证据链</strong>（结合 Table 1 + Table 3）：</p>
+<ol>
+<li>
+<p><strong>Reward Model 的评估泛化能力很强</strong>（Table 1 证据）</p>
+<pre><code>GRRM 仅在 Zh-En 数据上训练
+但在 En→De/Ru 的排序测试中达到 61-67% 准确率
+与 CometKiwi-XXL（专门训练的多语言模型）持平
+
+这意味着：
+- GRRM 学到的是通用的翻译质量判别能力，而非特定语言对的规则
+- 比较上下文（Comparative Context）的能力可以跨语言迁移
+- 识别&quot;语义遗漏&quot;、&quot;幻觉&quot;、&quot;本地化错误&quot;的能力是语言无关的
+</code></pre>
+</li>
+<li>
+<p><strong>但 Translation Policy 的生成泛化需要显式暴露</strong>（Table 3 证据）</p>
+<pre><code>使用 GRRM 作为 Reward Model 进行 GRPO 训练：
+- 多语言数据训练 → En→X: 83.86 judge
+- 仅 Zh-En 数据训练 → En→X: 79.18 judge
+- 差距：-4.68 judge
+
+这说明：
+- Reward Model 可以说&quot;哪种翻译更好&quot;（评估）
+- 但 Translation Policy 需要知道&quot;目标语言长什么样&quot;（生成）
+- 评估能力可以迁移，但生成能力需要直接学习
+</code></pre>
+</li>
+</ol>
+<p><strong>类比理解</strong>：</p>
+<pre><code>美食评论家（Reward Model）vs 厨师（Translation Policy）
+
+美食评论家：
+  - 品尝过中餐和法餐
+  - 可以评价德式料理的好坏（评估泛化强）
+  - 因为&quot;好吃 vs 难吃&quot;的标准是通用的
+
+厨师：
+  - 只学过中餐和法餐
+  - 让他做德式料理会手足无措（生成泛化弱）
+  - 因为&quot;具体怎么做&quot;需要亲自学习
+</code></pre>
+<p><strong>实践意义</strong>：</p>
+<p>方案 A（高效）：</p>
+<pre><code>收集少量多语言数据训练 Reward Model
+利用其评估泛化能力支持更多语言
+Translation Policy 需要显式多语言暴露
+成本：~150K + 多语言生成数据
+</code></pre>
+<p>方案 B（低效）：</p>
+<pre><code>为每个语言对单独训练 Reward Model
+Translation Policy 也需要各语言数据
+成本：150K × N 个语言对
+</code></pre>
+<p>论文选择了方案 A，这是<strong>性价比最优</strong>的策略。</p>
+<p><strong>注意</strong>：&quot;评估泛化 ≠ 生成泛化&quot;的结论是基于 Table 1（RM 跨语言排序）+ Table 3（Policy 跨语言生成）的综合推论，而非仅基于本消融实验。</p>
+<h3 id="5-消融实验-reasoning-的必要性">(5) 消融实验：Reasoning 的必要性</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>Challenge En→Zh judge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>w/ Reasoning</td>
+<td><strong>84.36</strong></td>
+</tr>
+<tr>
+<td>w/o Reasoning</td>
+<td>79.35</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现：&quot;Reasoning × Reasoning&quot;范式是必要的</strong></p>
+<p><strong>深入解读</strong>：</p>
+<p>推理型策略与推理型 Reward Model 配对才能释放框架的全部潜力。</p>
+<pre><code>┌─────────────────────────────────────────────┐
+│  推理型策略 (Reasoning Policy)              │
+│  - 生成多样化候选                           │
+│  - 覆盖更大的解空间                         │
+│  - 包含细微差异的对比样本                   │
+└──────────────┬──────────────────────────────┘
+               │ 提供&quot;原材料&quot;
+               ↓
+┌─────────────────────────────────────────────┐
+│  推理型 RM (Reasoning Reward Model)         │
+│  - 准确评估候选间的细微差异                 │
+│  - 识别语义错误 vs 风格问题                 │
+│  - 提供可靠的排序信号                       │
+└──────────────┬──────────────────────────────┘
+               │ 提供&quot;评估反馈&quot;
+               ↓
+┌─────────────────────────────────────────────┐
+│  &quot;探索 - 评估&quot;闭环                          │
+│  - 策略生成更难区分的候选                   │
+│  - RM 提供更精细的判别                      │
+│  - 相互促进，共同进化                       │
+└─────────────────────────────────────────────┘
+</code></pre>
+<p><strong>如果没有 Reasoning 会发生什么？</strong></p>
+<p>情况 1：策略不推理，RM 推理</p>
+<pre><code>策略：生成模板化、缺乏多样性的候选
+    ↓
+RM：再强的判别能力也无处施展
+    ↓
+结果：79.35（&quot;巧妇难为无米之炊&quot;）
+</code></pre>
+<p>情况 2：策略推理，RM 不推理</p>
+<pre><code>策略：生成多样化、有细微差异的候选
+    ↓
+RM：无法区分细粒度差异（SQM 饱和）
+    ↓
+结果：Reward Hacking 或优化停滞
+</code></pre>
+<p>情况 3：两者都推理（最佳）</p>
+<pre><code>策略：生成有挑战性的候选集
+    ↓
+RM：准确识别优劣并提供精细反馈
+    ↓
+结果：84.36（&quot;强强联合&quot;）
+</code></pre>
+<p><strong>为什么 Challenge Set 的提升特别大？</strong></p>
+<p>回顾 Table 1：</p>
+<pre><code>Gemini-2.5-Pro SQM:   51.26%
+Gemini-2.5-Pro GQM:   88.89%
+提升：+37.6%（所有场景中最大）
+</code></pre>
+<p>原因：</p>
+<ul>
+<li>Challenge Set 包含习语、俚语、领域术语</li>
+<li>这些场景需要深度推理才能正确理解</li>
+<li>例如：&quot;七五折&quot; ≠ &quot;75% off&quot;，需要文化背景推理</li>
+<li>没有推理能力的 DRM（如 CometKiwi）崩溃至 46.72%</li>
+</ul>
+<p><strong>两组消融实验的内在联系</strong>：</p>
+<p>Cross-Lingual Generalization → <strong>广度</strong>（能力能否跨语言迁移）
+Role of Reasoning → <strong>深度</strong>（推理能力是否必要）</p>
+<p>GRRM 的定位：</p>
+<ul>
+<li>✅ 已实现：深度（Reasoning × Reasoning）</li>
+<li>✅ 已实现：部分广度（评估泛化）</li>
+<li>⚠️ 待改进：生成的跨语言泛化（需要更多语言数据）</li>
+</ul>
+<hr />
+<h2 id="6-golden-case-gqm-如何通过比较上下文解决-sqm-的判别失败">6. Golden Case：GQM 如何通过比较上下文解决 SQM 的判别失败</h2>
+<blockquote class="card card-info">
+<p>基于 Fig. 5 的四个典型案例，系统展示 SQM 的四种失败模式</p>
+</blockquote>
+<h3 id="case-1-细粒度词汇差异">Case 1: 细粒度词汇差异</h3>
+<p><strong>Source</strong>: &quot;联合国称阿富汗民主取决于女性的政治地位&quot;</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>候选</th>
+<th>翻译</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>United Nations says Afghanistan's democracy depends on women's political <strong>status</strong>.</td>
+</tr>
+<tr>
+<td>B</td>
+<td>U.N. says Afghanistan democracy depends on women's political <strong>role</strong>.</td>
+</tr>
+<tr>
+<td>C</td>
+<td>Afghan democracy depends on women's political <strong>clout</strong>, U.N. says.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>SQM</strong>: Ranking A=B=C, Scores A:10, B:10, C:10 — 无法区分 &quot;status&quot;（最精确）、&quot;role&quot;（稍宽泛）、&quot;clout&quot;（非正式语体，与联合国语境不符）</li>
+<li><strong>GQM</strong>: Ranking A&gt;B&gt;C, Scores A:10, B:9, C:8 — 跨样本比较使风格一致性变得显著</li>
+</ul>
+<h3 id="case-2-本地化错误">Case 2: 本地化错误</h3>
+<p><strong>Source</strong>: &quot;今天所有餐品七五折&quot; (中文&quot;七五折&quot; = 打七五折 = 75% of price = 25% off)</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>候选</th>
+<th>翻译</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>All menu items are <strong>75% off</strong> today.</td>
+</tr>
+<tr>
+<td>B</td>
+<td>All menu items are <strong>25% off</strong> today.</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>SQM</strong>: Ranking A=B, Scores A:10, B:10 — &quot;75% off&quot; 语法完美，缺乏对照组无法发现本地化错误</li>
+<li><strong>GQM</strong>: Ranking B&gt;A, Scores A:1, B:10 — 直接对比使数值差异变得显著，识别 A 包含关键本地化错误</li>
+</ul>
+<h3 id="case-3-幻觉-vs-风格生硬">Case 3: 幻觉 vs 风格生硬</h3>
+<p><strong>Source</strong>: &quot;While most output is human-readable, barcode printers are an example of an expanded use for printers.&quot;</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>候选</th>
+<th>翻译</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>大多数打印机的输出是可读的，而且，条形码打印机可以输出条形码，<strong>接触到更广泛的应用范围</strong>。（Over-translation + 幻觉）</td>
+</tr>
+<tr>
+<td>B</td>
+<td>然而，虽然最普遍的打印输出是可读的人类语言，但条形码打印机的示例显示打印机能用于其他用途。（语义正确但风格生硬）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>SQM</strong>: Ranking A&gt;B, Scores A:5, B:4 — 过度惩罚 B 的风格生硬，忽略 A 的幻觉内容（&quot;output barcodes&quot; 不在原文）</li>
+<li><strong>GQM</strong>: Ranking B&gt;A, Scores A:2, B:8 — 优先处理语义准确性，识别 A 的幻觉为严重缺陷</li>
+</ul>
+<h3 id="case-4-语义遗漏">Case 4: 语义遗漏</h3>
+<p><strong>Source</strong>: &quot;Garland is the chief judge for the U.S. Court of Appeals for the District of Columbia Circuit.&quot;</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>候选</th>
+<th>翻译</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>加兰是美国哥伦比亚特区上诉法院首席法官。（遗漏 &quot;Circuit&quot;/联邦区分）</td>
+</tr>
+<tr>
+<td>B</td>
+<td>加兰德是美国哥伦比亚特区<strong>联邦巡回</strong>上诉法院的首席法官。（正确翻译特定法院名称）</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>SQM</strong>: Ranking A=B, Scores A:10, B:10 — A 句子流畅且看似合理，独立评估时语义遗漏被忽略</li>
+<li><strong>GQM</strong>: Ranking B&gt;A, Scores A:6, B:10 — 组内对比使 &quot;Circuit&quot; 的遗漏变得显著</li>
+</ul>
+<h3 id="案例总结">案例总结</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>失败模式</th>
+<th>SQM 失败原因</th>
+<th>GQM 成功机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>细粒度词汇差异</td>
+<td>无法区分风格一致性</td>
+<td>比较上下文 (Comparative Context)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>本地化错误</td>
+<td>语法完美掩盖语义错误</td>
+<td>对比锚定 (Contrastive Anchoring)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>幻觉 vs 风格问题</td>
+<td>过度惩罚风格，忽略内容错误</td>
+<td>自适应粒度 (Adaptive Granularity)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>语义遗漏</td>
+<td>流畅性掩盖信息缺失</td>
+<td>对比锚定 (Contrastive Anchoring)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="7-insights">7. Insights</h2>
+<h3 id="7-1-论文评价">7.1 论文评价</h3>
+<p><strong>方法设计的优雅性</strong>：GQM 范式的提出非常自然——既然 GRPO 依赖组内相对排序，那么 Reward Model 就应该专门优化组内判别能力，而非追求绝对分数校准。这种&quot;目标对齐&quot;的设计思路值得借鉴。</p>
+<p><strong>范式转换的力量</strong>：本文没有在 SQM 框架内修补（如调整 prompt、增加训练数据），而是从根本上质疑评估范式本身。这种&quot;跳出框架思考&quot;的能力适用于其他研究问题。</p>
+<p><strong>实验设计的全面性</strong>：</p>
+<ul>
+<li>排序准确率实验覆盖 LLM-as-a-Judge、DRM、GenRM 三类基线</li>
+<li>MT 优化实验覆盖通用 LLM、翻译专用模型</li>
+<li>消融实验系统分离了三个变量：Reward Model 选择、跨语言泛化、Reasoning 必要性</li>
+<li>Case Study 直观展示 SQM 的四种结构性失败模式</li>
+</ul>
+<p><strong>出乎意料的发现</strong>：</p>
+<ol>
+<li><strong>SQM-GenRM 的 Reward Hacking 如此严重</strong>：En→X 任务崩溃至 8.15 分，模型完全生成英语而非目标语言</li>
+<li><strong>Challenge Set 提升幅度之大</strong>：Gemini-2.5-Pro 从 51.26% → 88.89%（+37.6%），远超其他场景</li>
+</ol>
+<h3 id="7-2-领域启发">7.2 领域启发</h3>
+<p><strong>GQM 范式的适用性分析</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>GQM 适用性</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器翻译</td>
+<td>高</td>
+<td>候选间差异细微，需要比较上下文</td>
+</tr>
+<tr>
+<td>文本摘要</td>
+<td>高</td>
+<td>同样存在细粒度质量差异</td>
+</tr>
+<tr>
+<td>创意写作</td>
+<td>高</td>
+<td>主观性强，比较判断更可靠</td>
+</tr>
+<tr>
+<td>代码生成</td>
+<td>中</td>
+<td>可用执行结果作为绝对信号，GQM 可能不是必须</td>
+</tr>
+<tr>
+<td>数学推理</td>
+<td>低</td>
+<td>有确定性正确答案，不需要相对比较</td>
+</tr>
+</tbody>
+</table></div>
+<p>GQM 范式最适合**&quot;开放式生成任务 + 无绝对正确答案 + 细粒度质量差异&quot;**的场景。</p>
+<p><strong>Reward Model 设计的新方向</strong>：</p>
+<ul>
+<li>从&quot;绝对评分&quot;转向&quot;相对排序&quot;</li>
+<li>从&quot;独立评估&quot;转向&quot;组内比较&quot;</li>
+<li>从&quot;标量输出&quot;转向&quot;推理+分数&quot;</li>
+</ul>
+<p><strong>与 <a class="wikilink" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html" title="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models">Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models</a> 的互补关系</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>GRRM 论文</th>
+<th>Outcome Accuracy 论文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>关注点</td>
+<td>Reward Model 的<strong>排序能力</strong></td>
+<td>Reward Model 的<strong>推理质量</strong></td>
+</tr>
+<tr>
+<td>核心问题</td>
+<td>GRPO 需要组内相对质量</td>
+<td>Rationale consistency 监督</td>
+</tr>
+<tr>
+<td>结合方向</td>
+<td>GQM + Rationale Consistency</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="7-3-方法论启发">7.3 方法论启发</h3>
+<p><strong>&quot;自指优化&quot;的思路</strong>：用 RLVR 优化奖励模型本身，以排序准确率作为可验证奖励。这种&quot;用 RL 来优化评估器&quot;的思路可以推广到其他场景——任何可以用可验证信号度量评估器质量的场景，都可以用 RL 来优化评估器。</p>
+<p><strong>效率与效果的平衡</strong>：GRRM 作为 GQM 的高效实例化（7B 模型），避免了直接使用前沿 LLM 作为 Reward Model 的计算开销。但需要注意，GQM 范式下联合评估 G 个候选必然比独立评估更耗显存（需要同时 attend 到所有候选），这个 trade-off 论文未充分讨论。</p>
+<p><strong>排序奖励函数的替代方案</strong>：论文使用 Kendall's $\tau$ 变体，但可以考虑：</p>
+<ol>
+<li><strong>位置加权奖励</strong>：Top 位置的错误惩罚更大（类似 NDCG）</li>
+<li><strong>Listwise 奖励</strong>：直接优化整个排序列表的概率</li>
+<li>论文的 Score Consistency Reward 实际上是 Margin-based 的离散化版本，连续函数可能更平滑</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<ol>
+<li><strong>GQM 范式</strong>：首次系统提出 Group Quality Metric 范式，从独立评分转向组内联合评估，与 GRPO 结构对齐</li>
+<li><strong>GRRM 实现</strong>：高效的 GQM 实例化，通过 SFT + RLVR 训练获得强排序能力</li>
+<li><strong>Reasoning × Reasoning</strong>：证明推理型策略与推理型 Reward Model 配对是释放框架潜力的关键</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>Group Size 约束</strong>：GQM 受训练时覆盖的最大组大小限制，外推到显著更大的组可能导致排序准确率下降（不过论文指出小 group size + 大 batch size 与大 group 配置效果相当）</li>
+<li><strong>低质量组的奖励分配问题</strong>：GQM 依赖相对排序，当整组质量都很低时，可能给&quot;最优&quot;候选高分，无法有效惩罚全局低质量——可能需要引入&quot;绝对质量阈值&quot;机制</li>
+<li><strong>单一语言对训练</strong>：GRRM 仅在 Zh-En 数据上训练，虽然展现跨语言泛化，但最优性能仍需显式多语言暴露</li>
+<li><strong>依赖闭源标注</strong>：训练数据用 Gemini-2.5-Pro 标注，引入对闭源模型的依赖</li>
+<li><strong>计算开销未充分讨论</strong>：联合评估 G 个候选的显存和延迟 trade-off 有待分析</li>
+<li><strong>Seed Model 质量局限</strong>（新增）：
+<ul>
+<li>训练数据由 Qwen2.5-7B 生成，其翻译能力有限（En→Zh 仅 59.99 BLEURT）</li>
+<li>可能导致候选池缺乏某些错误类型或高质量模式</li>
+<li>虽有缓解机制（人类参考注入、Gemini 独立标注、RLVR 自我纠正），但仍需验证</li>
+<li>改进方向：多强度混合采样、课程学习、迭代式数据优化</li>
+</ul>
+</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li>绝对质量约束 + 相对排序结合，避免低质量组的问题</li>
+<li>更大规模多语言训练，验证 GRRM 在更多语言对上的有效性</li>
+<li>与 Rationale Consistency 监督结合，同时优化排序能力和推理质量</li>
+<li>探索无监督/弱监督的 GRRM 训练方法，减少对闭源模型标注的依赖</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="笔记库内相关论文">笔记库内相关论文</h3>
+<ul>
+<li><a class="wikilink" href="PEGRL-Post-Editing_Guided_RL_for_MT.html" title="PEGRL-Post-Editing_Guided_RL_for_MT">PEGRL-Post-Editing_Guided_RL_for_MT</a>: 同样关注 GRPO 在翻译中的应用，但从两阶段 RL 角度解决方差问题；本文从 Reward Model 设计角度解决排序问题，两者互补</li>
+<li><a class="wikilink" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html" title="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models">Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models</a>: 同样关注 Reward Model 质量，但聚焦于 rationale consistency；本文聚焦于排序能力，可结合为 GQM + Rationale Consistency</li>
+<li><a class="wikilink" href="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents.html" title="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents">ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents</a>: 从相对排序角度解决判别性崩塌问题，与 GRRM 的组内联合评估范式呼应，但采用锦标赛机制</li>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a>: 翻译专用模型，可与 GRRM 的翻译优化结果对比</li>
+<li><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a>: 从机制可解释性角度理解 LLM 翻译，与 GRRM 的翻译评估互补</li>
+<li><a class="wikilink" href="Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics.html" title="Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics">Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics</a>: 同样关注 CoT 推理在 RL 训练中的作用，与 GRRM 的 &quot;Reasoning × Reasoning&quot; 范式呼应</li>
+</ul>
+<h3 id="技术关联">技术关联</h3>
+<ul>
+<li>
+<p><strong>GRPO</strong>: 基于 Group Relative Policy Optimization (Shao et al., 2024)</p>
+</li>
+<li>
+<p><strong>GSPO</strong>: 使用 Group Sequence Policy Optimization (Zheng et al., 2025) 作为 RLVR 框架</p>
+</li>
+<li>
+<p><strong>TowerBlocks</strong>: 多语言翻译训练数据 (Alves et al., 2024)</p>
+</li>
+<li>
+<p><strong>相关 MOC</strong>:</p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span></li>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">核心贡献</span></a>
+<a class="paper-nav-link next" href="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Emergent Misalignment is Easy, Narrow Misalignment is Hard</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Yang et al. (2026). GRRM: Group Relative Reward Modeling for Machine Translation. arXiv:2602.14028</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasoning Fails Where Step Flow Breaks</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Reasoning Fails Where Step Flow Breaks</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-lrm-推理出错时-信息流在哪里断裂"><span class="toc-num">02</span> 2. 关键问题：LRM 推理出错时，信息流在哪里断裂？</a></li>
+<li><a class="toc-link" href="#3-关键方法-step-saliency-诊断-stepflow-双组件-test-time-干预"><span class="toc-num">03</span> 3. 关键方法：Step-Saliency 诊断 + StepFlow 双组件 test-time 干预</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#step-saliency-从-token-到-step-的影响力度量">Step-Saliency：从 token 到 step 的影响力度量</a></li>
+<li><a class="toc-link toc-sub" href="#oeb-odds-equal-bridge-修复浅层-shallow-lock-in">OEB (Odds-Equal Bridge) — 修复浅层 Shallow Lock-in</a></li>
+<li><a class="toc-link toc-sub" href="#smi-step-momentum-injection-修复深层-deep-decay">SMI (Step Momentum Injection) — 修复深层 Deep Decay</a></li>
+<li><a class="toc-link toc-sub" href="#超参与配置">超参与配置</a></li>
+<li><a class="toc-link toc-sub" href="#step-分割的鲁棒性">Step 分割的鲁棒性</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集-6-个推理-benchmark-覆盖竞赛数学-研究生科学和编程"><span class="toc-num">04</span> 4. 数据集：6 个推理 benchmark，覆盖竞赛数学、研究生科学和编程</a></li>
+<li><a class="toc-link" href="#5-关键结果-stepflow-在所有-backbone-benchmark-上一致提升-竞赛级长链推理提升最大"><span class="toc-num">05</span> 5. 关键结果：StepFlow 在所有 backbone × benchmark 上一致提升，竞赛级长链推理提升最大</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-table-1">主实验 (Table 1)</a></li>
+<li><a class="toc-link toc-sub" href="#消融-table-2-gpt-oss-20b-medium">消融 (Table 2, GPT-OSS-20B medium)</a></li>
+<li><a class="toc-link toc-sub" href="#layer-coverage-table-4">Layer Coverage (Table 4)</a></li>
+<li><a class="toc-link toc-sub" href="#难度分层-table-3-livecodebench-gpt-oss-20b-medium">难度分层 (Table 3, LiveCodeBench GPT-OSS-20B medium)</a></li>
+<li><a class="toc-link toc-sub" href="#compute-normalized-comparison-table-5-r1-distill-32b">Compute-Normalized Comparison (Table 5, R1-Distill-32B)</a></li>
+<li><a class="toc-link toc-sub" href="#error-taxonomy-table-12-section-5-2">Error Taxonomy (Table 12, Section 5.2)</a></li>
+<li><a class="toc-link toc-sub" href="#效率开销-table-9">效率开销 (Table 9)</a></li>
+<li><a class="toc-link toc-sub" href="#统计显著性-table-11-gpt-oss-20b-medium">统计显著性 (Table 11, GPT-OSS-20B medium)</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-30</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.06695" target="_blank">arXiv</a>
+    </div>
+    <h1>Reasoning Fails Where Step Flow Breaks</h1>
+    <p class="authors">Xiaoyu Xu, Yulan Pan, Xiaosong Yuan, Zhihong Shen, Minghao Su, Yuanhao Su, Xiaofeng Zhang</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Reasoning_LLM</span> <span class="topic-tag">Test_Time_Intervention</span> <span class="topic-tag">Information_Flow</span> <span class="topic-tag">Saliency_Analysis</span></div>
+</header>
+
+<h1>论文笔记: Reasoning Fails Where Step Flow Breaks</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>Xiaoyu Xu（上海交通大学/福州大学），Yulan Pan / Zhihong Shen / Minghao Su / Yuanhao Su（福州大学），Xiaosong Yuan（吉林大学，Project Leader），Xiaofeng Zhang（上海交通大学，通讯作者）</li>
+<li>2026-04-08 arXiv 预印本，cs.AI，尚未正式发表</li>
+<li>代码开源：https://github.com/XiaoyuXu-Vincent/step-saliency</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-lrm-推理出错时-信息流在哪里断裂">2. 关键问题：LRM 推理出错时，信息流在哪里断裂？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>一道 AIME 24 数学题（Appendix E.2, P-7）：模型需要先展开得到 $300\cos\theta - 468\sin\theta$ 和 $24\cos\theta + 36\sin\theta$，然后合并同类项。每一步推导都对了，但合并时&quot;忘了&quot;$+36\sin\theta$，直接写成 $-468\sin\theta$，最终算出 593 而不是 540。</p>
+<p>这不是不会做——公式全对，中间结果也对。问题出在已经推导出的正确结论没有被后续步骤&quot;看到&quot;。</p>
+</blockquote>
+<p>这个现象其实很普遍：长链推理中，中间结果经常丢。模型写当前步骤时过于关注刚写的内容，前面的关键结论被遗忘了。</p>
+<p>为什么已有工具解决不了？没有一个 step-level 的分析工具。token-level 的 saliency map 太细了——对于 LRM 动辄几千 token 的推理链，你看到的是一片红色热力图，根本分不清 Step 3 到底还在不在用 Step 1 的结论。attention weight 本身也 not faithful (Jain &amp; Wallace 2019)，单看 attention 不能可靠反映模型实际依赖了哪些上下文。</p>
+<p><img src="https://arxiv.org/html/2604.06695v1/x1.png" alt="Figure 1: Token-level saliency 太密太噪，Step-Saliency 把它们池化到 step 粒度后，正确和错误 trace 的差异一目了然" /></p>
+<hr />
+<h2 id="3-关键方法-step-saliency-诊断-stepflow-双组件-test-time-干预">3. 关键方法：Step-Saliency 诊断 + StepFlow 双组件 test-time 干预</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>还是那道 AIME 24 P-7。模型的推理 trace 被切成 question → step 1（展开第一项）→ step 2（展开第二项）→ step 3（合并同类项）→ summary。</p>
+<p><strong>Step-Saliency 诊断</strong>：把 token-level attention-gradient saliency 按 step 分组做 mean pooling，得到 step-to-step 影响矩阵。浅层一看：step 3 几乎只 attend 自己和 step 2，对 step 1 的 saliency 接近 0——<strong>Shallow Lock-in</strong>，模型锁在&quot;刚写的东西&quot;上了。深层一看：summary 主要看自己和最后几步，thinking 段的 saliency 快速衰减——<strong>Deep Decay</strong>。</p>
+<p><strong>StepFlow 干预</strong>（不改权重，直接在 forward pass 中操作）：</p>
+<ul>
+<li>浅层 OEB 检测到 bridge 区域（question + 早期 step）的 attention mass 低于阈值，做 logit shift 把一部分 mass 从当前 step 转过去，让 step 3 生成时能&quot;看见&quot;step 1 的 $+36\sin\theta$</li>
+<li>深层 SMI 在 step 边界把上一步的 value vector 均值注入下一步的 hidden state，防止 thinking 段信息在深层被冲掉</li>
+</ul>
+<p>结果：模型成功合并出 $324\cos\theta - 432\sin\theta$，因式分解后得到 540，正确。</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p>StepFlow = Step-Saliency（离线诊断工具）+ OEB（浅层干预）+ SMI（深层干预）。三者共享同一套 step 分割。整个方法是 <strong>test-time intervention</strong>：不改权重，不需要反向传播，只在 forward pass 中修改 attention logits（浅层）和 hidden states（深层）。</p>
+<h3 id="step-saliency-从-token-到-step-的影响力度量">Step-Saliency：从 token 到 step 的影响力度量</h3>
+<p><strong>Token-level saliency (Eq. 1-2)</strong>：对每层 $\ell$、每个 head $h$，计算 gradient-weighted attention influence：</p>
+<div class="math-display">$$I^{(\ell)}_{t \leftarrow k} = \frac{1}{H} \sum_{h=1}^{H} \left| A^{(\ell,h)}_{t,k} \cdot \frac{\partial \mathcal{L}_t}{\partial A^{(\ell,h)}_{t,k}} \right|, \quad k \leq t$$</div>
+<ul>
+<li>$A^{(\ell,h)}_{t,k}$：causal attention weight</li>
+<li>$\mathcal{L}_t = -\log p_\theta(x_t | x_{&lt;t})$：token-level loss</li>
+<li>取绝对值是因为正负贡献在 step-level 聚合时会抵消</li>
+<li>物理意义：position $k$ 对 position $t$ 的预测&quot;有多重要&quot;（综合 attention weight 和梯度）</li>
+</ul>
+<p>然后 row-normalize 得到分布 $\tilde{s}^{(\ell)}_{t \leftarrow k}$（$\varepsilon = 10^{-8}$）。</p>
+<p><strong>Step-level aggregation (Eq. 3)</strong>：把 trace 切成 question $\Gamma_0$、thinking steps $\Gamma_1, ..., \Gamma_K$、summary $\Gamma_{K+1}$，mean-pool：</p>
+<div class="math-display">$$M^{(\ell)}_{j \leftarrow i} = \frac{1}{|\Gamma_j| \cdot |\Gamma_i|} \sum_{t \in \Gamma_j} \sum_{k \in \Gamma_i} \tilde{s}^{(\ell)}_{t \leftarrow k}, \quad i \leq j$$</div>
+<p>对角线 = step 内 self-reinforcement，离对角线 = 跨步信息流。所有 layer 平均就得到 depth-collapsed Step-Saliency map。</p>
+<p><strong>量化指标 (Eq. 4)</strong>：$I^{(\ell)}_T = \frac{1}{K} \sum_{i=1}^{K} M^{(\ell)}_{i \leftarrow i}$（thinking 步骤的平均自我引用强度），$I^{(\ell)}_S = M^{(\ell)}_{(K+1) \leftarrow (K+1)}$（summary 的自我引用强度）。</p>
+<p><img src="https://arxiv.org/html/2604.06695v1/x2.png" alt="Figure 2: 浅层 vs 深层、正确 vs 错误 trace 的 Step-Saliency 模式。蓝色箭头=长距离信息流（正确链），红色箭头=局部锁定（错误链）" /></p>
+<p><strong>两个 failure pattern</strong>：</p>
+<ul>
+<li><strong>Shallow Lock-in</strong>（浅层）：错误 trace 的 saliency 集中在当前 step 和邻近 step 上（近对角线），question 和早期 step 的 saliency 被压制。正确 trace 保持对 question 的持续引用。</li>
+<li><strong>Deep Decay</strong>（深层）：thinking 段的 saliency 在正确和错误 trace 中都随层数衰减，但错误 trace 衰减更快。Summary 变得高度 self-focused，只看自己和最后几步。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2604.06695v1/x3.png" alt="Figure 3: 三个模型上的 layer-wise saliency 曲线——错误 trace 浅层 $I_T$ 更高（lock-in），深层 $I_S$ 更高（self-focused summary）" /></p>
+<p>关键观察：这两个 pattern 在 GPT-OSS-20B、R1-Distill-32B、QwQ-32B 三个不同模型上都一致出现。</p>
+<h3 id="oeb-odds-equal-bridge-修复浅层-shallow-lock-in">OEB (Odds-Equal Bridge) — 修复浅层 Shallow Lock-in</h3>
+<p>把 keys 分三组：当前 segment $\mathcal{S}$、bridge $\mathcal{B}$（需要保留联系的上文——生成 thinking 时是 question，生成 summary 时是 thinking）、其他 $\mathcal{O}$。设 bridge 的 attention mass 下界：</p>
+<div class="math-display">$$\tau_\mathcal{B} = \min\!\left(\sqrt{\frac{|\mathcal{B}|}{|\mathcal{B}| + |\mathcal{S}|}}, \tau_{\max}\right), \quad \tau_\mathcal{S} = 1 - p_t(\mathcal{O}) - \tau_\mathcal{B}$$</div>
+<p>平方根阻尼防止 bridge 太长时阈值过高，$\tau_{\max}$ 硬上限防止 OEB 主导 attention。只在 $p_t(\mathcal{B}) &lt; \tau_\mathcal{B}$ 时触发，做 KL-minimal logit shift（Bregman projection 闭式解）：</p>
+<div class="math-display">$$z&#x27;_k = z_k + \lambda_g, \quad \lambda_\mathcal{B} = \log \frac{\tau_\mathcal{B}}{p_t(\mathcal{B})}, \quad \lambda_\mathcal{S} = \log \frac{\tau_\mathcal{S}}{p_t(\mathcal{S})}$$</div>
+<p>$\mathcal{O}$ 的 logits 不变。为什么用 logit shift 而不是直接改 weights？logit space 的 group-wise shift 在 softmax 后等价于组内 attention 按比例缩放，保持组内相对顺序不变——改动最小。</p>
+<h3 id="smi-step-momentum-injection-修复深层-deep-decay">SMI (Step Momentum Injection) — 修复深层 Deep Decay</h3>
+<p>在 step 边界（$\Gamma_i$ → $\Gamma_{i+1}$），计算上一步的 value vector 均值：</p>
+<div class="math-display">$$\mathbf{m}_{\text{prev}} = \frac{1}{|\Gamma_i|} \sum_{k \in \Gamma_i} \mathbf{v}_k$$</div>
+<p>$\mathbf{v}_k$ 是 multi-head attention 的 value projection output（所有头 concatenate）。然后在深层、下一步首 token 的 residual stream（MLP 之前）做残差注入：</p>
+<div class="math-display">$$\mathbf{h}&#x27;_t = \mathbf{h}_t + \alpha \cdot \mathbf{m}_{\text{prev}}$$</div>
+<p>设计选择：value vector（而非 hidden state 或 key）更直接代表&quot;这个 step 包含什么信息&quot;；只在 step 边界注入（一个序列通常 50-200 个 boundary），计算开销很小；注入在 MLP 前让 MLP 可以进一步 transform 注入的信息。</p>
+<h3 id="超参与配置">超参与配置</h3>
+<p>所有模型统一（Table 8）：OEB 作用于 bottom 1/4 layers，SMI 作用于 top 1/4 layers，$\tau_{\max} = 0.15$，$\alpha = 0.06$。$\tau_{\max}$ 在 [0.1, 0.5] 范围内 peak-to-trough variation &lt; 1 point，$\alpha$ 在 {0.03, 0.06, 0.09} 范围内 variation 在 1-2 points 以内。</p>
+<h3 id="step-分割的鲁棒性">Step 分割的鲁棒性</h3>
+<p>用 analysis marker + 标点 + 模板 cue 做 step 边界检测，100 条人工检查准确率 99%。即使极端扰动（Table 6: 随机删 25% 边界、插入 25% 假边界、完全随机放置），accuracy 最多降 2 points，始终高于 baseline。</p>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<ul>
+<li><strong>vs. 改 prompt 的方法 (PS+, Hint-Infer)</strong>：它们只改 input，不动模型内部</li>
+<li><strong>vs. Attn-Interv. (Yan et al.)</strong>：基于 few-shot demos 识别要 zero-out 的 token，跟 step 结构无关</li>
+<li><strong>vs. PASTA (Activation Steering)</strong>：head-level 固定 scaling，不区分浅层/深层的不同 failure mode</li>
+<li><strong>vs. Budget Forcing</strong>：延长生成长度，StepFlow 不改长度，改信息流</li>
+<li><strong>vs. Self-Consistency</strong>：SC 靠多次采样 + voting，StepFlow 是 single-pass 的，且两者正交可组合</li>
+</ul>
+<hr />
+<h2 id="4-数据集-6-个推理-benchmark-覆盖竞赛数学-研究生科学和编程">4. 数据集：6 个推理 benchmark，覆盖竞赛数学、研究生科学和编程</h2>
+<p><strong>没有训练数据</strong>——这是 test-time 方法。</p>
+<p><strong>评估数据</strong>：</p>
+<ul>
+<li><strong>AIME24 / AIME25</strong>：美国数学邀请赛题，各 30 题，竞赛难度，16-sample 均值</li>
+<li><strong>AMC23</strong>：美国数学竞赛题，16-sample 均值</li>
+<li><strong>MATH-500</strong>：500 题标准数学 benchmark，single-sample</li>
+<li><strong>GPQA-Diamond</strong>：研究生级科学 QA (Rein et al.)，8-sample 均值</li>
+<li><strong>LiveCodeBench</strong>：编程竞赛 (Jain et al.)，single-sample</li>
+</ul>
+<p><strong>模型</strong>：DeepSeek-R1-Distill-Qwen 7B/14B/32B，GPT-OSS-20B（low/medium 两个配置），QwQ-32B-Preview</p>
+<p><strong>统一 decoding</strong>：temperature 0.6, top-p 0.95, max 32768 new tokens。baseline 和 StepFlow 共享相同 random seeds。</p>
+<p><strong>统计</strong>：95% bootstrap CI (B=10000)，paired bootstrap + McNemar's test，$p &lt; 0.05$。<strong>硬件</strong>：单张 NVIDIA H20 GPU。</p>
+<hr />
+<h2 id="5-关键结果-stepflow-在所有-backbone-benchmark-上一致提升-竞赛级长链推理提升最大">5. 关键结果：StepFlow 在所有 backbone × benchmark 上一致提升，竞赛级长链推理提升最大</h2>
+<h3 id="主实验-table-1">主实验 (Table 1)</h3>
+<p>所有 backbone、所有 benchmark 上 StepFlow 都是最高分，超过 5 个 baseline（Budget Forcing, Hint-Infer, PS+, Attn-Interv., Act. Steering）。亮点数字：</p>
+<ul>
+<li><strong>R1-Distill-32B + AIME25</strong>：54.9 → 66.7 (+11.8)，远超次好的 PS+ (59.5)</li>
+<li><strong>GPT-OSS-20B medium + LiveCodeBench</strong>：70.0 → 79.5 (+9.5)</li>
+<li><strong>QwQ-32B + AMC23</strong>：80.0 → 91.0 (+11.0)</li>
+<li><strong>R1-Distill-7B + LiveCodeBench</strong>：37.6 → 47.1 (+9.5)</li>
+<li>MATH-500 提升小（1-2 points），因为 baseline 已 90+，错误主要是 conceptual 而非 propagation</li>
+</ul>
+<h3 id="消融-table-2-gpt-oss-20b-medium">消融 (Table 2, GPT-OSS-20B medium)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>AIME25</th>
+<th>GPQA-D</th>
+<th>LiveCodeBench</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>62.0</td>
+<td>65.2</td>
+<td>70.0</td>
+</tr>
+<tr>
+<td>+OEB only</td>
+<td>64.5</td>
+<td>66.7</td>
+<td>74.5</td>
+</tr>
+<tr>
+<td>+SMI only</td>
+<td>64.0</td>
+<td>67.2</td>
+<td>75.0</td>
+</tr>
+<tr>
+<td>+OEB+SMI (StepFlow)</td>
+<td>69.2</td>
+<td>70.3</td>
+<td>79.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>两个组件有明显的 <strong>super-additive</strong> 效果：OEB 单独 +2.5，SMI 单独 +2.0，线性加性预期 = 66.5，实际 69.2（超出 2.7 points）。这暗示两者之间存在级联效应——OEB 在浅层保留的信息让 SMI 在深层有更好的 raw material 来注入。</p>
+<h3 id="layer-coverage-table-4">Layer Coverage (Table 4)</h3>
+<p>Bottom/top 1/4 是最佳配置，扩到 1/3 或 1/2 反而降低效果（AIME25 R1-32B: 1/4=66.7, 1/3=64.0, 1/2=62.3）。跟 Step-Saliency 诊断一致：问题集中在最浅和最深的层，覆盖太宽反而引入不必要干预。</p>
+<h3 id="难度分层-table-3-livecodebench-gpt-oss-20b-medium">难度分层 (Table 3, LiveCodeBench GPT-OSS-20B medium)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>难度</th>
+<th>Baseline</th>
+<th>+StepFlow</th>
+<th>提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Easy</td>
+<td>90.1</td>
+<td>93.5</td>
+<td>+3.4</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>70.2</td>
+<td>84.0</td>
+<td>+13.8</td>
+</tr>
+<tr>
+<td>Hard</td>
+<td>37.8</td>
+<td>52.0</td>
+<td>+14.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>越难（推理链越长）提升越大——符合预期。</p>
+<h3 id="compute-normalized-comparison-table-5-r1-distill-32b">Compute-Normalized Comparison (Table 5, R1-Distill-32B)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>计算量</th>
+<th>Acc (AIME 24/25 avg)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>1.0x</td>
+<td>63.8</td>
+</tr>
+<tr>
+<td>Longer gen</td>
+<td>~1.35x</td>
+<td>65.0</td>
+</tr>
+<tr>
+<td>StepFlow</td>
+<td>~1.35x</td>
+<td>70.6</td>
+</tr>
+<tr>
+<td>SC (k=2)</td>
+<td>~2.0x</td>
+<td>66.5</td>
+</tr>
+<tr>
+<td>StepFlow+SC (k=2)</td>
+<td>~2.7x</td>
+<td>73.5</td>
+</tr>
+<tr>
+<td>SC (k=4)</td>
+<td>~4.0x</td>
+<td>68.5</td>
+</tr>
+<tr>
+<td>SC (k=8)</td>
+<td>~8.0x</td>
+<td>70.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>同等计算量下 StepFlow 增益是 longer gen 的 5.7x。要达到同等 accuracy 需要 SC k=8（8x compute）。StepFlow + SC(k=2) 在 ~2.7x 下（73.5%）超过 SC(k=4) 在 4x 下（68.5%）。</p>
+<p>其他 backbone 类似（Table 10）：GPT-OSS baseline 62.7 → StepFlow 67.6（~1.37x），QwQ baseline 45.0 → StepFlow 52.7（~1.32x）。</p>
+<h3 id="error-taxonomy-table-12-section-5-2">Error Taxonomy (Table 12, Section 5.2)</h3>
+<p>正文概括数字：arithmetic carry-forward 34% + premise forgetting 38% = 72% of corrections（分模型看 R1-32B: 38/34，GPT-OSS: 30/42）。Step-skip 14-18%，conceptual 10-14%。前两类都是跨步信息传播失败，conceptual error 几乎不修——StepFlow 修的是&quot;怎么传&quot;不是&quot;传什么&quot;。</p>
+<p><img src="https://arxiv.org/html/2604.06695v1/x5.png" alt="Figure 5: 三个 backbone 上 StepFlow 对 Step-Saliency 指标的影响及精度提升。上方：error case 的 $\Delta I_T$/$\Delta I_S$（浅层 $I_T$ 下降=减少 lock-in，深层 $I_S$ 下降=减少 self-focus）" /></p>
+<h3 id="效率开销-table-9">效率开销 (Table 9)</h3>
+<p>30-37% per-token 时间增加（R1-32B: 0.023 → 0.032 s/tok，GPT-OSS: 0.036 → 0.047 s/tok，QwQ: 0.068 → 0.090 s/tok）。</p>
+<h3 id="统计显著性-table-11-gpt-oss-20b-medium">统计显著性 (Table 11, GPT-OSS-20B medium)</h3>
+<p>95% bootstrap CI：AIME25 baseline [58.0, 66.0] vs StepFlow [65.2, 73.2]（有重叠），GPQA-D [63.0, 67.4] vs [68.1, 72.5]（不重叠），LiveCodeBench [65.5, 74.5] vs [75.5, 83.5]（几乎不重叠）。只给了 GPT-OSS medium 一个模型三个 benchmark 的 CI，其他模型的 CI 和 p-value 缺失。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>1. 消融的 super-additivity 对 &quot;两个独立 failure mode&quot; 叙事构成挑战。</strong> OEB +2.5, SMI +2.0, 合在一起 +7.2（AIME25）——如果修的真是&quot;正交&quot;问题，增益应该大致 additive（~4.5），不该有 7.2。两种可能：(i) 级联效应——OEB 在浅层保留的信息让 SMI 在深层有更好的 raw material；(ii) Shallow Lock-in 和 Deep Decay 其实是同一个底层问题的不同症状。论文完全没做 OEB → SMI 的交叉消融来区分这两个假说。</p>
+<p><strong>2. 统计证据不太稳固，尤其在最大 claim 上。</strong> 最亮的数字（+11.8 on AIME25, R1-32B）恰好在最小的 dataset（30 题）上，CI 重叠明显（[58.0, 66.0] vs [65.2, 73.2]）。而且 CI 只给了 GPT-OSS medium 这一个模型的三个 benchmark，R1-32B 和 QwQ 的 CI 和 p-value 全缺。</p>
+<p><strong>3. 诊断和干预之间有一个 proxy gap。</strong> Step-Saliency 用 attention * gradient（需要 backward pass）做诊断，但 OEB 在 test-time 用的是 raw attention probability 作为 proxy——而论文自己引了 &quot;attention is not explanation&quot;。如果 attention 真不 faithful，OEB 凭什么有效？一个替代解释是 OEB 实际起了 generic regularization 的作用（防止 attention 坍缩），而不一定是因为它精准修复了 saliency 诊断出的问题。论文试图用 Table 4（层覆盖实验）排除 generic-reg 解释——但 layer-specific 效果也可以只是因为不同层的 attention 分布本身不同。</p>
+<p><strong>4. 超参 grid 太粗，&quot;统一超参&quot;可能是假象。</strong> $\alpha$ 只试了 {0.03, 0.06, 0.09} 三个值，所有模型 $\alpha^* = 0.06$。如果 grid 更细（比如 0.01 到 0.10 步长 0.01），不同模型很可能分化。7B 到 32B、Qwen-based 到 GPT-OSS，架构差异很大，最优超参完全一样？更像是分辨率不够。</p>
+<p><strong>5. GPT-OSS-20B 是个黑箱。</strong> 引用的 model card (Agarwal et al. 2025, arXiv 2508.10925) 发表于 2025 年 8 月，但论文日期 2026 年 4 月，时间线可疑 [?]。&quot;low&quot; 和 &quot;medium&quot; 两个配置的区别没有任何解释——是不同 checkpoint？不同 system prompt？baseline 性能差距巨大（AIME25: low 39.1 vs medium 62.0）。</p>
+<p><strong>6. Error taxonomy 有 selection bias 和主观性问题。</strong> 只分析了 &quot;baseline 错、StepFlow 对&quot; 的 60 道 AIME 题——没有分析 &quot;baseline 对、StepFlow 错&quot;（StepFlow 引入了多少新错误？）和 &quot;两者都错&quot;（哪些 propagation error StepFlow 修不了？）。这个单向分析系统性高估了修复率。另外 60 题的人工分类没报 inter-annotator agreement，arithmetic carry-forward 和 premise forgetting 的边界模糊。</p>
+<p><strong>7. Step 边界检测的可复现性隐忧。</strong> 论文说用 &quot;analysis marker + punctuation + template cues&quot;，但没开源具体的 regex 或 parser 代码。更深的问题是：如果未来 LRM 不再显式生成 step-structured thinking（比如更自由的推理形式），整个 Step-Saliency + StepFlow 框架就失去了基本前提——这不只是&quot;边界检测准确率下降&quot;，是方法论适用范围的限制。</p>
+<p><strong>8. OEB 的 bridge 定义是粗粒度的。</strong> 生成 thinking step i 时 bridge = 所有 question tokens，但不是所有 question token 对每个 step 都同等重要。OEB 均匀提升整个 bridge 区域的 mass，可能把 attention 分给了不相关的早期 token。论文没做 selective bridge 的消融。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>Step-Saliency 作为诊断工具可能比 StepFlow 作为干预方法更有持久价值。干预方法会随模型迭代被淘汰（如果下一代模型的 training objective 显式优化了信息流），但&quot;把 token-level saliency pool 到 step-level&quot;这个思路可以扩展到任何有结构化中间输出的系统——agent trace、tool-use chain 等。</p>
+<p>更自然的修复路径是在训练时解决：加 auxiliary loss 惩罚浅层的过度 self-attention，把 Step-Saliency 类的诊断信号做成 training-time regularization，那样就不需要 30% 的推理开销了。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic/Area:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 提出 Step-Saliency 将 token 级 saliency 池化到推理步骤粒度，发现 Shallow Lock-in / Deep Decay 两种信息流失败模式，并用 StepFlow test-time 干预修复</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Rubric-as-Experts-Case-Specific-MQM-Rubrics.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</span></a>
+<a class="paper-nav-link next" href="Qwen-RobotManip-Alignment-Unlocks-Scale-VLA.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Qwen-RobotManip Technical Report: Alignment Unlocks Scale for Robotic Manipulation Foundation Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: xu2026reasoning</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

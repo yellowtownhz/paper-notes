@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scaling Synthetic Data Creation with 1,000,000,000 Personas</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Scaling Synthetic Data Creation with 1,000,000,000 Personas</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#一句话判断"><span class="toc-num">01</span> 一句话判断</a></li>
+<li><a class="toc-link" href="#1-背景信息"><span class="toc-num">02</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-数量容易扩-数据分布不容易扩"><span class="toc-num">03</span> 2. 关键问题：数量容易扩，数据分布不容易扩</a></li>
+<li><a class="toc-link" href="#3-关键方法-先构造视角索引-再让视角驱动生成"><span class="toc-num">04</span> 3. 关键方法：先构造视角索引，再让视角驱动生成</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-用同一个例子走完管线">3.1 用同一个例子走完管线</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-三种提示方式的-tradeoff">3.2 三种提示方式的 tradeoff</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-十亿-代表容量-不等于十亿条训练样本">3.3 “十亿”代表容量，不等于十亿条训练样本</a></li>
+<li><a class="toc-link" href="#4-关键证据-百万-persona-能生成有效数学训练数据"><span class="toc-num">05</span> 4. 关键证据：百万 persona 能生成有效数学训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-训练与评估设置">4.1 训练与评估设置</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-主结果到底支持什么">4.2 主结果到底支持什么</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-多样性证据比-headline-弱">4.3 多样性证据比 headline 弱</a></li>
+<li><a class="toc-link" href="#5-其他用例-能跑通-但不是同等强度的验证"><span class="toc-num">06</span> 5. 其他用例：能跑通，但不是同等强度的验证</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">07</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-persona-hub-更像生成模型的查询规划器">6.1 Persona Hub 更像生成模型的查询规划器</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-论文把生成质量与索引质量混在了一起">6.2 论文把生成质量与索引质量混在了一起</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-模拟真实人群-是危险的概念跳跃">6.3 “模拟真实人群”是危险的概念跳跃</a></li>
+<li><a class="toc-link toc-sub" href="#6-4-工程上先做小而硬的-persona-bank">6.4 工程上先做小而硬的 persona bank</a></li>
+<li><a class="toc-link" href="#7-必须记住的四点"><span class="toc-num">08</span> 7. 必须记住的四点</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-20</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2406.20094" target="_blank">arXiv</a>
+    </div>
+    <h1>Scaling Synthetic Data Creation with 1,000,000,000 Personas</h1>
+    <p class="authors">Tao Ge, Xin Chan, Xiaoyang Wang, Dian Yu, Haitao Mi, Dong Yu</p>
+    <div class="topic-row"><span class="topic-tag">Synthetic_Data</span> <span class="topic-tag">Data_Curation</span> <span class="topic-tag">LLM</span></div>
+</header>
+
+<h1>论文笔记: Scaling Synthetic Data Creation with 1,000,000,000 Personas</h1>
+<h2 id="一句话判断">一句话判断</h2>
+<p>这篇工作的好点子不是“让 LLM 扮演角色”，而是把 <strong>persona 当成可规模化的 prompt 索引</strong>：先从 Web 文本反推出十亿级视角，再用这些视角查询生成模型，从而把数据合成的多样性瓶颈从“人工枚举主题”改写成“自动枚举谁会关心这些主题”。它用数学数据证明了这条管线能训练出强模型，但并没有证明十亿 persona 真正覆盖十亿种有效分布，也没有把 persona 的贡献与 GPT-4 生成质量充分拆开。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>Tencent AI Lab Seattle，2024 年 6 月发布的技术报告。</li>
+<li>论文发布 Persona Hub：经过去重和启发式过滤后共 <strong>1,015,863,523</strong> 条 persona；仓库最初只开放其中 20 万条以及若干类合成样例。</li>
+<li>最扎实的验证集中在数学题生成；instruction、知识文本、NPC、逻辑题和工具定义主要是可行性展示。</li>
+</ul>
+<h2 id="2-关键问题-数量容易扩-数据分布不容易扩">2. 关键问题：数量容易扩，数据分布不容易扩</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 同一句“出一道数学题”，为什么会塌缩？</strong></p>
+<p>不加约束时，模型容易反复生成常见代数或应用题。给它“从事计算语言学、研究 attention 的语言学家”这个 persona 后，问题可能转向词频、序列概率或模型计算；再换成精算师、拓扑学家，题目所需知识和语境随之改变。persona 在这里不是待模拟的真实用户，而是一把打开模型内部某片知识的“检索钥匙”。</p>
+</blockquote>
+<p>以往两条路线都难以无上限扩展：</p>
+<ol>
+<li><strong>Instance-driven</strong>：从 Self-Instruct 一类 seed instances 变形，新增样本的覆盖面受 seed corpus 限制。</li>
+<li><strong>Key-point-driven</strong>：先枚举主题/知识点再生成；在数学等窄域可行，但跨领域、跨粒度穷举 key points 的人工成本太高。</li>
+</ol>
+<p>作者的核心观察是：Web 上几乎任何文本都隐含了“谁会写、读、喜欢或讨厌它”。因此，Web 文本本身可以被压缩为 persona 列表；persona 又能与几乎任意数据合成任务组合。真正的扩展对象由“任务模板”变成了“视角”。</p>
+<h2 id="3-关键方法-先构造视角索引-再让视角驱动生成">3. 关键方法：先构造视角索引，再让视角驱动生成</h2>
+<h3 id="3-1-用同一个例子走完管线">3.1 用同一个例子走完管线</h3>
+<p>假设输入是一段关于 attention 架构的论文文字：</p>
+<ol>
+<li><strong>Text-to-Persona</strong> 提问“谁可能阅读/撰写这段文字？”，得到“研究神经网络架构与注意力机制的机器学习研究者”等尽量细粒度的描述。</li>
+<li><strong>Persona-to-Persona</strong> 再问“谁与此人关系密切？”，沿同事、师生、照护等关系补出 Web 可见度低的角色；作者对每个初始 persona 做六轮关系扩展。</li>
+<li><strong>去重</strong>先用 1-gram MinHash（signature size 128、阈值 0.9）去表面重复，再用文本 embedding 过滤余弦相似度大于 0.9 的语义重复，最后做启发式低质量过滤。</li>
+<li><strong>persona-driven synthesis</strong> 把 persona 插入“创建一道数学题”等 prompt，让生成模型站在该视角出题；同一 persona 仍可叠加“几何”“奥赛难度”等任务约束。</li>
+</ol>
+<p>数据流可以压成：</p>
+<p><code>Web text → inferred persona → related personas → dedup/filter → persona + synthesis prompt → synthetic instance</code></p>
+<h3 id="3-2-三种提示方式的-tradeoff">3.2 三种提示方式的 tradeoff</h3>
+<ul>
+<li><strong>Zero-shot</strong>：不提供示例，最少受 seed data 限制，创造空间最大；论文的 109 万数学题使用这一方案。</li>
+<li><strong>Few-shot</strong>：示例保证格式和任务要求，但多样性更受 demonstrations 约束。</li>
+<li><strong>Persona-enhanced few-shot</strong>：先为每个 demonstration 反推 persona，再把 persona—样例配对放入 prompt；更能强化“视角驱动”，代价是多一道 persona 标注过程。</li>
+</ul>
+<p>这里最值得复用的设计是把两个控制轴分开：persona 控制“从哪个知识视角生成”，task prompt 控制“生成什么、难度和格式是什么”。因此一个 persona 集合可以复用于数学题、instruction、知识文本或工具需求，而 key-point 列表通常绑定具体任务。</p>
+<h3 id="3-3-十亿-代表容量-不等于十亿条训练样本">3.3 “十亿”代表容量，不等于十亿条训练样本</h3>
+<p>论文从 RedPajama v2 出发构造并去重出约 10.16 亿 persona，但核心训练实验只抽取 <strong>109 万</strong> persona，每个生成一道数学题。于是论文实际验证的是“百万级 persona 驱动数据有效”，不是“十亿规模端到端生成已被验证”。十亿更像可采样的候选索引库。</p>
+<h2 id="4-关键证据-百万-persona-能生成有效数学训练数据">4. 关键证据：百万 persona 能生成有效数学训练数据</h2>
+<h3 id="4-1-训练与评估设置">4.1 训练与评估设置</h3>
+<ul>
+<li>用 109 万 persona 和 GPT-4 zero-shot 出题；用 gpt-4o assistant 生成答案。</li>
+<li>随机留出 2 万道合成题，另用 gpt-4o PoT 与 gpt-4-turbo 生成解答，只保留至少两个解答一致的样本，得到 <strong>11.6K</strong> in-distribution 测试集。</li>
+<li>其余 <strong>107 万</strong>题微调 Qwen2-7B；论文强调生成和训练均未使用 MATH 样本。</li>
+<li>OOD 评估用 5,000 题的 MATH test，greedy decoding；答案等价判断遵循 OpenAI simple-evals。</li>
+</ul>
+<h3 id="4-2-主结果到底支持什么">4.2 主结果到底支持什么</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>证据</th>
+<th style="text-align:right">观察</th>
+<th>能说明什么</th>
+<th>不能说明什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Synthetic test（Table 1）</td>
+<td style="text-align:right">微调 Qwen2-7B 为 <strong>79.4%</strong>；Qwen2-72B-Instruct 为 77.2%</td>
+<td>模型能拟合同一合成管线产生的问题分布</td>
+<td>训练模型独享 ID 数据，且测试答案不是人工金标，不能作公平能力排名</td>
+</tr>
+<tr>
+<td>MATH（Table 2）</td>
+<td style="text-align:right">微调 Qwen2-7B 为 <strong>64.9%</strong>；base instruct 为 49.6%，约 +15.3 点；接近 GPT-4-turbo-0125-preview 的 64.5%</td>
+<td>不使用 MATH seed 的合成数据也能迁移到竞赛数学</td>
+<td>生成教师是 GPT-4、解答教师是 gpt-4o，无法把收益单独归因于 persona</td>
+</tr>
+<tr>
+<td>数据规模（Figure 9）</td>
+<td style="text-align:right">随合成训练样本增加，MATH 准确率持续上升</td>
+<td>百万级数据仍有正向 scaling 趋势</td>
+<td>图只改变样本量，没有与无 persona、随机主题或等成本筛选比较</td>
+</tr>
+<tr>
+<td>人工有效性检查</td>
+<td style="text-align:right">200 道较难题中 7 道无效，报告 <strong>96.5%</strong> validity</td>
+<td>至少在小样本上多数题条件自洽</td>
+<td>两名专家、200 题不足以估计长尾错误；“有效”也不等于答案与推理完全正确</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="4-3-多样性证据比-headline-弱">4.3 多样性证据比 headline 弱</h3>
+<p>作者采样 persona 相似度约为 0.4、0.6、0.8 的各 100 对，用 temperature=0 各生成一对数学题。Figure 10 显示题目相似度与 persona 相似度正相关、但通常更低；即使 persona 相似度约 0.9，gpt-4o/gpt-3.5 生成题目的相似度多数落在 0.6–0.75。</p>
+<p>这支持“persona 差异会传递到输出”这一局部机制，却不足以证明十亿条输出仍保持有效多样性：embedding 相似度只是一个代理指标，没有检查语义模板、解法结构、知识点频率与样本边际收益。</p>
+<h2 id="5-其他用例-能跑通-但不是同等强度的验证">5. 其他用例：能跑通，但不是同等强度的验证</h2>
+<p>论文展示了 Ruozhiba 风格逻辑题、用户 instructions、知识丰富文本、游戏 NPC 与工具接口生成。它们共同证明 persona 与不同 synthesis prompt 容易组合；但没有像数学部分一样提供训练收益、人工质量或覆盖率对照。因此更准确的结论是“方法具备跨任务可用性迹象”，而不是“跨任务有效性已系统验证”。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-persona-hub-更像生成模型的查询规划器">6.1 Persona Hub 更像生成模型的查询规划器</h3>
+<p><strong>观察</strong>：persona 描述只占一两句，却能改变生成内容；作者甚至把约 $10^{10}$ persona tokens 视作对约 $10^{14}$ Web tokens 的分布式压缩。</p>
+<p><strong>推理</strong>：persona 并不保存完整知识，它主要告诉教师模型该访问哪种知识、语境和需求。效果依赖教师模型参数里已经存在相应能力。</p>
+<p><strong>判断</strong>：复现时最该测的不是 persona 数量，而是同等 teacher token 预算下的覆盖增益：与随机主题、聚类中心、直接从原文生成以及无 persona prompt 比较 unique concepts、解法簇和下游收益。否则“十亿”可能只是昂贵的查询冗余。</p>
+<h3 id="6-2-论文把生成质量与索引质量混在了一起">6.2 论文把生成质量与索引质量混在了一起</h3>
+<p>数学管线同时用了 GPT-4 出题、gpt-4o 解题和 Qwen2-7B 学习。64.9% 证明整条管线有效，却没有回答：换成弱教师时 persona 是否仍有增益？同一个强教师在相同预算下直接出题能否达到类似结果？persona 的边际价值仍缺关键消融。</p>
+<p>一个最小补实验应是固定生成模型、题目数和 token 成本，比较 <code>no persona / random key point / retrieved text / persona</code> 四组，并报告去重后的知识点覆盖、人工有效率与 MATH 曲线。</p>
+<h3 id="6-3-模拟真实人群-是危险的概念跳跃">6.3 “模拟真实人群”是危险的概念跳跃</h3>
+<p>Text-to-Persona 从 Web 文本反推“可能的人”，得到的是语言模型可表达的角色原型，不是按人口统计采样、经过行为校准的真实个体。它适合扩充 prompt 视角，却不能仅凭十亿数量就用于预测公众对政策或产品的反应。把生成覆盖率当社会代表性，会放大 Web 可见性偏差和模型刻板印象。</p>
+<h3 id="6-4-工程上先做小而硬的-persona-bank">6.4 工程上先做小而硬的 persona bank</h3>
+<p>论文自己指出，更严格的 embedding 阈值（如 0.5）可以在只需百万实例时换取更高多样性。对实际训练项目，与其追十亿规模，不如先构造与任务失败模式对应的 persona bank，并用下游误差反馈重采样：只有能带来新知识点、新解法或新错误覆盖的 persona 才值得保留。</p>
+<h2 id="7-必须记住的四点">7. 必须记住的四点</h2>
+<ol>
+<li>Persona Hub 的创新是把 persona 变成通用、可扩的生成控制变量，而不是发明 roleplay。</li>
+<li>Persona 来源于 Text-to-Persona、六轮 Persona-to-Persona 扩展和两阶段去重，最终约 10.16 亿条。</li>
+<li>最强证据是 107 万合成数学题把 Qwen2-7B 在 MATH 上做到 64.9%；这验证整条教师—数据—学生管线，不等于隔离验证 persona。</li>
+<li>十亿规模、多样性、社会代表性和跨任务训练收益仍主要是外推，后续工作应做等预算消融和覆盖率测量。</li>
+</ol>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Failure-as-a-Process-CLI-Coding-Agent-Failure-Trajectories.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Failure as a Process: An Anatomy of CLI Coding Agent Trajectories</span></a>
+<a class="paper-nav-link next" href="On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">On the Role of Attention Heads in Large Language Model Safety</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: ge2024scaling</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

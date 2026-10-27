@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Towards Feedback-to-Plan Decisions for Self-Evolving LLM Agents in CUDA Kernel Generation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Towards Feedback-to-Plan Decisions for Self-Evolving LLM Agents in CUDA Kernel Generation</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-删掉-profiler-后最终变慢-究竟是哪一步需要它"><span class="toc-num">02</span> 2. 关键问题：删掉 profiler 后最终变慢，究竟是哪一步需要它？</a></li>
+<li><a class="toc-link" href="#3-关键方法-在同一程序上枚举反馈组合-再测计划落实后的结果"><span class="toc-num">03</span> 3. 关键方法：在同一程序上枚举反馈组合，再测计划落实后的结果</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿同一个-kernel-走完一次干预">3.1 沿同一个 kernel 走完一次干预</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-模块到底提供什么-哪些行为已经写在-prompt-里">3.2 模块到底提供什么？哪些行为已经写在 prompt 里？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-用-banzhaf-区分-平均有用-与-组合才有用">3.3 用 Banzhaf 区分“平均有用”与“组合才有用”</a></li>
+<li><a class="toc-link" href="#4-数据与设置-冻结的是参考轨迹-不是让四个模型各自重跑优化"><span class="toc-num">04</span> 4. 数据与设置：冻结的是参考轨迹，不是让四个模型各自重跑优化</a></li>
+<li><a class="toc-link" href="#5-关键结果-反馈匹配比-先写一段计划-更重要"><span class="toc-num">05</span> 5. 关键结果：反馈匹配比“先写一段计划”更重要</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-最强证据-规划与反馈的交叉对照">5.1 最强证据：规划与反馈的交叉对照</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-工具组合有价值-但没有跨模型固定不变的贡献排名">5.2 工具组合有价值，但没有跨模型固定不变的贡献排名</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-摘要改善反馈利用-强模型计划可以部分迁移">5.3 摘要改善反馈利用，强模型计划可以部分迁移</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-工程落地-cugedit-能提速-但不能把峰值当作全套任务结论">5.4 工程落地 CuGEdit：能提速，但不能把峰值当作全套任务结论</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-最有价值的迁移对象是决策点实验-而不是一套固定工具优先级">6.1 最有价值的迁移对象是决策点实验，而不是一套固定工具优先级</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-模型如何利用反馈-与-我们怎样教它利用反馈-还没有完全拆开">6.2 “模型如何利用反馈”与“我们怎样教它利用反馈”还没有完全拆开</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-局部有效的计划接口-不自动带来长期最优搜索">6.3 局部有效的计划接口，不自动带来长期最优搜索</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-31</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.26720v1" target="_blank">arXiv</a>
+    </div>
+    <h1>Towards Feedback-to-Plan Decisions for Self-Evolving LLM Agents in CUDA Kernel Generation</h1>
+    <p class="authors">Yee Hin Chong, Jiaming Wu, Youhui Zhang, Peng Qu</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Agent</span> <span class="topic-tag">CUDA_Kernel_Generation</span> <span class="topic-tag">Feedback_Conditioned_Planning</span> <span class="topic-tag">Causal_Attribution</span> <span class="topic-tag">Credit_Assignment</span></div>
+</header>
+
+<h1>论文笔记: Towards Feedback-to-Plan Decisions for Self-Evolving LLM Agents in CUDA Kernel Generation</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Yee Hin Chong、Jiaming Wu、Youhui Zhang、Peng Qu；清华大学计算机系、北京信息科学与技术国家研究中心。</li>
+<li><strong>发表</strong>：ICML 2026；本笔记依据 2026-05-26 的 arXiv v1，官方页面仍注明 camera-ready in progress。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/abs/2605.26720v1">论文与版本</a> · <a href="https://arxiv.org/html/2605.26720v1">官方全文</a> · <a href="https://arxiv.org/pdf/2605.26720v1">PDF</a> · <a href="https://github.com/yuxuan-z19/cudanalyst">作者代码</a>。已阅读正文及附录 A–E，并用 PDF 核对关键图表和提示词；未运行 CUDA 实验。</li>
+</ul>
+<p><strong>值得记住的四点</strong>：</p>
+<ol>
+<li><strong>贡献首先是测量方法</strong>：CUDAnalyst 冻结程序和上下文，在同一决策点替换反馈，测量下一步结果，避免端到端消融把不同演化路径混在一起。</li>
+<li><strong>显式规划的收益依赖反馈是否匹配当前程序</strong>：在代表性设置中，没有反馈的计划反而有害；空计划和错配反馈对照比“加一个 planner 后分数变高”更有说服力。</li>
+<li><strong>工具价值依赖组合、模型和程序状态</strong>：不能依据单工具贡献小就删除它，也不能把非加性交互一律解释成正向协同。</li>
+<li><strong>摘要和强模型计划能帮助弱模型利用反馈，但不是参数学习</strong>：推理时注入计划有收益；长期自演化、普遍的规划机制以及同预算最优性仍未被证明。</li>
+</ol>
+<p>我的判断：<strong>最值得复用的是“冻结状态 → 干预反馈 → 重新执行”的实验接口；把观察到的工具分工上升为普遍规律则需要更谨慎。</strong> 下文会保留原文叙述、公式与图表之间几处会影响这一判断的差异。</p>
+<h2 id="2-关键问题-删掉-profiler-后最终变慢-究竟是哪一步需要它">2. 关键问题：删掉 profiler 后最终变慢，究竟是哪一步需要它？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case——为便于理解构造，非论文实测 trace。</strong></p>
+<p>一个 agent 正在优化分块矩阵乘法。当前 kernel 能通过检查，但共享内存开销较大、occupancy 偏低。静态分析显示 tile 与循环结构；profiler 显示资源占用和停顿；debugger 没有报错。</p>
+<p>如果只看性能指标，agent 可能选择缩小 tile；结合循环结构，它也可能发现减少展开就能缓解寄存器压力。debugger 的“当前无错”则为保持正确性提供参照。这里真正要问的是：<strong>哪组证据帮助它选中了有效且安全的修改？</strong></p>
+</blockquote>
+<p>常规消融从头关闭 profiler，重新演化，再比较最终最快 kernel。问题是，第一次反馈差异就可能改变代码、候选选择、后续参考程序；若干轮之后，两组已经在处理不同问题。最终速度差不能直接解释为“当前这一步使用 profiler 的效果”。<a href="https://arxiv.org/html/2605.26720v1#S3.SS2">§1、§3.2，Figure 1</a></p>
+<p>这里需要分清两个问题：<strong>端到端实验可以评估关闭工具后的整个系统表现；固定状态的干预才能更直接回答某次决策需要什么信息。</strong> CUDAnalyst 针对后者，牺牲跨代状态变化，换取局部比较的可解释性。</p>
+<h2 id="3-关键方法-在同一程序上枚举反馈组合-再测计划落实后的结果">3. 关键方法：在同一程序上枚举反馈组合，再测计划落实后的结果</h2>
+<h3 id="3-1-沿同一个-kernel-走完一次干预">3.1 沿同一个 kernel 走完一次干预</h3>
+<p>延续矩阵乘法例子，CUDAnalyst 的流程是：</p>
+<ol>
+<li><strong>冻结决策前状态</strong>：保存当前 kernel、参考程序和已有上下文。同一次比较不重新抽参考程序，也不让干预结果写回后续演化轨迹。</li>
+<li><strong>构造可开关的证据</strong>：对同一程序保存 debugger、analyzer、profiler 的结构化报告。</li>
+<li><strong>只改反馈组合</strong>：例如比较“只给 profiler”和“给 analyzer + profiler”，其余模型、prompt、解码和评测流程保持相同。若启用摘要，则先由各工具对应的 SummaryAgent 解释报告。</li>
+<li><strong>生成计划并落实成代码</strong>：PlanAgent 综合报告，输出修改优先级和步骤；代码生成模型按计划改写 kernel。在构造例子中，可能输出“先减少过度展开，保持数据布局，再验证正确性和资源占用”。这只是机制示意，不代表作者实际得到该计划。</li>
+<li><strong>重新编译、验证与计时</strong>：每个样本最多尝试 5 次，记录是否至少一次达到相应结果；然后回到原冻结状态，测试另一组反馈。</li>
+</ol>
+<p>因此，归因对象是<strong>反馈变化经由计划和代码生成后，对执行结果的条件效应</strong>，不是对计划文本的人工评分，也不是对模型内部推理电路的解释。<a href="https://arxiv.org/html/2605.26720v1#S3">§3.1–3.3、Appendix B.1</a></p>
+<p><img src="../../assets/papers/CUDAnalyst-2605.26720/figure-2-framework.png" alt="CUDAnalyst 原文 Figure 2：三类工具报告、可选摘要与 PlanAgent" /></p>
+<p><strong>Figure 2 要看的是 Report → PlanAgent 这个接口</strong>：把诊断报告与决策拆开，才能对报告做干预。图中的摘要模块可关闭。另一个容易读错的细节是，图注称报告为规划的唯一输入，但 <strong>Prompt D.10 实际还包含 <code>Source Code</code> / <code>&lt;RAWCODE&gt;</code></strong>；更准确的理解是源代码属于固定上下文，反馈是被操纵的输入，不能据图注声称 planner 完全不看代码。<a href="https://arxiv.org/pdf/2605.26720v1#page=31">§3.1；PDF p.31，Prompt D.10</a></p>
+<h3 id="3-2-模块到底提供什么-哪些行为已经写在-prompt-里">3.2 模块到底提供什么？哪些行为已经写在 prompt 里？</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模块</th>
+<th>实际实现与输出</th>
+<th>对例子的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debugger，记作 $d$</td>
+<td>clang-tidy 18.0.0、Compute Sanitizer 2023.2.0；静态警告、内存访问与并发检查</td>
+<td>约束修改的安全性，定位越界或竞争</td>
+</tr>
+<tr>
+<td>Analyzer，记作 $a$</td>
+<td>Tree-sitter 0.25.2 / Language Pack 0.13.0；提取循环结构</td>
+<td>把性能问题定位到可改变的循环、索引和组织方式</td>
+</tr>
+<tr>
+<td>Profiler，记作 $p$</td>
+<td>Nsight Compute 2025.2.1；硬件性能报告，选相对加速最差的运行配置采样</td>
+<td>判断资源占用、访存、停顿等瓶颈</td>
+</tr>
+<tr>
+<td>SummaryAgent</td>
+<td>LLM 读取源码和对应工具报告，产生解释与修改建议</td>
+<td>降低报告理解负担，但也引入 LLM 的诊断偏置</td>
+</tr>
+<tr>
+<td>PlanAgent</td>
+<td>LLM 综合报告、排序问题并给出执行路线</td>
+<td>协调可能冲突的修改，比如展开与寄存器压力</td>
+</tr>
+</tbody>
+</table></div>
+<p>来源：Appendix D.1、Table 10、Prompts D.1–D.10。实现先进行 lint / sanitizer 验证，对可执行程序再做结构分析和 profiling；<strong>不是任何失败程序都天然拥有完整三路运行证据</strong>。</p>
+<p>所有 LLM 模块使用评测前固定的 prompt 和解码配置；本文没有训练一个新的规划网络，也没有在线更新权重。所谓 self-evolving 主要是外部程序与搜索状态迭代。<a href="https://arxiv.org/html/2605.26720v1#A4.SS4">§4、Appendix D.4</a></p>
+<p>Prompt D.10 中决定行为的一句原文是：</p>
+<blockquote class="card card-info">
+<p>“Prioritize fixing Sanitizer errors first, followed by major Perf bottlenecks.”</p>
+</blockquote>
+<p>随后模板明确要求三步：先解决正确性问题，再改变循环或访存模式，最后微调指令和 occupancy；Prompt D.9 还要求跨工具关联和冲突检查。<strong>这既解释了为什么 planner 能把报告变成动作，也限制了“阶段分工是模型自主发现的”这一解释。</strong><a href="https://arxiv.org/pdf/2605.26720v1#page=31">PDF p.31</a></p>
+<h3 id="3-3-用-banzhaf-区分-平均有用-与-组合才有用">3.3 用 Banzhaf 区分“平均有用”与“组合才有用”</h3>
+<p>对冻结的第 $g$ 代，令 $v_g(S)$ 表示启用反馈集合 $S$ 后，固定尝试预算下某个执行指标的期望表现。令 $N=\{d,a,p\}$，三类工具需要评估 8 个集合，包括空集合和完整集合。工具 $i$ 的 Banzhaf 值是：</p>
+<div class="math-display">$$
+\phi_i^{(g)}=
+\frac{1}{2^{|N|-1}}
+\sum_{S\subseteq N\setminus\{i\}}
+\left[v_g(S\cup\{i\})-v_g(S)\right].
+$$</div>
+<p>它把“在其他工具的每一种组合上加上 $i$”的收益等权平均。于是 debugger 单独没帮助，不意味着它在 analyzer / profiler 已出现时也没帮助。<strong>这个数不是关闭完整系统中该工具的一次消融差，也不应直接读成最终加速比。</strong><a href="https://arxiv.org/html/2605.26720v1#S3.SS4">§3.4，Eq.1</a></p>
+<p>正文 Eq.2 把两工具交互写成：</p>
+<div class="math-display">$$
+\sigma_{ij}=v(ij)-v(i)-v(j)+v(\emptyset).
+$$</div>
+<p>正值表示二者一起出现的收益超出单独收益相加；负值可能是冗余或干扰。作者选择 Banzhaf 的理由是反馈同时呈现，但数学上的实质区别是<strong>对联盟等权，而非 Shapley 的联盟大小加权</strong>；“没有呈现顺序”本身并不排除使用 Shapley。</p>
+<p><strong>复现前必须核对的定义差异</strong>：附录 Eq.7 在上式后额外减去 $\sigma_{dap}/3$，其中 Eq.8 定义</p>
+<div class="math-display">$$
+\sigma_{dap}=v(dap)-v(da)-v(dp)-v(ap)+v(d)+v(a)+v(p)-v(\emptyset).
+$$</div>
+<p>这是与正文 Eq.2 不同的两两交互口径。论文未清楚解释这一步修正的依据 <code>[?]</code>；不能把 Tables 4–7 中的两两交互直接当作正文式的数值，也不能把 Banzhaf 值和所有交互项随意相加当成总收益。最稳妥的复现材料应包含原始 8 个 $v_g(S)$，而不只是归因表。<a href="https://arxiv.org/pdf/2605.26720v1#page=18">Appendix B.3，PDF p.18</a></p>
+<h2 id="4-数据与设置-冻结的是参考轨迹-不是让四个模型各自重跑优化">4. 数据与设置：冻结的是参考轨迹，不是让四个模型各自重跑优化</h2>
+<p>主分析使用完整 <strong>PolyBench-ACC</strong>、NVIDIA <strong>RTX 4090</strong> 和 OpenEvolve。MINI_DATASET 用于正确性检查，SMALL 至 EXTRALARGE 用于性能评估；每个规模预热 3 次、测量 10 次，取<strong>各规模相对官方实现加速比的最小值</strong>作为整体改进。主图汇总 10 次独立运行，阴影为跨运行的 95% 置信区间。<a href="https://arxiv.org/html/2605.26720v1#A2.SS1">§4、Appendix B.1</a></p>
+<p>参考轨迹由 <strong>GLM-4.5-Air</strong> 生成。干预时分别用 DeepSeek-V3.2（关闭 thinking）、Qwen3-Coder-30B-A3B、DeepSeek-R1-0528、Qwen3-235B-A22B-32K 重新评估；作者把前两者视为弱推理组、后两者视为强推理组。这样减少了“模型恰好适应自己代码风格”的混杂，但作者也<strong>排除了接近最优、几乎没有反馈改进空间的轨迹</strong>，因此不是对任意生产状态的无偏抽样。</p>
+<p>参考演化是单 island、200 iterations；Table 2 仍设置 population size 25、archive size 12。<strong>单 island 不等于单个程序，200 iterations 也不等于主图的 0–7 共 8 个 generation。</strong> 论文没有在这里给出可核验的逐代总样本数与完整映射 <code>[?]</code>。</p>
+<p>指标需特别小心：一次执行按最高满足条件分为 <code>failed / compiled / pass / fast</code>；样本有最多 $k=5$ 次代码生成机会。正文描述总体成功为至少一次达到 pass 或 fast。附录图表还拆分结果类别，因而 <strong>pass 类别减少可能伴随 fast 增多，不能自动解释成正确率下降；compiled 类别为零也不表示所有程序都编译失败。</strong> 复现应同时保存互斥类别和累计“至少通过正确性检查”指标。<a href="https://arxiv.org/html/2605.26720v1#S3.SS3">§3.3、Appendix B.1–B.3</a></p>
+<h2 id="5-关键结果-反馈匹配比-先写一段计划-更重要">5. 关键结果：反馈匹配比“先写一段计划”更重要</h2>
+<h3 id="5-1-最强证据-规划与反馈的交叉对照">5.1 最强证据：规划与反馈的交叉对照</h3>
+<p>RQ0 交叉比较显式规划 $P$ 和反馈 $F$：Base 为 NP+NF，其余三组为 P+NF、NP+F、P+F。这里 NP 仍允许模型在代码生成中隐式规划，只是不单独调用 PlanAgent。</p>
+<p><strong>Figures 3–4 的主要现象</strong>：P+F 通常较好；P+NF 缺乏稳定收益。把计划替换为相似长度、固定格式的 DummyPlan，主要损害弱模型；将反馈在同代不同程序间随机交换，保留反馈量但破坏匹配，四种模型都明显受损。这个设计支持“收益需要有意义且匹配的证据”，而不仅是更多上下文 token。强模型对空计划相对不敏感，也说明显式计划文本不是在所有模型上都同样重要。<a href="https://arxiv.org/html/2605.26720v1#S4.SS1">§4.1、Appendix B.2</a></p>
+<p>一个可核查的定量例子来自 <strong>Table 3(a)，DeepSeek-V3.2，第 7 代</strong>：$\phi_P=0.095$，$\phi_F=0.015$，$\sigma_{FP}=0.430$。利用该两玩家游戏的 Eq.3–5，可由表内舍入值反推出：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>比较</th>
+<th style="text-align:right">对总体成功率的差值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>有反馈时增加规划：P+F − NP+F</td>
+<td style="text-align:right">约 <strong>+31.0 个百分点</strong></td>
+</tr>
+<tr>
+<td>无反馈时增加规划：P+NF − NP+NF</td>
+<td style="text-align:right">约 <strong>−12.0 个百分点</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>计算分别为 $\phi_P+\sigma_{FP}/2$ 与 $\phi_P-\sigma_{FP}/2$。<strong>这是笔记者依据表格计算的单代差值，不是论文报告的全任务平均提升。</strong> 它具体说明：同一个 planner，在不同反馈条件下可以从有害变成有益。</p>
+<p>也不能把正文的“持续正协同”照单全收：Table 3(d) 中 Qwen3-235B-A22B 第 2–4 代的 $\sigma_{FP}$ 分别为 <strong>−0.147、−0.026、−0.185</strong>。合理结论是存在重要交互，而非每代都正向协同。</p>
+<h3 id="5-2-工具组合有价值-但没有跨模型固定不变的贡献排名">5.2 工具组合有价值，但没有跨模型固定不变的贡献排名</h3>
+<p>RQ1 在固定 planner 下枚举 $d,a,p$ 的全部组合，分别观察 compiled、pass、fast。作者概括为结构分析帮助编译、profiling 帮助性能、debugging 常通过交互发挥作用；附录显示实际模式更不均匀。</p>
+<ul>
+<li><strong>正向例子</strong>：Table 4(a) 中，V3.2 第 0 代 analyzer 的 compiled 类别 Banzhaf 值为 <strong>0.222</strong>，高于 debugger / profiler 各 <strong>0.056</strong>，符合结构信息有用的解释。</li>
+<li><strong>反例与边界</strong>：同模型第 7 代，Table 4(b) 的 pass 三阶交互为 <strong>−0.500</strong>；Qwen3-Coder-30B 第 7 代的 compiled、fast 归因项均为零，但 pass 的 debugger 边际值为 <strong>−0.444</strong>（Table 5）。不能概括成“交互随代数单调增强”，也不能将某一结果类别上的零贡献推成工具完全无用。</li>
+</ul>
+<p>这些结果足以支持<strong>工具价值依赖状态和组合</strong>。至于负值究竟意味着信息干扰、结果类别迁移还是采样波动，需要原始 coalition 结果和相应区间；归因表没有为每个数附置信区间。<a href="https://arxiv.org/html/2605.26720v1#A2.SS3">§4.2、Tables 4–7</a></p>
+<h3 id="5-3-摘要改善反馈利用-强模型计划可以部分迁移">5.3 摘要改善反馈利用，强模型计划可以部分迁移</h3>
+<p>RQ2 比较 P+F、P+S 和 NP+S，主要支持弱模型更受益于摘要，以及摘要存在时显式规划仍有额外贡献。一个定义细节是 <strong>Appendix B.4 明确写 raw feedback 始终存在</strong>，因此 $S$ 应理解为摘要组件的开关，不能直接讲成“把原始报告完全替换成短摘要”。</p>
+<p>Table 8(a) 中，V3.2 第 7 代 $\phi_S=0.268$、$\phi_P=0.222$、$\sigma_{SP}=-0.177$。用同一两玩家公式反推，已有摘要时增加规划仍带来约 <strong>+13.4 个百分点</strong>的总体成功率差值。这支持摘要没有覆盖规划的全部收益；但摘要并非总是正向，Qwen3-Coder-30B 第 4、5 代的 $\phi_S$ 分别为 <strong>−0.050、−0.033</strong>。<a href="https://arxiv.org/html/2605.26720v1#A2.SS4">Figure 6、Table 8</a></p>
+<p>RQ3 将强模型计划注入弱模型的代码生成上下文，保持上下文长度和解码配置固定。Figure 7、Figures 21–22 显示弱模型通常优于自写计划，同家族传递收益更大，例如 R1 → V3.2；总体仍未稳定追平强模型。作者把个别“学生超过老师”解释为更保守地执行计划、减少错误，这是对 pass / fast 分布的解释，<strong>不是直接测得的行为机制</strong>。</p>
+<p>这里的 distillation 是<strong>推理时传递计划</strong>，没有 teacher–student 参数训练。实验支持计划可作为跨模型接口，不支持“弱模型已经学会强模型的推理能力”。<a href="https://arxiv.org/html/2605.26720v1#A2.SS5">§4.4、Appendix B.5</a></p>
+<h3 id="5-4-工程落地-cugedit-能提速-但不能把峰值当作全套任务结论">5.4 工程落地 CuGEdit：能提速，但不能把峰值当作全套任务结论</h3>
+<p>CuGEdit 是将分析转成策略的附录 case study：先要求正确；再用当前与参考 kernel 的基本块控制流图相似度 $s$ 判断阶段。四种 GraKeL 图核分数取平均，阈值设为 <strong>0.42</strong>：低相似度时注入参考程序的结构摘要，高相似度时提供当前程序的细粒度 profiling。强模型生成摘要和计划，弱模型写代码；昂贵摘要只在样本被选为参考且尚无摘要时生成，并缓存复用。<a href="https://arxiv.org/html/2605.26720v1#A5.SS2">Appendix E.2–E.3</a></p>
+<p>在 <strong>A800、KernelBench Level 3</strong> 上，Base 和 CuGEdit 都用 V3.2 生成代码，后者额外用 R1 规划。作者报告相对 <code>torch.compile</code> 的 <strong>2.08×–10.32×</strong> 加速，以及相对 Base 约 <strong>40% 更少的收敛迭代</strong>；预热 / 测量次数为 32 / 128，允许混合精度但做数值检查。<a href="https://arxiv.org/html/2605.26720v1#A5.SS4">Appendix E.4</a></p>
+<p><img src="../../assets/papers/CUDAnalyst-2605.26720/figure-29-kernelbench.png" alt="原文 Figure 29：CuGEdit 与 OpenEvolve、AI CUDA Engineer、CUDA-L1 的逐任务速度比较" /></p>
+<p><strong>Figure 29 应同时看峰值和不占优的柱子</strong>：浅绿色是 CuGEdit，虚线为 <code>torch.compile</code>；DeepNarrowMLP 标出 <strong>10.32×</strong>，但 VisionAttn 和 MinGPTBlk 上黄色 CUDA-L1 柱更高。原文称评估 50 个 Level 3 workload，图中只展示 <strong>17 个任务</strong>，且部分浅绿色柱低于 2.08×。所以 <strong>“50 个任务全部至少 2.08×”并未由这张图支持；区间具体覆盖哪些任务尚不清楚 <code>[?]</code></strong>，更不能将其当作平均加速。</p>
+<p>此外，作者承认其他方法使用各自设置下的最佳 kernel，KernelBench 此处只测单一输入 shape。CuGEdit 同时改变了反馈门控、摘要、强模型调用和缓存，没有把这些新增因素逐个拆开；迭代数减少也不等于总 token、GPU 时间或金额按同一比例下降。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-最有价值的迁移对象是决策点实验-而不是一套固定工具优先级">6.1 最有价值的迁移对象是决策点实验，而不是一套固定工具优先级</h3>
+<p><strong>证据</strong>：同一冻结状态下可以比较反馈组合，而不同模型 / generation 的贡献会变号。<strong>推理</strong>：如果要在自己的 coding agent 中决定是否保留某种日志，只统计整体“工具使用率”或“最终成功率”会掩盖状态依赖。<strong>行动</strong>：在真实任务中记录决策前完整状态，优先抽样卡住的修改点，配对重放“完整反馈 / 删除某项 / 错配某项”；先测局部效应，再做长期端到端验证。</p>
+<p>成本边界也与这个取样策略有关：Appendix D.3 的优势依赖只干预少量 checkpoint。若每代都干预，Eq.10 中 $V|C|$ 在 $|C|=D$ 时仍随 $VD$ 增长；不能无条件声称归因成本已经与搜索深度解耦。</p>
+<h3 id="6-2-模型如何利用反馈-与-我们怎样教它利用反馈-还没有完全拆开">6.2 “模型如何利用反馈”与“我们怎样教它利用反馈”还没有完全拆开</h3>
+<p><strong>证据</strong>：Prompt D.9–D.10 已明确要求跨工具关联与正确性优先；SummaryAgent 也会提出具体改法，而非只压缩字数。<strong>推理</strong>：观察到的协同可能同时来自模型能力、摘要中的建议和人工规定的处理顺序。固定 prompt 能保证组内比较，却不能证明结论对 prompt 不敏感。</p>
+<p><strong>我最想补的实验</strong>是：中性计划模板、原模板、去掉工具职责提示的模板，保持信息和预算相近，再比较贡献结构是否保留。RQ0 的错配反馈对照能证明内容匹配重要；它不能单独证明工具分工是模型内生、跨流程不变的规律。</p>
+<h3 id="6-3-局部有效的计划接口-不自动带来长期最优搜索">6.3 局部有效的计划接口，不自动带来长期最优搜索</h3>
+<p><strong>证据</strong>：主实验冻结了历史与隐式记忆；泛化分析主要固定 V3.2 evaluator，改变轨迹来源、参考选择机制和选定 workload。跨工作负载使用 NPB-GPU 的 3 个 kernel、XSBench 和 robust-kbench 的 4 个算子，不是后三套 benchmark 的全量覆盖（Table 9）。作者还用单个 Numba N-body 任务跨到 CPU，报告 R1 指导下 <strong>12.5× 峰值</strong>。<a href="https://arxiv.org/html/2605.26720v1#S5">§5、§6</a></p>
+<p><strong>推理</strong>：这些结果扩大了已观察到的适用范围，但当新计划会改变未来参考集、记忆和候选分布时，当前一步更好并不保证最终搜索更好。高相似度也可能意味着陷入局部最优，未必总应进入微调阶段。</p>
+<p><strong>行动</strong>：复现 CuGEdit 时，除固定预算下的最终速度，还应比较“相似度高且多轮无改进时重新探索”的策略，并纳入强模型计划、工具分析和图相似度计算的实际开销。论文支持尝试这个接口，尚不足以把 0.42 阈值与阶段规则直接当成通用默认值。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — Topic：把 agent 调试推进到可执行的决策点干预，补充仅看 trace 或最终成功率的评估方式。</li>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span> — Concept：将执行结果归因到反馈组件及其组合；关注的是固定状态的结构性归因，而非跨时间步奖励分配。</li>
+<li><a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> — 两者都从固定上下文做反事实重放；CAR 重采样动作并观察后续失败，CUDAnalyst 更换反馈并限制到当前代的执行结果。干预对象和时间范围不同，不能互相替代。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Who&When Pro：能找出 Agent 出错的位置，不等于解释了失败原因</span></a>
+<a class="paper-nav-link next" href="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">TACT: Mitigating Overthinking and Overacting in Coding Agents via Activation Steering</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Chong2026CUDAnalyst</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

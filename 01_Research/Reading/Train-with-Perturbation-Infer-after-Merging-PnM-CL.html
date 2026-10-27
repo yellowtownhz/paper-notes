@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Train with Perturbation, Infer after Merging</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Train with Perturbation, Infer after Merging</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-传统-cl-用当前任务最优参数做推理-为什么不用合并后的模型"><span class="toc-num">02</span> 2. 关键问题：传统 CL 用当前任务最优参数做推理，为什么不用合并后的模型？</a></li>
+<li><a class="toc-link" href="#3-数据集-5-个标准-cl-benchmark"><span class="toc-num">03</span> 3. 数据集：5 个标准 CL benchmark</a></li>
+<li><a class="toc-link" href="#4-关键方法-训练时扰动-推理时合并"><span class="toc-num">04</span> 4. 关键方法：训练时扰动，推理时合并</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-infer-after-merging">4.1 Infer after Merging</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-最优-α-的闭式解">4.2 最优 α 的闭式解</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-train-with-perturbation">4.3 Train with Perturbation</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-lora-p-m">4.4 LoRA-P&M</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-训练流程-algorithm-1">4.5 训练流程（Algorithm 1）</a></li>
+<li><a class="toc-link" href="#5-关键结果-p-m-在所有-benchmark-上显著提升"><span class="toc-num">05</span> 5. 关键结果：P&M 在所有 benchmark 上显著提升</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验结果">5.1 主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融实验">5.2 消融实验</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-loss-landscape-分析-figure-2">5.3 Loss Landscape 分析（Figure 2）</a></li>
+<li><a class="toc-link" href="#6-golden-case-imagenet-r-任务-4-合并的完整流程"><span class="toc-num">06</span> 6. Golden Case：ImageNet-R 任务 4 合并的完整流程</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-1-diagonal-fisher-近似有多准">疑问 1: Diagonal Fisher 近似有多准？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-2-扰动方向为什么一定是-task-vector">疑问 2: 扰动方向为什么一定是 task vector？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-3-α-的闭式解是否真的最优">疑问 3: α 的闭式解是否真的最优？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-4-扰动的方差增加会不会影响收敛">疑问 4: 扰动的方差增加会不会影响收敛？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-5-lora-rank-10-够用吗">疑问 5: LoRA rank=10 够用吗？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-6-为什么论文没有和-ema-对比">疑问 6: 为什么论文没有和 EMA 对比？</a></li>
+<li><a class="toc-link" href="#8-insights"><span class="toc-num">08</span> 8. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-对论文本身的-comments">8.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#8-3-研究品味">8.3 研究品味</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-14</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2505.22389" target="_blank">arXiv</a>
+    </div>
+    <h1>Train with Perturbation, Infer after Merging</h1>
+    <p class="authors">Haomiao Qiu, Miao Zhang, Ziyue Qiao, Liqiang Nie</p>
+    <div class="topic-row"><span class="topic-tag">Continual_Learning</span> <span class="topic-tag">Model_Merging</span> <span class="topic-tag">Task_Vector</span> <span class="topic-tag">PEFT</span></div>
+</header>
+
+<h1>论文笔记: Train with Perturbation, Infer after Merging</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: 邱浩淼¹², 张淼¹*, 乔子越²*, 聂立强¹</li>
+<li><strong>团队</strong>: ¹哈尔滨工业大学（深圳）, ²大湾区大学</li>
+<li><strong>发表时间</strong>: 2025年5月28日</li>
+<li><strong>论文编号</strong>: arXiv:2505.22389</li>
+<li><strong>领域</strong>: 机器学习 (cs.LG)</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-传统-cl-用当前任务最优参数做推理-为什么不用合并后的模型">2. 关键问题：传统 CL 用当前任务最优参数做推理，为什么不用合并后的模型？</h2>
+<p>传统持续学习的方法有个&quot;默认设置&quot;：任务 t 训练完后，直接用 $\theta_t^*$ 做所有任务的推理。但这个参数只在当前任务上优化过，对之前的任务早就&quot;跑偏&quot;了。</p>
+<p>更有意思的是，持续学习和模型合并这两个领域目标相同（多任务统一模型），但流程完全不兼容：</p>
+<ul>
+<li><strong>传统 CL</strong>：$\theta_t^* = \theta_{t-1} + \Delta\theta_t^*$，顺序训练，但推理用当前参数</li>
+<li><strong>模型合并</strong>：$\theta_t^* = \theta_0 + \Delta\theta_t^*$，独立训练后合并，但没法做 CL——CL 的前提是顺序训练，数据不能回头</li>
+</ul>
+<p>那问题来了：能不能把 CL 的训练动态和模型合并的推理原则结合起来？</p>
+<h2 id="3-数据集-5-个标准-cl-benchmark">3. 数据集：5 个标准 CL benchmark</h2>
+<p>训练数据和评估数据都遵循 prior work [35, 23] 的协议：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>任务数</th>
+<th>类别数</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ImageNet-R</td>
+<td>5/10/20</td>
+<td>200</td>
+<td>分布外泛化测试</td>
+</tr>
+<tr>
+<td>ImageNet-A</td>
+<td>10</td>
+<td>200</td>
+<td>对抗样本</td>
+</tr>
+<tr>
+<td>DomainNet</td>
+<td>5</td>
+<td>345/200*</td>
+<td>域迁移（DN* 是 200 类子集）</td>
+</tr>
+<tr>
+<td>CIFAR100</td>
+<td>10</td>
+<td>100</td>
+<td>经典分类</td>
+</tr>
+<tr>
+<td>CUB200</td>
+<td>10</td>
+<td>200</td>
+<td>细粒度分类</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>评估指标</strong>：</p>
+<ul>
+<li><strong>Acc</strong>：所有任务训练完后，在全部任务上的平均准确率</li>
+<li><strong>AAA (Average Anytime Accuracy)</strong>：每学完一个任务后在所有已见任务上的平均准确率，再取平均——capture 学习动态</li>
+</ul>
+<p><strong>Backbone</strong>：ViT-B/16，ImageNet-21K 预训练 + ImageNet-1K 微调</p>
+<h2 id="4-关键方法-训练时扰动-推理时合并">4. 关键方法：训练时扰动，推理时合并</h2>
+<p>P&amp;M 做的事情就两件：</p>
+<ol>
+<li><strong>推理时做合并</strong>：训练完任务 t 后，把旧推理参数 $\hat{\theta}_{t-1}$ 和当前任务参数 $\theta_t^*$ 做凸组合</li>
+<li><strong>训练时加扰动</strong>：在训练过程中沿着任务向量方向随机扰动参数</li>
+</ol>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>训练</th>
+<th>推理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>传统 CL</td>
+<td>$\theta_t^* = \theta_{t-1} + \Delta\theta_t^*$</td>
+<td>$\hat{\theta}_t = \theta_t^*$</td>
+</tr>
+<tr>
+<td>模型合并</td>
+<td>$\theta_t^* = \theta_0 + \Delta\theta_t^*$</td>
+<td>$\hat{\theta}_t = \sum_{i=1}^t \alpha_i\theta_i^*$</td>
+</tr>
+<tr>
+<td><strong>P&amp;M</strong></td>
+<td>$\theta_t^* = \hat{\theta}_{t-1} + \Delta\theta_t^*$</td>
+<td>$\hat{\theta}_t = \hat{\theta}_{t-1} + \alpha_t\Delta\theta_t^*$</td>
+</tr>
+</tbody>
+</table></div>
+<p>注意到了吗？P&amp;M 继承了 CL 的顺序训练动态，但在推理时引入了模型合并的思路。</p>
+<h3 id="4-1-infer-after-merging">4.1 Infer after Merging</h3>
+<p><strong>核心公式</strong>（Eq. 3-4）：
+$$\hat{\theta}_t = (1 - \alpha_t)\hat{\theta}_{t-1} + \alpha_t \theta_t^* = \hat{\theta}_{t-1} + \alpha_t \Delta\theta_t^*$$</p>
+<p>其中 $\Delta\theta_t^* = \theta_t^* - \hat{\theta}_{t-1}$ 是任务向量。凸组合等价于对任务向量做缩放——缩放不会破坏 $\hat{\theta}_{t-1}$（旧任务的参数），只是减弱 $\Delta\theta_t^*$ 对旧参数的干扰。</p>
+<p><strong>关键问题</strong>：α 取多少最合适？</p>
+<h3 id="4-2-最优-α-的闭式解">4.2 最优 α 的闭式解</h3>
+<p>定义&quot;性能下降&quot; $\delta_i$ 为合并后的模型在任务 i 上的 loss 相对于任务最优 $\theta_i^*$ 的增量（Eq. 5）：
+$$\delta_i = \mathcal{L}_i(\hat{\theta}_t) - \mathcal{L}_i(\theta_i^*)$$</p>
+<p>在 $\theta_i^*$ 处做 Taylor 展开（Eq. 6），一阶项在最优点趋于 0：
+$$\delta_i \approx \frac{1}{2}(\hat{\theta}_t - \theta_i^*)^\top \mathbf{H}_i(\theta_i^*)(\hat{\theta}_t - \theta_i^*)$$</p>
+<p>最小化 $\sum_{i=1}^t \delta_i$，对 α 求导 = 0，得到闭式解（Eq. 8）：
+$$\alpha_t^* = -\frac{\sum_{i=1}^t (\hat{\theta}_{t-1} - \theta_i^*)^\top \mathbf{H}_i \Delta\theta_t^*}{\sum_{i=1}^t \Delta\theta_t^{*\top} \mathbf{H}_i \Delta\theta_t^*}$$</p>
+<p>实际实现用对角经验 Fisher 信息矩阵近似 Hessian（Eq. 9-10）：
+$$\hat{\mathbf{F}}(\theta) = \frac{1}{N}\sum_{i=1}^N \nabla_\theta \log p_\theta(y_i|x_i) \nabla_\theta \log p_\theta(y_i|x_i)^\top$$</p>
+<p>只存对角线元素，每个任务训练完后算一次 Fisher，供后续 α 计算使用。</p>
+<h3 id="4-3-train-with-perturbation">4.3 Train with Perturbation</h3>
+<p>合并后模型还是会比各任务最优模型差一点——因为存在&quot;参数冲突&quot;。但有个关键观察（Eq. 11-12）：合并后总损失增量的上界中，只有最后一项 $\delta_t(\alpha_t^*) = \Delta\theta_t^{*\top} \mathbf{H}_t \Delta\theta_t^*$ 能在当前任务 t 的训练中优化。</p>
+<p><strong>朴素想法</strong>：把这项当正则化加到 loss 里。但 Hessian 计算太贵，而且训练时参数远没到最优，Fisher 近似不靠谱。</p>
+<p><strong>关键 trick</strong>：用对称有限差分近似这个二次型（Eq. 13）：
+$$\Delta\theta_t^\top \mathbf{H}_t \Delta\theta_t \approx \frac{1}{\epsilon^2}\left[\mathcal{L}_t(\theta_t + \epsilon\Delta\theta_t) + \mathcal{L}_t(\theta_t - \epsilon\Delta\theta_t) - 2\mathcal{L}_t(\theta_t)\right]$$</p>
+<p>问题是这样需要 3 次 forward pass。但作者发现：<strong>这个近似可以变成随机扰动！</strong></p>
+<p>每个 batch 以概率 $p_0$ 用原始参数，以概率 $p_+$ 用 $\theta + \epsilon\Delta\theta_t$，以概率 $p_-$ 用 $\theta - \epsilon\Delta\theta_t$。期望值无偏，但每个 batch 只需要一次 forward（Eq. 15-16）。</p>
+<p>实验中设 $p_0 = p_+ = p_- = \frac{1}{3}$，$\epsilon = 0.5$。</p>
+<p><strong>直觉理解</strong>：训练时偶尔沿着 task vector 方向&quot;晃一晃&quot;参数，让模型学会在这个方向上保持稳定。这样合并时，task vector 的干扰就小了。</p>
+<h3 id="4-4-lora-p-m">4.4 LoRA-P&amp;M</h3>
+<p>存所有 $\theta_i^*$ 的 Fisher 信息内存开销大。解决方案是结合 LoRA：每个任务只训练低秩矩阵 $A_t, B_t$：
+$$\theta_t = \hat{\theta}_{t-1} + \mathbf{A}_t\mathbf{B}_t$$</p>
+<p>只需要存 LoRA 参数的 Fisher（rank=10 的两个小矩阵），大幅减少存储。</p>
+<p><strong>LoRA 配置</strong>：</p>
+<ul>
+<li>插入位置：key 和 value projection</li>
+<li>Rank = 10</li>
+</ul>
+<h3 id="4-5-训练流程-algorithm-1">4.5 训练流程（Algorithm 1）</h3>
+<pre><code>for t = 1 to T:
+    # Train with Perturbation
+    冻结 θ̂_{t-1}，初始化新的 LoRA_t
+    for each batch:
+        随机选扰动 ε̃ ∈ {-0.5, 0, +0.5}，各 1/3 概率
+        计算 loss = L_ce(θ̂_{t-1} + (1+ε̃)LoRA_t)
+        更新 LoRA_t
+
+    # Infer after Merging
+    θ_t* = θ̂_{t-1} + LoRA_t
+    计算 diagonal Fisher F_t(θ_t*)
+    α_t* = 闭式解
+    θ̂_t = θ̂_{t-1} + α_t* LoRA_t
+</code></pre>
+<h2 id="5-关键结果-p-m-在所有-benchmark-上显著提升">5. 关键结果：P&amp;M 在所有 benchmark 上显著提升</h2>
+<h3 id="5-1-主实验结果">5.1 主实验结果</h3>
+<p><strong>Table 2: ImageNet-R 上与 CL 方法对比</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>INR-5 Acc</th>
+<th>INR-5 AAA</th>
+<th>INR-10 Acc</th>
+<th>INR-10 AAA</th>
+<th>INR-20 Acc</th>
+<th>INR-20 AAA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Fine-Tuning</td>
+<td>64.92±0.87</td>
+<td>75.57±0.50</td>
+<td>60.57±1.06</td>
+<td>72.31±1.09</td>
+<td>49.95±1.31</td>
+<td>65.32±0.84</td>
+</tr>
+<tr>
+<td>L2P</td>
+<td>73.04±0.71</td>
+<td>76.94±0.41</td>
+<td>71.26±0.44</td>
+<td>76.13±0.46</td>
+<td>68.97±0.51</td>
+<td>74.16±0.32</td>
+</tr>
+<tr>
+<td>InfLoRA</td>
+<td>76.95±0.23</td>
+<td>81.81±0.14</td>
+<td>74.75±0.64</td>
+<td>80.67±0.55</td>
+<td>69.89±0.56</td>
+<td>76.68±0.57</td>
+</tr>
+<tr>
+<td>SD-LoRA</td>
+<td>79.15±0.20</td>
+<td>83.01±0.42</td>
+<td>77.34±0.35</td>
+<td>82.04±0.24</td>
+<td>75.26±0.37</td>
+<td>80.22±0.72</td>
+</tr>
+<tr>
+<td>LoRA (baseline)</td>
+<td>71.22±1.47</td>
+<td>78.15±1.08</td>
+<td>65.72±0.75</td>
+<td>76.14±0.96</td>
+<td>56.35±0.80</td>
+<td>71.08±1.04</td>
+</tr>
+<tr>
+<td><strong>LoRA-P&amp;M</strong></td>
+<td><strong>81.47±0.56</strong></td>
+<td><strong>85.96±0.52</strong></td>
+<td><strong>79.95±0.18</strong></td>
+<td><strong>85.29±0.93</strong></td>
+<td><strong>76.37±0.09</strong></td>
+<td><strong>82.77±0.71</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ul>
+<li>相比 LoRA baseline：INR-10 提升 <strong>+14.23%</strong>，INR-20 提升 <strong>+20.02%</strong></li>
+<li>相比 SOTA SD-LoRA：INR-5 提升 <strong>+2.32%</strong>，INR-20 提升 <strong>+1.11%</strong></li>
+</ul>
+<p><strong>Table 3: 与 Model Merging 方法对比</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>INR-10</th>
+<th>INR-20</th>
+<th>INA-10</th>
+<th>DN*-5</th>
+<th>C100-10</th>
+<th>CUB-10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoRA</td>
+<td>65.72</td>
+<td>56.35</td>
+<td>44.41</td>
+<td>71.81</td>
+<td>72.58</td>
+<td>64.82</td>
+</tr>
+<tr>
+<td>w/ Model Averaging</td>
+<td>76.90</td>
+<td>74.64</td>
+<td>54.54</td>
+<td>81.84</td>
+<td>87.52</td>
+<td>74.87</td>
+</tr>
+<tr>
+<td>w/ DARE</td>
+<td>75.09</td>
+<td>66.03</td>
+<td>55.87</td>
+<td>80.58</td>
+<td>87.28</td>
+<td>76.57</td>
+</tr>
+<tr>
+<td>w/ CoMA</td>
+<td>79.34</td>
+<td>75.60</td>
+<td>53.24</td>
+<td>83.98</td>
+<td>86.95</td>
+<td>74.65</td>
+</tr>
+<tr>
+<td>w/ CoFIMA</td>
+<td>79.06</td>
+<td>75.09</td>
+<td>54.09</td>
+<td>83.85</td>
+<td>86.58</td>
+<td>74.43</td>
+</tr>
+<tr>
+<td><strong>w/ P&amp;M</strong></td>
+<td><strong>79.95</strong></td>
+<td><strong>76.37</strong></td>
+<td><strong>56.57</strong></td>
+<td><strong>84.71</strong></td>
+<td><strong>88.45</strong></td>
+<td><strong>78.29</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>P&amp;M 超越所有 Merging 方法，因为 CL 顺序训练让参数沿着更优轨迹走。</p>
+<h3 id="5-2-消融实验">5.2 消融实验</h3>
+<p><strong>Table 4: 扰动方向的重要性</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>INR-10</th>
+<th>INR-20</th>
+<th>INA-10</th>
+<th>DN*-5</th>
+<th>C100-10</th>
+<th>CUB-10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LoRA</td>
+<td>65.72</td>
+<td>56.35</td>
+<td>44.41</td>
+<td>71.81</td>
+<td>72.58</td>
+<td>64.82</td>
+</tr>
+<tr>
+<td>LoRA-M（仅合并无扰动）</td>
+<td>78.35</td>
+<td>74.26</td>
+<td>56.16</td>
+<td>81.28</td>
+<td>86.57</td>
+<td>74.98</td>
+</tr>
+<tr>
+<td>LoRA-M w/ 高斯噪声</td>
+<td>78.48</td>
+<td>74.13</td>
+<td>49.51</td>
+<td>83.00</td>
+<td>85.83</td>
+<td>74.09</td>
+</tr>
+<tr>
+<td><strong>LoRA-P&amp;M</strong></td>
+<td><strong>79.95</strong></td>
+<td><strong>76.37</strong></td>
+<td><strong>56.57</strong></td>
+<td><strong>84.71</strong></td>
+<td><strong>88.45</strong></td>
+<td><strong>78.29</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>：</p>
+<ul>
+<li>合并本身带来巨大提升（LoRA → LoRA-M: +12.63% on INR-10）</li>
+<li>任务向量方向扰动优于随机噪声（INA-10: 56.57 vs 49.51）</li>
+<li>扰动 + 合并的完整 P&amp;M 效果最好</li>
+</ul>
+<h3 id="5-3-loss-landscape-分析-figure-2">5.3 Loss Landscape 分析（Figure 2）</h3>
+<p><img src="https://arxiv.org/html/2505.22389v4/x2.png" alt="Figure 2: ImageNet-R 和 CUB 上合并后模型的损失景观可视化，展示缩放和扰动对损失盆地的影响" /></p>
+<p>四个关键观察：</p>
+<ol>
+<li><strong>Scaling 减少遗忘，对塑性影响小</strong>：P&amp;M 保持和 LoRA 相近的新任务性能，但旧任务遗忘显著减少</li>
+<li><strong>凸组合在低损失区域</strong>：$\hat{\theta}_{t-1}$ 和 $\theta_t^*$ 之间的直线路径一直在低损失区域</li>
+<li><strong>最优 α 找到低损失点</strong>：理论推导的 α* 确实落在 loss landscape 的低谷</li>
+<li><strong>扰动扩大平坦区域</strong>：加入扰动后，合并点周围的低损失盆地变宽变平</li>
+</ol>
+<h2 id="6-golden-case-imagenet-r-任务-4-合并的完整流程">6. Golden Case：ImageNet-R 任务 4 合并的完整流程</h2>
+<p>假设我们在做 ImageNet-R 10 任务设置，当前到了第 4 个任务。</p>
+<p><strong>输入状态</strong>：</p>
+<ul>
+<li>任务 1-3 已学完，推理模型为 $\hat{\theta}_3$</li>
+<li>任务 4 数据：$D_4 = \{(x_i^4, y_i^4)\}$</li>
+<li>$\hat{\theta}_3$ 在任务 1-3 上表现好，但对任务 4 没知识</li>
+</ul>
+<p><strong>处理流程</strong>：</p>
+<p>Step 1: 初始化 LoRA_4</p>
+<ul>
+<li>从 $\hat{\theta}_3$ 开始，插入新的 LoRA 模块 $(A_4, B_4)$</li>
+<li>此时 $\theta_4 = \hat{\theta}_3 + A_4 B_4 \approx \hat{\theta}_3$（LoRA 初始为 0）</li>
+</ul>
+<p>Step 2: Train with Perturbation</p>
+<ul>
+<li>每个 batch:
+<ul>
+<li>采样扰动 $\tilde{\epsilon} \in \{-0.5, 0, +0.5\}$，各 1/3 概率</li>
+<li>计算 loss = CrossEntropy($\hat{\theta}_3 + (1+\tilde{\epsilon}) \cdot A_4 \cdot B_4$; $x_i^4, y_i^4$)</li>
+<li>反向传播更新 $A_4, B_4$</li>
+</ul>
+</li>
+<li>直觉：训练时偶尔把 LoRA 参数放大/缩小 0.5 倍，让模型学会在 task vector 方向上不敏感</li>
+</ul>
+<p>Step 3: 训练结束，得到任务最优</p>
+<ul>
+<li>$\theta_4^* = \hat{\theta}_3 + A_4 \cdot B_4$</li>
+<li>此时 $\theta_4^*$ 在任务 4 上最优，但对任务 1-3 可能遗忘</li>
+</ul>
+<p>Step 4: 计算 Fisher 矩阵</p>
+<ul>
+<li>在 $D_4$ 上计算 diagonal empirical Fisher: $F_4(\theta_4^*) = \frac{1}{N} \sum \nabla_\theta \log p(y|x) \odot \nabla_\theta \log p(y|x)$</li>
+<li>只存 LoRA 参数的 Fisher</li>
+</ul>
+<p>Step 5: 计算最优 α</p>
+<ul>
+<li>用闭式解计算 $\alpha_4^*$</li>
+<li>假设算出 $\alpha_4^* = 0.7$</li>
+</ul>
+<p>Step 6: 合并得到推理模型</p>
+<ul>
+<li>$\hat{\theta}_4 = \hat{\theta}_3 + 0.7 \times \text{LoRA}_4$</li>
+<li>相当于把任务 4 的知识融入 70%，保留旧知识</li>
+</ul>
+<p><strong>最终效果</strong>：</p>
+<ul>
+<li>$\hat{\theta}_4$ 用于任务 1-4 的推理</li>
+<li>相比直接用 $\theta_4^*$，旧任务遗忘减少</li>
+<li>相比不用扰动，合并更平滑</li>
+</ul>
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<h3 id="疑问-1-diagonal-fisher-近似有多准">疑问 1: Diagonal Fisher 近似有多准？</h3>
+<ul>
+<li><strong>我的理解</strong>：论文用对角 Fisher 近似 Hessian，省计算。但 Fisher 等于 Hessian 的期望是在 $N \to \infty$ 且模型最优时才成立，而且 Hessian 的非对角元素包含参数间交互信息，丢弃可能影响 α* 的准确性。</li>
+<li><strong>想搞清楚</strong>：有没有实验对比 diagonal vs full Fisher？或者和其他 curvature 近似方法（如 K-FAC）对比？</li>
+<li><strong>Reviewer 回应</strong>：[?] 论文没有给出对比实验。但对于&quot;找最优 α&quot;这个目的，对角近似已经够用了（实验证明）。</li>
+</ul>
+<h3 id="疑问-2-扰动方向为什么一定是-task-vector">疑问 2: 扰动方向为什么一定是 task vector？</h3>
+<ul>
+<li><strong>我的理解</strong>：论文说扰动方向必须是 task vector 方向才有效，随机高斯噪声效果差。</li>
+<li><strong>想搞清楚</strong>：有没有理论分析说明 task vector 方向的扰动为什么能近似 Hessian-related 正则项？</li>
+<li><strong>Reviewer 回应</strong>：任务向量方向是训练优化方向，也是 loss 变化最敏感的方向。在这个方向扰动，相当于让模型在&quot;学到的方向&quot;上保持稳定。随机噪声在很多不敏感方向扰动，效果自然差。[?] 但论文没有理论证明这一点，只是消融实验验证。</li>
+</ul>
+<h3 id="疑问-3-α-的闭式解是否真的最优">疑问 3: α 的闭式解是否真的最优？</h3>
+<ul>
+<li><strong>我的理解</strong>：推导基于 Taylor 展开，假设 $\theta_i^*$ 是局部最优（梯度≈0），三阶项可忽略。但实际训练可能没收敛到真正的最优点；当 α 较小时，$\hat{\theta}_t$ 和旧任务最优可能差得较远，三阶项还能忽略吗？</li>
+<li><strong>想搞清楚</strong>：有没有实验验证闭式解 α* vs 网格搜索找到的真正最优 α？实验中观察到的 α 值分布是怎样的？</li>
+<li><strong>Reviewer 回应</strong>：[?] 论文应该做一个实验：用网格搜索找真正的最优 α，和闭式解对比。建议论文报告实验中观察到的 α 分布。</li>
+</ul>
+<h3 id="疑问-4-扰动的方差增加会不会影响收敛">疑问 4: 扰动的方差增加会不会影响收敛？</h3>
+<ul>
+<li><strong>我的理解</strong>：论文只说期望无偏，方差&quot;略有增加&quot;但没给具体数据。理论上方差太大会导致训练不稳定。</li>
+<li><strong>想搞清楚</strong>：实验中是否观察到方差相关的训练问题？有没有考虑方差缩减的技巧？</li>
+<li><strong>Reviewer 回应</strong>：[?] 论文没给数据，这是个实际工程问题。</li>
+</ul>
+<h3 id="疑问-5-lora-rank-10-够用吗">疑问 5: LoRA rank=10 够用吗？</h3>
+<ul>
+<li><strong>我的理解</strong>：论文用 rank=10 的 LoRA，只用在 key/value projection，总参数量不大。如果任务比较复杂，秩 10 可能不够表达。</li>
+<li><strong>想搞清楚</strong>：有没有不同 rank 的消融实验？</li>
+<li><strong>Reviewer 回应</strong>：[?] 论文没有 rank 消融实验。但论文效果已经很好，说明至少在这些任务上够用。</li>
+</ul>
+<h3 id="疑问-6-为什么论文没有和-ema-对比">疑问 6: 为什么论文没有和 EMA 对比？</h3>
+<ul>
+<li><strong>我的理解</strong>：P&amp;M 的合并系数 α 是任务级别的优化，用闭式解算，考虑了所有历史任务的 Fisher 信息。EMA 是参数级别的动量，没有考虑任务的 curvature 信息。理论上 P&amp;M 更优，但 EMA 不需要存历史 Fisher，更轻量。</li>
+<li><strong>想搞清楚</strong>：论文应该做这个对比实验。</li>
+</ul>
+<h2 id="8-insights">8. Insights</h2>
+<h3 id="8-1-对论文本身的-comments">8.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的点</strong>：</p>
+<ol>
+<li>
+<p><strong>训练时扰动不增加计算量</strong>：这个 trick 很妙。朴素做法需要 3× forward（原始 + 两个扰动点），但随机采样让每个 batch 只需要 1× forward。无偏估计 + 方差可控，这个设计很聪明。从方法论角度理解，这是&quot;参数空间的 data augmentation&quot;——在参数空间而非数据空间做增强。</p>
+</li>
+<li>
+<p><strong>CL + Model Merging 的结合不是简单拼接</strong>：之前的直觉可能是&quot;先 CL 训练，再用 Merging 后处理&quot;。但论文发现 Merging 的效果受训练过程影响——如果训练时没考虑后续要合并，合并时冲突就大。Train with Perturbation 本质是&quot;为更好的合并而训练&quot;。</p>
+</li>
+<li>
+<p><strong>这个思路转变很关键</strong>：传统 CL 方法（EWC、replay、架构方法）都在训练阶段&quot;防守&quot;，试图让参数不走偏。P&amp;M 说：不管你怎么防守，训练完参数总是偏的。那不如训练照常，推理时用数学方法把偏掉的参数&quot;修正&quot;回来。从&quot;预防&quot;变成&quot;治疗&quot;。</p>
+</li>
+</ol>
+<p><strong>让我想不到的点</strong>：</p>
+<ul>
+<li>Loss landscape 可视化（Figure 2）很漂亮地验证了理论推导。凸组合路径确实在低损失区域，α* 确实落在最低点附近。这种 theory + visualization 的闭环很少见。</li>
+<li>Task vector 方向扰动 vs 随机噪声的对比（Table 4）是关键实验，说明&quot;方向&quot;比&quot;扰动&quot;本身重要。任务向量方向是 loss 变化最敏感的方向——因为训练就是沿着这个方向优化的。在这个方向上加扰动，相当于问模型&quot;你学到的这个方向稳固吗？&quot;</li>
+</ul>
+<p><strong>做得不好的地方</strong>：</p>
+<ul>
+<li>没有对比 EMA、moving average 这些更简单的方案。论文说&quot;不同于 EMA&quot;，但没有实验证明 EMA 就一定差。</li>
+<li>没有 Fisher 近似质量的消融实验，只说用 diagonal Fisher，但没有实验验证这个近似的误差。</li>
+<li>LoRA rank 选择没有消融。rank=10 是拍脑袋还是实验得出？</li>
+<li>扰动的方差分析缺失，只说&quot;variance may increase slightly&quot;。</li>
+<li>所有实验都是 ViT + 分类任务，没有 NLP 或其他模态的验证。</li>
+</ul>
+<h3 id="8-3-研究品味">8.3 研究品味</h3>
+<p><strong>&quot;为更好的合并而训练&quot;——一个通用范式</strong>：</p>
+<p>Train with Perturbation 的本质是：既然推理时要合并，那训练时就为合并做准备。这让我想到 Agent 领域的 &quot;Train with Environment&quot;——既然部署时要与环境交互，那训练时就模拟环境。</p>
+<p>背后的逻辑是：<strong>推理/融合阶段遇到的问题，可以提前到训练阶段解决</strong>。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推理阶段问题</th>
+<th>训练阶段准备</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P&amp;M</td>
+<td>参数合并时有冲突</td>
+<td>沿任务向量扰动，让参数在合并方向上稳定</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>与环境交互时泛化差</td>
+<td>训练时模拟环境，学习环境适应能力</td>
+</tr>
+</tbody>
+</table></div>
+<p>这个思路可推广：任何需要在推理时&quot;组装&quot;或&quot;适应&quot;的场景，都可以问一句——训练时能不能为这个组装/适应做准备？</p>
+<p><strong>&quot;把两个领域的痛点互相解决&quot;的思路</strong>：</p>
+<ul>
+<li>CL 的痛点：推理用当前任务参数，对旧任务不友好</li>
+<li>Model Merging 的痛点：要求独立训练，无法用于顺序学习场景</li>
+<li>论文发现：CL 的顺序训练让参数在更好的轨迹上（相比独立训练），而 Merging 的 post-hoc 组合机制可以借过来用</li>
+</ul>
+<p>这个思路可复用：当看到两个领域目标相同但流程不同时，思考——能否把 A 的流程优势嵌入 B？关键是找到两个流程的&quot;接口&quot;，这里就是&quot;训练结束后的模型参数&quot;。</p>
+<p><strong>复杂公式的高效近似</strong>：</p>
+<ul>
+<li>Hessian 难算 → 用 Fisher</li>
+<li>二次型难算 → 用有限差分</li>
+<li>3× 前向传播太慢 → 用随机采样</li>
+<li>每一步近似都保持了无偏性，同时大幅降低计算开销</li>
+</ul>
+<p><strong>Loss landscape 可视化作为诊断工具</strong>：Figure 2 不只是好看，它直接回答了&quot;凸组合为什么行&quot;和&quot;扰动为什么有用&quot;两个核心问题。推导出来的 α* 是否真的落在低损失区域？用图说话。</p>
+<h2 id="9-总结">9. 总结</h2>
+<ul>
+<li>
+<p><strong>核心创新</strong>：把 Model Merging 的 post-training 组合机制引入 CL 流程，同时设计 task-vector-aligned 扰动让模型&quot;为更好的合并而训练&quot;。最有价值的一点是&quot;推理时补救&quot;的思路——承认训练会遗忘，但在推理时通过参数缩放来缓解。</p>
+</li>
+<li>
+<p><strong>局限性</strong>：</p>
+<ul>
+<li>理论假设强（Fisher 近似 Hessian、忽略三阶项、对角 Fisher）</li>
+<li>需要存储历史 Fisher 矩阵，任务数很多时仍有内存压力（假设 ViT-B/16 约 86M 参数，20 个任务的对角 Fisher 约 6.88 GB）</li>
+<li>只在 ViT 分类任务上验证，泛化性待考察</li>
+<li>扰动的方差分析缺失</li>
+</ul>
+</li>
+<li>
+<p><strong>改进方向</strong>：</p>
+<ul>
+<li>探索更精确但高效的 curvature 近似（如 K-FAC）</li>
+<li>做闭式解 α* vs 网格搜索真正最优 α 的对比实验</li>
+<li>与 EMA 的对比实验</li>
+<li>扩展到 LLM 的 CL 场景</li>
+</ul>
+</li>
+</ul>
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li>
+<p><strong>知识地图</strong>: <span class="wikilink unresolved" title="MOC-模型融合">MOC-模型融合</span></p>
+</li>
+<li>
+<p><strong>相关工作</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a>: 同样关注持续学习中的灾难性遗忘问题，但用自蒸馏思路（on-policy 演示学习）；P&amp;M 用模型合并思路，两者目标相同但方法不同，可以视为互补方向</li>
+</ul>
+</li>
+<li>
+<p><strong>技术关联</strong>: P&amp;M 的 Fisher 矩阵近似与 EWC (Elastic Weight Consolidation) 有关联，但用法不同——EWC 在训练时约束参数，P&amp;M 在推理时用它计算最优合并系数。</p>
+</li>
+<li>
+<p><strong>潜在应用</strong>: 如果做 LLM 的持续学习（如不断注入新知识），P&amp;M + LoRA 是一个值得尝试的 baseline。相比 SDFT 需要演示数据，P&amp;M 只需要计算 Fisher，更轻量。</p>
+</li>
+<li>
+<p><strong>相关 MOC</strong>:</p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span></li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Policy_Gradient_with_Adaptive_Entropy_Annealing-aEPG.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Policy Gradient with Adaptive Entropy Annealing for Continual Fine-Tuning</span></a>
+<a class="paper-nav-link next" href="Tracing-Provenance-in-LLM-Reasoning-Distillation.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Where Did This Sentence Come From? Tracing Provenance in LLM Reasoning Distillation</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Qiu2025PM</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

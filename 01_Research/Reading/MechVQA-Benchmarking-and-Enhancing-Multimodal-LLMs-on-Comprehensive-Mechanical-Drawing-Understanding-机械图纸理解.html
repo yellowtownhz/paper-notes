@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MechVQA: Benchmarking and Enhancing Multimodal LLMs on Comprehensive Mechanical Drawing Understanding</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">MechVQA: Benchmarking and Enhancing Multimodal LLMs on Comprehensive Mechanical Drawing Understanding</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-读出了剖面字母-是否真的找对了剖切位置"><span class="toc-num">02</span> 2. 关键问题：读出了剖面字母，是否真的找对了剖切位置？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先保证题目有据可答-再训练模型把依据用对"><span class="toc-num">03</span> 3. 关键方法：先保证题目有据可答，再训练模型把依据用对</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-数据构造-模型共识之前-需要专家纠正图纸事实">3.1 数据构造：模型共识之前，需要专家纠正图纸事实</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-沿-c-c-案例走完训练与推理">3.2 沿 C–C 案例走完训练与推理</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-奖励究竟在教什么">3.3 奖励究竟在教什么？</a></li>
+<li><a class="toc-link" href="#4-数据与评分-要分清论文集合-公开包和分数含义"><span class="toc-num">04</span> 4. 数据与评分：要分清论文集合、公开包和分数含义</a></li>
+<li><a class="toc-link" href="#5-关键结果-rl-补上部分推理短板-但最弱能力没有消失"><span class="toc-num">05</span> 5. 关键结果：RL 补上部分推理短板，但最弱能力没有消失</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-领域后训练有效-比较对象的训练条件也不同">5.1 领域后训练有效，比较对象的训练条件也不同</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-两阶段训练的收益明确-收益归因仍需更强控制">5.2 两阶段训练的收益明确，收益归因仍需更强控制</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-奖励会改变回答长度-但长度曲线不是推理机制证明">5.3 奖励会改变回答长度，但长度曲线不是推理机制证明</a></li>
+<li><a class="toc-link" href="#6-insights-下一步应该验证什么"><span class="toc-num">06</span> 6. Insights：下一步应该验证什么？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.30794v2" target="_blank">arXiv</a>
+    </div>
+    <h1>MechVQA: Benchmarking and Enhancing Multimodal LLMs on Comprehensive Mechanical Drawing Understanding</h1>
+    <p class="authors">Qian Kou, Xiaofeng Shi, Yulin Li, Xiaosong Qiu, Xinyang Wang, Hua Zhou, Cao Dongxing</p>
+    <div class="topic-row"><span class="topic-tag">Mechanical_Drawing_Understanding</span> <span class="topic-tag">Multimodal_Reasoning</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Benchmark</span></div>
+</header>
+
+<h1>论文笔记: MechVQA: Benchmarking and Enhancing Multimodal LLMs on Comprehensive Mechanical Drawing Understanding</h1>
+<p><strong>MechVQA 的价值，是把机械图纸理解拆成可诊断的识别、推理和判断任务，再用领域后训练展示哪些短板能够改善。</strong> 作者构造机械图纸问答数据，并将 Qwen3-VL-4B 训练成 MechVL；核心投入在数据质检、奖励设计与薄弱任务重采样，没有增加显式三维重建或几何约束求解器。</p>
+<p>我最关心两个结果：领域训练的收益确实明显，但投影与多视图依旧落后；训练和评测又大量依赖语言模型判分。因此，这篇论文支持“小模型通过针对性训练成为更好的机械图纸问答器”，尚不足以证明它已掌握可独立校验的制图规则，或能完成工程设计交付。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Qian Kou、Xiaofeng Shi 等，来自北京智源人工智能研究院、中科院信息工程研究所、北京工业大学。</li>
+<li><strong>发表与版本</strong>：<a href="https://proceedings.mlr.press/v306/kou26c.html">ICML 2026 / PMLR 306</a>。本文阅读的是 2026-07-07 更新的 <a href="https://arxiv.org/html/2605.30794v2">arXiv v2 全文与附录 A–C</a>，并查看原图。</li>
+<li><strong>复现入口</strong>：<a href="https://github.com/xiaofengShi/MechVQA">官方仓库</a>、<a href="https://xiaofengshi.github.io/MechVQA/">项目页</a>、<a href="https://huggingface.co/datasets/XiaofengAlg/MechVQA">公开 SFT 数据卡</a>。本次另核对了发布说明、评分说明和 SFT 配置；没有训练模型、运行基准或逐题复核数据标签。</li>
+</ul>
+<h2 id="2-关键问题-读出了剖面字母-是否真的找对了剖切位置">2. 关键问题：读出了剖面字母，是否真的找对了剖切位置？</h2>
+<p><strong>Golden Case：Figure 1 的投影与多视图例题。</strong> 给定一张零件图和一个剖视图，问题是“这个剖视图对应主视图中的哪条剖切线？”，参考答案是 <strong>C–C</strong>。这要求模型把局部剖面形状、孔位和主视图中的剖切位置关联起来；只识别字母或看见相似轮廓，并不充分。</p>
+<p><img src="../../assets/mechvqa-2605.30794v2/fig1-task-overview.png" alt="Figure 1：机械图纸的挑战、能力分类与真实问答样例" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2605.30794v2#S1.F1">Figure 1</a>，Kou 等，CC BY 4.0。重点看左侧的跨视图对应，以及右下方 Projection &amp; Multi-view 的 C–C 例题：文字、几何和投影关系需要一起解释。</em></p>
+<p>一种可能的失败是：模型读对了几个尺寸和字母，却把另一个位置的剖切轮廓认作目标剖面。<strong>这是为解释难点给出的潜在失败方式，论文没有公布该例的模型错误轨迹。</strong> 主实验提供的是任务层面的证据：基座模型在文本与表格上已有较高分，多视图任务却明显偏弱，具体数字见第 5 节。</p>
+<p>与自然图像 VQA 相比，图纸多了一层受制图惯例约束的表示：同一对象在不同视图中形状不同，相同图形符号在不同上下文中含义也不同。邻近工作如 DesignQA、TriView2CAD 分别覆盖工程文档问答、三视图推理等侧面；MechVQA 试图在真实零件与装配图上统一测量以下能力。<a href="https://arxiv.org/html/2605.30794v2#A2.SS3">§1–3；Appendix B.3</a></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>能力</th>
+<th>子任务</th>
+<th>要区分的能力边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recognition／识别</td>
+<td>实体识别与计数 IC；尺寸与标注 DA；文本与表格 TT；对象定位 IL</td>
+<td>能否读出信息，并把标注定位到正确对象</td>
+</tr>
+<tr>
+<td>Reasoning／推理</td>
+<td>结构理解 SU；几何计算 GC；装配关系 AR；投影与多视图 PM</td>
+<td>能否结合尺寸链、剖面和多个视图推断未直接给出的信息</td>
+</tr>
+<tr>
+<td>Judging／判断</td>
+<td>异常检测 AD；一致性判断 CJ</td>
+<td>能否发现缺失、冲突，以及制图规范或视图一致性问题</td>
+</tr>
+</tbody>
+</table></div>
+<p>每题只有一个子任务标签。“综合”指覆盖面，不能理解为每题都同时验收全部工程能力。一个值得保留的细节是：附录 Figure 13 的<strong>一种尺寸计算模板只允许加减法</strong>，明确排除三角函数和勾股定理；不能把这个模板的限制扩大成全部 GC 题的定义，也不能仅凭“几何计算”名称推断其数学深度。</p>
+<h2 id="3-关键方法-先保证题目有据可答-再训练模型把依据用对">3. 关键方法：先保证题目有据可答，再训练模型把依据用对</h2>
+<h3 id="3-1-数据构造-模型共识之前-需要专家纠正图纸事实">3.1 数据构造：模型共识之前，需要专家纠正图纸事实</h3>
+<p>流程从公开教材、专业手册和设计平台的图纸开始。专家先去掉低质量、不完整或扫描不清的图；OCR 提取文本，强多模态模型提取零件名、视图类别、视图数量、技术要求等元数据，再由受过机械专业训练的研究生核验。<a href="https://arxiv.org/html/2605.30794v2#S3">§3.1–3.3</a></p>
+<p>随后有三条出题路线：自由生成；没有内生答案的模板生成；由已验证元数据或专家可控编辑提供答案的模板生成。前两条都要跨模型检题、修题，多模型作答后做语义多数投票，缺少明确共识的样本丢弃。第三条还包含二维与轴测视图配对，以及专家用 CAD 增删标注、修改尺寸和符号构造的异常题。<strong>这些 CAD 编辑用于局部判断题，不能描述成整个数据集都由程序合成并自动提供几何真值。</strong> 最后，专家对分层抽样的保留样本审计；论文没有声称逐条 QA 全部经专家确认。</p>
+<p>为什么专家不能省？Table 5 中，视图数量、剖视图、技术要求字段的修正率分别为 <strong>41.6%、37.8%、43.7%</strong>。这些是被审计组的<strong>元数据字段修正率</strong>，不是最终 QA 错误率。它们说明：如果最初把剖面类型、热处理要求读错，后续语言流畅的问答也可能只是围绕错误前提展开。<a href="https://arxiv.org/html/2605.30794v2#A2.T5">Appendix B.2，Table 5</a></p>
+<p>检题提示词中最有用的原则是：先检查问题预设的视图、符号和尺寸是否存在，再决定接受、修订或删除。例如，把基准字母当成剖切标识，会使问题本身失效。这比只让另一个模型回答一次更接近实际质检，但模型间的一致仍不保证几何正确。<a href="https://arxiv.org/html/2605.30794v2#A2.SS5">Figure 14–15</a></p>
+<h3 id="3-2-沿-c-c-案例走完训练与推理">3.2 沿 C–C 案例走完训练与推理</h3>
+<p>对上面的例题，MechVL 的输入是<strong>图纸图像与问题</strong>。它经 Qwen3-VL 的视觉编码器和投影层进入语言模型，再生成解释与最终答案；推理时没有额外 CAD 工具或外部检索。</p>
+<ol>
+<li><strong>SFT 学习领域映射与回答结构。</strong> 用数据集中的解释和答案作为监督，更新语言模型全部参数，冻结视觉编码器与多模态投影层。对该类问题，目标是把剖切位置与剖面对应关系写进回答，最终返回 C–C。这里描述的是方法应用于该例的过程，不是作者展示的逐 token 运行记录。</li>
+<li><strong>RL 比较同题的多个候选回答。</strong> 每题采样 10 个回答，用正确性、格式和解释质量合成奖励。在这个例子里，选对 C–C、输出可解析的答案、解释前后一致，会分别影响不同奖励项；论文没有给出该样本的实际奖励值。</li>
+<li><strong>第二轮增加薄弱子任务的训练占比。</strong> 第一轮在全训练集上做 DAPO，第二轮对表现较差的子任务提高采样比例，优化目标和奖励不变。作者称它为 two-stage self-play；按论文具体定义，它是模型表现驱动的再采样流程，没有描述独立出题者与解题者互相博弈。</li>
+</ol>
+<p>SFT 使用标准交叉熵，新增设计主要在数据与 RL 奖励。正文 §4.1 明确冻结视觉模块；附录 C.1 的“所有模型参数”表述较宽泛，当前公开 <a href="https://github.com/xiaofengShi/MechVQA/blob/main/training/qwen3_vl_sft_4b_full_finetune.yaml">SFT 配置</a>也设置了视觉编码器和投影层冻结，因而应以“<strong>语言模块全参训练</strong>”理解，不能误写成全模型端到端更新。</p>
+<h3 id="3-3-奖励究竟在教什么">3.3 奖励究竟在教什么？</h3>
+<p>最终配置为：</p>
+<div class="math-display">$$
+R=0.60\,r_{\mathrm{acc}}+0.10\,r_{\mathrm{fmt}}+0.30\,r_{\mathrm{qual}},
+\qquad
+r_{\mathrm{qual}}=\frac{s_{\mathrm{logic}}+s_{\mathrm{prof}}+s_{\mathrm{conc}}}{3}.
+$$</div>
+<p>其中，$r_{\mathrm{acc}}\in[0,1]$ 由 LLM 判断最终答案与参考答案的语义一致性；$r_{\mathrm{fmt}}\in\{0,1\}$ 检查是否具有规范的 <code>&lt;think&gt;...&lt;/think&gt;</code> 与 <code>&lt;answer&gt;...&lt;/answer&gt;</code> 结构；$r_{\mathrm{qual}}$ 则取逻辑、专业性、简洁性三个评分的均值。<strong>正确性奖励也依赖 LLM，不能把它当成确定性的几何验证器。</strong> 引言对质量维度的概述出现了 Normativity，这里采用 §4.2 / Eq. 7 的明确公式定义。<a href="https://arxiv.org/html/2605.30794v2#S4.SS2">Eq. 6–7；Table 7</a></p>
+<p>为什么不用字符串相等？C–C 的等价写法不应被直接判错，开放解释也很难逐字匹配。为什么还要质量奖励？只奖励最终答案和格式，未必抑制冗长或自相矛盾的解释。但质量评分改善表达，不等于证明解释忠实反映模型内部的视觉推理。</p>
+<p>DAPO 沿用组内相对优势：</p>
+<div class="math-display">$$
+\hat A_i=\frac{R_i-\operatorname{mean}(R_1,\ldots,R_G)}{\operatorname{std}(R_1,\ldots,R_G)+\epsilon},\quad G=10.
+$$</div>
+<p>同题中比平均更好的回答被强化，同一个回答的所有 token 共用这个优势。它在 token 级聚合策略损失，以非对称裁剪限制更新幅度，并对过长回答做奖励塑形；动态采样保留同时含正确与错误回答的组，丢弃全对或全错的组。直觉是优先利用“模型已经有机会做对、但还不稳定”的题。<strong>这不同于第二轮的子任务重采样：前者筛同题回答组，后者调整训练题目分布。</strong> <a href="https://arxiv.org/html/2605.30794v2#S4.SS2">Eq. 2–5</a></p>
+<p>复现时需要保留的配置包括：SFT 3 个 epoch、学习率 $10^{-5}$、全局 batch 64、序列上限 4096；RL 学习率 $10^{-6}$、全局 batch 128，DAPO 不加显式 KL 惩罚，裁剪幅度为下侧 0.20、上侧 0.28。图像最大总像素数 262,144，SFT 还限制长边为 1024；实验使用 8 张 80GB H800。论文未充分说明 targeted 阶段各任务采样权重与等算力对照，不能只凭这些公共超参保证原样复现。<a href="https://arxiv.org/html/2605.30794v2#A3">Appendix C，Table 6</a></p>
+<h2 id="4-数据与评分-要分清论文集合-公开包和分数含义">4. 数据与评分：要分清论文集合、公开包和分数含义</h2>
+<p>论文共 <strong>3,281 张图、20,778 对 QA</strong>，按图纸组以 8:1:1 划分训练、验证、测试，同一图纸衍生的所有题进入同一划分；再融合 CLIP 图像与平均文本表征进行聚类分配，兼顾来源、子任务与难度分布。此举减少库内同图及相似变体泄漏，不能排除公开教材进入基础模型预训练。Appendix B.6 的 t-SNE 仅支持划分分布较接近，不能作为零污染证明。<a href="https://arxiv.org/html/2605.30794v2#S3.SS4">§3.4；B.6</a></p>
+<p><strong>截至 2026-10-26，公开发布材料与论文统计应分开记录：</strong> 官方仓库提供 1,185 道评测 QA、562 张图；SFT 数据卡则列出训练 12,749 条、验证 766 条，共 3,371 张独立图像。数据卡报告构建时删除了 2,555 条与公开评测集图像哈希重合的记录，以及 465 条训练侧跨划分同图记录；最终包无精确图像哈希重合，但明确不保证没有视觉近重复。这是<strong>当前发布包的清理记录，不能据此断言论文实验泄漏，也不能反推论文实验已完全去污</strong>。本次只核对了文档，没有独立运行其审计。<a href="https://github.com/xiaofengShi/MechVQA#-public-benchmark-data">官方发布说明</a>、<a href="https://huggingface.co/datasets/XiaofengAlg/MechVQA">数据卡</a></p>
+<p>评测先抽取最终答案，然后让 GPT-OSS-120B、DeepSeek-V3.2、Kimi-k2 三个裁判独立判断与参考答案是否语义等价，温度为 0.1，以多数票得到题目分数。裁判<strong>只看问题、参考答案和模型答案，不看原图或被评模型身份</strong>；目标模型无回答计零，调用失败的裁判被排除，全部失败计零。这是答案核验，不是让裁判重新解图。<a href="https://arxiv.org/html/2605.30794v2#A3.SS4">Appendix C.4，Figure 18</a></p>
+<p>这里的测试裁判要求 <strong>0/1</strong>；它与 RL 使用的连续正确性奖励不是同一个口径。<strong>Total 是逐题聚合，Avg. 是十个子任务的无权平均，三项能力分则各自在所属子任务上平均。</strong> 数据分布不均衡时，三者不能互换。参考答案若错，或答案文字正确却没有真正利用图像，当前自动裁判本身无法独立排除这些问题。<a href="https://arxiv.org/html/2605.30794v2#S5.T3">Table 3</a>、<a href="https://github.com/xiaofengShi/MechVQA#-highlights">官方分数说明</a></p>
+<h2 id="5-关键结果-rl-补上部分推理短板-但最弱能力没有消失">5. 关键结果：RL 补上部分推理短板，但最弱能力没有消失</h2>
+<h3 id="5-1-领域后训练有效-比较对象的训练条件也不同">5.1 领域后训练有效，比较对象的训练条件也不同</h3>
+<p>所有模型都在同一 MechVQA 协议下评测，不使用外部工具或检索。通用基线没有接受额外领域适配，MechVL 则训练于该基准的训练集；因此这是领域适配相对通用迁移的比较，不是相同数据和预算下的架构对决。下表从 Table 2 选择总体表现与诊断性子任务，分数均以百分数计。<a href="https://arxiv.org/html/2605.30794v2#S4.T2">§5.1–5.2，Table 2</a></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align:right">Total</th>
+<th style="text-align:right">文本表格 TT</th>
+<th style="text-align:right">对象定位 IL</th>
+<th style="text-align:right">装配关系 AR</th>
+<th style="text-align:right">投影多视图 PM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-VL-4B-Instruct</td>
+<td style="text-align:right">60.23</td>
+<td style="text-align:right">88.64</td>
+<td style="text-align:right">33.09</td>
+<td style="text-align:right">22.00</td>
+<td style="text-align:right">20.00</td>
+</tr>
+<tr>
+<td>MechVL-4B-SFT</td>
+<td style="text-align:right">76.36</td>
+<td style="text-align:right">97.73</td>
+<td style="text-align:right">61.15</td>
+<td style="text-align:right">40.00</td>
+<td style="text-align:right">44.00</td>
+</tr>
+<tr>
+<td>MechVL-4B-RL</td>
+<td style="text-align:right"><strong>84.85</strong></td>
+<td style="text-align:right"><strong>97.73</strong></td>
+<td style="text-align:right"><strong>82.01</strong></td>
+<td style="text-align:right"><strong>84.00</strong></td>
+<td style="text-align:right"><strong>64.00</strong></td>
+</tr>
+<tr>
+<td>GLM-4.6V</td>
+<td style="text-align:right">78.91</td>
+<td style="text-align:right"><strong>97.73</strong></td>
+<td style="text-align:right">63.31</td>
+<td style="text-align:right">60.00</td>
+<td style="text-align:right">62.00</td>
+</tr>
+<tr>
+<td>Gemini-3-Pro-Preview</td>
+<td style="text-align:right">77.28</td>
+<td style="text-align:right"><strong>97.73</strong></td>
+<td style="text-align:right">64.03</td>
+<td style="text-align:right">46.00</td>
+<td style="text-align:right">58.00</td>
+</tr>
+<tr>
+<td>GPT-5</td>
+<td style="text-align:right">75.44</td>
+<td style="text-align:right">93.18</td>
+<td style="text-align:right">62.59</td>
+<td style="text-align:right">60.00</td>
+<td style="text-align:right">60.00</td>
+</tr>
+</tbody>
+</table></div>
+<p>RL 模型比最强受测闭源基线高 <strong>7.57 个百分点</strong>，比最强受测开源基线高 <strong>5.94 个百分点</strong>。这里应采用 Table 2 的精确差值，不能直接沿用引言中较含混的“6%”。</p>
+<p>更有解释力的是提升分布：相对 SFT，AR 增加 44 点，PM 增加 20 点，TT 不变。结合 Figure 3 中中等题 70%→79%、困难题 53%→75%、简单题 92%→94%，收益主要集中于更难的推断，而不只是文本读取。<a href="https://arxiv.org/html/2605.30794v2#S5.F3">Figure 3</a></p>
+<p>但 PM 仍是最终模型得分最低的子任务，且只领先 GLM-4.6V 2 点。MechVL 也并非所有任务第一：几何计算为 76.83，低于 GLM 的 82.93；一致性判断为 78.67，低于 Gemini 的 82.67。回到 C–C 案例，模型在这类对应问题上更会答了，数据仍不足以支持“已经解决投影一致性”。</p>
+<h3 id="5-2-两阶段训练的收益明确-收益归因仍需更强控制">5.2 两阶段训练的收益明确，收益归因仍需更强控制</h3>
+<p>Table 3(A) 区分了全量 RL 与 targeted RL，能力分是子任务均值：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>训练阶段</th>
+<th style="text-align:right">识别</th>
+<th style="text-align:right">推理</th>
+<th style="text-align:right">判断</th>
+<th style="text-align:right">Total</th>
+<th style="text-align:right">十任务均值 Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td style="text-align:right">83.11</td>
+<td style="text-align:right">54.40</td>
+<td style="text-align:right">76.91</td>
+<td style="text-align:right">76.36</td>
+<td style="text-align:right">70.39</td>
+</tr>
+<tr>
+<td>+ 全量 DAPO</td>
+<td style="text-align:right">86.26</td>
+<td style="text-align:right">70.75</td>
+<td style="text-align:right">81.62</td>
+<td style="text-align:right">81.95</td>
+<td style="text-align:right">79.12</td>
+</tr>
+<tr>
+<td>+ 薄弱任务重采样 DAPO</td>
+<td style="text-align:right">89.70</td>
+<td style="text-align:right">77.04</td>
+<td style="text-align:right">82.81</td>
+<td style="text-align:right">84.85</td>
+<td style="text-align:right">83.26</td>
+</tr>
+</tbody>
+</table></div>
+<p>全量 RL 带来 5.59 点 Total 增益，第二阶段再增 2.90 点；推理能力均值也持续上升。这支持重采样流程的实用性。<strong>但缺少“继续相同步数的全量 RL”对照，无法把第二阶段收益完全归因于薄弱任务选择，而非额外训练。</strong> <a href="https://arxiv.org/html/2605.30794v2#S5.T3">Table 3(A)</a></p>
+<p>算法对照中，全量 DAPO 的 Total 为 81.95，GRPO 为 80.47，GSPO 为 78.77。作者比较了同一初始化和共享训练设置下的算法配置；KL、裁剪、损失聚合和筛样方式仍随算法不同，故这是整套配置的比较，不能单独证明动态采样或非对称裁剪哪项起决定作用。论文也未报告这些差值的多种子方差或置信区间。<a href="https://arxiv.org/html/2605.30794v2#S5.T3">Table 3(B)、Table 6</a></p>
+<h3 id="5-3-奖励会改变回答长度-但长度曲线不是推理机制证明">5.3 奖励会改变回答长度，但长度曲线不是推理机制证明</h3>
+<p>在 targeted 阶段，二元正确性奖励、token F1、去掉质量项、完整奖励的 Total 分别为 <strong>82.24、80.33、83.44、84.85</strong>。完整配置表现最好，说明在本设置下语义反馈和质量项有用；但不能据此说每一项对每类能力都必需：去掉质量项时，推理均值为 <strong>77.23</strong>，还略高于完整配置的 <strong>77.04</strong>。<a href="https://arxiv.org/html/2605.30794v2#S5.T3">Table 3(C)</a></p>
+<p><img src="../../assets/mechvqa-2605.30794v2/fig4-reward-length.svg" alt="Figure 4：不同奖励下的训练回答长度" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2605.30794v2#S5.F4">Figure 4</a>，Kou 等，CC BY 4.0。紫线的 F1 奖励使回答迅速缩短；橙线去掉质量项后偏长；蓝线完整奖励保持中等长度。需要把这张图与 Table 3(C) 的最终分数一起看。</em></p>
+<p>一种合理解释是，表面词语重合奖励鼓励短答，缺少简洁性约束则容易变啰嗦。但实验同时改变了奖励函数与回答长度，没有固定长度的对照。它支持“奖励塑造输出行为”，<strong>不能证明更长的解释导致更好的推理，也不能证明蓝线对应的解释更忠实</strong>。</p>
+<h2 id="6-insights-下一步应该验证什么">6. Insights：下一步应该验证什么？</h2>
+<p><strong>第一，最有价值的迁移单元可能是“可核验的领域语义”，而非 DAPO 名称。</strong> 元数据需要大量专家修正，最终模型的收益又集中在定位、装配与视图推断，这共同指向一个具体方向：把“标注属于哪个几何对象、剖面对应哪个位置”作为监督对象。若迁移到其他工程图纸，优先建立少量高可信的对象—标注—视图关系，再比较纯 QA 监督与关系监督；不能直接假设同一奖励配方在新图纸上仍有效。</p>
+<p><strong>第二，要验证跨视图规则是否学会，应让答案随着几何变化而变化。</strong> PM 仍弱，而评测裁判看不到图，说明总分无法定位模型是否真正利用投影关系。可以基于 C–C 案例构造最小反事实：保持问题和大部分标注不变，只改变剖切位置或局部孔形，并由 CAD 几何确认新答案；再做遮挡关键局部与保留局部两组对照。若模型仍机械返回同一字母，便能把语言先验与视觉约束使用区分开。这是建议实验，不是论文已有结果。</p>
+<p><strong>第三，模型共识让数据可规模化，也可能系统性排掉最值得测的难题。</strong> MechVQA 丢弃没有语义多数的候选 QA，同时用 LLM 判定最终答案。分歧有时来自坏题，有时恰恰来自强模型共有能力的边界。更有信息量的补充集，是从“分歧但专家可明确判定”的样本中建立独立挑战集，并按新教材、零件家族或图纸来源留出测试。当前没有人类专家上界、正式标注一致性或充分跨来源外推证据，尚不能量化模型距离工程专家多远。<a href="https://arxiv.org/html/2605.30794v2#A1">§3.3；Appendix A</a></p>
+<p>就复现决策而言，我会先使用公开权重和评测脚本，在一个<strong>来源独立、答案经过专家核验的 PM/AR 小集合</strong>上比较基座、SFT、RL；分别报告任务均值与逐题总分，再决定是否投入完整训练。论文的边界是高质量公开二维图纸问答，不包括企业历史扫描件上的稳定性、完整三维 CAD 重建或 STEP/IGES 文件交付。<a href="https://arxiv.org/html/2605.30794v2#A1">Appendix A</a></p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Multimodal-LLM-Reasoning">MOC-Multimodal-LLM-Reasoning</span> — Topic：为多模态选择性优化增加一个机械图纸场景；选择发生在题目与回答组层面，正确性反馈依赖语义裁判。</li>
+<li><span class="wikilink unresolved" title="Engineering-Drawing-Understanding-Cross-Discipline-Survey">Engineering-Drawing-Understanding-Cross-Discipline-Survey</span> — 从符号、标注抽取推进到图纸问答、跨视图对应与规范判断的案例，可补充工程图纸理解谱系。</li>
+<li><a class="wikilink" href="PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测.html" title="PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测">PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测</a> — MechVQA 评估图纸问答，PLE 评估文件包与工程约束验收；两者连接了工程认知与交付，但分数没有可直接互换的含义。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Mitigating Reward Hacking via Task Representations</span></a>
+<a class="paper-nav-link next" href="MechGPT-Mechanics-and-Materials-教材蒸馏与跨域知识图谱.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">MechGPT — Mechanics and Materials</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: kou2026mechvqa</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

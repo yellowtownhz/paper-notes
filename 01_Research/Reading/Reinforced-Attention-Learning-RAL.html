@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reinforced Attention Learning (RAL)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Reinforced Attention Learning (RAL)</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-为什么文本推理对多模态感知任务收益有限"><span class="toc-num">02</span> 2. 关键问题：为什么文本推理对多模态感知任务收益有限？</a></li>
+<li><a class="toc-link toc-sub" href="#核心挑战">核心挑战</a></li>
+<li><a class="toc-link" href="#3-数据集-video-r1-数据集-15个评估基准"><span class="toc-num">03</span> 3. 数据集：Video-R1 数据集 + 15个评估基准</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估基准">评估基准</a></li>
+<li><a class="toc-link" href="#4-关键方法-直接优化注意力分布作为策略"><span class="toc-num">04</span> 4. 关键方法：直接优化注意力分布作为策略</a></li>
+<li><a class="toc-link toc-sub" href="#核心思想">核心思想</a></li>
+<li><a class="toc-link toc-sub" href="#1-聚合因果注意力分布策略">(1) 聚合因果注意力分布策略</a></li>
+<li><a class="toc-link toc-sub" href="#2-优势加权注意力散度-ral-loss">(2) 优势加权注意力散度 (RAL Loss)</a></li>
+<li><a class="toc-link toc-sub" href="#3-组合优化目标">(3) 组合优化目标</a></li>
+<li><a class="toc-link toc-sub" href="#4-梯度推导">(4) 梯度推导</a></li>
+<li><a class="toc-link toc-sub" href="#5-在线策略注意力蒸馏">(5) 在线策略注意力蒸馏</a></li>
+<li><a class="toc-link" href="#5-关键实验-ral-在-15-个基准上持续优于-grpo-table-2-3"><span class="toc-num">05</span> 5. 关键实验：RAL 在 15 个基准上持续优于 GRPO（Table 2 & 3）</a></li>
+<li><a class="toc-link toc-sub" href="#实验设置">实验设置</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#消融研究-figure-3">消融研究 (Figure 3)</a></li>
+<li><a class="toc-link toc-sub" href="#ral-zero-显式思考过程是否必要">RAL-zero：显式思考过程是否必要？</a></li>
+<li><a class="toc-link" href="#6-golden-case-视频问答中的注意力优化"><span class="toc-num">06</span> 6. Golden Case：视频问答中的注意力优化</a></li>
+<li><a class="toc-link toc-sub" href="#场景-视频颜色识别-figure-2">场景：视频颜色识别（Figure 2）</a></li>
+<li><a class="toc-link toc-sub" href="#为什么-ral-有效">为什么 RAL 有效</a></li>
+<li><a class="toc-link" href="#7-insights-注意力作为策略的新范式"><span class="toc-num">07</span> 7. Insights：注意力作为策略的新范式</a></li>
+<li><a class="toc-link toc-sub" href="#核心洞见">核心洞见</a></li>
+<li><a class="toc-link toc-sub" href="#对未来工作的启发">对未来工作的启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#方法定位">方法定位</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#ral-vs-vc-star-vs-sdpo-对比">RAL vs VC-STaR vs SDPO 对比</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-12</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.04884" target="_blank">arXiv</a>
+    </div>
+    <h1>Reinforced Attention Learning (RAL)</h1>
+    <p class="authors">Bangzheng Li, Jianmo Ni, Chen Qu, Ian Miao, Liu Yang, Xingyu Fu, Muhao Chen, Derek Zhiyuan Cheng</p>
+    <div class="topic-row"><span class="topic-tag">VLM</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Attention_Mechanism</span> <span class="topic-tag">Visual_Reasoning</span></div>
+</header>
+
+<h1>论文笔记: Reinforced Attention Learning (RAL)</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Bangzheng Li* (UC Davis), Jianmo Ni (Google DeepMind), Chen Qu (Google), Ian Miao (Google), Liu Yang (Google), Xingyu Fu (Princeton), Muhao Chen (UC Davis), Derek Zhiyuan Cheng (Google DeepMind)</li>
+<li><strong>团队</strong>: UC Davis, Google DeepMind, Google, Princeton University</li>
+<li><strong>时间</strong>: 2026年2月5日 (arXiv:2602.04884)</li>
+<li><strong>通讯作者</strong>: Bangzheng Li (bzhli@ucdavis.edu)</li>
+<li><strong>备注</strong>: *Work done as a student researcher at Google</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-为什么文本推理对多模态感知任务收益有限">2. 关键问题：为什么文本推理对多模态感知任务收益有限？</h2>
+<h3 id="核心挑战">核心挑战</h3>
+<p>当前 LLM 后训练的成功范式是通过 RL 优化 next-token prediction，引出长格式 Chain-of-Thought 推理。但将这种范式迁移到多模态 LLM (MLLM) 时遇到了根本性障碍：</p>
+<p><strong>问题1：文本推理对感知任务收益有限，甚至有害</strong></p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;However, our results reveal that for core perception tasks—such as image or video question answering—extensive textual reasoning provides only marginal gains and may even degrade the model's fundamental perceptual capabilities.&quot;</p>
+</blockquote>
+<ul>
+<li>在纯文本任务（数学、编程）中，冗长的推理链能显著提升准确率（test-time scaling）</li>
+<li>但在视觉问答等感知密集型任务中，大量文本推理仅提供边际收益，甚至可能降低模型的基本感知能力</li>
+<li><strong>根本原因</strong>：感知任务的核心挑战不是&quot;如何推理&quot;，而是&quot;关注哪里&quot;</li>
+</ul>
+<p><strong>问题2：Next-token prediction 优化的是&quot;结果&quot;而非&quot;过程&quot;</strong></p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;We attribute this limitation to the insufficiency of next-token prediction as the fundamental policy objective in MLLM post-training.&quot;</p>
+</blockquote>
+<ul>
+<li>在 MLLM 架构中，视觉输入被编码为 tokens 并投影到文本嵌入空间作为生成上下文</li>
+<li>准确回答细粒度问题需要模型<strong>精确识别并关注任务相关的视觉信息</strong></li>
+<li>这个信息分配过程由 Transformer 的注意力机制控制</li>
+<li><strong>标准 RLHF 优化的是结果（token），而不是过程（内部信息分配）</strong></li>
+</ul>
+<p><strong>问题3：Token 级优化导致多样性坍缩</strong></p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;While effective for maximizing immediate rewards, this token-level optimization often precipitates diversity collapse. In such cases, the model overfits to specific high-reward surface forms, thereby weakening its generalization across diverse reasoning patterns and leading to 'reward hacking' of the linguistic structure rather than the underlying logic.&quot;</p>
+</blockquote>
+<p><strong>与纯文本任务的对比</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>核心挑战</th>
+<th>RL优化token的有效性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学推理</td>
+<td>推理步骤的正确性</td>
+<td>高：优化推理路径</td>
+</tr>
+<tr>
+<td>代码生成</td>
+<td>逻辑结构的正确性</td>
+<td>高：优化代码输出</td>
+</tr>
+<tr>
+<td><strong>视觉问答</strong></td>
+<td><strong>关注正确的视觉区域</strong></td>
+<td>低：优化token无法直接改善注意力分配</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>核心洞见</strong>：</p>
+<blockquote class="card card-info">
+<p>对于多模态感知任务，瓶颈不在于&quot;生成什么token&quot;，而在于&quot;关注哪些视觉信息&quot;。传统 RL 优化的是前者，而 RAL 直接优化后者。</p>
+</blockquote>
+<hr />
+<h2 id="3-数据集-video-r1-数据集-15个评估基准">3. 数据集：Video-R1 数据集 + 15个评估基准</h2>
+<h3 id="训练数据">训练数据</h3>
+<p>基于 <strong>Video-R1</strong> 数据集：</p>
+<ul>
+<li><strong>SFT 阶段</strong>: Video-R1-COT-165k（165k 视频-问题对，带结构化 CoT 推理）</li>
+<li><strong>RL 阶段</strong>: Video-R1-260k 的前 51.2k 实例</li>
+</ul>
+<p><strong>数据格式</strong>（Figure 2）:</p>
+<pre><code>&lt;think&gt; The video clip captures a scene near a construction site… 
+As the camera rounds a corner, a bucket of blue paint comes into view… &lt;/think&gt;
+&lt;answer&gt; blue &lt;/answer&gt;
+</code></pre>
+<h3 id="评估基准">评估基准</h3>
+<p><strong>图像 VQA 任务（8个）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>评估维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V* Bench</td>
+<td>细粒度视觉搜索</td>
+<td>空间推理</td>
+</tr>
+<tr>
+<td>MMMU Pro</td>
+<td>多步专家知识</td>
+<td>expert-level</td>
+</tr>
+<tr>
+<td>MME</td>
+<td>基础感知+高级认知</td>
+<td>综合评测</td>
+</tr>
+<tr>
+<td>MuirBench</td>
+<td>多样图像类型</td>
+<td>鲁棒性</td>
+</tr>
+<tr>
+<td>ChartQA</td>
+<td>复杂数据提取</td>
+<td>图表理解</td>
+</tr>
+<tr>
+<td>VizWiz</td>
+<td>真实世界视觉基础</td>
+<td>实际应用</td>
+</tr>
+<tr>
+<td>Blink</td>
+<td>基础感知任务</td>
+<td>感知能力</td>
+</tr>
+<tr>
+<td>CVBench</td>
+<td>核心CV能力</td>
+<td>计算机视觉</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>视频 VQA 任务（7个）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>评估维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LongVideoBench</td>
+<td>长程指代推理</td>
+<td>长视频理解</td>
+</tr>
+<tr>
+<td>NExT-QA</td>
+<td>因果和时序动作解释</td>
+<td>时序推理</td>
+</tr>
+<tr>
+<td>Video-MME</td>
+<td>综合多领域评测</td>
+<td>全面评估</td>
+</tr>
+<tr>
+<td>Video-MMMU</td>
+<td>专家级知识获取</td>
+<td>知识推理</td>
+</tr>
+<tr>
+<td>LVBench</td>
+<td>极长视频理解</td>
+<td>长上下文</td>
+</tr>
+<tr>
+<td>MVBench</td>
+<td>多任务时序感知</td>
+<td>时序感知</td>
+</tr>
+<tr>
+<td>TempCompass</td>
+<td>运动和时序顺序敏感性</td>
+<td>时序敏感</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-关键方法-直接优化注意力分布作为策略">4. 关键方法：直接优化注意力分布作为策略</h2>
+<h3 id="核心思想">核心思想</h3>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;RAL treats the attention pattern itself as the policy: when a response receives a high reward, the algorithm encourages the underlying attention distribution by minimizing the divergence between the current and reference policies. Conversely, for low-reward responses, the model is penalized by increasing the divergence from those sub-optimal patterns.&quot;</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2602.04884v1/x1.png" alt="RAL概念图" /></p>
+<h3 id="1-聚合因果注意力分布策略">(1) 聚合因果注意力分布策略</h3>
+<p><strong>从最后一层提取注意力权重</strong>，对所有头取平均：</p>
+<p><strong>公式 1：因果注意力分布策略</strong></p>
+<div class="math-display">$$p_\theta^t(i) = \frac{\alpha_{t,i}}{\sum_{j=1}^{t-1} \alpha_{t,j}}, \quad \forall i \in [1, t-1]$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\alpha_{t,i}$</td>
+<td>位置 $t$ 的生成 token 对位置 $i$ 的原始注意力权重</td>
+</tr>
+<tr>
+<td>$p_\theta^t(i)$</td>
+<td>归一化后的注意力分布（策略），表示 token $t$ 对历史位置 $i$ 的&quot;关注度概率&quot;</td>
+</tr>
+<tr>
+<td>$t$</td>
+<td>当前生成的 token 位置，$t \in [P+1, T]$</td>
+</tr>
+<tr>
+<td>$P$</td>
+<td>Prompt 长度（包括视觉 tokens）</td>
+</tr>
+<tr>
+<td>$T$</td>
+<td>总序列长度</td>
+</tr>
+<tr>
+<td>$i, j$</td>
+<td>历史位置索引，$i, j &lt; t$（因果约束）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p>想象你在回答一个问题时，眼睛会在材料的不同部分&quot;扫描&quot;。这个公式就是在计算：<strong>当你生成第 $t$ 个词时，你的&quot;注意力目光&quot;落在之前每个词上的概率分布</strong>。</p>
+<p>举个例子：假设生成 &quot;blue&quot; 这个词时，模型对前面内容的注意力权重是：</p>
+<ul>
+<li>&quot;bucket&quot;: 0.4</li>
+<li>&quot;paint&quot;: 0.3</li>
+<li>其他词合计: 0.3</li>
+</ul>
+<p>归一化后，$p_\theta^t(\text{bucket}) = 0.4$，$p_\theta^t(\text{paint}) = 0.3$。这个分布就是 RAL 要优化的&quot;策略&quot;。</p>
+<blockquote class="card card-info">
+<p>&quot;This formulation captures how the model attends to its own emerging reasoning in addition to the initial instructions and visual input.&quot;</p>
+</blockquote>
+<h3 id="2-优势加权注意力散度-ral-loss">(2) 优势加权注意力散度 (RAL Loss)</h3>
+<p><strong>公式 2：RAL 损失函数</strong></p>
+<div class="math-display">$$L_{\text{AttnRL}} = \mathbb{E}_t \left[ A_t \cdot D(p_\theta^t \| p_{\text{old}}^t) \right]$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$L_{\text{AttnRL}}$</td>
+<td>注意力强化学习损失</td>
+</tr>
+<tr>
+<td>$A_t$</td>
+<td>优势函数，表示当前响应的&quot;好坏程度&quot;（相对于平均水平）</td>
+</tr>
+<tr>
+<td>$D(p_\theta^t \| p_{\text{old}}^t)$</td>
+<td>Jensen-Shannon 散度（JSD），衡量两个分布的差异</td>
+</tr>
+<tr>
+<td>$p_\theta^t$</td>
+<td>当前策略的注意力分布</td>
+</tr>
+<tr>
+<td>$p_{\text{old}}^t$</td>
+<td>旧策略（参考）的注意力分布</td>
+</tr>
+<tr>
+<td>$\mathbb{E}_t$</td>
+<td>对所有生成 token $t$ 取期望</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>公式 3：优势函数（GRPO 风格）</strong></p>
+<div class="math-display">$$\hat{A}_i = \frac{r_i - \frac{1}{G}\sum_{j=1}^G r_j}{\text{std}(r_1, ..., r_G)}$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\hat{A}_i$</td>
+<td>第 $i$ 个样本的优势值（标准化后）</td>
+</tr>
+<tr>
+<td>$r_i$</td>
+<td>第 $i$ 个样本的奖励值</td>
+</tr>
+<tr>
+<td>$G$</td>
+<td>一个 batch 中的样本数（论文中 $G=8$）</td>
+</tr>
+<tr>
+<td>$\frac{1}{G}\sum_{j=1}^G r_j$</td>
+<td>batch 内平均奖励（基线）</td>
+</tr>
+<tr>
+<td>$\text{std}(r_1, ..., r_G)$</td>
+<td>batch 内奖励的标准差</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p><strong>优势函数</strong>好比给每个答案打&quot;相对分&quot;：</p>
+<ul>
+<li>如果你得了 90 分，但班级平均是 85 分，你的优势就是正的（+5）</li>
+<li>如果你得了 70 分，平均是 85 分，你的优势就是负的（-15）</li>
+</ul>
+<p><strong>RAL Loss 的逻辑</strong>：</p>
+<ul>
+<li><strong>好的答案</strong>（$A_t &gt; 0$）：让它&quot;记住&quot;当时的注意力模式 → 最小化当前注意力与成功模式的差异</li>
+<li><strong>差的答案</strong>（$A_t &lt; 0$）：让它&quot;忘记&quot;错误的注意力模式 → 最大化与失败模式的差异</li>
+</ul>
+<p>类比：<strong>好学生的笔记要模仿，差学生的错题要避免</strong>。</p>
+<p><strong>行为解释</strong>:</p>
+<ul>
+<li>若 $A_t &gt; 0$：最小化 $L_{\text{AttnRL}}$ → 拉近当前策略 $p_\theta$ 与成功策略 $p_{\text{old}}$</li>
+<li>若 $A_t &lt; 0$：目标&quot;推开&quot;$p_\theta$ 远离次优策略</li>
+</ul>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;This per-token granularity prevents the 'vanishing gradient' effect often encountered when averaging attention over long sequences, ensuring that even late-stage tokens in a long response are supervised by the internal attention objective.&quot;</p>
+</blockquote>
+<h3 id="3-组合优化目标">(3) 组合优化目标</h3>
+<p><strong>公式 4：总损失函数</strong></p>
+<div class="math-display">$$L_{\text{total}} = L_{\text{RL}} + \lambda_{\text{attn}} L_{\text{AttnRL}}$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$L_{\text{total}}$</td>
+<td>总训练损失</td>
+</tr>
+<tr>
+<td>$L_{\text{RL}}$</td>
+<td>标准 GRPO token 级损失（优化输出文本）</td>
+</tr>
+<tr>
+<td>$L_{\text{AttnRL}}$</td>
+<td>注意力强化损失（优化内部注意力分配）</td>
+</tr>
+<tr>
+<td>$\lambda_{\text{attn}}$</td>
+<td>平衡系数，论文中取 {0.5, 1, 5}</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p>这是&quot;双轨优化&quot;：</p>
+<ul>
+<li><strong>$L_{\text{RL}}$</strong>：教模型&quot;说什么&quot;（生成正确的答案）</li>
+<li><strong>$L_{\text{AttnRL}}$</strong>：教模型&quot;怎么看&quot;（关注正确的视觉信息）</li>
+</ul>
+<p>就像训练一个学生：既要教他答题技巧（输出），也要教他审题方法（注意力）。</p>
+<h3 id="4-梯度推导">(4) 梯度推导</h3>
+<p><strong>公式 5：对分布的梯度</strong></p>
+<div class="math-display">$$\nabla_{p_\theta^t} J_t = \frac{1}{2} \ln\left(\frac{2p_\theta^t}{p_\theta^t + p_{\text{old}}^t}\right)$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\nabla_{p_\theta^t} J_t$</td>
+<td>目标函数对注意力分布的梯度</td>
+</tr>
+<tr>
+<td>$J_t$</td>
+<td>token $t$ 的优化目标</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>公式 6：对 logits 的梯度（通过 softmax Jacobian）</strong></p>
+<div class="math-display">$$\nabla_{e_{t,i}} J_t = p_\theta^t(i) \left( \nabla_{p_\theta^t(i)} J_t - \sum_j p_\theta^t(j) \nabla_{p_\theta^t(j)} J_t \right)$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$e_{t,i}$</td>
+<td>token $t$ 对位置 $i$ 的注意力 logits（softmax 之前）</td>
+</tr>
+<tr>
+<td>$\nabla_{e_{t,i}} J_t$</td>
+<td>目标函数对注意力 logits 的梯度</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>公式 7：总参数更新</strong></p>
+<div class="math-display">$$\nabla_\theta L_{\text{AttnRL}} = \mathbb{E}_\tau \left[ A_\tau \sum_{t=P+1}^T \sum_{i=1}^{t-1} (\nabla_{e_{t,i}} J_t) \nabla_\theta e_{t,i} \right]$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\tau$</td>
+<td>一条生成轨迹（完整的响应序列）</td>
+</tr>
+<tr>
+<td>$\mathbb{E}_\tau$</td>
+<td>对所有轨迹取期望</td>
+</tr>
+<tr>
+<td>$\nabla_\theta$</td>
+<td>对模型参数 $\theta$ 的梯度</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p>梯度从&quot;分布空间&quot;传回&quot;参数空间&quot;的路径：</p>
+<pre><code>参数 θ → attention logits e → 注意力分布 p → Loss L
+         ↑                     ↑              ↑
+         └─── 梯度回传路径 ───┴──────────────┘
+</code></pre>
+<p>这里用 softmax 的 Jacobian 矩阵将分布空间的梯度转换为 logits 空间的梯度，再通过链式法则传到参数。</p>
+<h3 id="5-在线策略注意力蒸馏">(5) 在线策略注意力蒸馏</h3>
+<p><strong>公式 8：注意力蒸馏损失</strong></p>
+<div class="math-display">$$L_{\text{AttnDistill}} = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=P+1}^T \text{JSD}(p_\theta^t \| p_\phi^t) \right]$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$L_{\text{AttnDistill}}$</td>
+<td>注意力蒸馏损失</td>
+</tr>
+<tr>
+<td>$\pi_\theta$</td>
+<td>学生模型的采样策略</td>
+</tr>
+<tr>
+<td>$\tau \sim \pi_\theta$</td>
+<td>从学生模型策略采样的轨迹</td>
+</tr>
+<tr>
+<td>$p_\theta^t$</td>
+<td>学生模型在 token $t$ 的注意力分布</td>
+</tr>
+<tr>
+<td>$p_\phi^t$</td>
+<td>教师模型在 token $t$ 的注意力分布</td>
+</tr>
+<tr>
+<td>$\text{JSD}(\cdot \| \cdot)$</td>
+<td>Jensen-Shannon 散度</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>公式 9：统一蒸馏目标</strong></p>
+<div class="math-display">$$L_{\text{total}} = L_{\text{RL}} + \mu L_{\text{GKD}} + \gamma_{\text{attn}} L_{\text{AttnDistill}}$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$L_{\text{GKD}}$</td>
+<td>标准 Generalized Knowledge Distillation 损失（output logits KL 散度）</td>
+</tr>
+<tr>
+<td>$\mu$</td>
+<td>GKD 损失权重</td>
+</tr>
+<tr>
+<td>$\gamma_{\text{attn}}$</td>
+<td>注意力蒸馏损失权重，论文中取 {0.05, 0.5, 1}</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p>传统知识蒸馏只传递&quot;答案分布&quot;（output logits），而注意力蒸馏传递&quot;思考方式&quot;（如何分配注意力）。</p>
+<p>类比：</p>
+<ul>
+<li><strong>传统蒸馏</strong>：告诉学生&quot;正确答案是 A，B 也有点道理&quot; → 传递结果</li>
+<li><strong>注意力蒸馏</strong>：告诉学生&quot;解题时要先看题干关键词，再看选项&quot; → 传递方法</li>
+</ul>
+<p><strong>关键设计</strong>: 学生模型从自己的策略采样（on-policy），教师模型在学生生成的轨迹上提供监督，缓解 <span class="wikilink unresolved" title="MOC-Exposure-Bias">exposure bias</span>。</p>
+<hr />
+<h2 id="5-关键实验-ral-在-15-个基准上持续优于-grpo-table-2-3">5. 关键实验：RAL 在 15 个基准上持续优于 GRPO（Table 2 &amp; 3）</h2>
+<h3 id="实验设置">实验设置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>详情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础模型</td>
+<td>Qwen-2.5-VL-7B</td>
+</tr>
+<tr>
+<td>教师模型（蒸馏）</td>
+<td>Qwen-2.5-VL-32B</td>
+</tr>
+<tr>
+<td>训练框架</td>
+<td>veRL</td>
+</tr>
+<tr>
+<td>SFT 计算</td>
+<td>~10h on 8× H100</td>
+</tr>
+<tr>
+<td>RL 计算</td>
+<td>~120h on 8× H100</td>
+</tr>
+<tr>
+<td>Rollout batch size</td>
+<td>G=8</td>
+</tr>
+<tr>
+<td>KL coefficient</td>
+<td>β=0.04</td>
+</tr>
+<tr>
+<td>采样温度</td>
+<td>τ=0.9 (RL) / τ=1 (Table 1)</td>
+</tr>
+<tr>
+<td>学习率</td>
+<td>5e-6 (SFT), 1e-5 (RL)</td>
+</tr>
+<tr>
+<td>$\lambda_{\text{attn}}$</td>
+<td>{0.5, 1, 5}</td>
+</tr>
+<tr>
+<td>$\gamma_{\text{attn}}$</td>
+<td>{0.05, 0.5, 1}</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>奖励函数</strong>（完全基于规则）:</p>
+<ul>
+<li><strong>Accuracy Reward</strong> ($r_{\text{acc}}$): 答案精确匹配得 1.0，否则 0.0</li>
+<li><strong>Format Reward</strong> ($r_{\text{fmt}}$): 格式符合 <code>&lt;think&gt;...&lt;/think&gt;&lt;answer&gt;...&lt;/answer&gt;</code> 得 1.0</li>
+<li><strong>总奖励</strong>: $r_i = 0.9 \cdot r_{\text{acc}} + 0.1 \cdot r_{\text{fmt}}$</li>
+</ul>
+<h3 id="主实验结果">主实验结果</h3>
+<p><strong>视频 VQA (Table 2)</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>LongVideoBench</th>
+<th>NExTQA</th>
+<th>VideoMME</th>
+<th>VideoMMMU</th>
+<th>LVBench</th>
+<th>MVBench</th>
+<th>TempCompass</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen-2.5-VL-7B</td>
+<td>57.0</td>
+<td>73.7</td>
+<td>61.6</td>
+<td>47.6</td>
+<td>40.5</td>
+<td>63.4</td>
+<td>69.5</td>
+</tr>
+<tr>
+<td>Video-R1</td>
+<td>56.5</td>
+<td>65.3</td>
+<td>62.5</td>
+<td>44.7</td>
+<td>43.5</td>
+<td>62.0</td>
+<td>68.0</td>
+</tr>
+<tr>
+<td>GRPO</td>
+<td>57.9</td>
+<td>70.7</td>
+<td>62.0</td>
+<td><strong>49.7</strong></td>
+<td>43.9</td>
+<td>64.0</td>
+<td>68.3</td>
+</tr>
+<tr>
+<td><strong>RAL</strong></td>
+<td><strong>60.1</strong></td>
+<td><strong>74.1</strong></td>
+<td><strong>63.4</strong></td>
+<td>48.6</td>
+<td><strong>44.2</strong></td>
+<td><strong>65.5</strong></td>
+<td><strong>70.0</strong></td>
+</tr>
+<tr>
+<td>RAL-zero</td>
+<td>58.8</td>
+<td>76.2</td>
+<td>65.1</td>
+<td>49.2</td>
+<td>45.9</td>
+<td>62.7</td>
+<td>68.5</td>
+</tr>
+<tr>
+<td>KD</td>
+<td>59.7</td>
+<td>70.9</td>
+<td>61.3</td>
+<td>47.3</td>
+<td>43.7</td>
+<td>65.5</td>
+<td>69.2</td>
+</tr>
+<tr>
+<td><strong>+AttnDistill</strong></td>
+<td><strong>59.7</strong></td>
+<td><strong>75.3</strong></td>
+<td><strong>63.9</strong></td>
+<td><strong>48.5</strong></td>
+<td><strong>44.7</strong></td>
+<td><strong>65.5</strong></td>
+<td><strong>70.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>RAL vs GRPO 提升</strong>:</p>
+<ul>
+<li>LongVideoBench: <strong>+2.2</strong></li>
+<li>NExTQA: <strong>+3.4</strong></li>
+<li>VideoMME: <strong>+1.4</strong></li>
+<li>MVBench: <strong>+1.5</strong></li>
+<li>TempCompass: <strong>+1.7</strong></li>
+</ul>
+<p><strong>图像 VQA (Table 3)</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>V*</th>
+<th>MMMU Pro</th>
+<th>MME</th>
+<th>MuirBench</th>
+<th>ChartQA</th>
+<th>VizWiz</th>
+<th>Blink</th>
+<th>CVBench</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen-2.5-VL-7B</td>
+<td>70.7</td>
+<td>36.4</td>
+<td>2309.3</td>
+<td>44.9</td>
+<td>84.0</td>
+<td>71.2</td>
+<td>56.3</td>
+<td>77.6</td>
+</tr>
+<tr>
+<td>Video-R1</td>
+<td>66.5</td>
+<td>36.0</td>
+<td>2266.2</td>
+<td>40.9</td>
+<td>84.2</td>
+<td>63.5</td>
+<td>47.4</td>
+<td>72.3</td>
+</tr>
+<tr>
+<td>GRPO</td>
+<td>68.6</td>
+<td>36.8</td>
+<td>2258.7</td>
+<td>43.9</td>
+<td>81.7</td>
+<td>67.9</td>
+<td>54.9</td>
+<td>78.1</td>
+</tr>
+<tr>
+<td><strong>RAL</strong></td>
+<td><strong>73.3</strong></td>
+<td><strong>37.8</strong></td>
+<td><strong>2352.8</strong></td>
+<td><strong>47.4</strong></td>
+<td><strong>86.4</strong></td>
+<td><strong>71.7</strong></td>
+<td><strong>57.2</strong></td>
+<td><strong>79.0</strong></td>
+</tr>
+<tr>
+<td>RAL-zero</td>
+<td>72.3</td>
+<td>38.4</td>
+<td>2306.2</td>
+<td>43.4</td>
+<td>82.7</td>
+<td>71.9</td>
+<td>55.4</td>
+<td>78.4</td>
+</tr>
+<tr>
+<td>KD</td>
+<td>68.1</td>
+<td>37.8</td>
+<td>2344.7</td>
+<td>39.9</td>
+<td>81.7</td>
+<td>71.2</td>
+<td>56.3</td>
+<td>78.7</td>
+</tr>
+<tr>
+<td><strong>+AttnDistill</strong></td>
+<td><strong>72.3</strong></td>
+<td><strong>38.4</strong></td>
+<td><strong>2345.1</strong></td>
+<td><strong>43.4</strong></td>
+<td><strong>83.6</strong></td>
+<td><strong>72.1</strong></td>
+<td><strong>57.2</strong></td>
+<td><strong>78.4</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>RAL vs GRPO 提升</strong>:</p>
+<ul>
+<li>V*: <strong>+4.7</strong> (细粒度视觉搜索)</li>
+<li>MME: <strong>+94.1</strong> (综合感知)</li>
+<li>MuirBench: <strong>+3.5</strong></li>
+<li>ChartQA: <strong>+4.7</strong></li>
+<li>VizWiz: <strong>+3.8</strong></li>
+<li>Blink: <strong>+2.3</strong></li>
+</ul>
+<h3 id="消融研究-figure-3">消融研究 (Figure 3)</h3>
+<p><strong>不同视觉分辨率和帧率的影响</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>GRPO</th>
+<th>RAL</th>
+<th>提升</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LongVideoBench (32 frames)</td>
+<td>57</td>
+<td>59</td>
+<td>+2</td>
+</tr>
+<tr>
+<td>LongVideoBench (64 frames)</td>
+<td>59</td>
+<td>60</td>
+<td>+1</td>
+</tr>
+<tr>
+<td>LongVideoBench (128 frames)</td>
+<td>57</td>
+<td>62</td>
+<td>+5</td>
+</tr>
+<tr>
+<td>V* (512 tokens)</td>
+<td>65</td>
+<td>66.6</td>
+<td>+1.6</td>
+</tr>
+<tr>
+<td>V* (1024 tokens)</td>
+<td>72</td>
+<td>75</td>
+<td>+3</td>
+</tr>
+<tr>
+<td>V* (2048 tokens)</td>
+<td>74</td>
+<td><strong>80.3</strong></td>
+<td><strong>+6.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p>&quot;The performance margin widens as image resolution increases, rising from a +1.6 gain at 512 tokens to a significant +6.3 gain at 2048 tokens.&quot;</p>
+</blockquote>
+<p><strong>关键发现</strong>: RAL 的优势随着视觉信息变得更细粒度而<strong>越发明显</strong>，表明其在高保真多模态理解上具有更好的可扩展性。</p>
+<h3 id="ral-zero-显式思考过程是否必要">RAL-zero：显式思考过程是否必要？</h3>
+<p>移除 <code>&lt;think&gt;</code> 块，只训练直接输出答案：</p>
+<ul>
+<li><strong>视频 VQA</strong>: RAL-zero 在 5/7 基准上超过 GRPO，在 NExTQA、VideoMME、LVBench 上达到 SOTA</li>
+<li><strong>图像 VQA</strong>: RAL-zero 在 MMMU-Pro 和 VizWiz 上达到 RL 方法最佳</li>
+</ul>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;These results demonstrate that the attention policy space is significantly underexplored; RAL effectively unlocks visual understanding capabilities by optimizing the distribution of internal attention weights.&quot;</p>
+</blockquote>
+<hr />
+<h2 id="6-golden-case-视频问答中的注意力优化">6. Golden Case：视频问答中的注意力优化</h2>
+<h3 id="场景-视频颜色识别-figure-2">场景：视频颜色识别（Figure 2）</h3>
+<pre><code>问题: &quot;What color is the liquid inside the bucket?&quot;
+
+训练数据格式:
+&lt;think&gt; The video clip captures a scene near a construction site… 
+As the camera rounds a corner, a bucket of blue paint comes into view… &lt;/think&gt;
+&lt;answer&gt; blue &lt;/answer&gt;
+
+RAL 的作用:
+- 当模型正确回答 &quot;blue&quot; 时（高奖励）
+  → 强化当前的注意力分布，鼓励模型关注 &quot;bucket&quot; 和 &quot;paint&quot; 的视觉区域
+- 当模型错误回答时（低奖励）
+  → 惩罚当前的注意力模式，推动模型探索其他关注点
+</code></pre>
+<h3 id="为什么-ral-有效">为什么 RAL 有效</h3>
+<ol>
+<li><strong>直接作用于瓶颈</strong>: 感知任务的核心挑战是信息分配，RAL 直接优化注意力</li>
+<li><strong>per-token 粒度</strong>: 避免长序列上的梯度消失问题</li>
+<li><strong>结构正则化</strong>: 通过监督内部计算过程，提供比 token 级梯度更稳定的训练信号</li>
+</ol>
+<hr />
+<h2 id="7-insights-注意力作为策略的新范式">7. Insights：注意力作为策略的新范式</h2>
+<h3 id="核心洞见">核心洞见</h3>
+<p><strong>1. &quot;关注哪里&quot;与&quot;生成什么&quot;的解耦</strong></p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;By shifting the optimization target from token likelihood to attention-based allocation, RAL fine-tunes MLLMs more directly for multimodal alignment.&quot;</p>
+</blockquote>
+<p>传统 RL 后训练将&quot;关注哪里&quot;和&quot;生成什么&quot;耦合——通过优化输出间接影响注意力。RAL 直接优化注意力，在多模态场景下更有效。</p>
+<p><strong>2. 注意力蒸馏的价值</strong></p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;The success of attention distillation confirms that attention distributions serve as a transferable and semantically rich representation of reasoning behavior.&quot;</p>
+</blockquote>
+<p>传统知识蒸馏只传递输出分布，而注意力蒸馏传递&quot;如何处理信息&quot;的隐式知识。</p>
+<p><strong>3. 对 Test-Time Scaling 的启示</strong></p>
+<p>RAL-zero 的成功表明：对于感知任务，<strong>优化注意力分配比延长推理链更有效</strong>。</p>
+<h3 id="对未来工作的启发">对未来工作的启发</h3>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;We believe this perspective paves the way for future research into fine-grained credit assignment and the optimization of other internal structures, such as MoE routing or cross-modal fusion, to foster more robust and grounded multimodal intelligence.&quot;</p>
+</blockquote>
+<ol>
+<li><strong>MoE 路由优化</strong>: 将 RAL 思想扩展到 MoE 的专家选择</li>
+<li><strong>跨模态融合</strong>: 优化跨模态注意力的分配</li>
+<li><strong>细粒度信用分配</strong>: 利用注意力进行更精确的奖励归因</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p><strong>将注意力分布作为可优化的策略</strong>，直接针对多模态感知任务的核心瓶颈——信息分配，而非通过优化输出 token 间接影响。</p>
+<p>原文:</p>
+<blockquote class="card card-info">
+<p>&quot;Ultimately, this work establishes attention distributions as a first-class optimization target for multimodal alignment. By reinforcing internal computation pathways, RAL offers a principled, process-aware alternative to standard RLHF.&quot;</p>
+</blockquote>
+<h3 id="方法定位">方法定位</h3>
+<p>RAL 属于 <strong>过程优化（Process Optimization）</strong> 范畴：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>结果优化 (GRPO/DPO)</th>
+<th>过程优化 (RAL)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优化对象</td>
+<td>输出 token 序列</td>
+<td>内部注意力分布</td>
+</tr>
+<tr>
+<td>信号粒度</td>
+<td>序列级奖励</td>
+<td>Token级注意力</td>
+</tr>
+<tr>
+<td>对注意力的影响</td>
+<td>间接</td>
+<td>直接</td>
+</tr>
+<tr>
+<td>稳定性</td>
+<td>可能导致性能退化</td>
+<td>更稳定均匀的提升</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>计算开销</strong>: 需要 eager attention 实现来提取注意力权重（论文中 patch 了注意力实现）</li>
+<li><strong>只用最后一层</strong>: 当前只从最后一层提取注意力，是否应该用所有层？</li>
+<li><strong>训练成本</strong>: RL 阶段需要 120h on 8×H100，成本较高</li>
+<li><strong>任务依赖</strong>: 对于推理密集型任务，传统 token 优化可能仍然有效</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>多层注意力聚合</strong>: 探索不同层注意力的差异化利用</li>
+<li><strong>选择性优化</strong>: 只优化与视觉 token 相关的注意力</li>
+<li><strong>与 CoT 结合</strong>: RAL + CoT 的组合策略用于需要推理的视觉任务</li>
+<li><strong>效率优化</strong>: 减少注意力提取的计算开销</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="相关工作">相关工作</h3>
+<p><strong>多模态后训练</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Through_the_Lens_of_Contrast-Self-Improving_Visual_Reasoning_in_VLMs.html" title="Through_the_Lens_of_Contrast-Self-Improving_Visual_Reasoning_in_VLMs">Through_the_Lens_of_Contrast-Self-Improving_Visual_Reasoning_in_VLMs</a> —— 同为 VLM 后训练方法，VC-STaR 通过视觉对比改善推理，RAL 通过注意力优化改善感知。两者可能互补：VC-STaR 解决&quot;推理质量&quot;，RAL 解决&quot;注意力分配&quot;</li>
+</ul>
+<p><strong>强化学习蒸馏</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a> —— SDPO 利用环境反馈进行 self-distillation，RAL 的注意力蒸馏是另一种形式的知识传递。两者都关注&quot;如何更有效地利用训练信号&quot;</li>
+</ul>
+<h3 id="ral-vs-vc-star-vs-sdpo-对比">RAL vs VC-STaR vs SDPO 对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>工作</th>
+<th>核心问题</th>
+<th>解决方案</th>
+<th>优化对象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RAL</strong></td>
+<td>感知任务的注意力分配</td>
+<td>直接优化注意力策略</td>
+<td>Attention distribution</td>
+</tr>
+<tr>
+<td><strong>VC-STaR</strong></td>
+<td>VLM 推理中的视觉幻觉</td>
+<td>视觉对比作为隐式验证</td>
+<td>推理路径质量</td>
+</tr>
+<tr>
+<td><strong>SDPO</strong></td>
+<td>RL 中的信用分配</td>
+<td>环境反馈作为 self-teacher</td>
+<td>Token 分布</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>统一视角</strong>: 三者都在探索&quot;如何更有效地利用训练信号&quot;:</p>
+<ul>
+<li><strong>RAL</strong>: 利用注意力作为额外优化目标</li>
+<li><strong>VC-STaR</strong>: 利用对比作为质量验证</li>
+<li><strong>SDPO</strong>: 利用环境反馈作为密集信号</li>
+</ul>
+<p><strong>概念 MOC 定位</strong>：<span class="wikilink unresolved" title="MOC-Exposure-Bias">MOC-Exposure-Bias</span> §3.1（On-Policy 训练 · 注意力蒸馏变体）</p>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</span></a>
+<a class="paper-nav-link next" href="Gradually_Compacting_LLMs-Boiling_Frog_Pruning.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2602.04884</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Sparse Autoencoders Reveal Interpretable and Steerable Features in VLA Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Sparse Autoencoders Reveal Interpretable and Steerable Features in VLA Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型里会-夹取-语言接口为什么叫不出来"><span class="toc-num">02</span> 2. 关键问题：模型里会“夹取”，语言接口为什么叫不出来？</a></li>
+<li><a class="toc-link" href="#3-关键方法-离线发现方向-在线干预残差"><span class="toc-num">03</span> 3. 关键方法：离线发现方向，在线干预残差</a></li>
+<li><a class="toc-link toc-sub" href="#沿-f586-走完整条链">沿 F586 走完整条链</a></li>
+<li><a class="toc-link toc-sub" href="#sae-并没有沿用-大幅扩维-的默认直觉">SAE 并没有沿用“大幅扩维”的默认直觉</a></li>
+<li><a class="toc-link toc-sub" href="#通用-如何从观察变成分数">“通用”如何从观察变成分数？</a></li>
+<li><a class="toc-link toc-sub" href="#干预的是方向-不是-独立语义开关">干预的是方向，不是“独立语义开关”</a></li>
+<li><a class="toc-link" href="#4-数据与复现边界"><span class="toc-num">04</span> 4. 数据与复现边界</a></li>
+<li><a class="toc-link" href="#5-关键结果-可读-通用-因果有效是三件事"><span class="toc-num">05</span> 5. 关键结果：可读、通用、因果有效是三件事</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-可解释性-sae-坐标更容易命名-但样本小">5.1 可解释性：SAE 坐标更容易命名，但样本小</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-通用比例-适合筛候选-尚不适合给模型打分">5.2 通用比例：适合筛候选，尚不适合给模型打分</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-最强证据-分别删除通用方向-会破坏新任务执行">5.3 最强证据：分别删除通用方向，会破坏新任务执行</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-接回-golden-case-夹爪与目标物体确实能被改变">5.4 接回 Golden Case：夹爪与目标物体确实能被改变</a></li>
+<li><a class="toc-link" href="#6-insights-下一步最值得做什么"><span class="toc-num">06</span> 6. Insights：下一步最值得做什么？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-09</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.19183v2" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Sparse Autoencoders Reveal Interpretable and Steerable Features in VLA Models</h1>
+    <p class="authors">['Aiden Swann', 'Lachlain McGranahan', 'Hugo Buurmeijer', 'Monroe Kennedy III', 'Mac Schwager']</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Sparse_Autoencoders</span> <span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Activation_Steering</span></div>
+</header>
+
+<h1>论文笔记：Sparse Autoencoders Reveal Interpretable and Steerable Features in VLA Models</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<p>Stanford 团队，arXiv 首发 2026-03-19；本笔记采用 <strong>2026-06-06 的 v2</strong>，覆盖<a href="https://arxiv.org/html/2603.19183v2">正文及附录 A–G</a>。以预印本记录，未核实会议录用信息。<a href="https://drvla.github.io/">项目页 Dr. VLA</a>。未运行代码、复现实验或核验演示视频。</p>
+<p><strong>值得记住的四点</strong>：</p>
+<ol>
+<li>SAE 能从 VLA 中分离出与抓取、任务阶段、目标物体对应的可读方向；原生 FFN 神经元的可解释比例较低。</li>
+<li>部分方向在不同场景出现，而且单方向干预会改变真实机器人行为；这是比激活相关性更强的证据。</li>
+<li>“通用特征占比”是小样本标注加时序统计分类器的输出，不能把其余特征统称为已证实的机械记忆，更不能直接当作 OOD 泛化分数。</li>
+<li><strong>论文证明了若干内部方向可影响行为，没有证明 SAE 提升了任务泛化，也没有建立稳定、可组合的机器人控制接口。</strong></li>
+</ol>
+<h2 id="2-关键问题-模型里会-夹取-语言接口为什么叫不出来">2. 关键问题：模型里会“夹取”，语言接口为什么叫不出来？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case（原文 §5.4）</strong>：在真实 DROID 装置上，让策略执行“close the gripper”，夹爪几乎保持打开；但放大模型内部的 pinch-grasp 特征 F586，夹爪会明显闭合。问题不是机器人机械上不能闭合，而是已有策略的语言接口没有可靠暴露这个行为。</p>
+</blockquote>
+<p>仅观察 VLA 成功抓取，无法判断它调用了可复用的抓取结构，还是依赖某个场景的轨迹线索。线性 probe 能说明信息可被读出，仍不能证明策略实际使用了这份信息；直接看 FFN 神经元又受特征叠加影响。本文用 SAE 换一套稀疏坐标，再把“看见什么”和“改变什么”连接起来（§2–3）。</p>
+<h2 id="3-关键方法-离线发现方向-在线干预残差">3. 关键方法：离线发现方向，在线干预残差</h2>
+<p><img src="https://arxiv.org/html/2603.19183v2/figures/splash-new.png" alt="Figure 2：从 SAE 特征发现到行为干预" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.19183v2#S0.F2">原文 Figure 2</a>。沿激活采集、稀疏分解、通用性分类和 steering 四个环节阅读。分类指标负责挑出候选，实际干预才负责检验这些方向的行为效力。</em></p>
+<h3 id="沿-f586-走完整条链">沿 F586 走完整条链</h3>
+<p><strong>① 冻结已有 VLA，采集轨迹激活。</strong> 图像、状态和指令照常输入策略；在 transformer block 完整输出处采集 residual stream。主实验将同一时间步的 token 激活取均值，得到一个向量。针对不同层分别训练 SAE，不重新训练策略（Appendix A–B）。</p>
+<p><strong>② 用稀疏重构找出反复出现的结构。</strong> 在 DROID 的多条轨迹中，F586 在精细夹取阶段出现。作者通过跨 episode 的高激活样例及时间对齐，把它解释成 pinch-like grasp，而非仅给单张图配标签（§4.2、Figure 3）。</p>
+<p><strong>③ 取 F586 的 decoder 列作为干预方向。</strong> 推理时向 PaliGemma 第 5 层残差加上该向量；后续动作专家仍按 flow matching 解码。实际夹爪闭合变化才检验这个解释是否有行为效力。特征编号只对应该 SAE 字典，不是跨模型通用编号。</p>
+<p>这里最重要的分工是：<strong>SAE 离线负责发现方向；在线可以直接使用保存的 decoder 向量，无需每步先完成 SAE 重构。</strong></p>
+<h3 id="sae-并没有沿用-大幅扩维-的默认直觉">SAE 并没有沿用“大幅扩维”的默认直觉</h3>
+<p>原文 Eq. (3)–(4) 的核心为：</p>
+<div class="math-display">$$
+\tilde x=\frac{(x-b_{\rm pre})-\mu}{\|(x-b_{\rm pre})-\mu\|_2},\qquad
+z=\operatorname{ReLU}(\operatorname{TopK}(W_{\rm enc}\tilde x)),\qquad
+\widehat{\tilde x}=W_{\rm dec}z.
+$$</div>
+<p>$x$ 是时间步激活；$b_{\rm pre}$ 是学习的预偏置，以训练激活的几何中位数初始化；$\mu$ 是该样本各维均值。TopK 只保留最大的 $k$ 个预激活值，再由 ReLU 去掉负值。重构后恢复原范数、均值及预偏置。Decoder 列向量约束为单位范数。</p>
+<p>训练损失是重构误差加 AuxK：让长期不激活的 latent 尝试重构剩余误差，减少 dead features。关键设置是 <strong>PG 输入维度和字典维度均为 2048，ER=1、k=100</strong>；动作专家为 1024 维、k=64；OpenVLA 用 ER=0.5 得到 2048 个 latent。默认 Adam、学习率 $10^{-4}$、batch 4096、100 epochs、AuxK 系数 1/32（Table 6、Appendix B.1）。</p>
+<p>为什么不更大？Figure 4 中扩维主要增加死特征，作者据此选择紧凑字典；其解释是机器人激活数据远少于常见 VLM 分析数据。<strong>这里的价值是稀疏坐标分解，不以 overcomplete 为前提。</strong></p>
+<h3 id="通用-如何从观察变成分数">“通用”如何从观察变成分数？</h3>
+<p>每个特征使用四项统计量（§3.2、Appendix C.1）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>实际测量</th>
+<th>作者的判别直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Episode coverage</td>
+<td>至少一次非零激活的 episode 比例</td>
+<td>跨 episode 出现更像共享特征</td>
+</tr>
+<tr>
+<td>Mean onset count</td>
+<td>在活跃 episode 内，由关到开的平均次数</td>
+<td>反复短促出现更像重复子技能</td>
+</tr>
+<tr>
+<td>Mean activation magnitude</td>
+<td>每个活跃 episode 的<strong>峰值</strong>再取平均</td>
+<td>区分强响应与偶然响应</td>
+</tr>
+<tr>
+<td>Relative run length</td>
+<td>每次持续激活长度除以 episode 长度，再跨 episode 平均</td>
+<td>全程持续更像场景背景</td>
+</tr>
+</tbody>
+</table></div>
+<p>Onset 使用迟滞规则：激活超过 0.1 才开启，降到 0 才关闭，中间保持状态。它与 coverage 的“非零”口径不同，复现时不能混用。</p>
+<p>每个数据集用 30 个人工标注特征（15 general、15 memorized）训练 logistic regression，再跨层应用；OpenVLA 复用 LIBERO 分类边界。LOOCV 准确率为 LIBERO 100%、DROID 96.7%（Appendix C.3–C.4）。人工筛选本身已经偏好 bursty/high-coverage 特征，所以这些数字主要验证对标注规则的复现，并非独立验证真实泛化。</p>
+<h3 id="干预的是方向-不是-独立语义开关">干预的是方向，不是“独立语义开关”</h3>
+<p>对单位 decoder 方向 $v$，两种操作为（Eq. 1–2）：</p>
+<div class="math-display">$$
+y&#x27;=y+\alpha v,\qquad
+ y&#x27;=y-(y^\top v)v.
+$$</div>
+<p>第一式增强沿该方向的分量；第二式投影掉该方向。<strong>第二式不是把 SAE 的 $z_j$ 设为零后重构</strong>：字典不保证正交，投影也可能改变与其他特征共享的成分。</p>
+<p>Appendix F.2 描述干预广播至所有 token，并在动作专家去噪循环中持续施加。这与训练时 mean-pooling 的粒度不同。复现必须核对 PG/KV cache 与动作专家的 hook 时机，不能只复制一个加向量公式。</p>
+<h2 id="4-数据与复现边界">4. 数据与复现边界</h2>
+<p>Table 5 的数字是激活分析集，不是所有基础策略的训练规模：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>分析对象</th>
+<th style="text-align:right">Episodes</th>
+<th style="text-align:right">任务 / 指令</th>
+<th style="text-align:right">Timesteps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>π0.5 / LIBERO</td>
+<td style="text-align:right">1,693</td>
+<td style="text-align:right">40</td>
+<td style="text-align:right">273,465</td>
+</tr>
+<tr>
+<td>π0.5 / DROID 子集</td>
+<td style="text-align:right">2,000</td>
+<td style="text-align:right">1,545</td>
+<td style="text-align:right">567,088</td>
+</tr>
+<tr>
+<td>OpenVLA / 表中标注 LIBERO-Goal</td>
+<td style="text-align:right">428</td>
+<td style="text-align:right">10</td>
+<td style="text-align:right">52,042</td>
+</tr>
+</tbody>
+</table></div>
+<p>DROID 子集含 1,750 条成功、250 条失败轨迹；基础 π0.5-DROID 在完整 DROID（约 75k episodes）上训练。两种 π0.5 checkpoint 都使用 knowledge insulation，因此本文比较不能单独识别这种训练技术的因果贡献（Appendix A）。</p>
+<p><strong>原文存在需复现时澄清的不一致 [?]</strong>：A.1 指定 OpenVLA 的 <code>finetuned-libero-spatial</code> checkpoint，A.2/Table 5 却写 Goal，并称与微调分布匹配；Figure 7 的相关描述又出现 Object。相机部分也同时出现实际两路输入和三路 token 的通用描述。本文不足以唯一确定这些实现设置，不能替作者消除矛盾。</p>
+<h2 id="5-关键结果-可读-通用-因果有效是三件事">5. 关键结果：可读、通用、因果有效是三件事</h2>
+<h3 id="5-1-可解释性-sae-坐标更容易命名-但样本小">5.1 可解释性：SAE 坐标更容易命名，但样本小</h3>
+<p>Table 8 随机抽取 120 个 SAE 特征，95 个可解释，比例 79.2%；FFN baseline 是 20 个里 6 个，30%。更匹配的同模型、同层比较是 <strong>π0.5-DROID PG5 的 SAE 17/20（85%）对 FFN 6/20（30%）</strong>。两者使用相同激活检索和人工观察流程。</p>
+<p>这支持 SAE 提高可读方向的密度，但不是全面 benchmark；FFN 只评估一个模型层，也没有据此证明可解释特征均能控制动作。作者在 §7 明确承认：不少干净的激活模式干预后效果弱或不可预测。</p>
+<p><img src="https://arxiv.org/html/2603.19183v2/figures/droid_general.png" alt="Figure 3：跨 DROID 任务的特征激活" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.19183v2#S4.F3">原文 Figure 3</a>。把任务帧与下方激活时间轴对应起来，观察同一特征是否在不同场景的类似操作阶段出现。这支持跨任务关联；单看激活图还不是因果控制证据。</em></p>
+<h3 id="5-2-通用比例-适合筛候选-尚不适合给模型打分">5.2 通用比例：适合筛候选，尚不适合给模型打分</h3>
+<p>Table 1/7 报告 π0.5-LIBERO 为 2.62%，π0.5-DROID 为 10.81%，OpenVLA-LIBERO Goal 为 0.45%。π0.5 数字汇总的是所分析的 <strong>PaliGemma 层</strong>，不是整个网络所有参数或所有动作专家层；Table 7 对应计数为 188/7175、719/6649、42/9389，实质是按报告特征数汇总的比例。</p>
+<p>DROID 结果与“更丰富数据支持共享结构”一致，但模型、数据、场景多样性和分类边界并未全被控制。更直接的反例在 Appendix C.5：F1939 跨场景表达初始 home pose，却因每 episode 只触发一次被判为 memorized；F1381 跨多种锅盖出现，也因持续激活和覆盖率不足被漏掉。<strong>低分不能直接解释成死记硬背。</strong></p>
+<h3 id="5-3-最强证据-分别删除通用方向-会破坏新任务执行">5.3 最强证据：分别删除通用方向，会破坏新任务执行</h3>
+<p>真实 DROID 的海绵、毛巾两个任务中，每档取四个特征，<strong>一次只消融其中一个</strong>，每个特征每任务五次，最后汇总（§5.2、Table 2）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th style="text-align:right">成功次数</th>
+<th style="text-align:right">成功率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不干预</td>
+<td style="text-align:right">39/40</td>
+<td style="text-align:right">97.5%</td>
+</tr>
+<tr>
+<td>随机 memorized 特征</td>
+<td style="text-align:right">37/40</td>
+<td style="text-align:right">92.5%</td>
+</tr>
+<tr>
+<td>随机 general 特征</td>
+<td style="text-align:right">26/40</td>
+<td style="text-align:right">65.0%</td>
+</tr>
+<tr>
+<td>general 分数最高的四个特征，逐个干预</td>
+<td style="text-align:right">0/40</td>
+<td style="text-align:right">0.0%</td>
+</tr>
+</tbody>
+</table></div>
+<p>因此不能将结论改写成“同时删除四个特征才崩溃”。通用类别的随机采样也有明显下降，比只展示人工挑选的成功案例更有说服力。</p>
+<p>模拟补充实验扩大到 135 个特征、三个任务、每任务 50 个初始状态，共 20,250 次闭环 rollout；最高四个特征的单方向消融汇总为 0/600（Figure 10、Appendix F.4）。图中应关注“每个点对应一个特征的 150 次 rollout”，而非把点数当作任务数量。</p>
+<p><strong>证据支持这些方向具有行为重要性；它没有排除“高分方向承载更大或更关键的通用状态成分，因此投影损伤更大”这一解释。</strong> 仍缺匹配被移除能量的随机方向对照与更细的事件级语义评价。</p>
+<h3 id="5-4-接回-golden-case-夹爪与目标物体确实能被改变">5.4 接回 Golden Case：夹爪与目标物体确实能被改变</h3>
+<p>空语言指令下，增强物体特征后，海绵目标从 baseline 1/25 到 22/25，FFN baseline 为 5/25；毛巾、玩具、杯子分别达到 9/25、20/25、13/25（Table 3）。这里终点是接近目标到足以执行抓取，<strong>不是完整 pick-and-place 成功率</strong>；也不是对正常任务 prompt 的改进实验。</p>
+<p>回到“close the gripper”：闭合度以 0 为全开、1 为全闭，前 50 控制步、每条件五次取平均。Prompt 为 0.005，FFN 为 0.361，F586 为 0.653；开启夹爪时分别为 0.575、0.938、SAE F406 的 0.510（Table 4）。所有 steering 在 PG5、α=150。F586 确实能把潜在行为从模型中引出来，但并未实现全闭，开夹爪也不是完美控制。</p>
+<p>比较还有选择偏差：SAE 报最佳单特征，夹爪 FFN 报前三个方向各自干预后的均值；物体实验则使用六个 FFN 向量并扫稳定 α（Appendix F.3）。这些结果支持该实现下的效果优势，不能视为严格匹配搜索预算及扰动范数的普遍胜出。“语言无法做到”也只在所测试 prompt 与装置条件下成立。</p>
+<h2 id="6-insights-下一步最值得做什么">6. Insights：下一步最值得做什么？</h2>
+<p><strong>1. 先测“语义选择性”，再把干预当机制解释。</strong> 单方向消融导致失败，是强因果证据；但 decoder 方向不正交、干预遍及 token 与时间步，可能同时损伤感知、动作状态和控制。下一步应在抓取前后分时段干预，并匹配被移除能量；若 F586 主要影响闭合时序、保留接近轨迹，才能更有力地支持“抓取机制”而非一般表示损伤。</p>
+<p><strong>2. 通用性应按语义条件下的跨场景一致性衡量，而非奖励高频。</strong> 锅盖特征可以在所有相关任务上复用，却不该因为其他任务没有锅盖而受罚。由 Appendix C.5 的漏判出发，更合理的实验是在相关任务子集内衡量跨场景响应一致性，再以新场景干预效果验证；不能直接优化当前 generality score，否则模型可能只学会高频、短促地激活。</p>
+<p><strong>3. 可用方向更像状态偏置，未必是技能按钮。</strong> Appendix F.5 中持续增强 F399 会使机器人尚未抓稳就提前抬起，F586 会提前闭爪。这提示方向可能混合“动作阶段已发生”的表征与执行倾向。实用上应测试由观测状态触发的短时闭环干预，并比较任务成功率；仅仅增强一个被命名为 grasp 的特征，甚至可能更早破坏抓取。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — 从特征命名走向机器人闭环干预，也暴露了 SAE 因果解释的边界。</li>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic：从机器人轨迹激活学习稀疏字典并闭环操控 VLA，属机制可解释性线的字典学习分支。</li>
+<li><a class="wikilink" href="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预.html" title="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预">Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预</a> — 本文直接比较的 FFN 方向路线；这里改为从机器人轨迹激活学习稀疏字典，代价是额外的数据采集与 SAE 训练。需区分原方法的激活覆盖与本文 baseline 的加性实现。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Automated-Interpretability-and-Feature-Discovery-with-Agents.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Automated Interpretability and Feature Discovery in Language Models with Agents</span></a>
+<a class="paper-nav-link next" href="Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：Not All Features Are Created Equal: A Mechanistic Study of Vision-Language-Action Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: swann2026sparseautoencoders</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

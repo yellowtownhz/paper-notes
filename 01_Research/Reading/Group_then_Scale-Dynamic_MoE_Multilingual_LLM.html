@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-多语言诅咒-大量语言竞争导致有限模型容量下各语言性能次优"><span class="toc-num">02</span> 2. 关键问题：多语言诅咒——大量语言竞争导致有限模型容量下各语言性能次优</a></li>
+<li><a class="toc-link toc-sub" href="#定义">定义</a></li>
+<li><a class="toc-link toc-sub" href="#未解决的问题">未解决的问题</a></li>
+<li><a class="toc-link toc-sub" href="#现有方案的不足">现有方案的不足</a></li>
+<li><a class="toc-link" href="#3-数据集-culturax-18-语言-6-5b-tokens-madlad-400-128-语言-17-7b-tokens"><span class="toc-num">03</span> 3. 数据集：CulturaX（18 语言 6.5B tokens）+ MADLAD-400（128 语言 17.7B tokens）</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-参数偏差驱动的动态语言分组-选择性-moe-层扩展-新语言适应"><span class="toc-num">04</span> 4. 关键方法：参数偏差驱动的动态语言分组 + 选择性 MoE 层扩展 + 新语言适应</a></li>
+<li><a class="toc-link toc-sub" href="#核心思想">核心思想</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构-figure-2">整体架构（Figure 2）</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-参数偏差语言分组-dynamic-language-clustering">4.1 参数偏差语言分组（Dynamic Language Clustering）</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-动态-moe-层扩展-dynamic-moe-layer-extension">4.2 动态 MoE 层扩展（Dynamic MoE Layer Extension）</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-动态新语言适应-dynamic-language-adaptation">4.3 动态新语言适应（Dynamic Language Adaptation）</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法对比">与已有方法对比</a></li>
+<li><a class="toc-link" href="#5-关键实验-dmoe-以-3-6x-更少参数超越-x-elm-低资源语言受益最大"><span class="toc-num">05</span> 5. 关键实验：DMoE 以 3.6x 更少参数超越 X-ELM，低资源语言受益最大</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-table-2-18-语言困惑度-culturax-验证集-bloom560m-系列">5.1 Table 2：18 语言困惑度（CulturaX 验证集，BLOOM560M 系列）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-bloom1-7b-与-gemma2b-系列-table-2-续">5.2 BLOOM1.7B 与 Gemma2B 系列（Table 2 续）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-table-3-新语言适应-灾难性遗忘-vs-新语言学习">5.3 Table 3：新语言适应（灾难性遗忘 vs 新语言学习）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-table-4-128-语言困惑度-madlad-400">5.4 Table 4：128 语言困惑度（MADLAD-400）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-table-5-128-语言-in-context-learning-零样本-4-shot">5.5 Table 5：128 语言 In-context Learning（零样本 / 4-shot）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-消融分析">5.6 消融分析</a></li>
+<li><a class="toc-link" href="#6-golden-case-telugu-te-低资源语言处理全流程"><span class="toc-num">06</span> 6. Golden Case：Telugu（te）低资源语言处理全流程</a></li>
+<li><a class="toc-link toc-sub" href="#输入样本">输入样本</a></li>
+<li><a class="toc-link toc-sub" href="#处理流程">处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#关键决策点">关键决策点</a></li>
+<li><a class="toc-link" href="#7-insights-参数偏差是比语言类型学更好的任务相似性度量-只需-10-步-fine-tune-即可获得"><span class="toc-num">07</span> 7. Insights：参数偏差是比语言类型学更好的任务相似性度量，只需 10 步 fine-tune 即可获得</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-1-参数偏差作为任务表示的新视角">洞见 1：参数偏差作为任务表示的新视角</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-2-不是所有层都需要语言特化">洞见 2：不是所有层都需要语言特化</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-3-专家特化-分类损失双保险">洞见 3：专家特化 + 分类损失双保险</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-4-语言组专家天然支持增量学习">洞见 4：语言组专家天然支持增量学习</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-5-低资源语言受益最大">洞见 5：低资源语言受益最大</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-6-group-then-scale-范式的可推广性">洞见 6："Group then Scale"范式的可推广性</a></li>
+<li><a class="toc-link toc-sub" href="#开放问题">开放问题</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#批判性讨论-基础模型的时代局限性">批判性讨论：基础模型的时代局限性</a></li>
+<li><a class="toc-link toc-sub" href="#批判性讨论-与-the-bitter-lesson-的张力">批判性讨论：与 The Bitter Lesson 的张力</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#多语言可解释性论文矩阵">多语言可解释性论文矩阵</a></li>
+<li><a class="toc-link toc-sub" href="#核心理论支撑">核心理论支撑</a></li>
+<li><a class="toc-link toc-sub" href="#相关数据与工具">相关数据与工具</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+<li><a class="toc-link" href="#附录-关键数据速查"><span class="toc-num">10</span> 附录：关键数据速查</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-24</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2506.12388" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</h1>
+    <p class="authors">Chong Li, Yingzhuo Deng, Jiajun Zhang, Chengqing Zong</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">MoE</span> <span class="topic-tag">Language_Grouping</span></div>
+</header>
+
+<h1>论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>作者</strong></td>
+<td>Chong Li, Yingzhuo Deng, Jiajun Zhang, Chengqing Zong*（通讯作者）</td>
+</tr>
+<tr>
+<td><strong>团队</strong></td>
+<td>中国科学院自动化研究所（CASIA）多模态人工智能系统国家重点实验室；中国科学院大学人工智能学院</td>
+</tr>
+<tr>
+<td><strong>邮箱</strong></td>
+<td>{lichong2021,dengyingzhuo2024}@ia.ac.cn, {jjzhang,cqzong}@nlpr.ia.ac.cn</td>
+</tr>
+<tr>
+<td><strong>发表</strong></td>
+<td>ACL 2025 Findings</td>
+</tr>
+<tr>
+<td><strong>日期</strong></td>
+<td>2025 年 6 月 14 日（arXiv 预印本）</td>
+</tr>
+<tr>
+<td><strong>代码</strong></td>
+<td>https://github.com/ZNLP/DMoE</td>
+</tr>
+<tr>
+<td><strong>论文</strong></td>
+<td>https://arxiv.org/abs/2506.12388</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-关键问题-多语言诅咒-大量语言竞争导致有限模型容量下各语言性能次优">2. 关键问题：多语言诅咒——大量语言竞争导致有限模型容量下各语言性能次优</h2>
+<h3 id="定义">定义</h3>
+<p><strong>多语言诅咒（Curse of Multilinguality）</strong> 是多语言大语言模型的根本性问题：当模型同时训练大量语言时，<strong>语言之间的竞争导致各语言性能低于专语言模型</strong>。</p>
+<blockquote class="card card-info">
+<p>&quot;The curse of multilinguality phenomenon is a fundamental problem of multilingual LLMs, where the competition between massive languages results in inferior performance.&quot;</p>
+</blockquote>
+<p>两个根本原因（Chang et al., 2024）：</p>
+<ol>
+<li><strong>有限容量（Limited Capacity）</strong>：单一 dense 模型参数容量无法充分覆盖所有语言的语言特定知识</li>
+<li><strong>负向迁移（Negative Transfer）</strong>：语言差异过大时梯度方向冲突，训练过程中相互干扰，特别伤害中低资源语言</li>
+</ol>
+<p>具体表现（Table 2）：BLOOM560M 原始模型在 18 语言上平均困惑度 56.9，经继续预训练降至 21.6，但仍受负向迁移限制——Urdu（低资源）困惑度达 29.8，德语（未见语言）达 27.6。</p>
+<h3 id="未解决的问题">未解决的问题</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>效率与性能的权衡</strong></td>
+<td>传统方法要么牺牲推理效率（X-ELM 集成多个模型），要么牺牲灵活性（X-MOD 需语言指定）</td>
+</tr>
+<tr>
+<td><strong>负迁移缓解</strong></td>
+<td>如何在扩展容量的同时减少不相似语言间的干扰</td>
+</tr>
+<tr>
+<td><strong>新语言适配</strong></td>
+<td>如何在添加新语言时避免灾难性遗忘</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="现有方案的不足">现有方案的不足</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>X-MOD</strong>（Pfeiffer et al., 2022）</td>
+<td>每语言单独 adapter，需要语言识别；误分类影响推理性能</td>
+</tr>
+<tr>
+<td><strong>X-ELM</strong>（Blevins et al., 2024）</td>
+<td>推理时集成多个模型输出，参数量随语言数线性增长（5.03B vs 本文 1.16B）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-数据集-culturax-18-语言-6-5b-tokens-madlad-400-128-语言-17-7b-tokens">3. 数据集：CulturaX（18 语言 6.5B tokens）+ MADLAD-400（128 语言 17.7B tokens）</h2>
+<h3 id="训练数据">训练数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>语料库</strong></td>
+<td>CulturaX (Nguyen et al., 2024) + MADLAD-400 (Kudugunta et al., 2023)</td>
+</tr>
+<tr>
+<td><strong>采样策略</strong></td>
+<td>语言采样指数 = 0.3（遵循 mT5）</td>
+</tr>
+<tr>
+<td><strong>18 语言实验</strong></td>
+<td>6.5B tokens，覆盖 9 个语系</td>
+</tr>
+<tr>
+<td><strong>128 语言实验</strong></td>
+<td>17.7B tokens，覆盖更广泛语系</td>
+</tr>
+<tr>
+<td><strong>语言列表（18 种）</strong></td>
+<td>ar, de, fr, it, ja, nl, ru, zh, bn, hi, id, ko, th, uk, vi, ta, te, ur</td>
+</tr>
+<tr>
+<td><strong>预处理</strong></td>
+<td>单语语料微调 10 步获取参数偏差 Δθ</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>任务类型</th>
+<th>语言数</th>
+<th>评估框架</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>XNLI</strong> (Conneau et al., 2018)</td>
+<td>自然语言推理</td>
+<td>17</td>
+<td>lm-evaluation-harness</td>
+</tr>
+<tr>
+<td><strong>PAWS-X</strong> (Yang et al., 2019)</td>
+<td>释义检测</td>
+<td>7</td>
+<td>lm-evaluation-harness</td>
+</tr>
+<tr>
+<td><strong>XCOPA</strong> (Ponti et al., 2020)</td>
+<td>常识推理</td>
+<td>11</td>
+<td>lm-evaluation-harness</td>
+</tr>
+<tr>
+<td><strong>XStoryCloze</strong> (Lin et al., 2022)</td>
+<td>故事完形</td>
+<td>10</td>
+<td>lm-evaluation-harness</td>
+</tr>
+<tr>
+<td><strong>XWinograd</strong> (Tikhonov and Ryabinin, 2021)</td>
+<td>代词消歧</td>
+<td>6</td>
+<td>lm-evaluation-harness</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>资源级别定义</strong>：High (&gt;1% 语料占比), Medium (&gt;0.1%), Low (&gt;0.01%), Extremely-Low (≤0.01%)</p>
+<hr />
+<h2 id="4-关键方法-参数偏差驱动的动态语言分组-选择性-moe-层扩展-新语言适应">4. 关键方法：参数偏差驱动的动态语言分组 + 选择性 MoE 层扩展 + 新语言适应</h2>
+<h3 id="核心思想">核心思想</h3>
+<blockquote class="card card-info">
+<p><strong>&quot;Group then Scale&quot;</strong>: 通过单语语料微调确定每层的参数偏差和语言相似度，将参数偏差大的层扩展为 MoE 层，每个专家服务一组相似语言。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>原文：&quot;Specifically, the model is first tuned on monolingual corpus to determine the parameter deviation in each layer and quantify the similarity between languages. Layers with more deviations are extended to mixture-of-experts layers to reduce competition between languages, where one expert module serves one group of similar languages.&quot;</p>
+</blockquote>
+<h3 id="整体架构-figure-2">整体架构（Figure 2）</h3>
+<p><img src="https://arxiv.org/html/2506.12388v1/x3.png" alt="Figure 2: DMoE 方法总览——参数偏差计算、语言分组与 MoE 层扩展三阶段流程" /></p>
+<pre><code>Stage 1: Dynamic Language Clustering → 参数偏差语言分组
+Stage 2: Dynamic MoE Layer Extension → 高偏差层扩展为 MoE
+Stage 3: Dynamic Language Adaptation → 新语言快速适配
+</code></pre>
+<h3 id="4-1-参数偏差语言分组-dynamic-language-clustering">4.1 参数偏差语言分组（Dynamic Language Clustering）</h3>
+<p><strong>关键创新</strong>：用参数偏差量化语言相似性，而非依赖语言类型学特征（LANG2VEC 的类型/地理/谱系向量）。参数偏差直接反映模型对该语言的&quot;感知差异&quot;。</p>
+<p><strong>操作</strong>：</p>
+<ol>
+<li>将预训练好的多语言 LLM 分别在每种语言单语语料上 <strong>fine-tune 仅 10 步</strong>（仅需轻量计算）</li>
+<li>计算每层参数偏差：
+$$\|\Delta\theta_l^x\| = \|\theta_l^0 - \theta_l^x\| \quad \text{for layer } l \in [1, N]$$</li>
+<li>拼接各层偏差为语言表示向量：$\Delta\theta^x = [\Delta\theta_1^x, \Delta\theta_2^x, \cdots, \Delta\theta_N^x]$</li>
+<li>用余弦相似度度量语言间距离</li>
+</ol>
+<p><strong>聚类目标</strong>（最大化组内最小相似度，maximin 优化）：
+$$\max_{G_1, G_2, \ldots, G_K} \sum_{k=1}^{K} \text{Sim}(\theta, G_k), \quad \text{where} \quad \text{Sim}(\theta, G_k) = \min_{x,y \in G_k} \frac{\Delta\theta^x \cdot \Delta\theta^y}{\|\Delta\theta^x\|\|\Delta\theta^y\|}$$</p>
+<p>用组内最小相似度防止组内有离群语言；全局最优为 NP-Hard，用<strong>贪心算法</strong>（Algorithm 1）求解：每次找最相似语言对合并，逐步扩充到目标组大小，保持组间平衡。</p>
+<p><strong>实证验证</strong>（Figure 3）：Tamil（ta）和 Telugu（te）同属 Dravidian 语系，其参数偏差余弦相似度显著高于其他语言对——证明参数偏差能捕获真实语言亲缘关系。</p>
+<p><img src="https://arxiv.org/html/2506.12388v1/x4.png" alt="Figure 3: BLOOM560M 上 18 种语言间参数偏差的余弦相似度矩阵" /></p>
+<p><strong>Table 1：BLOOM560M 在 18 语言上的分组结果（6G）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>语言</th>
+<th>语系特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ar, ur</td>
+<td>闪语族</td>
+</tr>
+<tr>
+<td>2</td>
+<td>bn, hi, te, ta</td>
+<td>南亚语言（印度-伊朗 + 达罗毗荼）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>de, nl, it, fr</td>
+<td>欧洲语言（日耳曼 + 罗曼）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>zh, ja, ko</td>
+<td>东亚语言</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ru, uk</td>
+<td>斯拉夫语系</td>
+</tr>
+<tr>
+<td>6</td>
+<td>id, vi, th</td>
+<td>东南亚语言</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p>注：18 语言列表中不含西班牙语（es），分组结果符合语言地理亲缘关系。</p>
+</blockquote>
+<h3 id="4-2-动态-moe-层扩展-dynamic-moe-layer-extension">4.2 动态 MoE 层扩展（Dynamic MoE Layer Extension）</h3>
+<p><strong>关键观察</strong>（Figure 10, Appendix B）：靠近输入和输出的层参数偏差更大，说明这些层包含更多语言特定知识；中间层偏差更小，更接近跨语言共享的&quot;概念空间&quot;（Wendler et al., 2024）。</p>
+<blockquote class="card card-info">
+<p>&quot;We argue that layers with more deviation require more capacity to contain language-specific knowledge, while the other layers can be shared with all languages, like the 'concept space' in the multilingual LLM.&quot;</p>
+</blockquote>
+<p><strong>实现细节</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>超参数</th>
+<th>设置</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ε</td>
+<td>0.4</td>
+<td>扩展 top-40% 偏差最大的层（消融最优，Figure 5）</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="https://arxiv.org/html/2506.12388v1/x6.png" alt="Figure 5: 不同 ε 值下 DMoE 在 18 种语言上的平均困惑度变化" />
+| g | K | 专家数 = 语言组数 |
+| Routing | Top-2 | 每 token 激活 2 个专家 |
+| 初始化 | 稠密层→专家；随机→router | - |</p>
+<p><strong>训练目标</strong>（CLM 损失 + 语言组分类损失）：
+$$L(\theta) = L_{\text{CLM}}(\theta) + \alpha L_{\text{RC}}(\theta) \quad (\alpha = 1.28)$$</p>
+<p>其中语言组分类损失（Language Group Classification Loss）监督 router 按语言组路由：
+$$L_{\text{RC}}(\theta) = -\sum_x \sum_{i=1}^{M} [\log P_i(l|x;\theta)]$$</p>
+<p><strong>消融验证</strong>（Table 2 &quot;w/o Class. Loss&quot;）：去掉分类损失后平均困惑度从 19.5 上升至 20.9。Figure 6(a) 与 6(b) 对比：无分类损失时底层 router 无法按语言区分；有分类损失时 tokens 正确路由到对应语言组专家。</p>
+<p><img src="https://arxiv.org/html/2506.12388v1/x7.png" alt="Figure 6: Router 对不同语言文本的 top-1 专家分配分布——(a)随机初始化 vs (b)语言分类损失监督" /></p>
+<h3 id="4-3-动态新语言适应-dynamic-language-adaptation">4.3 动态新语言适应（Dynamic Language Adaptation）</h3>
+<p><strong>目标</strong>：新语言快速适应 + 缓解灾难性遗忘。</p>
+<p><strong>操作</strong>：</p>
+<ol>
+<li>将新语言样本通过<strong>硬路由</strong>送入所有现有专家，选困惑度最低的作为最相似语言组</li>
+<li><strong>复制</strong>该专家参数，仅 fine-tune 新复制的专家和 router</li>
+<li><strong>冻结</strong>其余参数（shared dense 层 + 其他专家）</li>
+</ol>
+<p><strong>优势</strong>：从相似语言获得正迁移，减少对已学习语言的干扰，仅需微调少量参数。</p>
+<h3 id="与已有方法对比">与已有方法对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>X-MOD</th>
+<th>X-ELM</th>
+<th>DMoE（本文）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>粒度</strong></td>
+<td>每语言一 adapter</td>
+<td>每对语言一模型</td>
+<td>每组语言一专家</td>
+</tr>
+<tr>
+<td><strong>推理要求</strong></td>
+<td>需语言 ID</td>
+<td>需语言识别 + 集成</td>
+<td>直接输入</td>
+</tr>
+<tr>
+<td><strong>参数效率</strong></td>
+<td>O(n) 线性增长</td>
+<td>O(n) 线性增长</td>
+<td>共享底层</td>
+</tr>
+<tr>
+<td><strong>跨语言迁移</strong></td>
+<td>无</td>
+<td>有限</td>
+<td>主动促进</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-关键实验-dmoe-以-3-6x-更少参数超越-x-elm-低资源语言受益最大">5. 关键实验：DMoE 以 3.6x 更少参数超越 X-ELM，低资源语言受益最大</h2>
+<h3 id="5-1-table-2-18-语言困惑度-culturax-验证集-bloom560m-系列">5.1 Table 2：18 语言困惑度（CulturaX 验证集，BLOOM560M 系列）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>#Param</th>
+<th>平均 PPL ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOOM560M（原始）</td>
+<td>560M</td>
+<td>56.9</td>
+</tr>
+<tr>
+<td>+ Pre-train</td>
+<td>560M</td>
+<td>21.6</td>
+</tr>
+<tr>
+<td>X-ELM</td>
+<td>5.03B</td>
+<td>20.6</td>
+</tr>
+<tr>
+<td>Branch-Train-Mix</td>
+<td>1.57B</td>
+<td>20.3</td>
+</tr>
+<tr>
+<td>DMoE (3 Groups)</td>
+<td>635M</td>
+<td>21.2</td>
+</tr>
+<tr>
+<td>DMoE (6 Groups)</td>
+<td>710M</td>
+<td>20.9</td>
+</tr>
+<tr>
+<td><strong>DMoE (9 Groups)</strong></td>
+<td><strong>937M</strong></td>
+<td><strong>19.5</strong></td>
+</tr>
+<tr>
+<td>w/ LANG2VEC Clusters</td>
+<td>937M</td>
+<td>20.0</td>
+</tr>
+<tr>
+<td>w/ Random Clusters</td>
+<td>937M</td>
+<td>21.5</td>
+</tr>
+<tr>
+<td>w/o Class. Loss</td>
+<td>937M</td>
+<td>20.9</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键数字</strong>：</p>
+<ul>
+<li>DMoE（9G）相比继续预训练（+ Pre-train）困惑度提升 <strong>+11.4%</strong>（21.6 → 19.5）</li>
+<li>DMoE（937M）以 <strong>3.6x 更少参数</strong>超越 X-ELM（5.03B），PPL 提升 <strong>+9.6%</strong>（20.6 → 19.5）</li>
+<li>提升最显著：<strong>德语（de，未见语言）+17.9%</strong>、<strong>乌尔都语（ur，低资源）+13.6%</strong>
+<ul>
+<li>德语是&quot;未见语言&quot;（BLOOM 继续预训练阶段未覆盖），仍获 +17.9% 提升，说明 DMoE 的语言分组带来了真实的跨语言正迁移</li>
+</ul>
+</li>
+<li><strong>随机分组</strong>比 DMoE 差 +1.4 PPL（平均），<strong>低资源 Urdu 差 +2.6 PPL</strong>——语言相似性分组的重要性在低资源语言上被放大近一倍</li>
+</ul>
+<h3 id="5-2-bloom1-7b-与-gemma2b-系列-table-2-续">5.2 BLOOM1.7B 与 Gemma2B 系列（Table 2 续）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>基础模型</th>
+<th>方法</th>
+<th>#Param</th>
+<th>平均 PPL ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOOM1.7B</td>
+<td>+ Pre-train</td>
+<td>1.72B</td>
+<td>16.1</td>
+</tr>
+<tr>
+<td>BLOOM1.7B</td>
+<td>X-ELM</td>
+<td>15.50B</td>
+<td>14.8</td>
+</tr>
+<tr>
+<td><strong>BLOOM1.7B</strong></td>
+<td><strong>DMoE (9G)</strong></td>
+<td><strong>4.14B</strong></td>
+<td><strong>14.5</strong></td>
+</tr>
+<tr>
+<td>Gemma2B</td>
+<td>+ Pre-train</td>
+<td>2.51B</td>
+<td>14.0</td>
+</tr>
+<tr>
+<td>Gemma2B</td>
+<td>X-ELM</td>
+<td>22.56B</td>
+<td>15.0</td>
+</tr>
+<tr>
+<td><strong>Gemma2B</strong></td>
+<td><strong>DMoE (9G)</strong></td>
+<td><strong>6.53B</strong></td>
+<td><strong>12.4</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Gemma2B 系列中 DMoE 以 6.53B 参数击败 X-ELM 的 22.56B（PPL 12.4 vs 15.0），参数效率优势尤为显著——仅约 1/3.5 的参数即实现更优性能。</p>
+<h3 id="5-3-table-3-新语言适应-灾难性遗忘-vs-新语言学习">5.3 Table 3：新语言适应（灾难性遗忘 vs 新语言学习）</h3>
+<p>4 种未见语言（be/ml/mr/sr）适应实验，基于 Gemma2B：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>新语言 PPL（均值±std）</th>
+<th>旧语言 PPL 变化（High/Medium/Low）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+ Pre-train（原始）</td>
+<td>15.1±7.9</td>
+<td>基线</td>
+</tr>
+<tr>
+<td>w/ LAPT（dense 微调）</td>
+<td>7.7±3.4</td>
+<td><strong>+2.0 PPL（严重遗忘，尤其 Medium/Low）</strong></td>
+</tr>
+<tr>
+<td><strong>DMoE w/ DLA</strong></td>
+<td><strong>5.4±1.8</strong></td>
+<td><strong>+0.7 PPL（轻微遗忘）</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>：DLA 新语言学习效果更优（5.4 vs 7.7），灾难性遗忘减少约 <strong>65%</strong>（+0.7 vs +2.0）。</p>
+<h3 id="5-4-table-4-128-语言困惑度-madlad-400">5.4 Table 4：128 语言困惑度（MADLAD-400）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>128 语言平均 PPL ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOOM560M + Pre-train</td>
+<td>20.7±12.8</td>
+</tr>
+<tr>
+<td>Branch-Train-Mix</td>
+<td>19.2±12.2</td>
+</tr>
+<tr>
+<td><strong>DMoE</strong></td>
+<td><strong>17.7±11.2</strong></td>
+</tr>
+<tr>
+<td>BLOOM1.7B + Pre-train</td>
+<td>14.9±8.7</td>
+</tr>
+<tr>
+<td>Branch-Train-Mix</td>
+<td>14.3±8.4</td>
+</tr>
+<tr>
+<td><strong>DMoE</strong></td>
+<td><strong>13.7±8.1</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键数字</strong>：</p>
+<ul>
+<li>DMoE 相比 Branch-Train-Mix 平均 PPL 提升 <strong>1.5</strong>（19.2 → 17.7，BLOOM560M）</li>
+<li>极低资源语言（5 种：br/pa/sw/ug/zu）平均提升 <strong>2.1 PPL</strong></li>
+<li>拉丁字母语言（80 种）提升 <strong>2.9 PPL</strong>（vs 非拉丁语言仅 <strong>0.7 PPL</strong>，说明共享字符集有助于迁移，书写系统差异较大的语言受益有限）</li>
+<li><strong>Niger-Congo 语系</strong>（仅占 BLOOM 预训练语料 <strong>0.4GB</strong>）受益最大（Figure 7），即便原始预训练数据极度匮乏，通过语言分组仍能显著受益</li>
+</ul>
+<p><img src="https://arxiv.org/html/2506.12388v1/x9.png" alt="Figure 7: 128 语言训练后各语系的平均困惑度对比" /></p>
+<h3 id="5-5-table-5-128-语言-in-context-learning-零样本-4-shot">5.5 Table 5：128 语言 In-context Learning（零样本 / 4-shot）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>零样本 XNLI</th>
+<th>零样本 XWinograd</th>
+<th>4-shot XNLI</th>
+<th>4-shot XWinograd</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOOM560M + Pre-train</td>
+<td>37.1±3.5</td>
+<td>54.9±4.1</td>
+<td>34.7±2.6</td>
+<td>53.8±5.1</td>
+</tr>
+<tr>
+<td>Branch-Train-Mix</td>
+<td>37.2±4.1</td>
+<td>54.4±3.6</td>
+<td>35.3±2.6</td>
+<td>54.2±4.3</td>
+</tr>
+<tr>
+<td><strong>DMoE</strong></td>
+<td><strong>37.5±4.5</strong></td>
+<td><strong>55.1±4.3</strong></td>
+<td><strong>35.7±2.5</strong></td>
+<td><strong>55.1±4.6</strong></td>
+</tr>
+<tr>
+<td>BLOOM1.7B + Pre-train</td>
+<td>39.2±4.9</td>
+<td>55.5±4.6</td>
+<td>37.1±3.2</td>
+<td>55.8±4.6</td>
+</tr>
+<tr>
+<td>Branch-Train-Mix</td>
+<td>39.1±5.1</td>
+<td>55.6±4.7</td>
+<td>36.8±3.2</td>
+<td>55.8±4.4</td>
+</tr>
+<tr>
+<td><strong>DMoE</strong></td>
+<td><strong>39.8±4.8</strong></td>
+<td><strong>56.4±5.1</strong></td>
+<td><strong>37.5±2.9</strong></td>
+<td><strong>56.4±5.1</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>XWinograd（多语言常识推理）受益最显著</strong>：相比基础模型平均提升 <strong>+1.6%</strong>（55.1 vs 54.9, BLOOM560M zero-shot）</li>
+<li>DMoE 在零样本和 4-shot 设置下均超越所有基线</li>
+</ul>
+<h3 id="5-6-消融分析">5.6 消融分析</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>消融维度</th>
+<th>设置</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ε（MoE 层比例）</strong></td>
+<td>Figure 5</td>
+<td>ε=0.4 最优；ε&lt;0.5 时针对高偏差层扩展远优于随机扩展；全层（ε=1）反而非最优</td>
+</tr>
+<tr>
+<td><strong>分组数 K</strong></td>
+<td>Table 2</td>
+<td>K 越大通常越好（9G 19.5 &lt; 6G 20.9 &lt; 3G 21.2），但参数量随之增加</td>
+</tr>
+<tr>
+<td><strong>分类损失 L_RC</strong></td>
+<td>Table 2 &quot;w/o&quot;</td>
+<td>去掉后 PPL 从 19.5 上升至 20.9，Figure 6 显示底层 router 无法正确路由</td>
+</tr>
+<tr>
+<td><strong>聚类方法</strong></td>
+<td>Table 2</td>
+<td>参数偏差 &gt; LANG2VEC (+0.5) &gt; Gemma Clusters (+0.2 跨模型) &gt; Random (+2.0)</td>
+</tr>
+<tr>
+<td><strong>跨模型迁移</strong></td>
+<td>&quot;w/ Gemma Clusters&quot;</td>
+<td>Gemma2B 聚类用于 BLOOM560M 略差于自身聚类，语言相似性有模型特异性</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Router 可视化（Figure 6）</strong>：</p>
+<ul>
+<li>无分类损失：Router 分配均匀，底层无语言特异性</li>
+<li>有分类损失：各专家形成清晰的语言分工（如 Expert 1 主要处理 ar/ur 组，权重约 92%）</li>
+</ul>
+<hr />
+<h2 id="6-golden-case-telugu-te-低资源语言处理全流程">6. Golden Case：Telugu（te）低资源语言处理全流程</h2>
+<p><strong>背景</strong>：Telugu 属达罗毗荼语系，低资源语言，初始 PPL 高达 88.4。</p>
+<h3 id="输入样本">输入样本</h3>
+<pre><code>语言：Telugu (te)
+文本：&quot;ఒక పుస్తకం చదివాను&quot; (意为&quot;我读了一本书&quot;)
+Token 序列：[ఒక, పుస్తకం, చదివాను]
+</code></pre>
+<h3 id="处理流程">处理流程</h3>
+<p><strong>Step 1：参数偏差计算（训练前准备）</strong></p>
+<ul>
+<li>在 Telugu 单语语料上微调 BLOOM560M（仅 10 步）</li>
+<li>计算每层参数偏差 $\|\Delta\theta_{te}^l\|$ for $l \in [1, 24]$</li>
+<li>靠近输入/输出的层偏差较大，中间层偏差较小</li>
+</ul>
+<p><strong>Step 2：语言相似度计算</strong></p>
+<ul>
+<li>Tamil (ta) 与 Telugu 余弦相似度最高（同属达罗毗荼语系，Figure 3 验证）</li>
+<li>与德语等欧洲语言距离最远</li>
+</ul>
+<p><strong>Step 3：语言分组（Algorithm 1）</strong></p>
+<ul>
+<li>贪心算法首先将最相似对 (ta, te) 合并</li>
+<li>最终 6G 配置：Telugu 被分入 Group 2 = {bn, hi, te, ta}（南亚语言组）</li>
+</ul>
+<p><strong>Step 4：MoE 层扩展</strong></p>
+<ul>
+<li>选择 top-40% 高偏差层扩展为 MoE</li>
+<li>每层 6 个专家，对应 6 个语言组</li>
+<li>Telugu 对应的专家从该语言组数据训练</li>
+</ul>
+<p><strong>Step 5：推理路由（Figure 6 统计）</strong></p>
+<ul>
+<li>MoE 层：Router 将 Telugu token 高权重路由到对应语言组专家</li>
+<li>Dense 层：所有语言共享稠密层（跨语言概念空间）</li>
+</ul>
+<h3 id="关键决策点">关键决策点</h3>
+<ol>
+<li>参数偏差而非语言学特征决定 Telugu 归属——数据驱动发现 ta/te 亲缘关系</li>
+<li>仅 top-40% 高偏差层扩展——中间层保持共享，避免参数浪费</li>
+<li>Router + 分类损失确保正确路由——防止 Telugu token 被误分配到欧洲语言专家</li>
+</ol>
+<blockquote class="card card-info">
+<p>注：上述流程为基于论文方法的推演示例，具体数值（如路由概率的精确值）仅为说明性质，非原文直接报告的数据。</p>
+</blockquote>
+<hr />
+<h2 id="7-insights-参数偏差是比语言类型学更好的任务相似性度量-只需-10-步-fine-tune-即可获得">7. Insights：参数偏差是比语言类型学更好的任务相似性度量，只需 10 步 fine-tune 即可获得</h2>
+<h3 id="洞见-1-参数偏差作为任务表示的新视角">洞见 1：参数偏差作为任务表示的新视角</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>表示来源</th>
+<th>优势</th>
+<th>局限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LANG2VEC</td>
+<td>类型学/地理/系统发育</td>
+<td>可解释性强</td>
+<td>忽略模型特性</td>
+</tr>
+<tr>
+<td><strong>参数偏差</strong></td>
+<td><strong>模型 fine-tuning 变化</strong></td>
+<td><strong>数据驱动，贴近实际迁移</strong></td>
+<td>需额外计算</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>深层意义</strong>：将&quot;任务相似性&quot;定义为&quot;模型内部表征变化的相似性&quot;——直接反映模型的&quot;感知差异&quot;，捕获了语言对下游模型的实际影响，且只需 10 步 fine-tune 即可获得。</p>
+<h3 id="洞见-2-不是所有层都需要语言特化">洞见 2：不是所有层都需要语言特化</h3>
+<p>中间层是跨语言共享的&quot;概念空间&quot;，只有靠近输入/输出的层（top-ε=0.4）需扩展为 MoE。这暗示了一种<strong>分层知识体系</strong>：</p>
+<pre><code>底层：语言通用能力（共享稠密层）
+  ↑
+中层：跨语言共享概念空间
+  ↑
+顶层：语言/语系特定知识（MoE 专家）
+</code></pre>
+<h3 id="洞见-3-专家特化-分类损失双保险">洞见 3：专家特化 + 分类损失双保险</h3>
+<p>数据分组保证每个专家看到自己的语言，分类损失强制 router 学到语言感知路由——两者缺一不可（去掉分类损失 PPL 上升 1.4）。</p>
+<h3 id="洞见-4-语言组专家天然支持增量学习">洞见 4：语言组专家天然支持增量学习</h3>
+<p>冻结旧专家 + 仅复制微调新专家，实现低遗忘（+0.7 PPL）的新语言快速适应，遗忘减少 65%。</p>
+<h3 id="洞见-5-低资源语言受益最大">洞见 5：低资源语言受益最大</h3>
+<p>初始 PPL 越高的语言，DMoE 提升越大（Figure 4）。低资源语言在稠密模型中与高资源语言竞争容量，扩展后获得专属参数，减少负迁移。</p>
+<p><img src="https://arxiv.org/html/2506.12388v1/x5.png" alt="Figure 4: DMoE 相比继续预训练基线在各语言上的困惑度改善幅度" />对于资源极度稀缺的语言（如 Niger-Congo 语系仅占 0.4GB 预训练语料），MoE 架构可能是唯一可行的规模化路径。</p>
+<h3 id="洞见-6-group-then-scale-范式的可推广性">洞见 6：&quot;Group then Scale&quot;范式的可推广性</h3>
+<p>先量化任务间相似度（通过参数偏差），再动态扩展冲突最大的层——这一思路不限于多语言场景：</p>
+<ul>
+<li>多领域适应：medical/legal/finance 文档处理</li>
+<li>多模态任务：vision-language-audio 统一架构</li>
+<li>多任务学习：问答/摘要/翻译共享底层</li>
+</ul>
+<h3 id="开放问题">开放问题</h3>
+<ol>
+<li><strong>Router 负载均衡</strong>：论文未详细讨论 load balancing 策略</li>
+<li><strong>最优组数 K</strong>：如何自动确定，而非手动调优？</li>
+<li><strong>跨组迁移</strong>：相似语系间的正迁移是否可进一步放大？</li>
+<li><strong>在线学习</strong>：能否支持新语言增量添加无需重训？</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>创新点</th>
+<th>技术细节</th>
+<th>贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>参数偏差语言分组</strong></td>
+<td>10 步 fine-tune → 参数偏差向量 → maximin 优化贪心聚类</td>
+<td>数据驱动发现语言相似性，优于 LANG2VEC</td>
+</tr>
+<tr>
+<td><strong>选择性 MoE 层扩展</strong></td>
+<td>仅扩展 top-ε=0.4 高偏差层</td>
+<td>平衡性能与推理成本</td>
+</tr>
+<tr>
+<td><strong>语言组分类损失</strong></td>
+<td>L_RC 显式监督 router 对齐语言组</td>
+<td>实现专家专业化</td>
+</tr>
+<tr>
+<td><strong>动态语言适应</strong></td>
+<td>复制最相似专家 + 冻结旧参数 + 微调新专家</td>
+<td>减少灾难性遗忘 65%</td>
+</tr>
+<tr>
+<td><strong>参数效率</strong></td>
+<td>937M vs X-ELM 5.03B（3.6x 更少）</td>
+<td>PPL 仍优于 X-ELM</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="局限性">局限性</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>局限</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>计算开销</strong></td>
+<td>每种语言需单独 fine-tune 获取参数偏差，计算量与语言数 × 参数量成正比</td>
+</tr>
+<tr>
+<td><strong>规模限制</strong></td>
+<td>受算力约束，最大模型仅测试到 22.6B 参数，训练 token 最多 17.7B</td>
+</tr>
+<tr>
+<td><strong>语言覆盖</strong></td>
+<td>部分语系（如 Trans-New Guinea）因语料缺乏未被覆盖</td>
+</tr>
+<tr>
+<td><strong>训练成本</strong></td>
+<td>高于 dense 模型（MoE 层扩展 + 分批训练）</td>
+</tr>
+<tr>
+<td><strong>超参数敏感</strong></td>
+<td>ε, K 需手动调优，缺乏自适应机制</td>
+</tr>
+<tr>
+<td><strong>书写系统影响</strong></td>
+<td>非拉丁字母语言提升有限（0.7 PPL vs 拉丁语言 2.9 PPL）</td>
+</tr>
+<tr>
+<td><strong>基础模型选择</strong></td>
+<td>主要基于 BLOOM（早期多语言模型）和 Gemma2B，未在 LLaMA、Qwen 等当前 SOTA 多语言模型上验证</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="批判性讨论-基础模型的时代局限性">批判性讨论：基础模型的时代局限性</h3>
+<p>本文实验主要基于 <strong>BLOOM</strong> 系列（2022 年发布）和 <strong>Gemma2B</strong>。BLOOM 作为早期的开源多语言模型，其多语言能力与当前 SOTA 模型存在显著差距：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>发布时间</th>
+<th>多语言能力</th>
+<th>本文是否验证</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BLOOM</td>
+<td>2022.11</td>
+<td>较弱，中文等语言 PPL 高</td>
+<td>✅ 主要实验</td>
+</tr>
+<tr>
+<td>Gemma</td>
+<td>2024.2</td>
+<td>中等</td>
+<td>✅ 部分实验</td>
+</tr>
+<tr>
+<td>LLaMA 3</td>
+<td>2024.4</td>
+<td>强，多语言指令遵循</td>
+<td>❌ 未验证</td>
+</tr>
+<tr>
+<td>Qwen2.5</td>
+<td>2024.9</td>
+<td>极强，中文能力突出</td>
+<td>❌ 未验证</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>核心问题</strong>：DMoE 在 BLOOM 上观察到的&quot;多语言诅咒&quot;现象，在 LLaMA/Qwen 等经过大规模多语言训练的模型上是否仍然显著？</p>
+<ul>
+<li><strong>假设 A（DMoE 仍有价值）</strong>：即使基础模型多语言能力强，语言间竞争仍存在，DMoE 可进一步提升</li>
+<li><strong>假设 B（收益递减）</strong>：基础模型足够强时，语言分组带来的边际收益可能很小，甚至被 MoE 的训练开销抵消</li>
+</ul>
+<p><strong>为什么这很重要</strong>：如果 B 成立，DMoE 的价值可能局限于&quot;资源受限场景下的次优解&quot;，而非&quot;通用多语言架构改进方案&quot;。论文未讨论这一边界条件，是重要的实验设计缺陷。</p>
+<h3 id="批判性讨论-与-the-bitter-lesson-的张力">批判性讨论：与 The Bitter Lesson 的张力</h3>
+<p>Rich Sutton 在 2019 年的经典文章 <strong>The Bitter Lesson</strong> 中指出：</p>
+<blockquote class="card card-info">
+<p>&quot;The biggest lesson that can be read from 70 years of AI research is that general methods that leverage computation are ultimately the most effective, and by a large margin... The human-knowledge approach tends to complicate methods in ways that make them less suited to taking advantage of general methods leveraging computation.&quot;</p>
+</blockquote>
+<p><strong>本文方法与 Bitter Lesson 的潜在冲突</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>本文方法</th>
+<th>Bitter Lesson 主张</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>语言分组</strong></td>
+<td>参数偏差 + 语言学先验（贪心聚类）</td>
+<td>应让模型自动发现语言结构</td>
+</tr>
+<tr>
+<td><strong>层选择</strong></td>
+<td>人工设定 ε=0.4</td>
+<td>应通过学习自动决定</td>
+</tr>
+<tr>
+<td><strong>专家分配</strong></td>
+<td>每组语言对应一个专家</td>
+<td>应让路由自由学习最优分配</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>可能的反驳</strong>：</p>
+<ol>
+<li>
+<p><strong>&quot;结构即归纳偏置&quot;</strong>：MoE 架构本身就需要某种路由机制，语言分组只是提供了一种合理的初始化，而非硬编码的约束。论文显示 router 仍能学习调整（Figure 6）。</p>
+</li>
+<li>
+<p><strong>&quot;计算效率 vs 纯粹 scaling&quot;</strong>：Bitter Lesson 强调的是长期趋势，但实际应用中计算资源有限。本文以 3.6x 更少参数达到更优性能，是一种&quot;穷人的 scaling&quot;。</p>
+</li>
+<li>
+<p><strong>&quot;语言分组的可学习性&quot;</strong>：参数偏差本身是从数据中学到的（fine-tune 10 步），而非纯粹的人类先验。这比 LANG2VEC 的类型学特征更接近&quot;从数据中发现结构&quot;。</p>
+</li>
+</ol>
+<p><strong>核心问题</strong>：如果给模型足够的计算和参数，它能否自动学会&quot;语言分组&quot;？</p>
+<ul>
+<li><strong>支持自动学习</strong>：DeepSeek-V3 等大规模 MoE 模型没有显式语言分组，仍表现出色</li>
+<li><strong>支持显式分组</strong>：本文实验表明，随机分组比参数偏差分组差 +1.4 PPL，说明某种结构先验是有价值的</li>
+</ul>
+<p><strong>开放问题</strong>：是否存在一种&quot;软分组&quot;方法，既不硬编码语言结构，又能引导模型发现有效的专家分工？这可能是一个值得探索的方向——让 router 在训练过程中<strong>发现</strong>而非<strong>被告知</strong>语言分组。</p>
+<blockquote class="card card-info">
+<p>Sutton: &quot;We want AI agents that can discover like we can, not which contain what we have discovered.&quot;</p>
+</blockquote>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>相似度迁移</strong>：从小模型计算参数偏差后迁移到大模型（跨模型损失仅 -0.2 PPL）</li>
+<li><strong>更好聚类算法</strong>：谱聚类/层次聚类替代贪心，可能发现更优分组</li>
+<li><strong>专家结构细化</strong>：DeepSeekMoE 式共享专家 + 语言专用专家，兼顾通用知识与语言特化</li>
+<li><strong>动态容量分配</strong>：高资源语言组分配更多参数，低资源语言组共享更多跨语言知识</li>
+<li><strong>扩展到更大规模</strong>：千亿参数 + 千语言验证</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="多语言可解释性论文矩阵">多语言可解释性论文矩阵</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>研究问题</th>
+<th>关键发现</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本文 (ACL'25)</strong></td>
+<td>多语言诅咒解决方案？</td>
+<td>参数偏差分组 + MoE 扩展</td>
+<td>应用：分层知识体系验证</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>语言特异性在哪？</td>
+<td>~1% FFN 神经元 + U形分布</td>
+<td>U形分布指导 MoE 层选择</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>多语言处理流程？</td>
+<td>MWork 三阶段 + 0.13% 神经元</td>
+<td>中间层&quot;概念空间&quot;支持共享设计</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>中间表示偏向？</td>
+<td>概念空间英语偏向</td>
+<td>中间层共享，顶层/底层特化</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>哪些组件激发翻译？</td>
+<td>&lt;5% attention heads</td>
+<td>翻译关键组件可指导专家路由</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="核心理论支撑">核心理论支撑</h3>
+<p>本文的设计决策&quot;仅扩展 top-ε 高偏差层&quot;得到了以下研究的理论支撑：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>本文发现</th>
+<th>支撑论文</th>
+<th>具体证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>中间层参数偏差小</td>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>Phase 2 中间层是跨语言共享的&quot;概念空间&quot;</td>
+</tr>
+<tr>
+<td>底层/顶层偏差大</td>
+<td><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>U形分布：底层/顶层是语言处理关键</td>
+</tr>
+<tr>
+<td>ε=0.4 最优</td>
+<td>两篇论文综合</td>
+<td>恰好覆盖语言特异性层，保留概念空间共享</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="相关数据与工具">相关数据与工具</h3>
+<ul>
+<li><a class="wikilink" href="MADLAD-400-Multilingual_Document-Level_Dataset.html" title="MADLAD-400-Multilingual_Document-Level_Dataset">MADLAD-400-Multilingual_Document-Level_Dataset</a> — 128 语言实验使用的 MADLAD-400 语料</li>
+<li><a class="wikilink" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html" title="Self-Improving_Multilingual_Long_Reasoning-TRIT">Self-Improving_Multilingual_Long_Reasoning-TRIT</a> — 多语言 LLM 推理能力提升，与本文目标互补</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span></li>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+</ul>
+<hr />
+<h2 id="附录-关键数据速查">附录：关键数据速查</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数值</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18 语言平均 PPL 提升</td>
+<td>+11.4%</td>
+<td>vs 持续预训练（21.6 → 19.5）</td>
+</tr>
+<tr>
+<td>参数量节省</td>
+<td>3.6x</td>
+<td>vs X-ELM（937M vs 5.03B）</td>
+</tr>
+<tr>
+<td>新语言适配遗忘</td>
+<td>+0.7 PPL</td>
+<td>vs +2.0（dense），减少 65%</td>
+</tr>
+<tr>
+<td>最佳组数</td>
+<td>9G（937M）</td>
+<td>19.5 PPL</td>
+</tr>
+<tr>
+<td>最佳 ε</td>
+<td>0.4</td>
+<td>top-40% 高偏差层</td>
+</tr>
+<tr>
+<td>训练 token（18L）</td>
+<td>6.5B</td>
+<td>CulturaX</td>
+</tr>
+<tr>
+<td>训练 token（128L）</td>
+<td>17.7B</td>
+<td>MADLAD-400</td>
+</tr>
+<tr>
+<td>语言覆盖</td>
+<td>18 → 128</td>
+<td>9 → 更多语系</td>
+</tr>
+<tr>
+<td>低资源提升（Urdu）</td>
+<td>+13.6%</td>
+<td>低资源语言</td>
+</tr>
+<tr>
+<td>未见语言提升（de）</td>
+<td>+17.9%</td>
+<td>未见语言仍有正迁移</td>
+</tr>
+<tr>
+<td>非拉丁 vs 拉丁提升</td>
+<td>0.7 vs 2.9 PPL</td>
+<td>共享字符集有助于迁移</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p>#Research #Paper #多语言LLM #Mixture-of-Experts #动态路由 #语言分组 #ACL2025
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">How do Large Language Models Handle Multilingualism?</span></a>
+<a class="paper-nav-link next" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：Exploring the Translation Mechanism of Large Language Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Li et al. (2025). Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model. arXiv:2506.12388</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

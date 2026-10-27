@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeadVis: An Interactive Tool For Investigating Attention Heads</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">HeadVis: An Interactive Tool For Investigating Attention Heads</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-注意力头在全分布上的行为-和窄任务里看到的不一样"><span class="toc-num">02</span> 2. 关键问题：注意力头在全分布上的行为，和窄任务里看到的不一样</a></li>
+<li><a class="toc-link" href="#3-关键方法-headvis-一个交互式注意力头调查工具"><span class="toc-num">03</span> 3. 关键方法：HeadVis —— 一个交互式注意力头调查工具</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心视图与功能">核心视图与功能</a></li>
+<li><a class="toc-link toc-sub" href="#技术细节">技术细节</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集-真实数据分布-自定义控制序列"><span class="toc-num">04</span> 4. 数据集：真实数据分布 + 自定义控制序列</a></li>
+<li><a class="toc-link" href="#5-关键结果-四个案例研究展示了从-容易理解-到-很难理解-的完整光谱"><span class="toc-num">05</span> 5. 关键结果：四个案例研究展示了从"容易理解"到"很难理解"的完整光谱</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-fuzzy-induction-容易理解">5.1 Fuzzy Induction（容易理解）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-polysemantic-attention-head-相对容易">5.2 Polysemantic Attention Head（相对容易）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-answer-selection-中等难度">5.3 Answer Selection（中等难度）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-same-set-suppression-最难理解">5.4 Same-Set Suppression（最难理解）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#moc-连接-按-author-team-topic-area-concept-分组">MOC 连接（按 Author/Team → Topic/Area → Concept 分组）</a></li>
+<li><a class="toc-link toc-sub" href="#论文间双链">论文间双链</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-15</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://transformer-circuits.pub/2026/headvis/index.html" target="_blank">arXiv</a>
+    </div>
+    <h1>HeadVis: An Interactive Tool For Investigating Attention Heads</h1>
+    <p class="authors">Joshua Batson, Tom Conerly</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Attention_Head_Analysis</span> <span class="topic-tag">Feature_Attribution</span> <span class="topic-tag">Circuit_Discovery</span> <span class="topic-tag">Feature_Visualization</span> <span class="topic-tag">Polysemanticity</span> <span class="topic-tag">Anthropic</span></div>
+</header>
+
+<h1>HeadVis: An Interactive Tool For Investigating Attention Heads</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Joshua Batson, Tom Conerly (Anthropic)</li>
+<li><strong>发表时间</strong>: 2026年</li>
+<li><strong>发表平台</strong>: transformer-circuits.pub（Anthropic 机制可解释性系列博客）</li>
+<li><strong>代码开源</strong>: https://github.com/anthropics/headvis
+<ul>
+<li>开源了 frontend + 接口规范，但 server/backend 未开源</li>
+<li>4 个内部功能未开源：自定义序列实时输入、logit lens、head 相似度度量、head composition heatmap</li>
+<li>作者甚至建议&quot;point Claude at the repository to implement the backend&quot;</li>
+</ul>
+</li>
+<li><strong>在线 Demo</strong>:
+<ul>
+<li>Haiku 3.5 子集: https://transformer-circuits.pub/2026/headvis/haiku/index.html</li>
+<li>Gemma 3 1B: https://transformer-circuits.pub/2026/headvis/gemma3/index.html</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-注意力头在全分布上的行为-和窄任务里看到的不一样">2. 关键问题：注意力头在全分布上的行为，和窄任务里看到的不一样</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>假设你在一个自定义数据集上发现某个注意力头在做&quot;序列继承&quot;（succession）——看到 [A][B]...[A] 就预测 B。你觉得这个头的职责很清楚了。但当你把它放到真实数据分布上跑，它同时还在做：复制（copying）、比较（comparison）、首字母缩略词生成（acronym production）。</p>
+<p>这就是论文反复出现的主题：一个头在窄任务上的行为 ≠ 它在全分布上的行为。而且差异往往不容易刻画。</p>
+<p>更麻烦的是，注意力头比 MLP 神经元难可视化得多——它是高秩的、同时组合 QK 和 OV 两条电路、还要在整个上下文窗口上激活。Feature Vis 对 residual stream 特征和 MLP 神经元很有效，但注意力头需要一套新的工具。</p>
+</blockquote>
+<p><strong>动机</strong>：</p>
+<ul>
+<li>已有工作（如 feature vis）对 residual stream 特征、MLP 特征和 MLP 神经元的可视化很成功，但注意力头因为高秩、双电路、长上下文激活，可视化难度更高。</li>
+<li>多篇 prior work 发现：注意力头在全分布上的行为和窄任务上不一样——Gould 2024 的 succession head（同一个头还做 copying、comparison、acronym）、Lieberum 2023 的多选题复制头、McDougall 2023 的 IOI 抑制头。</li>
+<li>需要一个工具，让研究者能轻松生成和检验关于&quot;某个头在做什么&quot;的假设。</li>
+</ul>
+<p><strong>之前的方法卡在哪里</strong>：</p>
+<ul>
+<li>单条 prompt 的注意力可视化（如 BERTviz）只能看一个输入下的模式，无法覆盖全分布。</li>
+<li>基于语料检索的方法（如 exBERT）依赖人工标注的参考集，扩展性有限。</li>
+<li>AttentionViz 把 query/key 向量联合嵌入到低维空间，类似 HeadVis 的 PCA 视图，但没有 QK/OV 特征归因和跨头组合分析。</li>
+<li>缺少一个能同时看：注意力模式、QK/OV 归因、低秩投影、SAE 特征归因、数据集分布度量的统一交互工具。</li>
+</ul>
+<hr />
+<h2 id="3-关键方法-headvis-一个交互式注意力头调查工具">3. 关键方法：HeadVis —— 一个交互式注意力头调查工具</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>延续上面的例子：你发现了一个看起来在做 induction 的头。打开 HeadVis：</p>
+<ol>
+<li><strong>Head Selector 散点图</strong>：把 induction score 放到一个轴上，快速定位极端值的头。</li>
+<li><strong>Attention Pattern 视图</strong>：看这个头在真实数据上的 top-activating 样本。比如一个诗歌样本里，<code>gleam</code> 的 attention 最高，但前面并没有 <code>gleam</code> 这个 token——说明不是字面 induction。</li>
+<li><strong>Hover 看 attention 来源</strong>：hover 到 <code>gleam</code> 上，发现它 attend 回的是 <code>dream</code> 后面的 newline。这是 fuzzy induction：按语义/结构匹配，而非 token 匹配。</li>
+<li><strong>QK 归因</strong>：从 <code>gleam</code> 到 newline 做 QK attribution。发现 query 侧是 &quot;-ea sound at line end&quot; 特征，key 侧是 &quot;newline after an 'ee' sound&quot; 特征。也就是说，QK 在 feature basis 上做 induction：匹配的不是具体 token，而是韵脚特征。</li>
+<li><strong>OV 归因</strong>：OV 侧和字面 induction 一模一样——value 侧是 &quot;current token is \n&quot;，output 侧是 &quot;say \n&quot;。也就是说，fuzziness 完全在 QK；一旦决定 attend 哪里，复制行为和字面 induction 头一样。</li>
+<li><strong>PCA 检查（可选）</strong>：对 Q、K、O 激活做 PCA，看是否有多个 distinct cluster——如果有，提示这个头可能是 polysemantic。</li>
+</ol>
+<p>走完这个流程，你对这个头的理解从&quot;它好像在做 induction&quot;变成了&quot;它在 feature basis 上做 fuzzy induction，QK 匹配韵脚/结构特征，OV 做标准复制&quot;。</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p>HeadVis 由三部分组成：</p>
+<ol>
+<li><strong>Frontend</strong>：交互式浏览界面（开源）</li>
+<li><strong>Offline Script</strong>：预计算每个头的度量指标和注意力模式</li>
+<li><strong>Server</strong>：处理实时查询（QK/OV 归因、自定义序列输入）</li>
+</ol>
+<h3 id="核心视图与功能">核心视图与功能</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>视图</th>
+<th>功能</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Head Selector 散点图</td>
+<td>横轴/纵轴/颜色均可配置为任意 per-head 度量（层数、head index、induction score 等）</td>
+<td>快速定位极端值的头</td>
+</tr>
+<tr>
+<td>Attention Pattern 视图</td>
+<td>按 max attention pattern 分桶展示数据集样本；hover token 看其 attend 回哪些 key</td>
+<td>直观理解头的激活模式</td>
+</tr>
+<tr>
+<td>PCA 投影</td>
+<td>对 Q、K、O 激活做 PCA；颜色可按 token-level 规则或自动聚类</td>
+<td>检查头是否有多个 distinct 行为</td>
+</tr>
+<tr>
+<td>QK 归因</td>
+<td>把 attention score 分解为 (query feature, key feature) 的交互和</td>
+<td>理解&quot;为什么 attend 这里&quot;</td>
+</tr>
+<tr>
+<td>OV 归因</td>
+<td>把头输出分解为 (value feature, output feature) 的交互和</td>
+<td>理解&quot;attend 之后做了什么&quot;</td>
+</tr>
+<tr>
+<td>Virtual Weights</td>
+<td>投影特征通过 head 的 key/query 权重，看哪些其他特征在投影空间中靠近</td>
+<td>发现跨特征的隐藏关联</td>
+</tr>
+<tr>
+<td>Top Token 排行</td>
+<td>按平均 attention 排列 top query/key tokens</td>
+<td>快速把握头的偏好</td>
+</tr>
+<tr>
+<td>自定义序列输入</td>
+<td>输入任意文本，实时看 attention 模式（内部功能，未开源）</td>
+<td>验证假设</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="技术细节">技术细节</h3>
+<ul>
+<li><strong>特征来源</strong>：使用 10M-feature 的 weakly causal crosscoder (WCC)，与 QK Attributions 论文同款。</li>
+<li><strong>QK Attribution</strong>：把 attention score 写成 query feature 和 key feature 的交互之和。形式化：
+<ul>
+<li>给定 query token q 和 key token k，attention score = softmax(QW_Q · KW_K^T / sqrt(d_head))</li>
+<li>QK attribution 将其分解为特征对 (f_q, f_k) 的加权和，权重由 crosscoder 特征激活和投影矩阵决定</li>
+</ul>
+</li>
+<li><strong>OV Attribution</strong>：把头输出写成 value feature 和 output feature 的交互之和。value feature 来自 attended token 的 residual stream 经 OV 电路；output feature 在 query token 位置。</li>
+<li><strong>PCA 方法</strong>：取 attention output norm 最高的 (query, key) 对，收集对应的 Q、K、O 激活，分别做 PCA。注意：O 激活 = key 的 residual stream 经 OV 电路，再乘以 attention weight。V 被省略，因为 V 和 O 通过固定线性映射 W_O 关联，PCA 定性结果相同。</li>
+<li><strong>Virtual Weights</strong>：参考 Circuit Tracing 论文，计算特征在 head 的 QK 电路中的&quot;虚拟权重&quot;——即投影特征通过 W_Q/W_K 后的余弦相似度，用于发现不直接共现但几何上对齐的特征。</li>
+</ul>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<ul>
+<li><strong>vs BERTviz / exBERT</strong>：从单条 prompt 可视化扩展到全分布 + 实时归因 + 跨头组合</li>
+<li><strong>vs AttentionViz</strong>：增加了 QK/OV 特征归因、virtual weights、head composition 等机制分析能力</li>
+<li><strong>vs TDB (Mossing 2024)</strong>：TDB 从 prompt+behavior 出发找贡献组件；HeadVis 从 head 出发反向理解其行为</li>
+<li><strong>核心差异</strong>：HeadVis 不仅展示&quot;attention 模式长什么样&quot;，还提供&quot;为什么是这个模式&quot;（QK 归因）和&quot;attend 之后做了什么&quot;（OV 归因）的实时分解</li>
+</ul>
+<hr />
+<h2 id="4-数据集-真实数据分布-自定义控制序列">4. 数据集：真实数据分布 + 自定义控制序列</h2>
+<ul>
+<li><strong>主要数据</strong>：未明确说明具体 benchmark 名称，但描述为&quot;standard dataset&quot;（用于 induction score 计算）和&quot;full data distribution&quot;（用于 HeadVis 浏览）。从上下文推断，应该是从模型训练/推理日志中采样的真实文本分布。</li>
+<li><strong>自定义序列</strong>：用于验证假设的控制输入。例如：
+<ul>
+<li>Same-set suppression 实验：生成 185 条句子，形式为 &quot;{five cities} are all cities in {country}&quot;，其中 4 个城市属于该国，1 个是外国城市。</li>
+<li>替换实验：在真实序列中替换特定 token（如把 Ivory Coast 换成 Zambia 或其他 51 个非洲国家），测量 attention 变化。</li>
+</ul>
+</li>
+<li><strong>数据预计算</strong>：HeadVis 的 offline script 预计算 per-head metrics 和 attention patterns over dataset，避免前端实时计算。</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-四个案例研究展示了从-容易理解-到-很难理解-的完整光谱">5. 关键结果：四个案例研究展示了从&quot;容易理解&quot;到&quot;很难理解&quot;的完整光谱</h2>
+<h3 id="5-1-fuzzy-induction-容易理解">5.1 Fuzzy Induction（容易理解）</h3>
+<ul>
+<li><strong>发现</strong>：早期层的 induction head 做字面复制（token-level 匹配）；中层 head 做 fuzzy induction（跨语言、反义词、结构位置、亲属关系）。</li>
+<li><strong>关键洞察</strong>：fuzzy induction 的 fuzziness 完全在 QK 电路——OV 电路和字面 induction 一样做复制。</li>
+<li><strong>QK 归因示例</strong>：诗歌中 <code>gleam</code> attend 回 <code>dream</code> 后的 newline，因为 query 侧是 &quot;-ea sound at line end&quot;，key 侧是 &quot;newline after an 'ee' sound&quot;。</li>
+<li><strong>数据来源</strong>：Figure 3（诗歌样本）、Figure 4（QK/OV 电路图）</li>
+</ul>
+<h3 id="5-2-polysemantic-attention-head-相对容易">5.2 Polysemantic Attention Head（相对容易）</h3>
+<ul>
+<li><strong>对象</strong>：一个之前被认为是&quot;line width&quot;的头（早期层，计算行宽）。</li>
+<li><strong>发现</strong>：该头在全分布上至少有 3 个 distinct 行为：
+<ol>
+<li><strong>Years</strong>：tokenizer 把 1000-1999 的年份拆成 <code>1</code> + <code>776</code>，头从 <code>776</code> attend 回 <code>1</code>。</li>
+<li><strong>Multi-token words</strong>：长词被拆成多个 token，头在 token 间 attend（如 <code>interpret</code> + <code>ability</code>）。</li>
+<li><strong>Newlines</strong>：从 newline attend 回前一个 newline——这是之前已知的行为。</li>
+</ol>
+</li>
+<li><strong>验证</strong>：Q、K、O 的 PCA 都把三个行为分成了 distinct cluster（Figure 6）。</li>
+<li><strong>意外发现</strong>：Years 行为只在 1000-1986 年 strong attend，1987+ 衰减（Figure 7）。这个约束从 attention pattern 和 attribution 都看不出来，需要 sweep 才能发现。</li>
+<li><strong>数据来源</strong>：Figure 5（样本）、Figure 6（PCA）、Figure 7（year sweep）</li>
+</ul>
+<h3 id="5-3-answer-selection-中等难度">5.3 Answer Selection（中等难度）</h3>
+<ul>
+<li><strong>对象</strong>：之前被认为是&quot;多选题答案选择&quot;的头。</li>
+<li><strong>发现</strong>：多选题只是其众多行为之一。在全分布上，它做的是更 general 的&quot;帮助模型重复之前上下文&quot;——通过识别&quot;即将被提及的实体&quot;。</li>
+<li><strong>OV 电路</strong>：始终做同一件事——复制 attended token 的内容，类似 induction。</li>
+<li><strong>QK 电路</strong>：复杂度在这里。Query 侧是&quot;about to produce content matching that mark&quot;，key 侧是&quot;content the model has marked as relevant&quot;。</li>
+<li><strong>具体案例</strong>：
+<ul>
+<li>多选题：query &quot;about to say an answer&quot; × key &quot;correct answer&quot;</li>
+<li>情感分类：query &quot;about to say sentiment&quot; × key &quot;relevant sentiment cue&quot;</li>
+<li>对话：query &quot;about to say speaker's line&quot; × key &quot;previous speaker content&quot;</li>
+</ul>
+</li>
+<li><strong>Virtual Weights 分析</strong>：&quot;correct answer&quot; 特征经 K 投影后，最相似的不是其他多选题特征，而是各种&quot;this is the relevant content&quot;特征——说明这些特征在 residual stream 中近正交，但头的 K 投影把它们映射到了一起。</li>
+<li><strong>判断</strong>：作者倾向于认为这个头是 monosemantic（一个通用行为），但不敢完全确定——因为缺乏一个 crisp 的文本描述来验证全分布。</li>
+<li><strong>数据来源</strong>：Figure 8-13</li>
+</ul>
+<h3 id="5-4-same-set-suppression-最难理解">5.4 Same-Set Suppression（最难理解）</h3>
+<ul>
+<li><strong>对象</strong>：一个中层头，top query/key tokens 都是地点、人名、队名。</li>
+<li><strong>核心发现</strong>：该头抑制&quot;同一集合内&quot;的 attention——比如国家 token 对自己城市 key 的 attention 被抑制，对外国城市反而高。</li>
+<li><strong>实验验证</strong>：185 条控制句子，国家 token 对外国城市的 attention 高于本国城市——98% 的情况下成立。</li>
+<li><strong>QK 几何</strong>：
+<ul>
+<li>国家 query 向量（减去跨国家均值）与本国城市 key 向量的余弦相似度：mean -0.47（负对齐）</li>
+<li>与外国城市 key 向量：mean +0.01（近零）</li>
+<li>在 residual stream 中，国家与本国城市原本正相关（mean +0.17），但 W_Q 和 W_K 投影后符号翻转。</li>
+</ul>
+</li>
+<li><strong>K-Composition 案例</strong>：<code>Ivory</code> attend 到 <code>a</code>（一个无关 token），因为前面序列提到 <code>chikumbuso</code>（赞比亚非营利组织），一个早期头把 Zambian 特征写到了 <code>a</code> 的位置，当前头的 key 侧读取了这个特征。这说明：token 层面看不出模式时，feature 层面能解释。</li>
+<li><strong>数据来源</strong>：Figure 14-20</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li>
+<p><strong>反直觉的发现</strong>：Same-set suppression 头在 residual stream 中国家和本国城市是正相关的（+0.17），但经 W_Q/W_K 投影后变成负相关（-0.47）。这意味着头的&quot;抑制&quot;不是利用已有的负相关，而是主动通过投影矩阵翻转符号。如果让我来设计，我可能会假设模型直接利用已有的语义距离，而不是额外学习一个翻转。</p>
+</li>
+<li>
+<p><strong>Polysemanticity 的两种 flavor</strong>：论文明确指出 attention head 的 polysemanticity 可以&quot;不需要 superposition&quot;——因为头的输出是高秩的，可以把不同行为写到不同方向，下游组件可以直接读取。MLP 神经元输出是 rank-1，所以 polysemantic neuron 必须依赖 superposition。这个区分很 sharp，之前我没想到过。</p>
+</li>
+<li>
+<p><strong>Year 1000-1986 的 dropoff</strong>：一个让我意外的细节——line width 头的 years 行为在 1987 年后突然衰减。这说明即使 attention pattern 和 QK attribution 看起来覆盖了所有年份，实际的有效范围可能很窄。这种&quot;隐性边界&quot;在全分布探索中很容易遗漏，HeadVis 的 sweep 功能很关键。</p>
+</li>
+<li>
+<p><strong>Answer selection 头的判断困境</strong>：作者花了大量篇幅分析，最后结论仍然是&quot;our best guess is monosemantic, but we aren't fully convinced&quot;。这种诚实的 uncertainty 比强行下结论更有价值——它暴露了当前可解释性方法的根本局限：没有 crisp 假设就无法系统验证。</p>
+</li>
+<li>
+<p><strong>开源策略的取舍</strong>：HeadVis 开源了 frontend + 接口规范，但实时自定义序列、logit lens、head composition heatmap 等内部功能未开源。这种&quot;半开源&quot;策略可能是为了降低维护负担，但也限制了社区复现某些案例研究的能力。</p>
+</li>
+<li>
+<p><strong>PCA 的局限性</strong>：作者自己警告了&quot;PCA only projects...different attention behaviors could seem separable...but not actually impact the attention score&quot;。A 版本没提这个警告，B 版本正确指出来了。PCA 在这里是假设生成工具，不是验证工具——这个定位很重要。</p>
+</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li><strong>Attention 分解方法会迎来一波进展</strong>：HeadVis 提供了 4 个清晰案例（从 clean 到 messy），正好覆盖了 polysemanticity、high-rank features、attention superposition 等障碍。这些案例将成为验证新分解方法的&quot;标准测试集&quot;。</li>
+<li><strong>Long context attention 会是下一个金矿</strong>：论文明确提到&quot;heads that frequently attend over long distances have been less studied&quot;，并暗示 system prompt 的作用可能和长距离 attention 有关。随着模型上下文越来越长，这个方向的研究价值会快速上升。</li>
+<li><strong>Softmax competition 的逻辑会被重视</strong>：目前 HeadVis 只分析单个 (query, key) 边，但 attention 的优先级逻辑（&quot;attend to A if present, otherwise B&quot;）依赖 softmax 竞争。理解这种竞争机制需要新的工具视角。</li>
+<li><strong>Attention 的 transcoder 会成为下一个热点</strong>：论文 Discussion 明确说&quot;We don't know how to do the analogous thing for an attention layer&quot;。现有方法（Attention-output SAEs, multi-token transcoders, Lorsa）都是 rank-1 OV basis，会把高秩行为（如 succession, copying induction）拆碎。我预测未来 1-2 年会有工作提出高秩 attention transcoder，并尝试在 HeadVis 发现的这些案例上验证。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>&quot;工具先行，发现跟上&quot;的研究策略</strong>：HeadVis 不是先提出理论再验证，而是先造工具、再让工具暴露现象、最后从现象中提炼理论障碍。这种&quot;工程驱动&quot;的路径在机制可解释性领域很有效——因为我们对 attention 的&quot;理论预期&quot;本身就不够成熟。</li>
+<li><strong>Case study 的梯度设计</strong>：四个案例从简单到复杂，形成了一条学习曲线。读者可以先在 induction 上熟悉工具，再跟着作者一步步进入更混乱的真实世界。这种写作结构让一篇工具论文同时成为了一篇教学材料。</li>
+<li><strong>Uncertainty 的显式标注</strong>：作者在 answer selection 和 same-set suppression 两个案例中都明确标注了&quot;我们理解到哪一步、哪一步还不确定&quot;。这种写法不仅诚实，也帮助读者区分&quot;已验证的事实&quot;和&quot;合理的猜测&quot;。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<h3 id="moc-连接-按-author-team-topic-area-concept-分组">MOC 连接（按 Author/Team → Topic/Area → Concept 分组）</h3>
+<p><strong>Team/Author:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-Anthropic-Interpretability-Safety">MOC-Team-Anthropic-Interpretability-Safety</span> — Team: 本文作者 Joshua Batson 与 Tom Conerly 均来自 Anthropic，发表于 transformer-circuits.pub，延续该团队在注意力机制可解释性与可视化工具方面的研究轨迹。</li>
+</ul>
+<p><strong>Topic/Area:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 本文提出 HeadVis 交互工具，通过 QK/OV 归因与 PCA 多视图方法系统探索注意力头在全数据分布上的行为，为机制可解释性领域提供了新的假设生成与验证范式。</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic: 本文对注意力头的深度理解（如 same-set suppression、answer selection 等机制）可为 alignment auditing 提供底层组件级别的监控能力，与激活工程方向形成互补。</li>
+</ul>
+<p><strong>Concept:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Attention-Head-Mechanisms">MOC-Attention-Head-Mechanisms</span> — Concept: 本文的 fuzzy induction、polysemantic line width、answer selection、same-set suppression 四个案例可作为该 MOC 的骨架内容，涵盖注意力头从简单到复杂的完整行为光谱。</li>
+</ul>
+<h3 id="论文间双链">论文间双链</h3>
+<ul>
+<li><span class="wikilink unresolved" title="QK Attributions">QK Attributions</span> — 同一团队，QK/OV 归因方法来源，使用同款 10M-feature WCC</li>
+<li><span class="wikilink unresolved" title="Monosemantic Features">Monosemantic Features</span> — Anthropic 同一系列，feature vis 工具来源</li>
+<li><span class="wikilink unresolved" title="AttentionViz">AttentionViz</span> — 相关工作，joint embedding 思路类似 HeadVis 的 PCA 视图</li>
+<li><span class="wikilink unresolved" title="BertViz">BertViz</span> — 单 prompt 注意力可视化先驱</li>
+<li><span class="wikilink unresolved" title="Linebreaks">Linebreaks</span> — line width 头来源</li>
+<li><span class="wikilink unresolved" title="Circuit Tracing">Circuit Tracing</span> — virtual weights 概念来源</li>
+<li><span class="wikilink unresolved" title="Lorsa">Lorsa</span> / <span class="wikilink unresolved" title="Attention-output SAEs">Attention-output SAEs</span> / <span class="wikilink unresolved" title="Multi-token transcoders">Multi-token transcoders</span> — Discussion 中对比的现有分解方法</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Natural_Language_Autoencoders-无监督激活解释与模型审计.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</span></a>
+<a class="paper-nav-link next" href="Circuits-May2026-Downstream-Connections-Steer-Prediction.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Circuits Updates – May 2026: Downstream Connections Predict Which Features Will Steer Model Behavior</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: </p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

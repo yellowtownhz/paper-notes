@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-没有完整动作剧本-机器人还能把箱子搬到目标处吗"><span class="toc-num">02</span> 2. 关键问题：没有完整动作剧本，机器人还能把箱子搬到目标处吗？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先学能执行的动作-再逐步撤掉特权信息与逐帧参考"><span class="toc-num">03</span> 3. 关键方法：先学能执行的动作，再逐步撤掉特权信息与逐帧参考</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-重定向-允许身体偏离示范-优先保住交互">3.1 重定向：允许身体偏离示范，优先保住交互</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-学生-用-mask-表示缺失-用潜变量处理目标的不确定性">3.2 学生：用 mask 表示缺失，用潜变量处理目标的不确定性</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-为什么蒸馏以后还需要-rl">3.3 为什么蒸馏以后还需要 RL？</a></li>
+<li><a class="toc-link" href="#4-数据与评价范围-规模扩增主要来自同类交互的变化"><span class="toc-num">04</span> 4. 数据与评价范围：规模扩增主要来自同类交互的变化</a></li>
+<li><a class="toc-link" href="#5-关键结果-更自由的任务接口-伴随可量化的跟踪代价"><span class="toc-num">05</span> 5. 关键结果：更自由的任务接口，伴随可量化的跟踪代价</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-重定向确实改善接触-但不是每个指标都最优">5.1 重定向确实改善接触，但不是每个指标都最优</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-蒸馏很有效-统一控制也确实牺牲精度">5.2 蒸馏很有效，统一控制也确实牺牲精度</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-rl-微调最清楚的收益来自偏离示范的目标">5.3 RL 微调最清楚的收益来自偏离示范的目标</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-真机验证了什么-又没有验证什么">5.4 真机验证了什么，又没有验证什么？</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.03279v1" target="_blank">arXiv</a>
+    </div>
+    <h1>ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</h1>
+    <p class="authors">['Xialin He', 'Sirui Xu', 'Xinyao Li', 'Runpei Dong', 'Liuyu Bian', 'Yu-Xiong Wang', 'Liang-Yan Gui']</p>
+    <div class="topic-row"><span class="topic-tag">Humanoid_Robotics</span> <span class="topic-tag">Loco_Manipulation</span> <span class="topic-tag">Reinforcement_Learning</span></div>
+</header>
+
+<h1>ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</h1>
+<p><strong>最值得记住的判断：ULTRA 把接触稳定的动作先验，与部署时可变的目标和感知输入接起来了；这种统一有用，但并非免费。</strong> 它在偏离示范的目标上受益于 RL 微调，同时牺牲部分分布内轨迹跟踪精度。真实机器人验证了第一视角搬运的可行性，距离开放环境中的通用自主操作仍有明显边界。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Xialin He、Sirui Xu 等，University of Illinois Urbana-Champaign。</li>
+<li><strong>阅读版本</strong>：2026-03-03 发布的 arXiv v1，阅读覆盖正文与附录；不据此判断后续版本或会议录用状态。</li>
+<li><strong>原始资料</strong>：<a href="https://arxiv.org/html/2603.03279v1">论文全文</a> · <a href="https://ultra-humanoid.github.io/">项目与演示</a>。本笔记未核查代码实现，也未独立复现实验。</li>
+</ul>
+<h2 id="2-关键问题-没有完整动作剧本-机器人还能把箱子搬到目标处吗">2. 关键问题：没有完整动作剧本，机器人还能把箱子搬到目标处吗？</h2>
+<p><strong>Golden Case：双手提起并搬运箱子。</strong> 这是论文实际测试的任务类型。人的动作捕捉记录给出了身体和箱子的完整轨迹，但直接把人体姿态映射到 G1 上，会遇到两层困难。</p>
+<p>第一层是<strong>动作看起来对，接触却不对</strong>：人和机器人的比例、关节限制不同，逐关节复刻可能让脚滑动、手离开箱子。第二层是<strong>跟踪成功不等于会完成目标</strong>：部署时操作者通过键盘指定箱子的未来目标位姿，并没有每一帧身体如何移动的参考。机器人还可能只能从头部深度点云估计箱子位置，必须自行决定迈步、弯腰和维持接触的过程。（§I、§V-E）</p>
+<p>因此，这篇论文同时处理两个瓶颈：把人类示范变成物理可执行的数据，以及把依赖完整参考的技能变成可接受稀疏目标的闭环控制。这里的“多模态”主要指本体感觉、物体状态、点云和不同粒度的控制目标，<strong>不是语言—视觉大模型控制</strong>。</p>
+<h2 id="3-关键方法-先学能执行的动作-再逐步撤掉特权信息与逐帧参考">3. 关键方法：先学能执行的动作，再逐步撤掉特权信息与逐帧参考</h2>
+<p>沿着搬箱子案例，整个流程如下：</p>
+<ol>
+<li><strong>人类示范 → G1 仿真轨迹</strong>：RL 重定向器读取人体与物体轨迹，在仿真中寻找既接近动作意图、又保持手箱接触的机器人动作。</li>
+<li><strong>G1 轨迹 → 特权教师</strong>：教师看到完整状态与密集参考，学习在实际控制接口、随机物理参数和外部扰动下稳定跟踪。</li>
+<li><strong>教师 → 多模态学生</strong>：训练时逐步遮掉部分目标和观测；学生通过可用信息预测技能潜变量，再输出关节目标。</li>
+<li><strong>学生 → 稀疏目标执行</strong>：对偏移后的目标与初始状态做 RL 微调。部署时只给本体感觉、箱子点云和目标，学生用自己的先验生成动作，经 PD 控制器驱动关节；不再需要教师或测试时参考动作。（§IV、Fig. 2）</li>
+</ol>
+<p><img src="https://arxiv.org/html/2603.03279v1/method_new.png" alt="Figure 2：从重定向到部署的四阶段训练" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.03279v1#S2.F2">原文 Figure 2</a>。重点看教师与学生的输入差别：完整状态和密集参考用于训练教师，部署时学生使用现实传感和稀疏目标；这解释了为何不能把重定向器直接当部署策略。</em></p>
+<h3 id="3-1-重定向-允许身体偏离示范-优先保住交互">3.1 重定向：允许身体偏离示范，优先保住交互</h3>
+<p>传统运动学重定向主要求姿态对应；ULTRA 让仿真器负责动力学与接触约束，奖励负责“想保留什么”。它只把<strong>脚和手掌的位置作为稀疏锚点</strong>，用连杆方向保持整体姿态，再加入物体运动、手掌到物体表面的距离，以及接触事件匹配奖励。对箱子来说，手是否抓住箱子，比每个身体关节是否逐帧与人一致更重要。（§IV-A）</p>
+<p>一个策略在全部示范上训练，训练完成后还能处理轨迹各轴缩放、物体尺寸缩放，不必逐条动作重新做 RL 优化。这是它相对逐轨迹物理优化的扩展性来源。</p>
+<p><strong>但“物理可行”有前提。</strong> 这一阶段采用理想化低层控制，控制频率等于仿真频率，而且没有域随机化；它生成的是仿真参考，并不直接证明真实电机能忠实执行。第二阶段单独训练教师，才引入部署控制接口、执行器限制、物理随机化和扰动恢复。这解释了为什么不能直接把重定向策略拿去部署。（§IV-A/B）</p>
+<h3 id="3-2-学生-用-mask-表示缺失-用潜变量处理目标的不确定性">3.2 学生：用 mask 表示缺失，用潜变量处理目标的不确定性</h3>
+<p>学生把不同输入编码成统一 token，并用 availability mask 告诉融合网络哪些信息存在。给出下一帧局部身体目标时，它可以精细跟踪；遮掉局部参考、保留长期物体目标时，它需要自行补全中间动作；遮掉 MoCap 物体状态、保留点云时，它从视觉几何信息执行任务。（§IV-C）</p>
+<p>附录 C 的关键规模是：<strong>64 维技能潜变量</strong>，模态 token 为 256 维，融合 Transformer 为 2 层、4 个 attention head。PointNet 把 64 个三维点编码成点云 token。学生还使用本体感觉历史；它不是只凭单帧箱子位置预测动作。</p>
+<p>为什么要潜变量？“把箱子放到那里”通常对应多种身体动作，目标并没有唯一指定下一帧姿态。作者让训练期的特权编码器利用完整信息辅助推断技能，同时训练仅依赖学生可见输入的 prior。正文写成潜变量 prior 与特权 residual 相加，部署时仅使用 prior。</p>
+<p>核心蒸馏目标可按 Eq. (1) 写为：</p>
+<div class="math-display">$$
+\mathcal L=\|a^{\mathrm{student}}-a^{\mathrm{teacher}}\|_2^2
++\mathcal L_{\mathrm{aux}}
++\lambda_{\mathrm{KL}}D_{\mathrm{KL}}\big(q_\phi(z\mid o_s,o_T)\,\|\,p_\theta(z\mid o_s)\big).
+$$</div>
+<p>动作匹配保住教师的控制方式；辅助预测要求潜变量保留被遮蔽信息中的任务线索；KL 将特权后验约束到部署可用的先验附近。否则，训练效果可能主要来自部署时不存在的信息。附录 C 还加入 prior-only 动作匹配和潜变量时间平滑，不能把实际实现理解为只有上面三个简单项。</p>
+<p><strong>两个避免信息丢失的细节</strong>：一是 DAgger 式采样，逐步从教师 rollout 转向学生 rollout，再向教师查询学生实际访问状态的动作；二是把密集局部目标直接旁路连接到动作解码器。精确跟踪的信息不必全部挤过随机技能瓶颈。（§IV-C）</p>
+<p>复现时需核对原文的符号约定：正文用 residual 与 prior 的和，附录 Table F 又直接用 privileged posterior 表述 KL；Table F 总损失列出 prior-only 项，却未单列其权重。概念数据流明确，完整实现仍需代码补齐。</p>
+<h3 id="3-3-为什么蒸馏以后还需要-rl">3.3 为什么蒸馏以后还需要 RL？</h3>
+<p>学生跟随教师访问过的状态，不代表会处理“箱子目标突然偏移”后的接触与恢复。ULTRA 微调时随机偏移物体目标、身体根部目标与初始状态，直接奖励靠近目标、逐步取得进展和最终成功。（§IV-C、附录 C/Table H）</p>
+<p>PPO 更新的是<strong>真正部署的 prior-only 策略</strong>；保留 <strong>1/4 的并行环境做蒸馏</strong>，避免目标优化完全冲掉已有动作技能。目标相关奖励还受 mask 控制：不可见的目标不计奖励，也不纳入成功检查。它学的是针对已提供目标的行为，不能据此认为机器人会自主推断未提供的任务。</p>
+<h2 id="4-数据与评价范围-规模扩增主要来自同类交互的变化">4. 数据与评价范围：规模扩增主要来自同类交互的变化</h2>
+<p>作者使用 OMOMO 人—物动作捕捉中经 InterMimic 修正的子集，聚焦 <strong>4 种箱形物体</strong>；其他物体涉及灵巧手能力。重定向后通过轨迹和物体缩放得到约 <strong>6 倍</strong>语料。跟踪 OOD 指留出的动作与新的物体尺度；目标控制 OOD 则使用随机目标偏移。（§V-A/D）</p>
+<p>训练在 IsaacGym 中进行，目标执行另外在 MuJoCo 验证，再部署到 Unitree G1。学生蒸馏使用 4096 个并行环境；实机点云由深度反投影、前方区域裁剪、去地面、取主要点簇并降采样得到。（附录 C、§V-E）</p>
+<p>这个感知流程依赖场景中箱子的几何可分离性。它没有证明从杂乱物体中根据语言识别目标，也没有覆盖任意形状、材质或精细手内操作。</p>
+<h2 id="5-关键结果-更自由的任务接口-伴随可量化的跟踪代价">5. 关键结果：更自由的任务接口，伴随可量化的跟踪代价</h2>
+<h3 id="5-1-重定向确实改善接触-但不是每个指标都最优">5.1 重定向确实改善接触，但不是每个指标都最优</h3>
+<p>Table II 在相同 OMOMO 子集比较 PHC、GMR、OmniRetarget 与 ULTRA。以 Largebox 为例，OmniRetarget → ULTRA 的 foot-skating duration 为 <strong>0.205 → 0.061</strong>，contact-floating duration 为 <strong>0.231 → 0.015</strong>；后者直接对应“搬运时手没有可靠贴住物体”的问题。</p>
+<p>这里保留表中 duration 原始数值，不把它擅自换算成秒。边界同样值得看：Largebox 穿透 duration 是 <strong>0.000 → 0.008</strong>，ULTRA 并未在所有指标上胜出。更准确的结论是接触稳定性与滑步显著改善，而非彻底消除几何违规。</p>
+<h3 id="5-2-蒸馏很有效-统一控制也确实牺牲精度">5.2 蒸馏很有效，统一控制也确实牺牲精度</h3>
+<p>正文 Table I 的人—物联合跟踪成功率如下，保留原表“均值 ± 报告波动量”的写法，不额外推断该波动量的统计定义。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">ID 联合成功率（%）</th>
+<th style="text-align:right">OOD 联合成功率（%）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>特权教师</td>
+<td style="text-align:right">89.79 ± 0.11</td>
+<td style="text-align:right">81.33 ± 0.78</td>
+</tr>
+<tr>
+<td>学生观测下直接 RL</td>
+<td style="text-align:right">41.78 ± 0.31</td>
+<td style="text-align:right">23.54 ± 0.24</td>
+</tr>
+<tr>
+<td>仅跟踪蒸馏学生</td>
+<td style="text-align:right">77.15 ± 0.57</td>
+<td style="text-align:right">52.74 ± 0.04</td>
+</tr>
+<tr>
+<td><strong>统一 ULTRA</strong></td>
+<td style="text-align:right"><strong>57.44 ± 0.40</strong></td>
+<td style="text-align:right"><strong>52.00 ± 0.44</strong></td>
+</tr>
+<tr>
+<td>OmniRetarget，使用 ULTRA 数据</td>
+<td style="text-align:right">20.91 ± 0.52</td>
+<td style="text-align:right">25.82 ± 0.52</td>
+</tr>
+<tr>
+<td>HDMI，适配当前设置</td>
+<td style="text-align:right">9.94 ± 0.38</td>
+<td style="text-align:right">12.95 ± 0.30</td>
+</tr>
+</tbody>
+</table></div>
+<p>成功要求没有跌倒，且逐帧全局身体位置误差与物体位置误差都低于 0.3 m。（§V-C）这是轨迹执行指标，不是精密装配指标。</p>
+<p>证据支持两点：教师蒸馏比学生直接 RL 更容易学到接触丰富的全身控制；统一 ULTRA 超过这里适配的外部跟踪基线，但<strong>相对自己的专用蒸馏学生，ID 成功率下降 19.71 个百分点，OOD 基本持平</strong>。作者将后者解释为更不依赖特定轨迹的动作先验，我认为这个解释合理，但尚不是独立机制证明。</p>
+<p>基线比较还存在信息接口差异：作者指出 OmniRetarget 缺少显式物体观测，HDMI 在当前规模下不稳定。因此结果能支持整个系统的收益，不能单独归因于 Transformer、mask 或潜变量。本文也未提供足以逐一隔离这些组件贡献的完整消融。</p>
+<h3 id="5-3-rl-微调最清楚的收益来自偏离示范的目标">5.3 RL 微调最清楚的收益来自偏离示范的目标</h3>
+<p>Table III 将 IsaacGym 训练的策略放到 MuJoCo，每种设置评估 20 条选定动作，成功定义为不跌倒且终态距目标小于 0.3 m。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>感知与目标</th>
+<th style="text-align:right">无 RL 微调</th>
+<th style="text-align:right">有 RL 微调</th>
+<th style="text-align:right">成功率增加</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>点云，ID</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">19/20</td>
+<td style="text-align:right">15 个百分点</td>
+</tr>
+<tr>
+<td>物体位置、无形状，ID</td>
+<td style="text-align:right">14/20</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">10 个百分点</td>
+</tr>
+<tr>
+<td>点云，OOD</td>
+<td style="text-align:right">5/20</td>
+<td style="text-align:right">9/20</td>
+<td style="text-align:right">20 个百分点</td>
+</tr>
+<tr>
+<td>物体位置、无形状，OOD</td>
+<td style="text-align:right">4/20</td>
+<td style="text-align:right">12/20</td>
+<td style="text-align:right">40 个百分点</td>
+</tr>
+</tbody>
+</table></div>
+<p>原文 OOD 的“+80%”“+200%”是相对增幅，不能读成百分点。这个消融支持微调能改善示范范围外的目标执行，但点云 OOD 微调后仍只有 9/20。样本较小，而且没有可直接执行稀疏目标的外部方法对比，不能推出在该任务上全面优于其他自主控制方法。</p>
+<p><img src="https://arxiv.org/html/2603.03279v1/mujoco.png" alt="Figure 6：有无 RL 微调的目标跟随对照" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.03279v1#S5.F6">原文 Figure 6</a>。上、下两行对比微调前后的目标跟随，黄色标出物体目标，蓝色与绿色对应不同点云条件。它展示的是 sim-to-sim 定性行为，不能当作真机成功率。</em></p>
+<h3 id="5-4-真机验证了什么-又没有验证什么">5.4 真机验证了什么，又没有验证什么？</h3>
+<p>Table IV：密集参考跟踪为 <strong>19/26（73%）</strong>；MoCap 稀疏目标控制的竖直/横向成功率为 <strong>8/10、9/10</strong>；第一视角控制为 <strong>5/10、6/10</strong>。表注称每个任务重复两次。</p>
+<p>第一视角策略运行时只依赖机载感知，但<strong>所有设置的成功评价仍使用 MoCap</strong>。这不否定策略的机载执行，只需区分控制输入与评价设备。视觉设置落后 MoCap 设置，结合作者报告的深度噪声、遮挡和抓取滑落，说明感知与接触误差仍是实际瓶颈。（§V-E、附录 D）</p>
+<p>因此，“无需测试时参考动作”在这些稀疏目标任务上成立；“无需人提供目标”“无需场景假设”或“已经可靠完成通用长程任务”均超出证据。</p>
+<h2 id="6-insights">6. Insights</h2>
+<ol>
+<li>
+<p><strong>可迁移的核心是分阶段消除训练—部署信息差，而不只是某个网络层。</strong> 重定向阶段容忍理想执行器，教师阶段加入硬件约束，学生阶段删除特权输入，微调阶段优化 prior-only 行为。每一步解决不同约束。若要复现，我会分别监控参考可跟踪率、学生相对教师的成功率损失，以及偏移目标下的恢复率，避免只看最终总成功率而定位不到瓶颈。</p>
+</li>
+<li>
+<p><strong>统一控制应看精度—灵活性的取舍。</strong> Table I 已显示跟踪损失，Table III 则显示稀疏目标收益。下一步有价值的实验是固定数据和感知接口，改变蒸馏/RL 环境比例，同时画出密集跟踪与 OOD 目标成功率；这能检验当前 1/4 蒸馏比例究竟是保技能的关键，还是一个尚未优化的折中。</p>
+</li>
+<li>
+<p><strong>“有语义簇”不等于“可以语义组合控制”。</strong> Fig. 5 的语义标签来自 MiniLM 文本嵌入再做 5 类 K-Means，t-SNE 上的对应关系只是事后可视化。它既未证明潜变量因果地控制动作语义，也未证明可组合性。更有说服力的检验是固定观测与目标，干预潜变量方向，观察接触方式或动作阶段是否稳定变化，并与不使用潜变量的容量匹配策略比较。</p>
+</li>
+</ol>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Diagnosing-the-Sources-of-Compositional-Failure-in-Vision-Language-Models-COMPASS组合失败诊断.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</span></a>
+<a class="paper-nav-link next" href="Training-Fast-Robot-Policies-with-Slow-Foundation-Models-视觉反馈奖励合成.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Training Fast Robot Policies with Slow Foundation Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: he2026ultra</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

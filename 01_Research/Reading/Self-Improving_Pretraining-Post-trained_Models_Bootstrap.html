@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Improving Pretraining: using post-trained models to pretrain better models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Self-Improving Pretraining: using post-trained models to pretrain better models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何在预训练阶段就解决llm的安全性-事实性和质量问题"><span class="toc-num">02</span> 2. 关键问题：如何在预训练阶段就解决LLM的安全性、事实性和质量问题</a></li>
+<li><a class="toc-link" href="#3-数据集-标准预训练语料-后训练模型作为教师"><span class="toc-num">03</span> 3. 数据集：标准预训练语料 + 后训练模型作为教师</a></li>
+<li><a class="toc-link" href="#4-关键方法-self-improving-pretraining-framework"><span class="toc-num">04</span> 4. 关键方法：Self-Improving Pretraining Framework</a></li>
+<li><a class="toc-link toc-sub" href="#1-序列预训练任务-prefix-conditioned-suffix-generation">(1) 序列预训练任务: Prefix-Conditioned Suffix Generation</a></li>
+<li><a class="toc-link toc-sub" href="#2-后训练模型的两种使用方式">(2) 后训练模型的两种使用方式</a></li>
+<li><a class="toc-link toc-sub" href="#3-policy-model-training">(3) Policy Model Training</a></li>
+<li><a class="toc-link toc-sub" href="#4-judge-prompts">(4) Judge Prompts</a></li>
+<li><a class="toc-link" href="#5-关键实验-continual-pretraining-设置下质量-win-rate-高达-86-3"><span class="toc-num">05</span> 5. 关键实验：Continual pretraining 设置下质量 win rate 高达 86.3%</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#关键消融实验">关键消融实验</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条语料的完整-rl-训练流程"><span class="toc-num">06</span> 6. Golden Case：一条语料的完整 RL 训练流程</a></li>
+<li><a class="toc-link toc-sub" href="#标准-rl-框架映射">标准 RL 框架映射</a></li>
+<li><a class="toc-link toc-sub" href="#reward-计算过程-以-online-dpo-为例">Reward 计算过程（以 Online DPO 为例）</a></li>
+<li><a class="toc-link toc-sub" href="#场景-a-quality-改进">场景 A: Quality 改进</a></li>
+<li><a class="toc-link toc-sub" href="#场景-b-safety-改进-关键场景">场景 B: Safety 改进（关键场景）</a></li>
+<li><a class="toc-link toc-sub" href="#场景-c-augmentation-改进">场景 C: Augmentation 改进</a></li>
+<li><a class="toc-link toc-sub" href="#训练动态-rewrite-与-rollout-的角色变化">训练动态：Rewrite 与 Rollout 的角色变化</a></li>
+<li><a class="toc-link" href="#7-insights-预训练阶段的干预比后训练修补更有效"><span class="toc-num">07</span> 7. Insights：预训练阶段的干预比后训练修补更有效</a></li>
+<li><a class="toc-link" href="#8-个人总结"><span class="toc-num">08</span> 8. 个人总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新-用-online-dpo-统一-mid-training-三阶段">核心创新：用 Online-DPO 统一 Mid-Training 三阶段</a></li>
+<li><a class="toc-link toc-sub" href="#局限性-rewriter-缺乏针对性诊断">局限性：Rewriter 缺乏针对性诊断</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-01-31</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2601.21343" target="_blank">arXiv</a>
+    </div>
+    <h1>Self-Improving Pretraining: using post-trained models to pretrain better models</h1>
+    <p class="authors">Ellen Xiaoqing Tan, Shehzaad Dhuliawala, Jing Xu, Ping Yu, Sainbayar Sukhbaatar, Jason Weston, Olga Golovneva</p>
+    <div class="topic-row"><span class="topic-tag">Pretraining</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Self-Improvement</span> <span class="topic-tag">AI_Safety</span> <span class="topic-tag">Factuality</span></div>
+</header>
+
+<h1>论文笔记: Self-Improving Pretraining: using post-trained models to pretrain better models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Ellen Xiaoqing Tan, Shehzaad Dhuliawala, Jing Xu, Ping Yu, Sainbayar Sukhbaatar, Jason Weston, Olga Golovneva</li>
+<li><strong>团队</strong>: FAIR at Meta</li>
+<li><strong>时间</strong>: 2026年1月29日 (arXiv:2601.21343)</li>
+<li><strong>领域</strong>: cs.CL, cs.AI, cs.LG</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何在预训练阶段就解决llm的安全性-事实性和质量问题">2. 关键问题：如何在预训练阶段就解决LLM的安全性、事实性和质量问题</h2>
+<ul>
+<li><strong>动机</strong>: 现有方法依赖昂贵的后训练流程（多阶段微调+对齐）来解决安全性、事实性和质量问题，但这些复杂流程仍无法保证纠正预训练阶段学到的不良模式</li>
+<li><strong>核心洞见</strong>: 预训练塑造了模型的核心行为，不安全或幻觉输出一旦在预训练阶段被深度嵌入，后续难以彻底纠正</li>
+<li><strong>关键问题</strong>: 能否利用已有的强大后训练模型来改进新模型的预训练过程，从根本上构建更高质量、更安全、更符合事实的模型？</li>
+</ul>
+<h2 id="3-数据集-标准预训练语料-后训练模型作为教师">3. 数据集：标准预训练语料 + 后训练模型作为教师</h2>
+<p><strong>训练数据</strong>:</p>
+<ul>
+<li><strong>SlimPajama (SP)</strong>: RedPajama 的衍生版本，经过更激进的安全和质量过滤，用于高质量训练</li>
+<li><strong>RedPajama (RP)</strong>: 包含更多原始数据（含不安全内容），用于安全性实验</li>
+<li><strong>chunk size</strong>: N=128 tokens</li>
+</ul>
+<p><strong>模型配置</strong>:</p>
+<ul>
+<li><strong>Policy Model</strong>: Llama2 1.4B（作为基线和训练对象）</li>
+<li><strong>Judge/Rewriter</strong>: Llama3.1-8B-Instruct (fine-tuned) 或 GPT-OSS-120B (prompted)</li>
+</ul>
+<h2 id="4-关键方法-self-improving-pretraining-framework">4. 关键方法：Self-Improving Pretraining Framework</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>: 将预训练重新定义为序列生成任务，利用后训练模型作为&quot;评判者&quot;和&quot;重写器&quot;，通过强化学习在每个训练步骤优化生成的 K 个 token。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2601.21343v1/x1.png" alt="Self-Improving Pretraining Framework" /></p>
+<h3 id="1-序列预训练任务-prefix-conditioned-suffix-generation">(1) 序列预训练任务: Prefix-Conditioned Suffix Generation</h3>
+<p>将传统的 next-token prediction 重新定义为序列学习任务：</p>
+<ul>
+<li>将预训练数据流切分为大小为 N 的 chunk</li>
+<li><strong>Suffix</strong> ($x_j$): 当前 chunk</li>
+<li><strong>Prefix</strong> ($x_{1,...,j-1}$): 上下文中的连续 chunk</li>
+</ul>
+<p><strong>任务形式化</strong>:
+$$\bar{x}_j \sim \pi(*|x_{1,...,j-1})$$</p>
+<p>其中 $\pi$ 是要训练的 policy model，生成长度限制为 N tokens。</p>
+<p><strong>关键区别</strong>: 不期望与原始 suffix 完全匹配——如果 suffix 是低质量/不安全/不符合事实的，我们不希望模型学习它。</p>
+<h3 id="2-后训练模型的两种使用方式">(2) 后训练模型的两种使用方式</h3>
+<h4>Suffix Rewriter（后缀重写器）</h4>
+<p>给定 prefix 和 suffix，生成更优的重写版本 $\hat{x}_j$：</p>
+<p><strong>三种改进方式</strong>:</p>
+<ul>
+<li><strong>Overall Quality</strong>: 改进低质量预训练语料的质量</li>
+<li><strong>Safety</strong>: 将不安全的 prefix+suffix 引导向安全的 suffix（注意：保留不安全的 prefix，让模型学习如何从不安全输入转向安全输出）</li>
+<li><strong>Augmentation</strong>: 通过重写增加数据多样性和知识</li>
+</ul>
+<h4>Suffix Judge（后缀评判者）</h4>
+<p>给定 prefix 和多个候选补全，判断哪个最适合作为训练目标：</p>
+<p><strong>三种评判维度</strong>:</p>
+<ul>
+<li><strong>Overall Quality</strong>: 低质量的 suffix/rewrite/rollout 获得低奖励</li>
+<li><strong>Safety</strong>: 在多个 rollout 中选择安全的生成</li>
+<li><strong>Factuality</strong>: 选择最符合事实的生成</li>
+</ul>
+<h3 id="3-policy-model-training">(3) Policy Model Training</h3>
+<p><strong>候选生成</strong>（每个 prefix 对应）:</p>
+<ol>
+<li><strong>(i) 原始 suffix</strong>: 预训练数据中的原始文本</li>
+<li><strong>(ii) 重写 suffix</strong>: 后训练模型生成的改进版本</li>
+<li><strong>(iii) K 个 rollouts</strong>: 从当前 policy $\pi$ 采样的 $\bar{x}_j^k$, $k=1,...,K$</li>
+</ol>
+<p><strong>优化算法</strong>:</p>
+<ul>
+<li><strong>Online DPO</strong>: chosen = 最高分, rejected = 最低分
+<ul>
+<li>优势：off-policy 算法，可以从非当前 policy 生成的序列学习（如原始 suffix 或 rewrite）</li>
+</ul>
+</li>
+<li><strong>RF-NLL (Reward-Filtered NLL)</strong>: 仅对最高分进行 NLL 更新</li>
+</ul>
+<p><strong>训练动态</strong>:</p>
+<ul>
+<li><strong>训练初期</strong>: rollouts 质量低，依赖原始 suffix 和 rewrite</li>
+<li><strong>训练后期</strong>: rollouts 质量提升，judge 开始奖励高质量的 rollouts</li>
+</ul>
+<h3 id="4-judge-prompts">(4) Judge Prompts</h3>
+<p><strong>Quality Judge Prompt</strong> (Figure 3):</p>
+<blockquote class="card card-info">
+<p>&quot;Given the context, compare the two possible continuations based on: [...] quality of style, coherence, relevance, factual consistency, fluency and grammar [...] Which continuation is of higher quality?&quot;</p>
+</blockquote>
+<p><strong>Safety Judge Prompt</strong> (Figure 3):</p>
+<blockquote class="card card-info">
+<p>&quot;Which continuation contains less harmful, unsafe, or inappropriate content?&quot;</p>
+</blockquote>
+<p><strong>Factuality Judge Prompt</strong> (Figure 4):</p>
+<blockquote class="card card-info">
+<p>&quot;Given the context, which continuation is more factually accurate?&quot;</p>
+</blockquote>
+<h2 id="5-关键实验-continual-pretraining-设置下质量-win-rate-高达-86-3">5. 关键实验：Continual pretraining 设置下质量 win rate 高达 86.3%</h2>
+<h3 id="主实验结果">主实验结果</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>指标</th>
+<th>提升</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Continual Pretraining</strong></td>
+<td>Quality Win Rate</td>
+<td><strong>86.3%</strong></td>
+<td>vs standard pretraining baseline</td>
+</tr>
+<tr>
+<td></td>
+<td>Factuality</td>
+<td><strong>+36.2%</strong> (relative)</td>
+<td>vs standard pretraining</td>
+</tr>
+<tr>
+<td></td>
+<td>Safety</td>
+<td><strong>+18.5%</strong> (relative)</td>
+<td>vs standard pretraining</td>
+</tr>
+<tr>
+<td><strong>From-Scratch</strong></td>
+<td>Quality Win Rate</td>
+<td><strong>+31.1%</strong> (absolute)</td>
+<td>vs standard pretraining</td>
+</tr>
+<tr>
+<td></td>
+<td>Safety</td>
+<td><strong>+14.4%</strong> (relative)</td>
+<td>vs standard pretraining</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="关键消融实验">关键消融实验</h3>
+<p><strong>候选类型消融</strong>:</p>
+<ul>
+<li>仅使用 rewrite 在训练初期有效</li>
+<li>随训练进行，rewarding rollouts 变得重要</li>
+<li>三种候选（original + rewrite + rollouts）组合效果最佳</li>
+</ul>
+<p><strong>Judge 模型对比</strong>:</p>
+<ul>
+<li>Fine-tuned Llama3.1-8B-Instruct vs Prompted GPT-OSS-120B</li>
+<li>两者都能提供有效的训练信号</li>
+</ul>
+<h2 id="6-golden-case-一条语料的完整-rl-训练流程">6. Golden Case：一条语料的完整 RL 训练流程</h2>
+<h3 id="标准-rl-框架映射">标准 RL 框架映射</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>RL 概念</th>
+<th>本文对应</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State</strong></td>
+<td>Prefix $x_{1,...,j-1}$（前面的 context）</td>
+</tr>
+<tr>
+<td><strong>Action</strong></td>
+<td>生成 Suffix $\bar{x}_j$（128 tokens）</td>
+</tr>
+<tr>
+<td><strong>Policy</strong></td>
+<td>待训练的 Llama2 1.4B ($\pi$)</td>
+</tr>
+<tr>
+<td><strong>Reward Model</strong></td>
+<td>Judge（后训练的 Llama3.1-8B 或 GPT-OSS-120B）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="reward-计算过程-以-online-dpo-为例">Reward 计算过程（以 Online DPO 为例）</h3>
+<ol>
+<li><strong>候选生成</strong>: 对每个 prefix，收集 (i) original suffix, (ii) rewritten suffix, (iii) K 个 policy rollouts</li>
+<li><strong>Judge 打分</strong>: 通过 pairwise comparison prompt 让 Judge 输出偏好排序</li>
+<li><strong>构造训练对</strong>: Online DPO 中 <code>chosen</code> = 最高分, <code>rejected</code> = 最低分</li>
+</ol>
+<h3 id="场景-a-quality-改进">场景 A: Quality 改进</h3>
+<pre><code>Prefix: &quot;今天我们来学习制作蛋糕。首先准备&quot;
+Original Suffix: &quot;材料有面粉要200克左右糖也要放...&quot;（质量差）
+Rewritten Suffix: &quot;材料：面粉200g，细砂糖100g，鸡蛋3个，黄油50g。&quot;（高质量）
+Policy Rollout 1: &quot;材料包括面粉和糖...&quot;（一般）
+Policy Rollout 2: &quot;材料需要准备好...&quot;（一般）
+</code></pre>
+<p><strong>Judge 排序</strong>: Rewritten &gt; Rollout 1 &gt; Rollout 2 &gt; Original<br />
+<strong>DPO 更新</strong>: chosen = Rewritten, rejected = Original<br />
+<strong>效果</strong>: Policy 学习向高质量表达靠拢</p>
+<h3 id="场景-b-safety-改进-关键场景">场景 B: Safety 改进（关键场景）</h3>
+<pre><code>Prefix: &quot;我对那个人非常愤怒，我想要...&quot;（不安全上下文，保留！）
+Original Suffix: &quot;伤害他，让他知道厉害...&quot;（不安全）
+Rewritten Suffix: &quot;冷静下来，通过沟通解决问题...&quot;（安全转向）
+Policy Rollout 1: &quot;报复他...&quot;（不安全）
+Policy Rollout 2: &quot;找人谈谈...&quot;（相对安全）
+</code></pre>
+<p><strong>Judge 排序</strong>: Rewritten &gt; Rollout 2 &gt; Original &gt; Rollout 1<br />
+<strong>DPO 更新</strong>: chosen = Rewritten, rejected = Rollout 1<br />
+<strong>关键点</strong>: Prefix 保持不安全！模型学会的是 <strong>从不安全输入转向安全输出</strong>，而非&quot;从没见过不安全内容&quot;</p>
+<h3 id="场景-c-augmentation-改进">场景 C: Augmentation 改进</h3>
+<pre><code>Prefix: &quot;Python 中打开文件的方法是&quot;
+Original Suffix: &quot;使用 open() 函数...&quot;
+Rewritten Suffix: &quot;使用 open() 函数或 pathlib.Path。open() 的参数包括 mode='r'...&quot;
+</code></pre>
+<p><strong>效果</strong>: Rewrite 扩展知识，Policy 学习生成更丰富、更详细的内容</p>
+<h3 id="训练动态-rewrite-与-rollout-的角色变化">训练动态：Rewrite 与 Rollout 的角色变化</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>训练阶段</th>
+<th>主要学习来源</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>初期 (0-20%)</td>
+<td>Original + Rewrite</td>
+<td>Rollouts 质量太差</td>
+</tr>
+<tr>
+<td>中期 (20-60%)</td>
+<td>Rewrite + Rollouts</td>
+<td>Rollouts 开始有竞争力</td>
+</tr>
+<tr>
+<td>后期 (60-100%)</td>
+<td>Rollouts 为主</td>
+<td>Policy 足够强，能生成高质量输出</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Self-Improving 核心机制</strong>: 后训练模型通过 Rewrite 提供初始高质量目标 → Policy 变强后 Rollouts 逐渐超越 Rewrite → 形成正向循环</p>
+<h2 id="7-insights-预训练阶段的干预比后训练修补更有效">7. Insights：预训练阶段的干预比后训练修补更有效</h2>
+<ol>
+<li><strong>根本性改进</strong>: 在预训练阶段解决问题比事后修补更有效——核心行为在预训练阶段形成</li>
+<li><strong>自我改进循环</strong>: 后训练模型可以&quot;反哺&quot;预训练，形成良性循环</li>
+<li><strong>安全训练的正确方式</strong>: 不是过滤掉不安全数据，而是让模型学会从不安全输入转向安全输出</li>
+<li><strong>序列级 vs Token 级</strong>: 将预训练任务从 token 级改为序列级，为引入更复杂的优化信号提供了可能</li>
+</ol>
+<h2 id="8-个人总结">8. 个人总结</h2>
+<h3 id="核心创新-用-online-dpo-统一-mid-training-三阶段">核心创新：用 Online-DPO 统一 Mid-Training 三阶段</h3>
+<p>这篇论文最有意思的地方在于：<strong>将 Mid-Training 中传统割裂的 CPT、SFT、DPO 三个阶段融合成了一个统一的框架</strong>。</p>
+<p>传统流程是串行的：</p>
+<pre><code>CPT (无监督，doc) → SFT (有监督，QA) → DPO (偏好学习，QA pairs)
+</code></pre>
+<p>本文的做法是将 <strong>数据形式</strong> 和 <strong>训练方式</strong> 解耦，形成一个 2×3 的组合空间：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th></th>
+<th>无监督 (NLL)</th>
+<th>有监督 (SFT)</th>
+<th>偏好学习 (DPO)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Doc 形式</strong></td>
+<td>传统 CPT</td>
+<td>Rewrite 作为 target</td>
+<td>Original vs Rewrite vs Rollouts</td>
+</tr>
+<tr>
+<td><strong>QA 形式</strong></td>
+<td>-</td>
+<td>传统 SFT</td>
+<td>传统 DPO</td>
+</tr>
+</tbody>
+</table></div>
+<p>本文实际上是在 <strong>Doc 形式 + 偏好学习</strong> 这个格子里做创新，证明了在 doc 级别的预训练数据上也可以应用 DPO 范式。</p>
+<h3 id="局限性-rewriter-缺乏针对性诊断">局限性：Rewriter 缺乏针对性诊断</h3>
+<p>当前的 Rewriter 设计过于粗糙：</p>
+<pre><code>当前做法（过于简化）:
+Prefix + Original Suffix + [通用 Prompt] → Rewriter → Rewritten Suffix
+                              ↑
+                    &quot;请改写得更好&quot; (one-size-fits-all)
+</code></pre>
+<p><strong>问题</strong>：实际的 doc 语料问题是多样的——可能是语法问题、事实错误、逻辑跳跃、风格不一致、信息缺失等。一个通用的 &quot;improve quality&quot; prompt 无法针对性地解决这些不同类型的问题。</p>
+<p><strong>改进方向</strong>：应该有一个两阶段的 Rewriter：</p>
+<pre><code>理想做法（分诊 + 治疗）:
+Prefix + Original Suffix → [Diagnoser] → 独立诊断报告
+                                          &quot;问题：事实错误，'法国首都是伦敦'&quot;
+                                          &quot;问题：语法混乱，主谓不一致&quot;
+                                              ↓
+Prefix + Original + 诊断报告 → [Rewriter] → 针对性改写
+</code></pre>
+<p>这样每条语料都有独立的诊断报告，Rewriter 可以根据具体问题类型进行针对性修复，而不是盲目地 &quot;让它变更好&quot;。</p>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<ul>
+<li><strong>相关工作</strong>:
+<ul>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a>（同样使用 RL + Post-training 模型作为 Judge 的范式）</li>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner</a>（同样使用on-policy学习，但通过自蒸馏而非外部Judge）</li>
+<li><a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a>（同样利用自蒸馏机制，但应用于持续学习场景）</li>
+</ul>
+</li>
+<li><strong>核心关联</strong>:
+<ul>
+<li>与 TranslateGemma: 两篇论文都展示了后训练模型作为&quot;教师&quot;指导训练的有效性，TranslateGemma 用于翻译质量，本文用于预训练的安全性和事实性</li>
+<li>与 Self-Distilled Reasoner: 都使用on-policy学习范式，但本文使用外部Judge模型，OPSD通过条件化同一模型实现自蒸馏</li>
+<li>与 Self-Distillation Enables Continual Learning: 都利用&quot;自我改进&quot;思想，本文在预训练阶段用后训练模型引导，SDFT在微调阶段用自蒸馏保持知识</li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Reinforcement Learning via Self-Distillation</span></a>
+<a class="paper-nav-link next" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2601.21343</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

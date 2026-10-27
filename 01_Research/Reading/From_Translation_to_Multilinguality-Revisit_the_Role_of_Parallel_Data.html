@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-平行数据对多语言llm预训练的真实作用是什么"><span class="toc-num">02</span> 2. 关键问题：平行数据对多语言LLM预训练的真实作用是什么？</a></li>
+<li><a class="toc-link toc-sub" href="#动机">动机</a></li>
+<li><a class="toc-link toc-sub" href="#研究问题">研究问题</a></li>
+<li><a class="toc-link toc-sub" href="#与已有研究的区别">与已有研究的区别</a></li>
+<li><a class="toc-link" href="#3-数据集-18-种语言的受控预训练数据"><span class="toc-num">03</span> 3. 数据集：18 种语言的受控预训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据组成">训练数据组成</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-standard-vs-split-协议对比"><span class="toc-num">04</span> 4. 关键方法：Standard vs Split 协议对比</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心设计-严格控制变量">核心设计：严格控制变量</a></li>
+<li><a class="toc-link toc-sub" href="#语言标记格式-en-de-的来源">语言标记格式 <en> <de> 的来源</a></li>
+<li><a class="toc-link toc-sub" href="#未探索的实验-无语言标记直接拼接">未探索的实验：无语言标记直接拼接</a></li>
+<li><a class="toc-link toc-sub" href="#实验设置维度">实验设置维度</a></li>
+<li><a class="toc-link toc-sub" href="#提出的实用方法-三步骤-pipeline">提出的实用方法：三步骤 Pipeline</a></li>
+<li><a class="toc-link" href="#5-关键实验-平行数据主要提升翻译能力-对其他能力影响有限"><span class="toc-num">05</span> 5. 关键实验：平行数据主要提升翻译能力，对其他能力影响有限</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果-table-1-setting-i">主实验结果（Table 1: Setting I）</a></li>
+<li><a class="toc-link toc-sub" href="#多语言设置实验结果-table-2-setting-ii-v">多语言设置实验结果（Table 2: Setting II-V）</a></li>
+<li><a class="toc-link toc-sub" href="#提出方法的效果-table-3">提出方法的效果（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验">消融实验</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条翻译样本的处理流程"><span class="toc-num">06</span> 6. Golden Case：一条翻译样本的处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#standard-协议处理流程">Standard 协议处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#split-协议处理流程">Split 协议处理流程</a></li>
+<li><a class="toc-link" href="#7-insights-数据格式对模型学习的决定性影响"><span class="toc-num">07</span> 7. Insights：数据格式对模型学习的决定性影响</a></li>
+<li><a class="toc-link toc-sub" href="#7-1-论文评价">7.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#7-2-领域启发">7.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#7-3-方法论启发">7.3 方法论启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#研究脉络">研究脉络</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-03-09</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://openreview.net/forum?id=1gbJ8euERb" target="_blank">arXiv</a>
+    </div>
+    <h1>From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining</h1>
+    <p class="authors">Haobin Lin, Yan Zhao, Wenhan Han, Ping Guo, Binbin Liu, Yifan Zhang, Bingni Zhang, Taifeng Wang, Yin Zheng</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">Parallel_Data</span> <span class="topic-tag">Pretraining</span> <span class="topic-tag">Translation_Capability</span></div>
+</header>
+
+<h1>论文笔记: From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Haobin Lin, Yan Zhao, Wenhan Han, Ping Guo, Binbin Liu, Yifan Zhang, Bingni Zhang, Taifeng Wang, Yin Zheng</li>
+<li><strong>团队</strong>: [?] 作者单位信息在双盲评审版本中匿名</li>
+<li><strong>发表</strong>: ICLR 2026 Conference - Withdrawn Submission [?]</li>
+<li><strong>时间</strong>: 2025年9月18日提交，2025年12月6日最后修改</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-平行数据对多语言llm预训练的真实作用是什么">2. 关键问题：平行数据对多语言LLM预训练的真实作用是什么？</h2>
+<h3 id="动机">动机</h3>
+<p>多语言大语言模型 (MLLMs) 通常使用平行数据（即拼接的翻译对）来引入跨语言对齐信号，以促进能力从高资源语言向低资源语言迁移。然而，这种实践做法是否真正改善了除翻译之外的一般多语言能力，仍是一个未被充分探索的问题。</p>
+<blockquote class="card card-info">
+<p>&quot;It remains unclear whether this de facto practice improves general multilingual ability beyond translation.&quot;</p>
+</blockquote>
+<h3 id="研究问题">研究问题</h3>
+<ol>
+<li>平行数据的拼接格式如何影响 MLLM 的多语言能力？</li>
+<li>在拼接翻译对上训练是否改善了超越翻译的一般单语能力和跨语言能力？</li>
+</ol>
+<h3 id="与已有研究的区别">与已有研究的区别</h3>
+<ul>
+<li><strong>Qorib et al. (2025)</strong>：仅研究了英语、中文和印尼语</li>
+<li><strong>本研究</strong>：覆盖 <strong>18 种语言</strong>，进行更详细和公平的比较</li>
+</ul>
+<h2 id="3-数据集-18-种语言的受控预训练数据">3. 数据集：18 种语言的受控预训练数据</h2>
+<h3 id="训练数据组成">训练数据组成</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>比例</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>英语单语数据</strong></td>
+<td>50%</td>
+<td>保持英语在预训练中的主导地位</td>
+</tr>
+<tr>
+<td><strong>非英语单语数据</strong></td>
+<td>36%</td>
+<td>17 种非英语语言</td>
+</tr>
+<tr>
+<td><strong>平行数据</strong></td>
+<td>14%</td>
+<td>仅保留包含英语文本的翻译对</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>能力类型</th>
+<th>Benchmark</th>
+<th>评估方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>一般单语能力</strong></td>
+<td>HellaSwag, ARC, MMLU, XNLI, XStoryCloze</td>
+<td>多语言版本</td>
+</tr>
+<tr>
+<td><strong>一般跨语言能力</strong></td>
+<td>MuBench</td>
+<td>英语-非英语配对</td>
+</tr>
+<tr>
+<td><strong>翻译能力</strong></td>
+<td>FLORES-Translate</td>
+<td>双向翻译 (EN↔XX)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-关键方法-standard-vs-split-协议对比">4. 关键方法：Standard vs Split 协议对比</h2>
+<h3 id="整体架构">整体架构</h3>
+<p>研究设计了两种平行数据使用协议进行受控对比：</p>
+<pre><code>Standard 协议：将翻译对连接为单个样本
+  输入: &quot;&lt;en&gt; English text &lt;xx&gt; Non-English text&quot;
+  特点: 模型在同一上下文窗口中同时看到翻译对，获得显式对齐信号
+
+Split 协议：将翻译对拆分为两个独立样本
+  输入1: &quot;English text&quot; (作为普通英语单语样本)
+  输入2: &quot;Non-English text&quot; (作为普通非英语单语样本)
+  特点: 每侧作为独立样本，无直接跨语言监督
+</code></pre>
+<h3 id="核心设计-严格控制变量">核心设计：严格控制变量</h3>
+<p>关键创新在于比较两种协议时，<strong>保持训练数据的总量和内容分布完全一致</strong>：</p>
+<ul>
+<li>Standard 协议：模型可以在上下文窗口内访问翻译对应文本，获得显式跨语言对齐信号</li>
+<li>Split 协议：每个样本等价于普通单语样本，不提供直接的跨语言监督</li>
+</ul>
+<h3 id="语言标记格式-en-de-的来源">语言标记格式 <code>&lt;en&gt;</code> <code>&lt;de&gt;</code> 的来源</h3>
+<p>Standard 协议使用的语言标记格式（如 <code>&lt;en&gt;</code> <code>&lt;de&gt;</code>）引用自 <strong>Cheng et al. (2025) - Seed-X</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;When using standard parallel data, <strong>following Cheng et al. (2025)</strong>, the text pair is concatenated with an explicit language tag (e.g., <code>&lt;en&gt;</code>) to indicate the boundary and identity of both segments.&quot;</p>
+</blockquote>
+<p><strong>参考论文</strong>: &quot;Seed-x: Building strong multilingual translation llm with 7b parameters&quot; (arXiv:2507.13618)</p>
+<p>语言标记的作用：</p>
+<ol>
+<li><strong>边界识别</strong> - 帮助模型区分两种语言的边界</li>
+<li><strong>方向指示</strong> - 暗示翻译任务的方向</li>
+</ol>
+<h3 id="未探索的实验-无语言标记直接拼接">未探索的实验：无语言标记直接拼接</h3>
+<p><strong>论文没有测试无语言标记的拼接格式</strong>：</p>
+<pre><code># 论文测试的格式
+&lt;en&gt; English text &lt;de&gt; German text   # 有语言标记
+
+# 论文未测试的格式
+English text German text              # 无语言标记直接拼接
+</code></pre>
+<p>这是一个实验设计缺口：论文声称研究 &quot;concatenation format&quot;，但忽略了「语言标记」这一关键变量。如果无语言标记，可能出现：</p>
+<ul>
+<li>模型把拼接文本当作<strong>混合语言文本</strong>而非翻译对</li>
+<li>无法区分「英德混合文本」和「翻译对」</li>
+</ul>
+<blockquote class="card card-info">
+<p>这是论文的一个明显局限性，值得后续研究探索。</p>
+</blockquote>
+<h3 id="实验设置维度">实验设置维度</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>描述</th>
+<th>训练规模</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Setting I</strong></td>
+<td>英语 + 单种非英语语言（德/法/日）</td>
+<td>100B tokens</td>
+</tr>
+<tr>
+<td><strong>Setting II</strong></td>
+<td>英语 + 17种非英语语言</td>
+<td>300B tokens</td>
+</tr>
+<tr>
+<td><strong>Setting III</strong></td>
+<td>平行数据比例变化（8% vs 20%）</td>
+<td>300B tokens</td>
+</tr>
+<tr>
+<td><strong>Setting IV</strong></td>
+<td>两阶段训练（先英语后多语言）</td>
+<td>300B tokens</td>
+</tr>
+<tr>
+<td><strong>Setting V</strong></td>
+<td>模型规模变化（1.5B vs 8B）</td>
+<td>300B tokens</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="提出的实用方法-三步骤-pipeline">提出的实用方法：三步骤 Pipeline</h3>
+<p><strong>Step 1: 训练强翻译器</strong></p>
+<ul>
+<li>使用标准协议训练模型获得翻译能力</li>
+<li>轻量级后训练</li>
+</ul>
+<p><strong>Step 2: 合成能力导向的多语言语料</strong></p>
+<ul>
+<li><strong>单语能力</strong>: 使用翻译器将英语数据翻译为非英语单语数据</li>
+<li><strong>跨语言能力</strong>: 合成 code-switch 数据（50% 概率替换）</li>
+<li><strong>翻译能力</strong>: 合成平行数据</li>
+</ul>
+<p><strong>Step 3: 整合合成数据到预训练</strong></p>
+<ul>
+<li>替换部分非英语数据为合成数据</li>
+<li>保持总数据量不变</li>
+</ul>
+<h2 id="5-关键实验-平行数据主要提升翻译能力-对其他能力影响有限">5. 关键实验：平行数据主要提升翻译能力，对其他能力影响有限</h2>
+<h3 id="主实验结果-table-1-setting-i">主实验结果（Table 1: Setting I）</h3>
+<h4>翻译能力（CHRF 分数）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言对</th>
+<th>Standard</th>
+<th>Split</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>英语↔德语</strong></td>
+<td>57.46</td>
+<td>44.18</td>
+<td><strong>+13.28</strong></td>
+</tr>
+<tr>
+<td><strong>英语↔法语</strong></td>
+<td>61.28</td>
+<td>47.50</td>
+<td><strong>+13.70</strong></td>
+</tr>
+<tr>
+<td><strong>英语↔日语</strong></td>
+<td>38.29</td>
+<td>22.16</td>
+<td><strong>+16.13</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h4>单语能力（平均 normalized accuracy）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言</th>
+<th>Standard</th>
+<th>Split</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>德语</td>
+<td>44.47</td>
+<td>44.08</td>
+<td><strong>+0.39</strong></td>
+</tr>
+<tr>
+<td>法语</td>
+<td>50.72</td>
+<td>50.37</td>
+<td><strong>+0.35</strong></td>
+</tr>
+<tr>
+<td>日语</td>
+<td>39.45</td>
+<td>39.76</td>
+<td><strong>-0.31</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p><strong>关键发现</strong>: Standard 协议在翻译任务上提升超过 <strong>13 CHRF 分数</strong>，但在单语能力上提升仅为 <strong>~0.3%</strong>。</p>
+</blockquote>
+<h3 id="多语言设置实验结果-table-2-setting-ii-v">多语言设置实验结果（Table 2: Setting II-V）</h3>
+<h4>翻译能力对比</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>Standard Avg</th>
+<th>Split Avg</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setting II (14% 平行数据)</td>
+<td>53.15</td>
+<td>44.36</td>
+<td><strong>+8.78</strong></td>
+</tr>
+<tr>
+<td>Setting III (8%)</td>
+<td>52.51</td>
+<td>44.59</td>
+<td><strong>+7.92</strong></td>
+</tr>
+<tr>
+<td>Setting V (8B 模型)</td>
+<td>57.03</td>
+<td>51.16</td>
+<td><strong>+5.87</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h4>单语能力对比</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>Standard Avg</th>
+<th>Split Avg</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setting II</td>
+<td>43.93</td>
+<td>43.78</td>
+<td><strong>+0.15</strong></td>
+</tr>
+<tr>
+<td>Setting V (8B)</td>
+<td>50.20</td>
+<td>49.82</td>
+<td><strong>+0.38</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h4>跨语言能力对比</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>Standard Avg</th>
+<th>Split Avg</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setting II</td>
+<td>40.76</td>
+<td>41.30</td>
+<td><strong>-0.54</strong></td>
+</tr>
+<tr>
+<td>Setting V (8B)</td>
+<td>46.45</td>
+<td>46.40</td>
+<td><strong>+0.05</strong></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p><strong>关键发现</strong>: 跨语言能力在所有设置下均<strong>无明显提升</strong>，部分设置甚至出现轻微下降。</p>
+</blockquote>
+<h3 id="提出方法的效果-table-3">提出方法的效果（Table 3）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>能力类型</th>
+<th>Baseline</th>
+<th>Proposed</th>
+<th>提升 (∆)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>单语能力</strong></td>
+<td>50.20</td>
+<td>51.54</td>
+<td><strong>+1.34</strong></td>
+</tr>
+<tr>
+<td><strong>跨语言能力</strong></td>
+<td>46.45</td>
+<td>49.38</td>
+<td><strong>+2.93</strong></td>
+</tr>
+<tr>
+<td><strong>翻译能力</strong></td>
+<td>57.03</td>
+<td>57.87</td>
+<td><strong>+0.84</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="消融实验">消融实验</h3>
+<h4>Unpaired Data 实验（Table 4）</h4>
+<p>验证 Split 协议下模型是否会隐式学习翻译样本间的关联。结果显示 Unpaired 设置与 Baseline 性能相近，表明模型<strong>不会隐式利用独立翻译样本来增强多语言能力</strong>。</p>
+<h4>Discard Parallel Data 实验（Table 5）</h4>
+<p>比较&quot;有平行数据&quot;、&quot;无平行数据&quot;、&quot;Split 协议&quot;三种情况。结果显示：</p>
+<ul>
+<li>有无平行数据对单语和跨语言能力影响微小</li>
+<li>翻译能力在有平行数据时显著更好</li>
+</ul>
+<h2 id="6-golden-case-一条翻译样本的处理流程">6. Golden Case：一条翻译样本的处理流程</h2>
+<h3 id="standard-协议处理流程">Standard 协议处理流程</h3>
+<p><strong>输入格式</strong>：</p>
+<pre><code>&lt;en&gt; The development of artificial intelligence has transformed many industries. &lt;de&gt; Die Entwicklung künstlicher Intelligenz hat viele Branchen verändert.
+</code></pre>
+<p><strong>模型行为</strong>：</p>
+<ol>
+<li>模型在上下文窗口内同时看到两种语言的等价表达</li>
+<li>显式跨语言对齐信号帮助模型建立翻译能力</li>
+<li>适合翻译任务，但对其他能力帮助有限</li>
+</ol>
+<h3 id="split-协议处理流程">Split 协议处理流程</h3>
+<p><strong>输入格式</strong>（两个独立样本）：</p>
+<pre><code>样本1: &quot;The development of artificial intelligence has transformed many industries.&quot;
+样本2: &quot;Die Entwicklung künstlicher Intelligenz hat viele Branchen verändert.&quot;
+</code></pre>
+<p><strong>模型行为</strong>：</p>
+<ol>
+<li>每个样本被独立处理，无跨语言对齐信号</li>
+<li>等价于普通单语样本</li>
+<li>不直接建立翻译能力</li>
+</ol>
+<h2 id="7-insights-数据格式对模型学习的决定性影响">7. Insights：数据格式对模型学习的决定性影响</h2>
+<h3 id="7-1-论文评价">7.1 论文评价</h3>
+<p><strong>出乎意料的发现</strong>：</p>
+<ol>
+<li>平行数据对翻译能力的提升远超预期（CHRF +10~16 分），但对其他能力几乎无帮助</li>
+<li>这种现象在不同模型规模、不同平行数据比例下保持一致</li>
+</ol>
+<p><strong>可能的解释</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;This reflects the dominant influence of data formation in model learning: the concatenated format of parallel data aligns directly with the translation objective and therefore has an immediate effect. In contrast, the relationship between general multilingual tasks and translation ability is indirect.&quot;</p>
+</blockquote>
+<h3 id="7-2-领域启发">7.2 领域启发</h3>
+<p><strong>对多语言预训练的重新思考</strong>：</p>
+<ol>
+<li>平行数据的核心价值在于<strong>直接构建翻译能力</strong>，而非跨语言表示对齐</li>
+<li>能力迁移不是自动发生的，需要<strong>显式设计数据格式</strong>来匹配目标任务</li>
+</ol>
+<p><strong>实践指导</strong>：</p>
+<ul>
+<li>如果目标仅是提升翻译能力，直接使用标准平行数据即可</li>
+<li>如果目标是全面多语言能力，需要额外的数据合成策略</li>
+</ul>
+<h3 id="7-3-方法论启发">7.3 方法论启发</h3>
+<p><strong>控制变量实验设计</strong>：</p>
+<ul>
+<li>对比 &quot;有无平行数据&quot; 引入内容分布差异（混杂变量）</li>
+<li>对比 &quot;格式变化&quot; 精确隔离格式效应</li>
+</ul>
+<p><strong>分层评估框架</strong>：</p>
+<ul>
+<li>单语能力 → 跨语言能力 → 翻译能力</li>
+<li>揭示不同能力与数据格式的关系</li>
+</ul>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p><strong>最重要的发现</strong>：平行数据通过拼接格式提供的跨语言对齐信号，直接作用于翻译任务，但不会自动转化为更广泛的多语言能力。这揭示了<strong>数据格式在模型学习中的决定性作用</strong>。</p>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>模型规模限制</strong>: 未验证超过 8B 的模型</li>
+<li><strong>英语比例</strong>: 固定 50%，未研究变化影响</li>
+<li><strong>论文状态</strong>: ICLR 2026 已撤回 [?]</li>
+<li>[?] <strong>训练细节缺失</strong>: 学习率、批次大小等未明确</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>更大规模验证</strong>: 扩展到 70B+ 模型</li>
+<li><strong>理论解释</strong>: 深入理解为什么跨语言对齐信号不能自动迁移</li>
+<li><strong>合成数据优化</strong>: 提升合成数据质量</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="相关工作">相关工作</h3>
+<ul>
+<li><strong>语言标记格式来源</strong>: 本笔记记录的 <code>&lt;en&gt;</code> <code>&lt;de&gt;</code> 格式源自 <a class="wikilink" href="Seed-X-Multilingual_Translation_LLM_7B.html" title="Seed-X-Multilingual_Translation_LLM_7B">Seed-X-Multilingual_Translation_LLM_7B</a>，该论文系统性地证明了显式语言标签优于简单分隔符</li>
+<li><strong>多语言LLM内部机制</strong>: 见 <a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></li>
+<li><strong>语言特异性神经元</strong>: 见 <a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></li>
+<li><strong>机器翻译RL</strong>: 见 <a class="wikilink" href="GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation.html" title="GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation">GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation</a></li>
+</ul>
+<h3 id="研究脉络">研究脉络</h3>
+<p>本文位于<strong>跨语言迁移学习</strong>研究的交叉点：</p>
+<ul>
+<li>核心发现：数据格式决定学习目标</li>
+<li>方法论贡献：Standard vs Split 控制变量设计</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="From_Unaligned_to_Aligned-Scaling_Multilingual_LLMs_with_Multi-Way_Parallel_Corpora.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">From Unaligned to Aligned: Scaling Multilingual LLMs with Multi-Way Parallel Corpora</span></a>
+<a class="paper-nav-link next" href="Simple_LLM_Baselines_Model_Diffing.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Simple LLM Baselines Are Competitive for Model Diffing</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Lin et al. (2026). From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining. ICLR 2026 (Withdrawn)</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Data-Efficient Path to Multilingual LLMs: Language Expansion via Post-training PARAM-Δ Integration into Upcycled MoE</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">A Data-Efficient Path to Multilingual LLMs: Language Expansion via Post-training PARAM-Δ Integration into Upcycled MoE</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-把英语强模型扩出新语言-hu-sr-bn-又不想花钱跑-sft-rl-但-dense-merge-里-留旧-和-学新-互相打架"><span class="toc-num">02</span> 2. 关键问题：把英语强模型扩出新语言（hu/sr/bn）又不想花钱跑 SFT+RL，但 dense merge 里"留旧"和"学新"互相打架</a></li>
+<li><a class="toc-link" href="#3-关键方法-把-dense-ffn-复制成-4-experts-cpt-阶段冻住-expert-0-装原语言-剩下-3-个-trainable-expert-装新语言-merging-阶段把-dense-alignment-delta-广播给所有-experts"><span class="toc-num">03</span> 3. 关键方法：把 dense FFN 复制成 4 experts，CPT 阶段冻住 expert-0 装原语言、剩下 3 个 trainable expert 装新语言；Merging 阶段把 dense alignment delta 广播给所有 experts</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-整体架构">3.1 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-stage-1-sparse-upcycling">3.2 Stage 1 — Sparse Upcycling</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-stage-2-moe-delta-merging">3.3 Stage 2 — MoE Delta Merging</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-与已有方法的本质区别">3.4 与已有方法的本质区别</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-复现可能卡的点">3.5 复现可能卡的点</a></li>
+<li><a class="toc-link" href="#4-数据集-扩展语言用-fineweb2-culturax-抓的纯语言-monolingual-文本-eval-覆盖数学-指令-阅读-常识-翻译五大类"><span class="toc-num">04</span> 4. 数据集：扩展语言用 FineWeb2/CulturaX 抓的纯语言 monolingual 文本，eval 覆盖数学/指令/阅读/常识/翻译五大类</a></li>
+<li><a class="toc-link" href="#5-关键结果-在-qwen2-5-7b-上-expanded-74-97-vs-最强-baseline-mola-73-21-1-76-original-81-17-vs-instruct-82-33-1-16-同时拿-扩-和-保-但-original-并非真正无损"><span class="toc-num">05</span> 5. 关键结果：在 Qwen2.5-7B 上 expanded 74.97 vs 最强 baseline MoLA 73.21（+1.76），original 81.17 vs Instruct 82.33（−1.16）—— 同时拿"扩"和"保"，但 original 并非真正无损</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主表-table-1-6-项-benchmark-平均">5.1 主表（Table 1，6 项 benchmark 平均）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-ablation-moe-cpt-avg-vs-deltamoe-table-2-merging-strategy-的独立必要性">5.2 Ablation：MoE-CPT-Avg vs DeltaMoE（Table 2）—— Merging strategy 的独立必要性</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-replay-知识保留-figure-4">5.3 Replay 知识保留（Figure 4）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-泛化-table-3-4">5.4 泛化（Table 3、4）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-scalability-appendix-h">5.5 Scalability（Appendix H）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-作者自陈-limitations-原文-limitations">5.6 作者自陈 Limitations（原文 §Limitations）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#team">Team</a></li>
+<li><a class="toc-link toc-sub" href="#topic-area">Topic / Area</a></li>
+<li><a class="toc-link toc-sub" href="#concept">Concept</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-30</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.18083" target="_blank">arXiv</a>
+    </div>
+    <h1>A Data-Efficient Path to Multilingual LLMs: Language Expansion via Post-training PARAM-Δ Integration into Upcycled MoE</h1>
+    <p class="authors">Hao Zhou, Tianhao Li, Zhijun Wang, Shuaijie She, Linjuan Wu, Hao-Ran Wei, Baosong Yang, Jiajun Chen, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">Mixture_of_Experts</span> <span class="topic-tag">Model_Merging</span> <span class="topic-tag">Continued_Pretraining</span> <span class="topic-tag">Post_training_Delta</span> <span class="topic-tag">Sparse_Upcycling</span> <span class="topic-tag">Catastrophic_Forgetting</span></div>
+</header>
+
+<h1>论文笔记: A Data-Efficient Path to Multilingual LLMs: Language Expansion via Post-training PARAM-Δ Integration into Upcycled MoE</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>南大 NLP（Shujian Huang 组）+ 阿里通义实验室 + 浙大；arXiv 2605.18083v1，2026-05-18，cs.CL</li>
+<li>一作 Hao Zhou 在 Tongyi 实习期间完成；co-corresponding：Shujian Huang &amp; Hao-Ran Wei</li>
+<li>简称 <strong>DeltaMoE</strong>；关键词：sparse upcycling、MoE、post-training delta merging、multilingual CPT</li>
+<li>资助：NSFC 62376116 / 南大-中国移动联合研究院 NJ20250038 / 中央高校 2024300507</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-把英语强模型扩出新语言-hu-sr-bn-又不想花钱跑-sft-rl-但-dense-merge-里-留旧-和-学新-互相打架">2. 关键问题：把英语强模型扩出新语言（hu/sr/bn）又不想花钱跑 SFT+RL，但 dense merge 里&quot;留旧&quot;和&quot;学新&quot;互相打架</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题为什么难</strong></p>
+<p>你拿到 Qwen2.5-7B-Instruct，想让它会匈牙利语（Hungarian）。
+用户问：&quot;Kérlek, írj egy haikut a tavaszról.&quot;（请写一首关于春天的俳句。）
+原版 Qwen 在 hu 上挺烂：MGSM-hu 61.2、Flores En-Hu 34.04、MIFEval-hu 58.91。</p>
+<p>你只有两条 data-free 捷径，因为根本搞不到百万级匈语指令数据：</p>
+<ul>
+<li><strong>Dense-FT-Avg（ElChat-style）</strong>：拿 Instruct 跑 hu CPT，再跟原 Instruct 做权重平均。MGSM-hu 涨到 64.4，但等于把刚学到的 hu 知识稀释一半，新东西吃不饱（Table 5）。</li>
+<li><strong>Dense-FT-Delta（PARAM-Δ）</strong>：拿 base 跑 hu CPT，再加上 &quot;Instruct − Base&quot; 这个对齐 delta。Flores En-Hu 拉到 88.31 看着很漂亮（Table 9），但 <strong>MGSM-hu 反而只有 56.80，比 Avg 还差</strong>（Table 5）——翻译涨了，数学推理崩了；原语言代价更惨：MGSM-en 80.8→78.0、Es 67.2、Fr 54.0，等于把英语推理打飞。</li>
+</ul>
+<p>一句话：dense 权重空间里你只有&quot;稀释新知识&quot;或&quot;打飞旧知识&quot;两个选项。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2605.18083v1/latex/figs/intro_tradeoff_plot_final.png" alt="Figure 1: 横轴=扩展语言能力、纵轴=原语言保留。dense baselines 都堵在 Pareto 前沿上互相 trade-off，DeltaMoE 一个点跳到右上角。" /></p>
+<p><strong>为什么 dense merge 必然 trade-off？</strong> CPT 把权重从 θ_base 推到 θ_cpt，post-training 把 θ_base 推到 θ_post。把两个偏移塞回同一组 dense 参数里：averaging 就是把两个方向加权平均（稀释 CPT），delta merge 就是叠加两个不相关方向（θ 飘离原 Instruct，catastrophic forgetting）。这是参数空间冲突，不是数据量不够——2× CPT 数据的 Dense-FT-Avg-2FLOPs 在 hu MGSM 上从 64.4 退到 56.8，2× 数据反而更糟（Table 5）。</p>
+<p>要解决的是<strong>架构层面的冲突</strong>：能不能开一块新的参数子空间专门装新语言、再让 alignment delta 干净地嫁接过来。</p>
+<hr />
+<h2 id="3-关键方法-把-dense-ffn-复制成-4-experts-cpt-阶段冻住-expert-0-装原语言-剩下-3-个-trainable-expert-装新语言-merging-阶段把-dense-alignment-delta-广播给所有-experts">3. 关键方法：把 dense FFN 复制成 4 experts，CPT 阶段冻住 expert-0 装原语言、剩下 3 个 trainable expert 装新语言；Merging 阶段把 dense alignment delta 广播给所有 experts</h2>
+<p><img src="https://arxiv.org/html/2605.18083v1/x1.png" alt="Figure 2: 两阶段 pipeline。左 CPT 阶段，FFN 复制为 N 个 expert，仅 expert 1..N-1 + router 训练，attention/embedding/expert-0 冻结；右 Merging 阶段，把外部 dense post-trained 模型的 Δ 广播到所有 experts 的 gate/up/down。" /></p>
+<blockquote class="card card-info">
+<p><strong>Golden Case 续 — 一个 hu token 在 DeltaMoE 里的完整生命周期</strong></p>
+<p>输入：&quot;Hogyan készítsünk teát?&quot;</p>
+<p><strong>Stage 1（CPT 完成之后）：</strong></p>
+<ol>
+<li>embedding（共享、冻结）映射 token</li>
+<li>attention（共享、冻结）算上下文 hidden state x ∈ ℝ^d</li>
+<li>router 给出 4 个 logits，softmax → top-2 选中 experts，例如 {1, 3}</li>
+<li>expert 1（trainable，CPT 后已在 hu 上特化）和 expert 3 各算 SwiGLU FFN</li>
+<li>归一化后线性组合 + 残差：y = Σ w_i E_i(x) + x</li>
+</ol>
+<p><strong>Stage 2（Merging 完成之后，每个 expert 都被加 Δ_FFN_post）：</strong>
+6. expert 1 的 W_gate 现在等于「CPT 训完的 W_gate^1 + Δ_gate^post」（Δ = Qwen2.5-7B-Instruct − Qwen2.5-7B-Base 的 FFN 部分），相当于&quot;hu 特化的 FFN 也获得了 Instruct 对齐的指令跟随能力&quot;
+7. attention/embed 也被加上对应 Δ_shared</p>
+<p>对比英语输入 &quot;How do I brew tea?&quot;：Figure 3 显示 router 几乎把 token 全送到 expert-0，所以英语前向 ≈ base FFN + Δ_FFN_post ≈ 原 Instruct FFN，几乎不被新 experts 干扰。</p>
+</blockquote>
+<h3 id="3-1-整体架构">3.1 整体架构</h3>
+<p>两阶段串联，全程跳过 SFT、跳过 RL、不需要任何指令数据：</p>
+<ul>
+<li><strong>Stage 1: CPT via Sparse Upcycling</strong> — 把 dense 升级成 4-expert MoE，只训新加的 3 个 expert + router</li>
+<li><strong>Stage 2: MoE Model Merging</strong> — 拿同 base 的公开 dense Instruct，算 Δ_post = θ_post − θ_base，按组件 graft 到 Stage 1 产物上</li>
+</ul>
+<h3 id="3-2-stage-1-sparse-upcycling">3.2 Stage 1 — Sparse Upcycling</h3>
+<p><strong>Why upcycle 而非从头训 MoE？</strong> 想复用英语上的预训练知识。Komatsuzaki 2023 sparse upcycling 的入口：N 个 expert 都用原 dense FFN 的 deep copy 初始化。</p>
+<p><strong>MoE 层定义</strong>（SwiGLU FFN）：</p>
+<div class="math-display">$$
+E_i(x) = \big(\mathrm{SiLU}(x W_\text{gate}^i) \odot x W_\text{up}^i\big) W_\text{down}^i
+$$</div>
+<ul>
+<li>x ∈ ℝ^d，W_gate^i / W_up^i ∈ ℝ^{d×f}，W_down^i ∈ ℝ^{f×d}</li>
+<li>4 experts，全部用 expert-0 的 FFN deep copy 初始化（gate/up/down 三组矩阵）</li>
+<li>注：原文 Eq.1 SiLU 括号位置有 typo（写成 SiLU 作用于 gate⊙up），按 SwiGLU 标准实现纠正 [?]</li>
+</ul>
+<p><strong>Top-k 路由</strong>（k=2, N=4）：</p>
+<div class="math-display">$$
+p = \mathrm{softmax}(x W_\text{router}),\quad \mathcal{T} = \mathrm{TopK}(p, k),\quad w_i = \frac{p_i}{\sum_{j\in\mathcal{T}} p_j}\cdot \mathbb{1}[i\in\mathcal{T}]
+$$</div>
+<div class="math-display">$$
+y = \sum_{i=1}^N w_i\, E_i(x) + x
+$$</div>
+<p><strong>Frozen anchor 设计 — 全文最核心的工程决策</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;we freeze all parameters of the dense base model, including the 0-th expert, which serves as a knowledge anchor&quot;</p>
+</blockquote>
+<p>可训练参数：</p>
+<div class="math-display">$$
+\theta_\text{tr} = \{\theta_\text{exp}^{(k)}\}_{k=1}^{N-1} \cup \{\theta_\text{router}\}
+$$</div>
+<p>（原文 Eq. 写 k=1..N 与文字&quot;only expansion experts trained / N=4、3 trainable&quot;矛盾，按文字描述写为 k=1..N−1）[?]</p>
+<p>也就是 <strong>attention、embedding、LM head、layer norm、expert-0 的 FFN 全部冻结</strong>，只有 expert 1..3 的 SwiGLU 三矩阵 + 每层 router 在更新。这样 router 可以学会在英语上把 token 全部送到 expert-0，英语前向几乎等价于原 dense 模型 + 残差。</p>
+<p><strong>损失</strong> — NTP + load-balancing：</p>
+<div class="math-display">$$
+\mathcal{L}_\text{LB} = N\cdot \sum_{i=1}^N f_i P_i,\quad \mathcal{L} = \mathcal{L}_\text{NTP} + \alpha\,\mathcal{L}_\text{LB},\ \alpha = 0.01
+$$</div>
+<p>f_i = batch 内被路由到 expert i 的 token 比例；P_i = batch 内 expert i 的平均 router 概率（标准 ST-MoE 设定）。</p>
+<p><strong>训练超参</strong>：LLaMA-Factory + DeepSpeed ZeRO-3、BF16、LR 5e-5 cosine、global batch 512、seq len 2048、1 epoch；每种扩展语言 3B tokens × 3 = 9B tokens；未披露 GPU 数 / 总步数 / wallclock / seed 数。</p>
+<h3 id="3-3-stage-2-moe-delta-merging">3.3 Stage 2 — MoE Delta Merging</h3>
+<p><strong>Why 不直接 dense delta merge 再 upcycle？</strong> 那样 expert-0 就也被 delta 冲掉了，等于回到 Dense-FT-Delta 的 forgetting。</p>
+<p><strong>Component-wise merging</strong>：</p>
+<p><strong>1) Shared params（attention / embedding / norm）—直接相加</strong>：</p>
+<div class="math-display">$$
+\hat\theta^\text{MoE}_\text{shared} = \theta^\text{MoE}_\text{shared} + \Delta^\text{shared}_\text{post},\quad \Delta^\text{shared}_\text{post} = \theta^\text{shared}_\text{post-trained} - \theta^\text{shared}_\text{base}
+$$</div>
+<p>Stage 1 这些参数被冻结所以等于 base，加 Δ 后等价于 dense post-trained 模型的对应位置。</p>
+<p><strong>2) Expert FFN — 同一个 FFN delta broadcast 到所有 i ∈ {0, 1, ..., N−1}（注意包括 frozen expert-0）</strong>：</p>
+<div class="math-display">$$
+\hat W^i_\text{gate} = W^i_\text{gate} + \Delta^\text{gate}_\text{post},\quad \hat W^i_\text{up} = W^i_\text{up} + \Delta^\text{up}_\text{post},\quad \hat W^i_\text{down} = W^i_\text{down} + \Delta^\text{down}_\text{post}
+$$</div>
+<p><strong>重要细节</strong>：所谓 &quot;frozen expert-0&quot; <strong>严格说只在 CPT 阶段成立</strong>——Merging 阶段 expert-0 也被加上了 Δ_FFN_post，结果等于 base FFN + Δ_FFN_post ≈ post-trained FFN。真正的&quot;anchor&quot;机制不是冻结，而是 <strong>routing-aware 的 Δ application</strong>：router 把 en 大量路由到 expert-0，等价于把 en 路由到&quot;dense post-trained FFN 的近似&quot;。</p>
+<p>Router 不被 merge（dense 模型没有 router），Stage 1 训出的 router 原样保留。</p>
+<p><strong>能力转移结果</strong>：</p>
+<ul>
+<li>expert-0：base FFN + Δ ≈ post-trained FFN → en 几乎恢复 dense Instruct</li>
+<li>expert 1..3：base FFN + ΔCPT_i + Δ_post → 在 hu/sr/bn 特化的 FFN 上叠加 alignment 偏移</li>
+<li>attention/embed 直接等价 dense Instruct</li>
+<li>Stage 1 训出的 router 决定 token 分流</li>
+</ul>
+<h3 id="3-4-与已有方法的本质区别">3.4 与已有方法的本质区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>新语言子空间</th>
+<th>原能力保留机制</th>
+<th>Alignment 转移</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dense-FT-Avg</td>
+<td>无（同一 θ）</td>
+<td>与 Instruct 平均（稀释 CPT）</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>Dense-FT-Delta</td>
+<td>无</td>
+<td>无 → forget</td>
+<td>直接加 Δ</td>
+</tr>
+<tr>
+<td>LLaMA-Pro</td>
+<td>新 Transformer blocks（深度扩）</td>
+<td>冻原 blocks</td>
+<td>Δ 只加到原 dense 参数</td>
+</tr>
+<tr>
+<td>MoLA</td>
+<td>LoRA experts（rank=1120, 各层 2/4/6/8 个）</td>
+<td>冻原参数</td>
+<td>Δ 加到原 dense；LoRA <strong>接不上</strong> Δ</td>
+</tr>
+<tr>
+<td><strong>DeltaMoE</strong></td>
+<td>trainable experts（宽度扩）</td>
+<td>frozen expert-0 + 路由隔离</td>
+<td>Δ broadcast 到所有 experts，FFN 同形可 graft</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>跟 MoLA 的本质差别</strong>：MoLA 用低秩 adapter 学新语言，但 dense Δ 没法投回 LoRA 子空间，只能加到原 dense 参数上 → 新语言 FFN 完全没被 alignment 更新过。DeltaMoE 的 full-rank expert 跟 dense FFN 同形，Δ 直接 graft——这是 +1.76 主表 gap 的机制来源。但反过来说，<strong>这个对比也意味着 MoLA 是一个被精心挑选的、设计上就接不到 dense delta 的对手</strong>，详见 §6.1.</p>
+<h3 id="3-5-复现可能卡的点">3.5 复现可能卡的点</h3>
+<ul>
+<li>论文未披露 router 初始化方式（按 sparse upcycling 惯例应该是 random init，但 1 frozen + 3 trainable 的设定下，random init 会让 expert-0 在 Stage 1 早期被路由概率分散——en 会受损。也没说有没有 router-only warmup）[?]</li>
+<li>baseline LR 不一致：Dense-FT 系列 2e-5、LLaMA-Pro <strong>2e-4（高 10×）</strong>、MoLA 5e-5、DeltaMoE 5e-5（Table 11）——LLaMA-Pro 的 LR 高一个数量级，加上 +28 层时崩到 24.60，公平性受影响</li>
+<li>top-2 引入约 1.8× dense FLOPs，作者用 2× CPT data 的 dense baseline 来过补偿对比公平性</li>
+<li>Total 24.7B / Active 13.3B vs dense 7.6B</li>
+<li>Stage 2 之后是否还要再 fine-tune？论文看是 zero-shot 直接评估</li>
+<li>§4.2 的 router-tuning 是 optional：0.15B token（原:新 = 1:2），只训 router，进一步提升原语言保留——不属于主表 pipeline</li>
+</ul>
+<hr />
+<h2 id="4-数据集-扩展语言用-fineweb2-culturax-抓的纯语言-monolingual-文本-eval-覆盖数学-指令-阅读-常识-翻译五大类">4. 数据集：扩展语言用 FineWeb2/CulturaX 抓的纯语言 monolingual 文本，eval 覆盖数学/指令/阅读/常识/翻译五大类</h2>
+<p><strong>CPT 训练数据</strong>：</p>
+<ul>
+<li>扩展语言：Hungarian (hu)、Serbian (sr)、Bengali (bn)，每种 3B tokens 共 9B</li>
+<li>hu/bn 来自 FineWeb2；sr 因 FineWeb2 数据量不足改用 CulturaX</li>
+<li>无指令数据、无平行语料</li>
+<li>2FLOPs baseline 把数据翻倍到 18B 以匹配 top-2 MoE FLOPs</li>
+</ul>
+<p><strong>原语言</strong>（仅评估，不在 CPT 里 replay）：en, zh, es, fr。§4.2 可选 replay 用 0.15B：en 来自 DCLM、es 来自 FineWeb2、zh 来自 SkyPile-150B（每语言 50k docs），French 留作 OOD。</p>
+<p><strong>Routing 分析（Figure 3）放在数据/分析侧讨论</strong>：</p>
+<p><img src="https://arxiv.org/html/2605.18083v1/latex/figs/expert_routing_sampled.png" alt="Figure 3: ifeval 上 English 与 Hungarian 输入的跨层 expert 选择频率。English 几乎全压在 expert-0（frozen），Hungarian 在中层走 expert-0、上层切到 trainable experts。" /></p>
+<p>作者解读对应 Wendler 2024 的 latent language 工作：&quot;模型在中层用英语思考、在上层做语言特化输出&quot;。意味着 <strong>language-specific experts 实际上更像 &quot;output formatter&quot; 而非 &quot;language understander&quot;</strong>——深层语义理解还在英语 FFN 里做。这个分析只在 ifeval 上做了一次，<strong>MGSM / Flores 的路由分布会不会完全不同，论文没扫</strong>。</p>
+<p><strong>评估 benchmark</strong>（全 zero-shot）：</p>
+<ul>
+<li><strong>MGSM</strong>（数学推理，BenchMAX 子集）：accuracy，zero-shot CoT；样本量论文未明说 [?]</li>
+<li><strong>MIFEval</strong>（指令跟随，BenchMAX 子集）：prompt/instruction × strict/loose 四子指标平均</li>
+<li><strong>BELEBELE</strong>（阅读理解，122 语言）：MCQ accuracy + zero-shot CoT</li>
+<li><strong>M_MMLU</strong>：<strong>每个 subject category 各抽 10%</strong> 的分层子集（绝对题数未给）</li>
+<li><strong>Flores-200</strong>：用 XCOMET-XXL（reference-free）打分；En-XX 和 XX-En 双向</li>
+</ul>
+<p><strong>评估细节</strong>（Appendix C）：</p>
+<ul>
+<li>MCQ prompt 用 OpenAI simple-evals 模板，<strong>用 DeepSeek-V3 翻译到目标语言</strong>——对 hu/sr/bn 这种低资源语言 prompt 本身质量是个未控变量</li>
+<li>答案抽取两段式：先 regex <code>Answer: [A-D]</code>，失败 fallback 到 <strong>Qwen3-4B-Instruct</strong> 做抽取——对 Qwen2.5 系基线可能有 model-family 偏好</li>
+<li>Flores 用 custom prompt（Figure 5）；XCOMET-XXL 是 LLM-as-judge，对低资源语言的可信度本身是公开问题</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-在-qwen2-5-7b-上-expanded-74-97-vs-最强-baseline-mola-73-21-1-76-original-81-17-vs-instruct-82-33-1-16-同时拿-扩-和-保-但-original-并非真正无损">5. 关键结果：在 Qwen2.5-7B 上 expanded 74.97 vs 最强 baseline MoLA 73.21（+1.76），original 81.17 vs Instruct 82.33（−1.16）—— 同时拿&quot;扩&quot;和&quot;保&quot;，但 original 并非真正无损</h2>
+<h3 id="5-1-主表-table-1-6-项-benchmark-平均">5.1 主表（Table 1，6 项 benchmark 平均）</h3>
+<p><strong>Expanded（hu/sr/bn 平均）：</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Active/Total</th>
+<th>MGSM</th>
+<th>MIFEval</th>
+<th>BELEBELE</th>
+<th>M_MMLU</th>
+<th>En-XX</th>
+<th>XX-En</th>
+<th><strong>Avg</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-7B-Instruct</td>
+<td>7.6/7.6</td>
+<td>60.40</td>
+<td>59.27</td>
+<td>71.89</td>
+<td>47.29</td>
+<td>40.31</td>
+<td>79.84</td>
+<td>59.83</td>
+</tr>
+<tr>
+<td>Dense-FT-Avg</td>
+<td>7.6/7.6</td>
+<td>66.13</td>
+<td>58.82</td>
+<td>76.85</td>
+<td>52.01</td>
+<td>76.71</td>
+<td>90.01</td>
+<td>70.09</td>
+</tr>
+<tr>
+<td>Dense-FT-Delta</td>
+<td>7.6/7.6</td>
+<td>61.87</td>
+<td>60.80</td>
+<td>80.00</td>
+<td>54.48</td>
+<td>84.14</td>
+<td>89.11</td>
+<td>71.73</td>
+</tr>
+<tr>
+<td>Dense-FT-Avg-2FLOPs</td>
+<td>7.6/7.6</td>
+<td>62.13</td>
+<td>56.74</td>
+<td>76.48</td>
+<td>50.66</td>
+<td>78.45</td>
+<td>90.38</td>
+<td>69.14</td>
+</tr>
+<tr>
+<td>Dense-FT-Delta-2FLOPs</td>
+<td>7.6/7.6</td>
+<td>64.67</td>
+<td>62.49</td>
+<td>81.44</td>
+<td>54.64</td>
+<td>85.18</td>
+<td>89.73</td>
+<td>73.03</td>
+</tr>
+<tr>
+<td>LLaMA-Pro (+14L)</td>
+<td>10.8/10.8</td>
+<td>60.80</td>
+<td>58.72</td>
+<td>81.70</td>
+<td>55.01</td>
+<td>82.56</td>
+<td>86.82</td>
+<td>70.94</td>
+</tr>
+<tr>
+<td>MoLA</td>
+<td>13.2/21.7</td>
+<td>65.47</td>
+<td>61.44</td>
+<td>80.74</td>
+<td>54.52</td>
+<td>87.36</td>
+<td>89.74</td>
+<td>73.21</td>
+</tr>
+<tr>
+<td><strong>DeltaMoE</strong></td>
+<td><strong>13.3/24.7</strong></td>
+<td><strong>67.60</strong></td>
+<td><strong>64.95</strong></td>
+<td><strong>82.22</strong></td>
+<td><strong>56.11</strong></td>
+<td><strong>88.13</strong></td>
+<td><strong>90.82</strong></td>
+<td><strong>74.97</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Original（en/zh/es/fr 平均）：</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-7B-Instruct</td>
+<td><strong>82.33</strong></td>
+</tr>
+<tr>
+<td>Dense-FT-Avg</td>
+<td>81.36</td>
+</tr>
+<tr>
+<td>Dense-FT-Delta</td>
+<td>79.22</td>
+</tr>
+<tr>
+<td>Dense-FT-Avg-2FLOPs</td>
+<td>81.38</td>
+</tr>
+<tr>
+<td>Dense-FT-Delta-2FLOPs</td>
+<td>77.92</td>
+</tr>
+<tr>
+<td>LLaMA-Pro</td>
+<td>78.68</td>
+</tr>
+<tr>
+<td>MoLA</td>
+<td>79.62</td>
+</tr>
+<tr>
+<td>DeltaMoE</td>
+<td>81.17</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>核心读数</strong>：</p>
+<ol>
+<li>Expand +1.76（vs MoLA），+1.94（vs Dense-FT-Delta-2FLOPs，matched FLOPs）</li>
+<li>Original 81.17 比所有 parameter-expansion baseline 都高，但<strong>对 base Instruct 仍是 −1.16 净损失</strong>，论文 abstract &quot;effectively preserving&quot; 的措辞与数字有 gap</li>
+<li>Dense-FT-Delta 在 hu/sr/bn 上 71.73 但 en/zh/es/fr 79.22 → trade-off 写在脸上</li>
+<li><strong>2× 数据不能救 dense</strong>：Dense-FT-Avg-2FLOPs 扩展语言反退到 69.14（dilution 不是数据量问题）；Dense-FT-Delta-2FLOPs 原语言进一步掉到 77.92</li>
+<li><strong>单 benchmark 提升幅度都很小</strong>：BELEBELE +0.52、M_MMLU +1.10、Flores En-XX +0.77，几乎都在单 seed 噪声量级（详见 §6.1.A）</li>
+</ol>
+<h3 id="5-2-ablation-moe-cpt-avg-vs-deltamoe-table-2-merging-strategy-的独立必要性">5.2 Ablation：MoE-CPT-Avg vs DeltaMoE（Table 2）—— Merging strategy 的独立必要性</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Expanded</th>
+<th>Original</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-7B-Instruct</td>
+<td>59.83</td>
+<td>82.33</td>
+<td>71.08</td>
+</tr>
+<tr>
+<td>MoE-CPT-Avg（在 MoE 上 averaging）</td>
+<td>70.93</td>
+<td><strong>81.35</strong></td>
+<td>76.14</td>
+</tr>
+<tr>
+<td><strong>DeltaMoE (delta merging)</strong></td>
+<td><strong>74.97</strong></td>
+<td>81.17</td>
+<td><strong>78.07</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>把 averaging 换成 delta merging：Expand +4.04，Original 仅 −0.18。这是论文最有说服力的一刀切证据：<strong>架构（MoE + frozen expert）和 merging strategy 各贡献一半，缺一不可</strong>。</p>
+<h3 id="5-3-replay-知识保留-figure-4">5.3 Replay 知识保留（Figure 4）</h3>
+<p><img src="https://arxiv.org/html/2605.18083v1/latex/figs/replay_scaling_law_numeric_axis.png" alt="Figure 4: 数据 replay 量 vs 知识保留。DeltaMoE 用 0.15B router-tuning replay 已超过 Dense-FT-Avg，Dense-FT-Delta 60× replay 也追不上。" /></p>
+<ul>
+<li>DeltaMoE + 0.15B router-tuning &gt; Dense-FT-Avg 在 in-domain</li>
+<li>Dense-FT-Delta 即便 60×（约 9B）replay 仍打不过 DeltaMoE 的 0.15B</li>
+<li>法语作为 OOD（router-tuning 没见过法语）接近 Dense-FT-Avg —— 解耦设计对未见原语言有泛化保护</li>
+<li><strong>公平性注意</strong>（B 抓到）：DeltaMoE 是 <strong>post-CPT router-only fine-tune</strong>，Dense-FT-Delta 是 <strong>CPT-time data mixing</strong>，两者 replay 时机和粒度不同；论文没给&quot;Dense-FT-Delta + 事后 fine-tune-on-replay&quot;的对照</li>
+</ul>
+<h3 id="5-4-泛化-table-3-4">5.4 泛化（Table 3、4）</h3>
+<ul>
+<li>换 alignment delta（Tulu3 SFT 自己做）：DeltaMoE Expand 65.77（vs LLaMA-Pro+7L 64.97 = +0.80），Original 76.14 —— <strong>但 Dense-FT-Avg 在该 setting 下 Original = 76.46，DeltaMoE 反而输了 0.32</strong>。原文 &quot;competitive results that rival the top-performing baseline&quot; 软化了这个事实。</li>
+<li>换 base 到 LLaMA-3.1-8B：DeltaMoE 69.37 / 77.32 双 SOTA。</li>
+<li>LLaMA-Pro 在 LLaMA-3.1 上极不稳：+8L 58.92、+16L 44.44、+24L 崩到 <strong>14.80 / 13.87</strong>（Appendix G Table 14）；同方法在三种 setting 下最优层数都不同（Qwen2.5+14L / Tulu+7L / LLaMA3.1+8L），说明 LLaMA-Pro 极度依赖 hyperparameter，作为 baseline 公平性受损。</li>
+</ul>
+<h3 id="5-5-scalability-appendix-h">5.5 Scalability（Appendix H）</h3>
+<ul>
+<li><strong>5 种扩展语言</strong>（hu/bn/sr/te/is 各 1B）：3 trainable expert 75.67 vs 5 trainable 75.84 ≈ 持平 → 3 个 trainable 容量够</li>
+<li><strong>从 3 种扩到 8 种</strong>（19B 总 token）：原 3 种 Expand 从 74.97 → 74.43（−0.54），Original 81.17 → 81.04；同条件 Dense-FT-Delta 退化到 70.00 → MoE 抗干扰强。<strong>自我吐槽</strong>：论文用宽尺度量正向收益（+1.76 算大）但用紧尺度量这里的 −0.54（算&quot;几乎不退化&quot;），其实跟 BELEBELE +0.52 同量级，双标。</li>
+</ul>
+<h3 id="5-6-作者自陈-limitations-原文-limitations">5.6 作者自陈 Limitations（原文 §Limitations）</h3>
+<ol>
+<li>评估语言/benchmark 不足以覆盖全球语种多样性</li>
+<li>MoE 架构在训练/推理上带来 non-trivial computational overhead</li>
+</ol>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>A. 单 seed、零方差、提升幅度在噪声内</strong> — 全篇所有表格都没有 std / CI / seed 数，每个 benchmark 只跑一次。关键 gap：BELEBELE +0.52、M_MMLU +1.10、Flores En-XX +0.77，都在 0.5–1 个点。M_MMLU 还是 10% stratified subsample（每个 subject 抽 10%，绝对题数未给），方差进一步放大。论文措辞&quot;resolves the trade-off&quot;、&quot;SOTA&quot;、&quot;effectively preserving&quot;跟数字差距严重不对位——reviewer 容易被措辞带偏，但只看数字会发现 claim 站不太稳。<strong>最可执行的 reviewer ask</strong>：跑 3 个 seed 给 std。同时 DeltaMoE 自己 Original 81.17 vs base 82.33 = <strong>−1.16 净损失</strong>，按这个量级，所谓&quot;preservation&quot;不是真的无损。</p>
+<p><strong>B. 参数预算的&quot;公平&quot;对比有诡辩感</strong> — DeltaMoE：13.3B active / <strong>24.7B total</strong>（3.25× dense 7.6B）。论文用&quot;matched FLOPs&quot;表头偷换&quot;matched capacity&quot;——MoE 总参数是真的占显存、占存储的成本。真正公平的设置应该是让 dense baseline 也用 ~20B 总参数（比如 Qwen2.5-14B 跑同 9B CPT + delta），论文没做。&quot;matched FLOPs&quot; 这一组里 dense baseline 只是数据翻倍但参数没变。</p>
+<p><strong>C. MoLA 是被精挑细选的 strawman，缺关键 multilingual-MoE 直接对位 baseline</strong> — 论文核心论点&quot;MoLA 的 LoRA expert 接不到 dense delta&quot;在设计上就让 MoLA 先天处于劣势。可以给 MoLA 也设计适配的 delta 注入策略（把 dense FFN delta 投影到 LoRA 空间，或在 LoRA 上做 ElChat-style averaging），论文没尝试。真正缺位的对手是 MoE-LPR / DMoE / LayerMoE 等 multilingual-MoE 工作——§Related Work 只一句&quot;它们没做 alignment 传递&quot;打发，但这些才是直接对位的方法。</p>
+<p><strong>D. &quot;frozen anchor&quot; framing 不准确，真实机制是 routing-aware Δ application</strong> — Stage 2 时 expert-0 也被加 Δ_FFN_post，已经不再 frozen。anchor 的真实机制不是&quot;冻结&quot;，而是 router 把 en 大量路由给 expert-0，等价于把 en 路由到&quot;dense post-trained FFN 的近似&quot;。论文（和我自己读第一遍）都把&quot;frozen&quot;当 framing 卖，但实际上 Stage 1 的冻结只是为了让 Stage 2 的 graft 有干净参照系。<strong>如果让我来做，我大概率会让所有 expert 都训，反而踩进 dense merging 的同一个坑</strong>。</p>
+<p><strong>E. Δ_post broadcast 到 trainable expert 能 work 暗示一个反直觉假设：dense post-training 方向与新语言知识方向接近正交</strong> — trainable expert 在 CPT 阶段已经偏移了（设偏移 ΔCPT_i），最终权重 = θ_base + ΔCPT_i + Δ_post。这跟 Dense-FT-Delta 在某种意义上是同构的（只是被限制在某些 token 路径上），但前者不 forget 后者 forget。<strong>作者论证是&quot;experts 都源自同一 FFN&quot;，但这其实是空话</strong>——真正能 work 的原因更像是：dense Instruct 的 post-training 在权重空间里方向比较&quot;通用&quot;（指令格式 + 推理结构），跟具体语言知识方向接近正交，所以加上去不打架。<strong>可证伪预测</strong>：在更激进的 post-training delta（比如长 CoT 推理专门强化的 R1 系模型）上，这个广播策略可能会崩。同样未解的：‖Δ_post‖ 跟 ‖ΔCPT_i‖ 的相对大小？如果前者远大于后者，所有 expert grafting 后都会塌缩到 base + Δ_post 邻域，等于稀释 CPT——论文没报这个 norm 比例。</p>
+<p><strong>F. 缺 Stage 1 中间产物 M_MoE-base 在扩展语言上的单独数字</strong> — 现在所有结果都是 &quot;CPT + Merging&quot; 的 final pipeline，没法分开看 CPT 学了多少、Merging graft 了多少。这是审稿人会问的第一刀。</p>
+<p><strong>G. 为什么 original 会掉 1.16 点？三个互斥假设论文没 disentangle</strong> — Figure 3 显示 English token 几乎全压回 expert-0，理论上应该零损失。三种猜测：(a) shared param（attention/embed）上的 grafted Δ 与原 instruct 仍有微小数值差；(b) router 偶尔路由错把 en 送到 trainable expert；(c) expert-0 在 merging 阶段加了 Δ_FFN，跟原 Instruct FFN 不完全一致。<strong>可执行 ablation</strong>：把 Stage 2 的 Δ_FFN_post 只加给 expert-0、不加给 expert 1..3，看 en 上还掉不掉。</p>
+<p><strong>H. top-2 强制激活第二个 expert，但论文只给了 routing 的边缘分布、没给联合分布</strong> — en token 上 expert-0 是第一选择，那第二个是哪个？如果第二激活的是 trainable expert，理论上会污染 en，但 en 性能仅掉 1.16 点——反过来暗示 <strong>trainable expert 在 en 上几乎学成了 identity-like 映射</strong>，这是个有 mechanistic 价值的发现，论文跳过了。</p>
+<p><strong>I. Router-tuning replay 跟主表不一致 setting，比较时还跨 replay 范式</strong> — 主表 Table 1 是 no replay；Figure 4 才加 router-tuning。给 Dense-FT-Delta 也加一个&quot;事后 fine-tune-on-replay&quot;阶段才公平，但论文没做，仍然把 0.15B vs 9B 的差距当 60× 数据效率秀。</p>
+<p><strong>J. 路由分析只在 ifeval 上做了一次</strong> — 推理（MGSM）和翻译（Flores）的路由分布很可能完全不同，&quot;模型在中层用英语思考&quot;的故事只有一张图支撑，generalization 待验证。</p>
+<p><strong>K. LLaMA-Pro 在不同 setting 下最优层数都不同（Qwen+14 / Tulu+7 / LLaMA3.1+8），且 +28 层时崩到 24.60 / 8.66</strong>（Appendix E/F/G） — 加上 LR 比其他 baseline 高 10×（2e-4 vs 2e-5/5e-5，Table 11），LLaMA-Pro 这个 baseline 调优本身就极度不稳。论文选 best variant 没错，但<strong>这个崩盘幅度本身就是 LLaMA-Pro 作为 fair baseline 的硬伤</strong>。反过来 DeltaMoE 自己只扫了 expert 个数（Appendix H），没扫 top-k、N、CPT epoch 等 — 自身有没有 hyperparameter cherry-picking 不可证。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li><strong>post-training delta 作为可移植&quot;能力包&quot;会越来越流行</strong>：DeltaMoE 的真正贡献是给了一个&quot;如何把 dense delta 嫁接到 sparse 架构&quot;的模板。可以预期：reasoning-MoE-graft、tool-use-MoE-graft、safety-alignment-MoE-graft 系列工作。但 §6.1.E 的反直觉假设是个 caveat——长 CoT 推理这种&quot;强方向性&quot;的 delta 上广播策略可能会崩，这是值得跟踪的第一批验证目标。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>trade-off 可视化的杀伤力</strong>：Figure 1 二维 Pareto plot 把 dense baseline 全压在前沿、DeltaMoE 单点跳到右上角。这种写法让 reviewer 没法用&quot;你只是稍微更好&quot;reject。做&quot;两个互斥目标同时优化&quot;类工作必备。</li>
+<li><strong>baseline 分组&quot;same data / matched FLOPs / matched parameters&quot;层次清晰，但要警惕双标</strong>：论文把这三组拆开来打，看起来非常严谨。但 B 抓到的是——&quot;matched parameters&quot;那组都是参数扩张架构（LLaMA-Pro / MoLA / DeltaMoE 自己），<strong>没有同样 ~20B 总参数的 dense baseline</strong>。所以&quot;参数公平&quot;那一维其实没真打。这个手法的两面：拆维度是好习惯，但每一维都得有真正同等的 dense 对手，否则就是&quot;每一组都赢但每一组都缺真正的对照&quot;。</li>
+<li><strong>claim 措辞 vs 实际数字差距的 lesson</strong>：这篇所有 SOTA claim 都在 1-2 个点内（含 net forgetting −1.16），且无 std。作为 reader / reviewer 训练，<strong>永远先把 abstract 措辞按到桌面再去看数字</strong>——&quot;effectively preserving&quot; 在数字上是 −1.16；&quot;resolves the trade-off&quot; 在数字上是从 trade-off 前沿&quot;挪动&quot;到一个稍好的点，没真正&quot;resolve&quot;。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<h3 id="team">Team</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-NJU-NLP-ShujianHuang">MOC-Team-NJU-NLP-ShujianHuang</span> — Team: 黄书剑组继 PEGRL/GRRM/TAPO/LLaMAX2/TRIT 的翻译 RL 与多语言推理保持路线后，把研究边界扩到 data-free 多语言能力扩展的架构层方案，与 LLaMAX2&quot;层选择性微调隔离推理&quot;思路同源（参数空间隔离 → 架构子空间隔离）。</li>
+</ul>
+<h3 id="topic-area">Topic / Area</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Model-Merging">MOC-Model-Merging</span> — Topic: 首次把 dense post-training delta 广播到 sparse-upcycled MoE 的所有 experts 上完成 alignment 转移，把模型合并从持续学习扩展到多语言能力嫁接。</li>
+<li><span class="wikilink unresolved" title="MOC-Multilingual-Translation">MOC-Multilingual-Translation</span> — Topic: 提出 sparse upcycling + delta merging 的 data-free 多语言扩展流水线，跳过 SFT/RL 在 hu/sr/bn 上同时拿下扩展语言能力与原语言保留。</li>
+<li><span class="wikilink unresolved" title="MOC-Continual-Learning">MOC-Continual-Learning</span> — Topic: 用 frozen expert-0 作知识锚点 + router 路由隔离新旧语言子空间，提供一条架构层隔离 + 参数空间嫁接的防遗忘新范式。</li>
+</ul>
+<h3 id="concept">Concept</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span> — Concept: 核心 motivation 正是 dense merge 中&quot;保留原能力 vs 学新语言&quot;的灾难性遗忘 trade-off，通过 frozen MoE expert 提供架构级隔离，与 LLaMAX2 / DMoE 同属架构隔离族。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Qwen-RobotManip-Alignment-Unlocks-Scale-VLA.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Qwen-RobotManip Technical Report: Alignment Unlocks Scale for Robotic Manipulation Foundation Models</span></a>
+<a class="paper-nav-link next" href="SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">SaeRL — Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhou2026deltamoe</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

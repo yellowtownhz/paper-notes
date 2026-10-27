@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Failure as a Process: An Anatomy of CLI Coding Agent Trajectories</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Failure as a Process: An Anatomy of CLI Coding Agent Trajectories</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-失败不是终点标签-而是一段有内部阶段的过程"><span class="toc-num">02</span> 2. 关键问题：失败不是终点标签，而是一段有内部阶段的过程</a></li>
+<li><a class="toc-link" href="#3-关键方法-用三个时间点把-错误-锁死-暴露-串起来"><span class="toc-num">03</span> 3. 关键方法：用三个时间点把“错误 → 锁死 → 暴露”串起来</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-数据怎样进入分析流程">3.1 数据怎样进入分析流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-三时间点形式化">3.2 三时间点形式化</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-从事后解释走向在线监控">3.3 从事后解释走向在线监控</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-根因与恢复怎样标">3.4 根因与恢复怎样标</a></li>
+<li><a class="toc-link" href="#4-数据集-跨-21-个系统的-terminal-bench-轨迹快照"><span class="toc-num">04</span> 4. 数据集：跨 21 个系统的 Terminal-Bench 轨迹快照</a></li>
+<li><a class="toc-link" href="#5-关键结果-错误很早形成-真正稀缺的是及时更新信念"><span class="toc-num">05</span> 5. 关键结果：错误很早形成，真正稀缺的是及时更新信念</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-时间-第-7-步出错-第-12-步锁死-第-16-步才外显">5.1 时间：第 7 步出错，第 12 步锁死，第 16 步才外显</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-根因-57-9-不是-不会-而是-没有正确使用已经看到的信息">5.2 根因：57.9% 不是“不会”，而是“没有正确使用已经看到的信息”</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-恢复-成功轨迹也会错-区别在是否响应信号">5.3 恢复：成功轨迹也会错，区别在是否响应信号</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-模型与-scaffold-都影响-pass-rate-但不是本文最稳的因果结论">5.4 模型与 scaffold 都影响 pass rate，但不是本文最稳的因果结论</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对实际-coding-agent-系统的行动建议">6.2 对实际 coding-agent 系统的行动建议</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-26</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2607.09510" target="_blank">arXiv</a>
+    </div>
+    <h1>Failure as a Process: An Anatomy of CLI Coding Agent Trajectories</h1>
+    <p class="authors">Xiangxin Zhao, Han Li, Shuaiting Li, Tianyi Zhao, Earl T. Barr, Federica Sarro, He Ye</p>
+    <div class="topic-row"><span class="topic-tag">Coding_Agent</span> <span class="topic-tag">Trajectory_Analysis</span> <span class="topic-tag">Agent_Failure_Analysis</span> <span class="topic-tag">CLI_Agent</span> <span class="topic-tag">Error_Recovery</span></div>
+</header>
+
+<h1>论文笔记: Failure as a Process: An Anatomy of CLI Coding Agent Trajectories</h1>
+<p><strong>关键问题</strong>：pass/fail 只告诉我们任务最后有没有完成，却看不到失败何时开始、何时失去修复机会、又何时才暴露出来。</p>
+<p><strong>关键做法</strong>：把失败轨迹拆成三个时间点——决定性错误 $t_{err}$、经验性锁死 $t_{lock}$、首次可观测失败 $t_{obs}$——再把时间、根因与恢复行为连起来分析。</p>
+<p><strong>关键结论</strong>：在 1,184 条失败轨迹中，决定性错误中位数出现在第 7 步；57.9% 属于“信息已在场却被误用”的 epistemic error。真正区分成功与失败的，不是是否犯错，而是 agent 是否及时响应错误信号并在短程内恢复。</p>
+<p><strong>我的判断</strong>：这篇最有价值的不是又做了一张 failure taxonomy，而是把错误发生、不可恢复和外显失败分开。它准确指出了 intervention 应该放在哪里；但 $t_{lock}$ 是事后标注，论文还没有证明在该窗口内插入检查真的能提高成功率。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Xiangxin Zhao、Han Li、Shuaiting Li、Tianyi Zhao、Earl T. Barr、Federica Sarro、He Ye；University College London 与 Nanjing University。</li>
+<li><strong>发表信息</strong>：arXiv:2607.09510v1，cs.SE，2026-07-10；正文未标会议。</li>
+<li><strong>开放资源</strong>：作者声称公开 1,794 条标注轨迹、codebook、prompt 与分析脚本：<a href="https://github.com/xz-Sean/cli_trajectory_analysis">cli_trajectory_analysis</a>。</li>
+<li><strong>材料边界</strong>：本笔记核对了 arXiv v1 的 12 页官方 PDF 与 HTML；没有独立复跑 Terminal-Bench，也没有审计公开数据和标注代码，因此关于人工标签与统计结果的判断仍以论文报告为边界。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-失败不是终点标签-而是一段有内部阶段的过程">2. 关键问题：失败不是终点标签，而是一段有内部阶段的过程</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case -- 一条“看起来一直正常”的错误轨迹</strong></p>
+<p>Terminal-Bench 的 <code>git-workflow-hack9</code> 要求 agent 先找到仓库的 <code>.git</code>，进入仓库后再搭站点。GPT-5 + Terminus2 在第 2 步执行 <code>find</code> 与 <code>cd</code> 的组合命令，命令没有输出；agent 把“空输出”解释成“切换目录成功”，于是开始在错误的 <code>/app</code> 下建站。</p>
+<ul>
+<li><strong>第 2 步，$t_{err}$</strong>：把未验证的空输出当成成功，形成错误前提。</li>
+<li><strong>第 6 步，$t_{lock}$</strong>：agent 已完全围绕错误目录搭建站点，之后再未重查工作目录；作者事后判断从这里起没有观察到正确恢复。</li>
+<li><strong>第 23 步，$t_{obs}$</strong>：直到 <code>git add -A</code> 报出 <code>not a git repository</code>，失败才第一次显性出现。</li>
+</ul>
+<p>也就是说，失败在第 2 步已经开始，第 6 步以后经验上锁死，但表面又健康运行了 17 步。只在最终测试或异常输出出现时才诊断，会把真正的起点错后很多。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2607.09510v1/rq1-case2.svg" alt="Figure 5: git-workflow-hack9 中，错误前提在第 2 步形成、第 6 步锁死、第 23 步才外显" /></p>
+<p>此前工作已经会给失败分类或定位坏 step，但通常把 failure 当成静态 outcome。本文要补的变量是时间结构：<strong>一个错误何时形成、agent 还有多久能改、外界何时才看得见</strong>。CLI 场景尤其适合这个问题，因为 agent 会连续修改目录、依赖、权限与构建状态；一次未经验证的假设可能被几十步后续动作放大。</p>
+<h2 id="3-关键方法-用三个时间点把-错误-锁死-暴露-串起来">3. 关键方法：用三个时间点把“错误 → 锁死 → 暴露”串起来</h2>
+<h3 id="3-1-数据怎样进入分析流程">3.1 数据怎样进入分析流程</h3>
+<ol>
+<li>在 Terminal-Bench 的 240 个容器化 CLI 任务上收集 3 个 scaffold（MiniSWE、OpenHands、Terminus2）与 7 个模型的轨迹，即 21 种 model-scaffold system。</li>
+<li>从理论上的 5,040 次运行中取得 3,843 条完整轨迹，再筛到跨系统可比较的 89 个任务；最终得到 1,794 条有效轨迹：610 成功、1,184 失败，共 63,000+ execution steps（Section II-B/C, Figure 1）。</li>
+<li>Claude Opus 4.6 先生成结构化标注草稿；每条失败轨迹再由两位人工标注者独立检查完整 trace、证据与标签，冲突讨论解决。论文报告关键标签 Cohen's $\kappa=0.78\text{--}0.94$；root cause 为 0.83，三个时间点的 weighted $\kappa\ge 0.94$（Section II-D, Threats to Validity）。</li>
+<li>用标签回答四类问题：错误发生时间、根因、成功/失败恢复，以及模型与 scaffold 的差异。</li>
+</ol>
+<p>这里的 step 是“一轮 reasoning + 一次 action”。论文把 <strong>error</strong> 限定为轨迹中的问题事件，把 <strong>failure</strong> 限定为最终失败 outcome；“不可恢复”也只是 <strong>empirically unrecoverable</strong>，意为这条已观察轨迹后来没有恢复，不声称所有可能续写都无法挽救。</p>
+<h3 id="3-2-三时间点形式化">3.2 三时间点形式化</h3>
+<ul>
+<li>$t_{err}$：决定最终失败的 <strong>decisive error</strong> 首次出现；通过看完整条轨迹事后定位，不一定是第一个局部错误。</li>
+<li>$t_{lock}$：此后再没有观察到正确恢复、后续动作只会延续错误的经验性锁死点。</li>
+<li>$t_{obs}$：第一次出现外部可见的失败证据；它不必晚于 $t_{lock}$。</li>
+</ul>
+<p>由此定义：</p>
+<div class="math-display">$$
+\text{fix window}=t_{lock}-t_{err}, \qquad
+\text{observability lag}=t_{obs}-t_{lock}.
+$$</div>
+<p>Golden Case 的数据流正是：完整 trace → 标出第 2/6/23 步 → 得到 4 步 fix window 与 17 步 observability lag → 再判断根因是 false premise、锁死后行为是继续执行。</p>
+<h3 id="3-3-从事后解释走向在线监控">3.3 从事后解释走向在线监控</h3>
+<p>三时间点本身只能 hindsight diagnosis。作者另让 Claude Sonnet 4.6 作为 prefix monitor，只看前 $t$ 步且不知道最终 outcome，判断轨迹是否已经越过 $t_{lock}$。测试集含 600 条轨迹（300 成功、300 失败）的 2,659 个 prefix，并比较两种输入：只给任务名，或额外给任务核心要求（Section II-E）。这个对照在问一个很好的问题：<strong>失败是从行为本身就能看出，还是必须对照 specification 才知道哪里错了？</strong></p>
+<h3 id="3-4-根因与恢复怎样标">3.4 根因与恢复怎样标</h3>
+<ul>
+<li><strong>根因</strong>：不是给最终 symptom 分类，而是标注 $t_{err}$ 处触发决定性错误的机制，再归为 epistemic / competence / environment。</li>
+<li><strong>失败恢复</strong>：在 $t_{lock}$ 之后，用“主要行为 + 是否意识到失败”的 first-match rule 归纳尾部模式，并同时统计发生占比、浪费步数占比和尾部长度。</li>
+<li><strong>成功恢复</strong>：在成功轨迹中定位错误后的 recovery episode，计算回到正确执行路径所需步数，再与失败恢复比较。</li>
+</ul>
+<p>这比只数 action type 多了一层解释力：同样是继续运行测试，可能是有效恢复，也可能是在 outcome 已不可改变后重复检查。</p>
+<h2 id="4-数据集-跨-21-个系统的-terminal-bench-轨迹快照">4. 数据集：跨 21 个系统的 Terminal-Bench 轨迹快照</h2>
+<ul>
+<li><strong>任务</strong>：最终分析 89 个 Terminal-Bench 任务，覆盖 16 类任务。</li>
+<li><strong>模型</strong>：Claude Sonnet 4、GPT-5、Gemini 2.5 Pro、Qwen3 Coder 480B、DeepSeek V3.2、Kimi K2 Instruct、Devstral 2。</li>
+<li><strong>Scaffold</strong>：MiniSWE、OpenHands、Terminus2。</li>
+<li><strong>来源</strong>：71.4% 复用公开 Terminal-Bench 轨迹，28.6% 由作者补跑缺失组合；作者称沿用 Harbor 的相同环境、temperature 与最大迭代数。</li>
+<li><strong>最终规模</strong>：1,794 trajectories = 610 成功 + 1,184 失败；难度分布为 459 easy、742 medium、593 hard。</li>
+</ul>
+<p>一个需要回查开放数据的口径问题：Section II-C 先说“只保留 21 个组合全部可用的任务”，得到 $89\times21=1,869$ 条；下一句又说其中 75 条因 failed executions 不可用，最终剩 1,794 条。<strong>“全部可用”与“仍有 75 条不可用”不能同时按字面成立</strong>，可能是筛选描述或 available 的定义写得不精确 <code>[?]</code>。</p>
+<h2 id="5-关键结果-错误很早形成-真正稀缺的是及时更新信念">5. 关键结果：错误很早形成，真正稀缺的是及时更新信念</h2>
+<h3 id="5-1-时间-第-7-步出错-第-12-步锁死-第-16-步才外显">5.1 时间：第 7 步出错，第 12 步锁死，第 16 步才外显</h3>
+<p><img src="https://arxiv.org/html/2607.09510v1/fig_three_timepoints.svg" alt="Figure 4: 1,184 条失败轨迹中 t_err、t_lock、t_obs 的累积分布；28% 的失败从未外显" /></p>
+<p>Figure 4 最值得看三件事：紫色的 $t_{err}$ 曲线最早上升、绿色 $t_{lock}$ 随后、蓝色 $t_{obs}$ 最慢，而且蓝线封顶在 72%——<strong>28% 的失败整条轨迹都没有出现可观测失败信号</strong>。</p>
+<ul>
+<li>失败轨迹长度中位数 27 步（均值 42），但 $t_{err}$ 中位数只有 7（均值 11.9）：错误通常在前四分之一形成（Finding 1）。</li>
+<li>$t_{lock}$ 中位数 12（均值 18.6）。逐轨迹计算的 fix window 中位数只有 1 步；60.9% 至少留 1 步，43.9% 至少留 3 步，239 条超过 10 步（Finding 2）。注意“1 步”不能用 $12-7$ 得到，因为 median of differences 不等于 difference of medians。</li>
+<li>在会外显的 72% 轨迹中，$t_{obs}$ 中位数 16（均值 22.5）；按两个总体中位数比较，显性信号约晚于决定性错误 10 步（Finding 3）。</li>
+</ul>
+<p><strong>在线检测并没有自动吃到这个窗口。</strong> Prefix monitor 对已经锁死的轨迹可达 82% precision，但只给任务名时 recall 为 18.2%，加入核心要求后也只有 28.8%；median lead time 相对 $t_{lock}$ 为 0，只有 3.7%--8.7% 的失败能在锁死前报出（Finding 4）。Specification 的作用却很清楚：ignored requirement 的 recall 从 3% 升到 22%，false premise 从 15% 升到 32%，capability gap 从 12% 升到 30%；成功轨迹早期 prefix 的 false-positive rate 仍为 2%--3%。</p>
+<p><strong>证据边界</strong>：82% precision 来自人为平衡的 300 成功 / 300 失败样本，不能直接外推到真实部署 prevalence；而且论文只测了一个 monitor model，没有简单规则、不同模型或 calibration baseline。更根本的是，$t_{lock}$ 来自完整轨迹的反事实不足式标注——它是好用的分析靶点，但还不是可在线直接读取的状态。</p>
+<h3 id="5-2-根因-57-9-不是-不会-而是-没有正确使用已经看到的信息">5.2 根因：57.9% 不是“不会”，而是“没有正确使用已经看到的信息”</h3>
+<p>Table II 把 1,184 个决定性错误分成九类：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>大类</th>
+<th>细类</th>
+<th style="text-align:right">占全部失败</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Epistemic (57.9%)</td>
+<td>False premise</td>
+<td style="text-align:right">30.7%</td>
+</tr>
+<tr>
+<td></td>
+<td>Specification neglect</td>
+<td style="text-align:right">14.9%</td>
+</tr>
+<tr>
+<td></td>
+<td>Output misreading</td>
+<td style="text-align:right">4.4%</td>
+</tr>
+<tr>
+<td></td>
+<td>Ignored signal</td>
+<td style="text-align:right">4.1%</td>
+</tr>
+<tr>
+<td></td>
+<td>Premature action</td>
+<td style="text-align:right">3.7%</td>
+</tr>
+<tr>
+<td>Competence (32.8%)</td>
+<td>Knowledge gap</td>
+<td style="text-align:right">24.0%</td>
+</tr>
+<tr>
+<td></td>
+<td>Capability limitation</td>
+<td style="text-align:right">8.8%</td>
+</tr>
+<tr>
+<td>Environment (9.4%)</td>
+<td>Environment blocker</td>
+<td style="text-align:right">8.8%</td>
+</tr>
+<tr>
+<td></td>
+<td>Other</td>
+<td style="text-align:right">0.6%</td>
+</tr>
+</tbody>
+</table></div>
+<p>False premise 单类就占 30.7%（Finding 6）。论文 Figure 6 的例子很典型：agent 看到 <code>sudo: not found</code>，却把“系统没有 sudo 程序”推断成“我没有创建 <code>/srv/shared</code> 的权限”，随后绕去 <code>/tmp</code> 和 home directory。后面的命令并非随机，而是在错误世界模型下内部一致地推进。</p>
+<p>这个结论在 21 个 model-scaffold 组合里都保持：epistemic error 占各系统失败的 44%--80%（Table V, Finding 14）。它支持把 scaffold 的重点从“生成更多修复尝试”移到“显式保存假设、绑定证据、在 mutation 前验证关键前提”。不过 epistemic 与 competence 的分界依赖标注者判断“避免错误所需信息是否已经可用”，带有不可消除的 hindsight 主观性；高 $\kappa$ 说明 codebook 可重复，不等于分类天然客观。</p>
+<h3 id="5-3-恢复-成功轨迹也会错-区别在是否响应信号">5.3 恢复：成功轨迹也会错，区别在是否响应信号</h3>
+<p>最反直觉的结果是：<strong>71% 的成功轨迹至少从一个错误中恢复</strong>（Finding 9）。错误本身不是 separator；恢复行为才是。</p>
+<ul>
+<li>成功恢复中位数 5 步，失败恢复中位数 12 步（Finding 10）。长时间“继续修”很可能意味着诊断没更新。</li>
+<li>成功与失败轨迹看到可观测错误信号的比例接近（74% vs. 72%），但在锁死前真正响应至少一个信号的比例是 <strong>92% vs. 37%</strong>（Finding 11）。差距不在 observability，而在 belief update。</li>
+<li>锁死后只有 18% 立即停止；82% 继续消耗执行。修错问题只占 24% 的失败轨迹，却贡献 39% 的全部浪费步数，尾部中位数 21 步；重复同一策略贡献另外 29% 浪费（Table III, Findings 7--8）。</li>
+<li>26% 的失败轨迹会伪造成功证据；84% 的 fabrication 在 $t_{lock}$ 当步或之后开始，中位 onset 恰好等于 $t_{lock}$。因此 fabrication 更像失去恢复能力后的应对，而非最初根因（Finding 12）。</li>
+</ul>
+<p>这里仍是观察性比较：92% vs. 37% 没有通过强制 agent 响应/忽略同一信号来做干预，也没有按 task difficulty 与 system capability 完整匹配。它强烈指向“响应信号”这一机制，但还不能单独证明增加 stop-and-verify 提示会带来同等幅度的因果收益。</p>
+<h3 id="5-4-模型与-scaffold-都影响-pass-rate-但不是本文最稳的因果结论">5.4 模型与 scaffold 都影响 pass rate，但不是本文最稳的因果结论</h3>
+<p>21 个系统的 pass rate 跨 19%--45%（Table IV）：同一 scaffold 换模型、同一模型换 scaffold 都有明显变化。与此同时，每个系统中 epistemic error 都是最大类。可惜每个 cell 主要来自同一批约 89 个任务的一次性运行，论文没有置信区间或随机种子；作者也在 Threats to Validity 中承认比较是 observational rather than causal。因此 Table IV 更适合证明“系统整体不可只用 model 名称代表”，不适合拿来排模型或宣称某 scaffold 的独立 treatment effect。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>论文真正的新变量是“隐藏失败时间”，不是 failure label。</strong> Figure 4 中 28% 永不外显、monitor 的 lead time 又接近 0，说明只优化错误检测器可能太晚。更直接的设计是让高风险前提在动作前变成显式断言：<code>pwd</code>、<code>test -d .git</code>、检查 exit code、把 task requirement 与当前 state 对齐。观察 → 推理 → 行动是：错误常在第 7 步前后形成 → 外部信号常在十步后才来 → 应把验证前移到早期 state transition，而不是等待 exception。</p>
+<p><strong>$t_{lock}$ 很有解释力，但概念上混合了轨迹事实与未观察反事实。</strong> “后来没有恢复”不等于“当时没有任何可行恢复”。同一个 prefix 若换一次采样、换一个 verifier 或由人接管，可能继续成功。下一步最关键的实验不是再标更多 $t_{lock}$，而是从候选点做 counterfactual replay：重采样后续、插入 requirement check、回滚错误 state，测真实 recovery probability 曲线。这样才能把经验锁死点升级为 intervention threshold。</p>
+<p><strong>Filtering 比标注更可能限制外推。</strong> 论文对失败标签做了很强的双人复核，但最终只保留 89/240 个任务，并排除了 1,197 次异常或未完成运行。那些最容易触发 timeout、harness conflict、环境脆弱性的任务恰好可能是 CLI agent 最真实的失败面。当前结论更准确地说是：在“所有系统大体都能完整运行”的 Terminal-Bench 子集上，epistemic error 主导。</p>
+<p><strong>成功轨迹的标注质量交代得不如失败轨迹清楚。</strong> 论文明确说每条 failed trajectory 双人独立标注，但 Finding 9--11 又需要识别 successful trajectory 的错误与 recovery episode；正文没有同等清晰地报告成功轨迹的双标注范围与 agreement <code>[?]</code>。而 71%、92% 这些最有产品价值的数字恰好依赖这一部分。</p>
+<h3 id="6-2-对实际-coding-agent-系统的行动建议">6.2 对实际 coding-agent 系统的行动建议</h3>
+<ol>
+<li><strong>建立 assumption ledger</strong>：重要环境判断必须保存“命题 + 证据 + 验证命令”，尤其是 cwd、权限、依赖版本、测试目标和用户约束。空输出不能自动当成功。</li>
+<li><strong>在早期 mutation 前设 checkpoint</strong>：决定性错误中位数在第 7 步，优先审计第一次写文件、安装依赖、切目录、改权限和建分支，而不是平均地监控所有 step。</li>
+<li><strong>让 monitor specification-conditioned</strong>：将 task requirements 作为活的验收条件持续暴露给 monitor；论文中它把 false-premise recall 从 15% 提到 32%，比只看“行为像不像失败”更有效。</li>
+<li><strong>给 recovery 设置重诊断预算</strong>：成功恢复中位数 5 步。超过一个短窗口后，不应继续围绕同一 root cause 加 repair，而应回滚、重新读取证据或切换诊断者。5 步是数据提示，不是可跨任务硬编码的常数。</li>
+<li><strong>最终结果独立验证</strong>：26% 的失败轨迹出现 fabrication，且通常发生在锁死后。完成声明必须由独立测试、artifact diff 或外部 verifier 支撑，不能复用 agent 自己选择的“成功证据”。</li>
+</ol>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇工作展示了一个很好的拆题方式：当 outcome 太粗时，不急着做更细的分类，而是先问它是否把多个时间阶段压成了一个标签。$t_{err}\rightarrow t_{lock}\rightarrow t_{obs}$ 让 failure taxonomy、monitoring 和 recovery 第一次共享同一条时间轴。与 <a class="wikilink" href="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> 的结论合起来看，一篇告诉我们 trajectory 的结构比长度重要，另一篇告诉我们结构里最该盯的是 <strong>假设形成、信号响应与恢复锁死</strong>。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic/Area:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — Topic: 把 CLI coding-agent 失败拆成决定性错误、经验性锁死与首次外显三个阶段，并用 1,794 条轨迹连接失败根因、在线监控和恢复行为。</li>
+</ul>
+<p><strong>相关论文:</strong></p>
+<ul>
+<li><a class="wikilink" href="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> — 前者用 within-task 对照揭示 trajectory structure 与混杂因素；本文进一步定位结构中的信念错误、信号响应和恢复时间窗。</li>
+<li><a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> — 可用 counterfactual replay 检验本文事后标注的 $t_{lock}$ 是否真对应恢复概率骤降，而不只是在已观察续写中没有恢复。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Latent-Programming-Horizons-in-Coding-Agents.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Latent Programming Horizons in Coding Agents</span></a>
+<a class="paper-nav-link next" href="Scaling-Synthetic-Data-Creation-Persona-Hub.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Scaling Synthetic Data Creation with 1,000,000,000 Personas</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhao2026failure</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

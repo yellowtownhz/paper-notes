@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language-Specific Neurons: The Key to Multilingual Capabilities in Large Language Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Language-Specific Neurons: The Key to Multilingual Capabilities in Large Language Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题"><span class="toc-num">02</span> 2. 关键问题</a></li>
+<li><a class="toc-link toc-sub" href="#核心动机">核心动机</a></li>
+<li><a class="toc-link toc-sub" href="#未解决的问题">未解决的问题</a></li>
+<li><a class="toc-link toc-sub" href="#与已有研究的区别">与已有研究的区别</a></li>
+<li><a class="toc-link" href="#3-数据集"><span class="toc-num">03</span> 3. 数据集</a></li>
+<li><a class="toc-link toc-sub" href="#分析数据-用于-lape-计算">分析数据（用于 LAPE 计算）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#预训练语料分布对比">预训练语料分布对比</a></li>
+<li><a class="toc-link" href="#4-关键方法"><span class="toc-num">04</span> 4. 关键方法</a></li>
+<li><a class="toc-link toc-sub" href="#lape-language-activation-probability-entropy">LAPE: Language Activation Probability Entropy</a></li>
+<li><a class="toc-link toc-sub" href="#与其他方法对比">与其他方法对比</a></li>
+<li><a class="toc-link" href="#5-关键实验"><span class="toc-num">05</span> 5. 关键实验</a></li>
+<li><a class="toc-link toc-sub" href="#实验-1-ppl-扰动矩阵-figure-2-3">实验 1: PPL 扰动矩阵 (Figure 2, 3)</a></li>
+<li><a class="toc-link toc-sub" href="#实验-2-模型规模影响-figure-3d-llama-2-70b">实验 2: 模型规模影响 (Figure 3d, LLaMA-2 70B)</a></li>
+<li><a class="toc-link toc-sub" href="#实验-3-开放生成评估-table-1-llama-2-70b">实验 3: 开放生成评估 (Table 1, LLaMA-2 70B)</a></li>
+<li><a class="toc-link toc-sub" href="#神经元分布分析">神经元分布分析</a></li>
+<li><a class="toc-link toc-sub" href="#语言主导性分析-figure-7">语言主导性分析 (Figure 7)</a></li>
+<li><a class="toc-link toc-sub" href="#跨模型验证-figure-3">跨模型验证 (Figure 3)</a></li>
+<li><a class="toc-link" href="#6-golden-case"><span class="toc-num">06</span> 6. Golden Case</a></li>
+<li><a class="toc-link toc-sub" href="#语言引导实验-西班牙语-中文">语言引导实验: 西班牙语 → 中文</a></li>
+<li><a class="toc-link" href="#7-insights"><span class="toc-num">07</span> 7. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-1-语言能力的极端稀疏性">洞见 1: 语言能力的极端稀疏性</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-2-英语主导性是训练产物">洞见 2: 英语主导性是训练产物</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-3-神经元重叠揭示语言亲缘关系">洞见 3: 神经元重叠揭示语言亲缘关系</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-4-层级分工的工程启示">洞见 4: 层级分工的工程启示</a></li>
+<li><a class="toc-link toc-sub" href="#洞见-5-跨语言迁移的工程应用">洞见 5: 跨语言迁移的工程应用</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#未探索问题">未探索问题</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#多语言可解释性论文矩阵">多语言可解释性论文矩阵</a></li>
+<li><a class="toc-link toc-sub" href="#核心发现的对应关系">核心发现的对应关系</a></li>
+<li><a class="toc-link toc-sub" href="#三阶段-三层的统一视角">三阶段/三层的统一视角</a></li>
+<li><a class="toc-link toc-sub" href="#其他相关研究">其他相关研究</a></li>
+<li><a class="toc-link toc-sub" href="#可应用方向">可应用方向</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-24</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2402.16438" target="_blank">arXiv</a>
+    </div>
+    <h1>Language-Specific Neurons: The Key to Multilingual Capabilities in Large Language Models</h1>
+    <p class="authors">Tianyi Tang, Wenyang Luo, Haoyang Huang, Dongdong Zhang, Xiaolei Wang, Wayne Xin Zhao, Furu Wei, Ji-Rong Wen</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Language_Neurons</span> <span class="topic-tag">FFN_Analysis</span></div>
+</header>
+
+<h1>论文笔记: Language-Specific Neurons: The Key to Multilingual Capabilities in Large Language Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Tianyi Tang, Wenyang Luo (共同一作), Haoyang Huang, Dongdong Zhang, Xiaolei Wang, Wayne Xin Zhao (通讯), Furu Wei, Ji-Rong Wen</li>
+<li><strong>团队</strong>:
+<ul>
+<li>中国人民大学高瓴人工智能学院</li>
+<li>微软亚洲研究院 (MSRA)</li>
+</ul>
+</li>
+<li><strong>发表</strong>: ACL 2024</li>
+<li><strong>时间</strong>: 2024 年 2 月 (arXiv v1), 2024 年 6 月 (v2)</li>
+</ul>
+<h2 id="2-关键问题">2. 关键问题</h2>
+<h3 id="核心动机">核心动机</h3>
+<p>LLM 在未经专门多语言平行语料训练的情况下展现出显著的多语言能力。以 LLaMA-2 为例，预训练语料中英语占比高达 <strong>89.70%</strong>，其他语言占比极低（中文仅 0.13%），但模型仍能处理中文、法语等多种语言。</p>
+<blockquote class="card card-info">
+<p>&quot;Large language models (LLMs) demonstrate remarkable multilingual capabilities without being pre-trained on specially curated multilingual parallel corpora.&quot;</p>
+</blockquote>
+<h3 id="未解决的问题">未解决的问题</h3>
+<ol>
+<li>LLM 内部是否存在<strong>语言特异性区域</strong> (language-specific regions)？</li>
+<li>这些区域分布在哪些层、哪些神经元？</li>
+<li>能否通过操控这些神经元来<strong>控制模型的语言输出</strong>？</li>
+</ol>
+<h3 id="与已有研究的区别">与已有研究的区别</h3>
+<ul>
+<li>以往研究集中于<strong>跨语言共享表示</strong> (language-agnostic representations)</li>
+<li>本研究首次从 <strong>FFN 神经元粒度</strong>系统性地识别和分析语言特异性神经元</li>
+<li>灵感来源：人脑中存在语言特定区域（如 Broca's area、Wernicke's area），类比假设 LLM 内部也有类似分工</li>
+</ul>
+<h2 id="3-数据集">3. 数据集</h2>
+<h3 id="分析数据-用于-lape-计算">分析数据（用于 LAPE 计算）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>数据来源</strong></td>
+<td>Wikipedia 语料库</td>
+</tr>
+<tr>
+<td><strong>语言覆盖</strong></td>
+<td>7 种：en, zh, fr, es, vi, id, ja</td>
+</tr>
+<tr>
+<td><strong>数据规模</strong></td>
+<td>每种语言 <strong>1 亿 tokens</strong></td>
+</tr>
+<tr>
+<td><strong>时间约束</strong></td>
+<td>2022 年 9 月之后（避免训练数据泄露）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th>数据集</th>
+<th>规模</th>
+<th>评估方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>语言建模</strong></td>
+<td>Wikipedia</td>
+<td>每语言 100 万 tokens</td>
+<td>PPL (困惑度)</td>
+</tr>
+<tr>
+<td><strong>开放生成</strong></td>
+<td>Vicuna (GPT-4 翻译版)</td>
+<td>多语言问答</td>
+<td>GPT-4 评分 (1-10)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="预训练语料分布对比">预训练语料分布对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言</th>
+<th>代码</th>
+<th>BLOOM 比例</th>
+<th>LLaMA-2 比例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>英语</td>
+<td>en</td>
+<td>33.68%</td>
+<td><strong>89.70%</strong></td>
+</tr>
+<tr>
+<td>中文</td>
+<td>zh</td>
+<td>18.13%</td>
+<td>0.13%</td>
+</tr>
+<tr>
+<td>法语</td>
+<td>fr</td>
+<td>14.46%</td>
+<td>0.16%</td>
+</tr>
+<tr>
+<td>西班牙语</td>
+<td>es</td>
+<td>12.16%</td>
+<td>0.13%</td>
+</tr>
+<tr>
+<td>越南语</td>
+<td>vi</td>
+<td>3.04%</td>
+<td>0.08%</td>
+</tr>
+<tr>
+<td>印尼语</td>
+<td>id</td>
+<td>1.39%</td>
+<td>0.03%</td>
+</tr>
+<tr>
+<td>日语</td>
+<td>ja</td>
+<td>0.00%</td>
+<td>0.10%</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-关键方法">4. 关键方法</h2>
+<h3 id="lape-language-activation-probability-entropy">LAPE: Language Activation Probability Entropy</h3>
+<p><strong>核心思想</strong>: 如果一个神经元只在处理特定语言时被激活，那它的跨语言激活概率分布的熵就很低——说明它&quot;专注&quot;于某种语言。</p>
+<h4>神经元定义</h4>
+<p>在 Transformer 的 FFN 层中，神经元定义为 $W_1^i$ 中单列的线性变换后接非线性激活。对于 LLaMA 使用的 SwiGLU：</p>
+<div class="math-display">$$h_i = (\text{act\_fn}(\tilde{h}_i W_1^i) \otimes \tilde{h}_i W_3^i) \cdot W_2^i$$</div>
+<p>其中 $W_1^i \in \mathbb{R}^{d \times 4d}$，因此单个 FFN 层包含 <strong>$4d$ 个神经元</strong>。</p>
+<h4>Step 1: 计算激活概率</h4>
+<p>对于第 $i$ 层第 $j$ 个神经元，在语言 $k$ 上的激活概率：</p>
+<div class="math-display">$$p_{i,j}^k = \mathbb{E}\left[\mathbb{I}\left(\text{act\_fn}(\tilde{h}_i W_1^i)_j &gt; 0\right) \mid \text{language } k\right]$$</div>
+<p><strong>直观理解</strong>: 统计&quot;当输入是法语时，这个神经元被激活的概率有多大&quot;。</p>
+<h4>Step 2: 计算熵值</h4>
+<p>将激活概率 L1 归一化后计算信息熵：</p>
+<div class="math-display">$$\text{LAPE}_{i,j} = -\sum_{k=1}^{l} p_{i,j}^{\prime k} \log(p_{i,j}^{\prime k})$$</div>
+<p><strong>直观解释</strong>:</p>
+<ul>
+<li><strong>低熵</strong> = 分布不均匀 = 该神经元只对少数语言激活 → <strong>语言特定神经元</strong></li>
+<li><strong>高熵</strong> = 分布均匀 = 该神经元对所有语言都有反应 → <strong>语言无关神经元</strong></li>
+</ul>
+<p>类比: 如果某神经元对英语激活概率 95%，对其他语言仅 1-2%，熵值很低，说明它是&quot;英语专家&quot;。</p>
+<h4>Step 3: 双重筛选</h4>
+<ol>
+<li>选择 LAPE 分数<strong>最低的 1%</strong> 神经元</li>
+<li>设置 <strong>95 百分位阈值</strong>（如 LLaMA-2 70B 为 0.515），要求激活概率超过阈值才判定为特定语言</li>
+</ol>
+<h3 id="与其他方法对比">与其他方法对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LAPE (本文)</strong></td>
+<td>基于激活概率的熵值</td>
+<td>对角线模式最清晰</td>
+</tr>
+<tr>
+<td><strong>LAP</strong></td>
+<td>直接基于 95% 激活阈值</td>
+<td>无明显语言特定模式</td>
+</tr>
+<tr>
+<td><strong>LAVE</strong></td>
+<td>用平均激活值替代激活概率</td>
+<td>存在跨语言干扰 (如 ⟨id,es⟩)</td>
+</tr>
+<tr>
+<td><strong>PV</strong></td>
+<td>比较单语微调前后参数变化</td>
+<td>无明显模式</td>
+</tr>
+<tr>
+<td><strong>RS</strong></td>
+<td>随机选择 (基线)</td>
+<td>无规律影响</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键实验">5. 关键实验</h2>
+<h3 id="实验-1-ppl-扰动矩阵-figure-2-3">实验 1: PPL 扰动矩阵 (Figure 2, 3)</h3>
+<p><img src="https://arxiv.org/html/2402.16438v2/x2.png" alt="Figure 2: 四种神经元识别方法对 LLaMA-2 (7B) PPL 的影响对比" /></p>
+<p><img src="https://arxiv.org/html/2402.16438v2/x6.png" alt="Figure 3: 不同模型上停用语言特定神经元后的 PPL 变化矩阵" /></p>
+<p>停用某语言特定神经元后的 PPL 变化 (LLaMA-2 7B):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>扰动语言</th>
+<th>en</th>
+<th>zh</th>
+<th>fr</th>
+<th>es</th>
+<th>vi</th>
+<th>id</th>
+<th>ja</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>en</td>
+<td><strong>0.01</strong></td>
+<td>0.07</td>
+<td>0.03</td>
+<td>0.04</td>
+<td>0.02</td>
+<td>0.04</td>
+<td>0.03</td>
+</tr>
+<tr>
+<td>zh</td>
+<td>0.03</td>
+<td><strong>0.58</strong></td>
+<td>0.04</td>
+<td>0.08</td>
+<td>0.05</td>
+<td>0.08</td>
+<td><strong>0.33</strong></td>
+</tr>
+<tr>
+<td>fr</td>
+<td>0.03</td>
+<td>0.03</td>
+<td><strong>0.44</strong></td>
+<td>0.29</td>
+<td>0.03</td>
+<td>0.07</td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>es</td>
+<td>0.03</td>
+<td>0.04</td>
+<td>0.18</td>
+<td><strong>0.42</strong></td>
+<td>0.05</td>
+<td>0.09</td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>vi</td>
+<td>0.02</td>
+<td>0.17</td>
+<td>0.11</td>
+<td>0.12</td>
+<td><strong>0.45</strong></td>
+<td>0.34</td>
+<td>0.04</td>
+</tr>
+<tr>
+<td>id</td>
+<td>0.03</td>
+<td>0.07</td>
+<td>0.09</td>
+<td>0.12</td>
+<td>0.06</td>
+<td><strong>0.72</strong></td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>ja</td>
+<td>0.02</td>
+<td>0.29</td>
+<td>0.04</td>
+<td>0.05</td>
+<td>0.06</td>
+<td>0.02</td>
+<td><strong>0.76</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li><strong>对角线数值最大</strong>: 停用某语言神经元主要影响该语言 PPL</li>
+<li><strong>中日关联</strong>: 停用中文神经元导致日语 PPL 上升 0.33（⟨zh,ja⟩），约 <strong>25% 神经元重叠</strong>，因两者共享汉字</li>
+</ul>
+<h3 id="实验-2-模型规模影响-figure-3d-llama-2-70b">实验 2: 模型规模影响 (Figure 3d, LLaMA-2 70B)</h3>
+<p><img src="https://arxiv.org/html/2402.16438v2/x9.png" alt="Figure 3d: LLaMA-2 (70B) 停用语言特定神经元后的 PPL 变化矩阵" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>扰动语言</th>
+<th>en</th>
+<th>zh</th>
+<th>fr</th>
+<th>es</th>
+<th>vi</th>
+<th>id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>zh</td>
+<td>0.03</td>
+<td><strong>59.19</strong></td>
+<td>0.04</td>
+<td>0.01</td>
+<td>0.13</td>
+<td>0.23</td>
+</tr>
+<tr>
+<td>fr</td>
+<td>0.11</td>
+<td>0.02</td>
+<td><strong>11.36</strong></td>
+<td>0.83</td>
+<td>0.01</td>
+<td>0.07</td>
+</tr>
+<tr>
+<td>es</td>
+<td>0.15</td>
+<td>0.00</td>
+<td>0.86</td>
+<td><strong>9.06</strong></td>
+<td>0.01</td>
+<td>0.20</td>
+</tr>
+<tr>
+<td>id</td>
+<td>0.06</td>
+<td>0.07</td>
+<td>0.08</td>
+<td>0.20</td>
+<td>0.02</td>
+<td><strong>17.29</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>重要发现</strong>: 大模型中神经元更倾向于<strong>专精单一语言</strong>（中文神经元停用后 PPL 上升 59.19，其他语言几乎不受影响），语言特异性随模型规模增强。</p>
+<h3 id="实验-3-开放生成评估-table-1-llama-2-70b">实验 3: 开放生成评估 (Table 1, LLaMA-2 70B)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>en</th>
+<th>zh</th>
+<th>fr</th>
+<th>es</th>
+<th>vi</th>
+<th>id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normal</td>
+<td>4.30</td>
+<td>4.19</td>
+<td>3.51</td>
+<td>3.70</td>
+<td>4.16</td>
+<td>2.86</td>
+</tr>
+<tr>
+<td>Random</td>
+<td>4.18</td>
+<td>4.22</td>
+<td>3.35</td>
+<td>3.53</td>
+<td>4.42</td>
+<td>2.99</td>
+</tr>
+<tr>
+<td>停用 en</td>
+<td>-</td>
+<td>2.46</td>
+<td>3.56</td>
+<td>2.96</td>
+<td>3.64</td>
+<td>3.56</td>
+</tr>
+<tr>
+<td>停用 zh</td>
+<td>3.69</td>
+<td>-</td>
+<td>2.50</td>
+<td>2.29</td>
+<td>3.01</td>
+<td>3.59</td>
+</tr>
+<tr>
+<td>停用 fr</td>
+<td>3.51</td>
+<td>2.57</td>
+<td>-</td>
+<td>2.01</td>
+<td>3.14</td>
+<td>3.34</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>: 停用语言特定神经元导致该语言生成质量显著下降（如停用中文神经元后中文评分从 4.19 降至&quot;停用 en 神经元&quot;行的 2.46）。</p>
+<h3 id="神经元分布分析">神经元分布分析</h3>
+<h4>各语言神经元数量 (Table 3, LLaMA-2 70B)</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言</th>
+<th>en</th>
+<th>zh</th>
+<th>fr</th>
+<th>es</th>
+<th>vi</th>
+<th>id</th>
+<th>ja</th>
+<th>合计</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数量</td>
+<td><strong>836</strong></td>
+<td>5,153</td>
+<td>6,082</td>
+<td>6,154</td>
+<td>4,980</td>
+<td>6,106</td>
+<td>5,216</td>
+<td>~23K</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>: 英语仅需 836 个特定神经元（其他语言 5000+），因为英语是 LLaMA-2 的&quot;默认语言&quot;（89.70% 预训练数据），能力已分布式编码于通用神经元。</p>
+<h4>层级分布: U 形曲线 (Figure 5, 6)</h4>
+<p><img src="https://arxiv.org/html/2402.16438v2/x15.png" alt="Figure 5: LLaMA-2 (70B) 各层语言特定神经元数量分布" /></p>
+<p><img src="https://arxiv.org/html/2402.16438v2/x16.png" alt="Figure 6: 各层平均 SES 与语言神经元总数的关系" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>神经元数量</th>
+<th>功能解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>底层</strong> (Layer 2)</td>
+<td>~7,000</td>
+<td>将不同语言输入映射到统一语义空间</td>
+</tr>
+<tr>
+<td><strong>中间层</strong> (Layer 5-47)</td>
+<td>每层~100</td>
+<td>处理共享语义推理</td>
+</tr>
+<tr>
+<td><strong>顶层</strong> (Layer 77-80)</td>
+<td>每层&gt;1,000</td>
+<td>词汇映射，生成各语言 token</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>认知类比</strong>: 底层 ≈ 感知皮层（语言识别），中间层 ≈ 联合皮层（语义整合），顶层 ≈ 运动皮层（语言生成）——<strong>编码-语义-解码</strong>三段式结构。</p>
+<p>SES (句子嵌入相似度) 曲线与神经元分布呈<strong>相反趋势</strong>，验证上述功能解释。</p>
+<h3 id="语言主导性分析-figure-7">语言主导性分析 (Figure 7)</h3>
+<p><img src="https://arxiv.org/html/2402.16438v2/x17.png" alt="Figure 7: 不同目标语言的跨层主导性分数（平均 SES）" /></p>
+<ul>
+<li><strong>LLaMA-2</strong>: 英语作为高资源语言，其他低资源语言围绕英语对齐</li>
+<li><strong>BLOOM</strong>: 多语言均衡预训练，多种语言都显示出主导性</li>
+</ul>
+<h3 id="跨模型验证-figure-3">跨模型验证 (Figure 3)</h3>
+<p>LAPE 在 <strong>LLaMA-2、BLOOM、OPT、Mistral、Phi-2</strong> 上均观察到一致的语言特异性停用效果。</p>
+<h2 id="6-golden-case">6. Golden Case</h2>
+<h3 id="语言引导实验-西班牙语-中文">语言引导实验: 西班牙语 → 中文</h3>
+<p><strong>输入</strong> (西班牙语):</p>
+<blockquote class="card card-info">
+<p>&quot;¿Cómo puedo mejorar mis habilidades de gestión del tiempo?&quot;
+(如何提高我的时间管理技能？)</p>
+</blockquote>
+<p><strong>正常输出</strong>: 西班牙语回答，语言准确率 0.81</p>
+<p><strong>语言引导操作</strong>:</p>
+<ol>
+<li><strong>停用</strong> 西班牙语特定神经元 (激活值设为 0)</li>
+<li><strong>激活</strong> 中文特定神经元 (激活值提升到该语言平均水平)</li>
+</ol>
+<p><strong>引导后输出</strong> (中文):</p>
+<blockquote class="card card-info">
+<p>Time管理是一个非常重要的技能，因为它可以提高你的生产力并使你更有效地完成任务。下面是一些提示来改进你的时间管理技能：1、制定计划：每天开始时制定清单并将任务分配给特定时间段......</p>
+</blockquote>
+<p><strong>效果</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>正常</th>
+<th>引导后</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语言准确率</td>
+<td>0.81</td>
+<td><strong>0.99</strong></td>
+</tr>
+<tr>
+<td>内容质量</td>
+<td>3.70</td>
+<td>保持/略升</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键决策点</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>操作</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>识别神经元</td>
+<td>LAPE 方法</td>
+<td>定位西/中语言特定神经元</td>
+</tr>
+<tr>
+<td>停用西语神经元</td>
+<td>激活值设为 0</td>
+<td>抑制西语输出</td>
+</tr>
+<tr>
+<td>激活中文神经元</td>
+<td>提升激活值</td>
+<td>促进中文输出</td>
+</tr>
+<tr>
+<td>生成</td>
+<td>贪婪解码</td>
+<td>流畅中文回复</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-insights">7. Insights</h2>
+<h3 id="洞见-1-语言能力的极端稀疏性">洞见 1: 语言能力的极端稀疏性</h3>
+<p>~1% 的神经元承载了多语言能力，这意味着:</p>
+<ul>
+<li><strong>高效干预可能性</strong>: 仅操控极少量神经元即可改变语言行为</li>
+<li><strong>模型效率反思</strong>: 大部分参数用于语言无关的通用推理</li>
+<li><strong>持续学习启发</strong>: 新增语言可能只需微调少量神经元</li>
+</ul>
+<h3 id="洞见-2-英语主导性是训练产物">洞见 2: 英语主导性是训练产物</h3>
+<p>英语仅需 836 个特定神经元（其他语言 5000+），因为 89.70% 预训练数据是英语。BLOOM 由于均衡训练不存在单一主导语言。</p>
+<p><strong>结论</strong>: &quot;英语中心表示&quot;不是 Transformer 架构的固有属性，而是训练数据分布的反映。</p>
+<h3 id="洞见-3-神经元重叠揭示语言亲缘关系">洞见 3: 神经元重叠揭示语言亲缘关系</h3>
+<p>中日语约 25% 神经元重叠反映汉字系统的共享特征。这种基于内部表示的语言相似度度量，比类型学特征更直接反映模型实际处理方式。</p>
+<p><strong>应用潜力</strong>:</p>
+<ul>
+<li><strong>零样本跨语言迁移通道</strong>: 通过激活中文神经元&quot;借用&quot;能力到日语</li>
+<li><strong>高效多语言训练切入点</strong>: 针对共享神经元优化可同时提升多种语言</li>
+</ul>
+<h3 id="洞见-4-层级分工的工程启示">洞见 4: 层级分工的工程启示</h3>
+<p>U 形分布表明:</p>
+<ul>
+<li><strong>底层和顶层</strong>是语言处理的关键区域，适合部署语言特定组件</li>
+<li><strong>中间层</strong>是共享推理区域，可进行跨语言知识迁移</li>
+</ul>
+<h3 id="洞见-5-跨语言迁移的工程应用">洞见 5: 跨语言迁移的工程应用</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>应用场景</th>
+<th>技术方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Off-target 修正</td>
+<td>检测并抑制非目标语言神经元</td>
+</tr>
+<tr>
+<td>低资源语言增强</td>
+<td>从高资源语言借用共享语义神经元</td>
+</tr>
+<tr>
+<td>Code-Switching</td>
+<td>动态调整多语言神经元激活权重</td>
+</tr>
+<tr>
+<td>语言混淆诊断</td>
+<td>分析低熵神经元的异常激活模式</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<ol>
+<li><strong>提出 LAPE 方法</strong>: 首次从 FFN 神经元粒度系统性识别语言特定神经元</li>
+<li><strong>发现稀疏性</strong>: ~1% 神经元承载多语言能力</li>
+<li><strong>揭示 U 形分布</strong>: 底层（理解）/顶层（生成）集中语言处理，中间层处理共享语义</li>
+<li><strong>验证语言引导可行性</strong>: 通过神经元干预实现语言输出控制，准确率达 0.99</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>方法相对性</strong>: LAPE 依赖多种语言存在，无法在单语场景下设定绝对阈值</li>
+<li><strong>语言覆盖有限</strong>: 仅测试 7 种相对高资源语言</li>
+<li><strong>因果性不明确</strong>: 停用导致 PPL 上升证明相关性，但无法证明神经元&quot;编码&quot;了语言知识</li>
+<li><strong>FFN 单一视角</strong>: 未涉及 Self-Attention 中的语言特异性</li>
+<li><strong>静态分析</strong>: 未考虑特定上下文下神经元角色的动态变化</li>
+</ol>
+<h3 id="未探索问题">未探索问题</h3>
+<ul>
+<li><strong>语系差异</strong>: 印欧语系 vs 汉藏语系的神经元分布是否有系统性差异？</li>
+<li><strong>书写系统影响</strong>: 表音文字 vs 表意文字的神经元编码策略是否不同？</li>
+<li><strong>任务特异性</strong>: 翻译任务 vs 生成任务是否调用不同的语言神经元子集？</li>
+</ul>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>与 MoE 结合</strong>: 利用 LAPE 识别的分布指导 MoE 层扩展位置（仅扩展底层和顶层）</li>
+<li><strong>扩展语言覆盖</strong>: 验证 U 形分布在低资源语言中是否成立</li>
+<li><strong>动态分析</strong>: 研究不同任务/上下文下语言神经元的动态激活模式</li>
+<li><strong>增强跨语言迁移</strong>: 利用发现促进高低资源语言间的知识转移</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="多语言可解释性论文矩阵">多语言可解释性论文矩阵</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>研究问题</th>
+<th>关键发现</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本文 (ACL'24)</strong></td>
+<td>语言特异性在哪？</td>
+<td>~1% FFN 神经元 + U形分布 + LAPE 方法</td>
+<td>提出语言特定神经元识别方法</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>多语言处理流程？</td>
+<td>MWork 三阶段 + 0.13% 神经元</td>
+<td>共同发现极端稀疏性，互证</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>中间表示偏向？</td>
+<td>Phase 1/2/3 + 概念空间英语偏向</td>
+<td>底层/顶层语言特化 vs 中间层共享</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>哪些组件激发翻译？</td>
+<td>&lt;5% attention heads + MLP 英语中心</td>
+<td>Attention 和 FFN 功能分工</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html" title="Group_then_Scale-Dynamic_MoE_Multilingual_LLM">Group_then_Scale-Dynamic_MoE_Multilingual_LLM</a></td>
+<td>多语言诅咒解决方案？</td>
+<td>参数偏差分组 + MoE 扩展</td>
+<td>应用 U 形分布指导 MoE 层选择</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="核心发现的对应关系">核心发现的对应关系</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>本文发现</th>
+<th>支撑/关联论文</th>
+<th>具体证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>U 形分布（底层/顶层语言特化）</td>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>Phase 1/3 对应底层/顶层，Phase 2 中间层是共享概念空间</td>
+</tr>
+<tr>
+<td>~1% 神经元稀疏性</td>
+<td><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>0.13% 神经元承载多语言能力，结论高度一致</td>
+</tr>
+<tr>
+<td>英语神经元稀少（836 vs 5000+）</td>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>概念空间英语偏向，英语是&quot;默认语言&quot;</td>
+</tr>
+<tr>
+<td>FFN 承载语言知识</td>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>MLP 中间表示呈英语中心，Self-Attention 负责推理</td>
+</tr>
+<tr>
+<td>中间层是共享语义区</td>
+<td><a class="wikilink" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html" title="Group_then_Scale-Dynamic_MoE_Multilingual_LLM">Group_then_Scale-Dynamic_MoE_Multilingual_LLM</a></td>
+<td>中间层参数偏差小，仅扩展底层/顶层为 MoE</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="三阶段-三层的统一视角">三阶段/三层的统一视角</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>本文神经元分布</th>
+<th>Wendler Phase</th>
+<th>MWork 阶段</th>
+<th>Translation Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>底层</td>
+<td>语言特异性神经元富集</td>
+<td>Phase 1 (输入空间)</td>
+<td>Understanding</td>
+<td>Indicator Heads 激活</td>
+</tr>
+<tr>
+<td>中间层</td>
+<td>神经元稀疏（~100/层）</td>
+<td>Phase 2 (概念空间)</td>
+<td>Task-Solving</td>
+<td>Source Heads + MLP 编码</td>
+</tr>
+<tr>
+<td>顶层</td>
+<td>语言特异性神经元富集</td>
+<td>Phase 3 (输出空间)</td>
+<td>Generation</td>
+<td>MLP 输出目标语言</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="其他相关研究">其他相关研究</h3>
+<ul>
+<li><a class="wikilink" href="Beyond_Data_Filtering-Knowledge_Localization_SGTM.html" title="Beyond_Data_Filtering-Knowledge_Localization_SGTM">Beyond_Data_Filtering-Knowledge_Localization_SGTM</a>: SGTM 通过梯度掩码实现参数级知识定位，与 LAPE 的神经元级定位互补</li>
+<li><a class="wikilink" href="Automatically_Interpreting_Millions_of_Features-SAE自动解释.html" title="Automatically_Interpreting_Millions_of_Features-SAE自动解释">Automatically_Interpreting_Millions_of_Features-SAE自动解释</a>: SAE 可作为 LAPE 检测到的语言特定神经元的语义解释工具</li>
+<li><a class="wikilink" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html" title="Self-Improving_Multilingual_Long_Reasoning-TRIT">Self-Improving_Multilingual_Long_Reasoning-TRIT</a>: TRIT 使用 MEXA 测量跨语言表示相似度，从不同角度研究多语言对齐</li>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a>: 翻译模型优化实践，与本文的多语言处理机制相关</li>
+<li><a class="wikilink" href="MADLAD-400-Multilingual_Document-Level_Dataset.html" title="MADLAD-400-Multilingual_Document-Level_Dataset">MADLAD-400-Multilingual_Document-Level_Dataset</a>: 多语言数据集，可用于扩展验证</li>
+</ul>
+<h3 id="可应用方向">可应用方向</h3>
+<ul>
+<li><span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>: U 形神经元分布支持&quot;仅在语言特异性层部署专用专家&quot;的设计，LAPE 可作为确定扩展层的定量工具</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Emergent Misalignment is Easy, Narrow Misalignment is Hard</span></a>
+<a class="paper-nav-link next" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">How do Large Language Models Handle Multilingualism?</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: tang2024language</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-mqm-rubric-空间该多大-应该-case-by-case-定-而不是全局固定"><span class="toc-num">02</span> 2. 关键问题：MQM rubric 空间该多大，应该 case-by-case 定，而不是全局固定</a></li>
+<li><a class="toc-link" href="#3-关键方法-级联-router-correctness-gate-major-category-router-compact-expansion-gate-budget-router-按-case-从-mqm-树里选搜索空间大小-再喂给-llm-评审员"><span class="toc-num">03</span> 3. 关键方法：级联 router（correctness gate → major-category router → compact → expansion gate → budget router）按 case 从 MQM 树里选搜索空间大小，再喂给 LLM 评审员</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-整体架构-级联-gating-figure-2">3.1 整体架构（级联 gating，Figure 2）</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-结构化-mqm-rubric-空间">3.2 结构化 MQM rubric 空间</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-路由模块与公式">3.3 路由模块与公式</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-路由监督-utility-based-oracle-复现核心">3.4 路由监督：utility-based oracle（复现核心）</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-动态-span-检测-推理端">3.5 动态 span 检测（推理端）</a></li>
+<li><a class="toc-link toc-sub" href="#3-6-训练与推理配置-复现必需">3.6 训练与推理配置（复现必需）</a></li>
+<li><a class="toc-link" href="#4-数据集-wmt23-span-级-qe-zh-en-en-de-dev-训-router-test-评估"><span class="toc-num">04</span> 4. 数据集：WMT23 span 级 QE，Zh-En + En-De；dev 训 router、test 评估</a></li>
+<li><a class="toc-link" href="#5-关键结果-两语向两规模上-mcc-都涨-但涨幅几乎全来自-recall-暴涨-且跨规模行为不一致"><span class="toc-num">05</span> 5. 关键结果：两语向两规模上 MCC 都涨，但涨幅几乎全来自 recall 暴涨，且跨规模行为不一致</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-table-1-word-level-wmt23">主实验（Table 1，word-level %，WMT23）</a></li>
+<li><a class="toc-link toc-sub" href="#消融-table-2-zh-en-qwen3-8b">消融（Table 2，Zh-En Qwen3-8B）</a></li>
+<li><a class="toc-link toc-sub" href="#router-可靠性分析-5-1">Router 可靠性分析（§5.1）</a></li>
+<li><a class="toc-link toc-sub" href="#动态复杂度分析-5-2-figure-3-4">动态复杂度分析（§5.2，Figure 3/4）</a></li>
+<li><a class="toc-link toc-sub" href="#rubric-推理约束-不只是标签清单-appendix-e-最有价值的机制-claim">Rubric = 推理约束，不只是标签清单（Appendix E，最有价值的机制 claim）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文的-comments">6.1 对论文的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-07-07</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2606.21559" target="_blank">arXiv</a>
+    </div>
+    <h1>Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</h1>
+    <p class="authors">Weilu Xu, Yunzhi Shen, Xinye Wang, Ranfei Dang, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">机器翻译</span> <span class="topic-tag">翻译质量评估</span> <span class="topic-tag">Span级QE</span> <span class="topic-tag">MQM</span> <span class="topic-tag">动态路由</span> <span class="topic-tag">LLM_as_Judge</span></div>
+</header>
+
+<h1>论文笔记: Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者/团队</strong>: Weilu Xu, Yunzhi Shen, Xinye Wang, Ranfei Dang, Shujian Huang（通讯）——南京大学，软件新技术国家重点实验室</li>
+<li><strong>发表</strong>: arXiv:2606.21559v1 [cs.CL]，2026-06-19（预印本，无 venue，看着像投稿版）</li>
+<li><strong>任务</strong>: span 级翻译质量评估（QE）——不是给译文打个总分，而是在译文里精确框出错误片段，用 MQM 错误分类体系引导 LLM</li>
+<li><strong>一句话</strong>: 别再给所有译文套同一套 MQM rubric。用一个轻量 router 按每条 case 的难度，动态决定&quot;给 LLM 评审员看多大的错误类型搜索空间&quot;。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-mqm-rubric-空间该多大-应该-case-by-case-定-而不是全局固定">2. 关键问题：MQM rubric 空间该多大，应该 case-by-case 定，而不是全局固定</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+论文 Table 5 一条 Zh-En 样本最能说明问题。同一条机器译文（里面把&quot;中西方&quot;误译成了 &quot;Midwest&quot;），<strong>只是把喂给同一个 LLM 评审员的 rubric（错误类型清单）换大换小</strong>，结果差异巨大：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Rubric 大小</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline（无细粒度 rubric）</td>
+<td>1.000</td>
+<td>0.111</td>
+<td>0.200</td>
+</tr>
+<tr>
+<td>Small Rubric</td>
+<td>1.000</td>
+<td>0.222</td>
+<td>0.364</td>
+</tr>
+<tr>
+<td><strong>Medium Rubric</strong></td>
+<td>0.875</td>
+<td><strong>0.778</strong></td>
+<td><strong>0.824</strong></td>
+</tr>
+<tr>
+<td>Full Rubric</td>
+<td>0.310</td>
+<td>1.000</td>
+<td>0.474</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rubric 越大，评审员探索得越广（recall 从 0.11 一路涨到 1.0），但也越容易乱标（precision 从 1.0 崩到 0.31）。<strong>这条 case 的最优点在 Medium</strong>——不是最小也不是最大。</p>
+<p>⚠️ 但要清醒：这是<strong>单条手挑样本</strong>，medium 恰好赢。它证明的是&quot;存在 case-level 最优粒度&quot;这个现象，不是&quot;框架能把每条都路由对&quot;。对照后面主表 Full Dynamic 的 F1 只有 33.78，离这里 medium 的 0.824 差得远——所以&quot;每条选对粒度&quot;这件事，框架实际上远没做到。</p>
+</blockquote>
+<p>核心 framing：rubric 不只是&quot;打分标准&quot;，它其实是 LLM 的<strong>搜索空间 / 探索边界</strong>。MQM 子类型给得越多，模型越倾向从多个语义角度审视译文，recall 涨但 false positive 也涨；给得越少，precision 高但漏检多。这是个此消彼长的 tradeoff，不是单调改进。</p>
+<p><img src="https://arxiv.org/html/2606.21559v1/images/intuition.png" alt="Figure 1: 静态 rubric（左）把所有 case 暴露在同一个宽 MQM 搜索空间，引入噪声 span；本文（右）按 case 动态分配粒度" /></p>
+<ul>
+<li><strong>动机 / 为什么重要</strong>: span 级 QE 要的是&quot;精确定位错误片段&quot;。LLM 在翻译生成上很强，但在 span 级错误定位上，老牌系统 CometKiwi 之类仍有竞争力——说明 LLM 这块能力没被释放出来。作者的判断：瓶颈不全在模型能力，而在<strong>评估搜索空间怎么暴露给模型</strong>。</li>
+<li><strong>之前的方法卡在哪</strong>（两条路都是&quot;静态&quot;的）:
+<ul>
+<li><strong>Free-form rubric 生成</strong>（LLM 自己现编标准）：灵活，但 coverage 不稳定、粒度不一致、行为不可控。</li>
+<li><strong>固定 MQM rubric prompting</strong>（GEMBA-MQM, RUBRIC-MQM）：一致性好，但一套 rubric 套所有 case，对异质样本适配差。</li>
+<li>缺一个&quot;<strong>在预定义 MQM 结构内做 case-specific 动态分配</strong>&quot;的中间态。</li>
+</ul>
+</li>
+<li><strong>为什么是 span 级 QE 特有的难点</strong>: 翻译质量有多种可接受解释，&quot;可接受变体&quot;和&quot;真错误&quot;边界模糊。模型不仅要检错，还要控制<strong>严格度和探索范围</strong>。search-space mismatch 本身就是影响 QE 的独立因子。</li>
+</ul>
+<hr />
+<h2 id="3-关键方法-级联-router-correctness-gate-major-category-router-compact-expansion-gate-budget-router-按-case-从-mqm-树里选搜索空间大小-再喂给-llm-评审员">3. 关键方法：级联 router（correctness gate → major-category router → compact → expansion gate → budget router）按 case 从 MQM 树里选搜索空间大小，再喂给 LLM 评审员</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+继续上面那条 &quot;Midwest&quot; 译文，走一遍完整 pipeline：</p>
+<ol>
+<li><strong>Correctness gate</strong>（&quot;这条要不要直接放过？&quot;）：先判是不是根本没错。这条明显有错，<code>p_ok</code> 低于阈值，不放过。</li>
+<li><strong>Major-category router</strong>（&quot;该看哪几个 MQM 大类？&quot;）：多标签预测相关大类，主要是 Accuracy（误译/漏译），可能带一点 Style。最多激活 3 个大类。</li>
+<li><strong>Compact 评估</strong>：用选中大类下少量最相关 subtype（如 Mistranslation, Omission）先跑一遍，抓到核心的 &quot;Midwest&quot; 误译。</li>
+<li><strong>Expansion gate</strong>（&quot;compact 够不够？&quot;）：看 compact 结果 + hidden state。这条错误多、句子长，<code>p_exp</code> 高，需要扩。</li>
+<li><strong>Budget router</strong>（&quot;扩到 medium 还是 full？&quot;）：理想路由到 <strong>medium</strong>（Table 5 里 F1=0.824 的甜点），而不是 full（会掉到 0.474）。</li>
+<li><strong>Span detection</strong>：把选定粒度的 subtype 描述拼进 prompt，评审员 <code>f_eval</code> 输出 span，最后合并重叠 / 去重 / 过滤非法 span。</li>
+</ol>
+<p>一句话：<strong>router 负责&quot;给多大搜索空间&quot;，LLM 评审员负责&quot;在空间里找错&quot;</strong>。router 很轻（LoRA + 线性头），重活还是 LLM 干。</p>
+</blockquote>
+<h3 id="3-1-整体架构-级联-gating-figure-2">3.1 整体架构（级联 gating，Figure 2）</h3>
+<p><img src="https://arxiv.org/html/2606.21559v1/images/pipeline.png" alt="Figure 2: case-specific MQM 评估框架总览——correctness gate 先拦掉判为正确的 case，expansion gate 决定 compact 够不够，rubric expansion 模块选 medium 或 full 粒度" /></p>
+<p>数据流（按 §3.1 + Figure 2）：<code>(x, y)</code> → <strong>correctness gate</strong>（廉价早退）→（不放过）→ major-category router → compact eval → expansion gate →（需扩）→ budget router(medium/full) → 组装 rubric → <code>f_eval</code> span 检测 → 后处理。</p>
+<blockquote class="card card-info">
+<p>⚠️ <strong>论文自相矛盾的一处</strong>：§3.1 和 Figure 2 caption 明确说 &quot;the framework <strong>first applies a correctness gate</strong>&quot;（correctness gate 最前置）；但 §3.3 &quot;Two-stage MQM Routing&quot; 和 Appendix B.2 的叙述顺序是先讲 major-category router、再讲 correctness gate。本笔记按架构图（correctness gate 优先）叙述——这是论文本身的描述 bug，复现时以 Figure 2 为准。</p>
+</blockquote>
+<h3 id="3-2-结构化-mqm-rubric-空间">3.2 结构化 MQM rubric 空间</h3>
+<ul>
+<li>
+<p>用 MQM taxonomy 构造 rubric 池 <code>R_MQM</code>，每个 subtype 配一句自然语言描述，作为<strong>原子 rubric 单元</strong>。case-specific rubric 就是从池里选子集：</p>
+<p><strong>公式 (2)</strong>: <code>R(x,y) ⊆ R_MQM</code>（<code>R_MQM</code> = 完整 MQM 派生池；<code>R(x,y)</code> = 这条 case 挑出的子集）</p>
+</li>
+<li>
+<p><strong>7 个 MQM 大类</strong>作为顶层路由空间（Appendix A, Table 6）：Accuracy（Mistranslation; Number; Date/time; Overtranslation; Omission）、Audience appropriateness、Design and markup、Linguistic conventions（Grammar; Agreement; Word order; Punctuation; Spelling）、Locale conventions、Style、Terminology。</p>
+</li>
+<li>
+<p>关键设计：下层节点全部 <strong>flatten</strong> 成 subtype 候选，每个带原始 MQM 描述。既保留层级语义，又简化推理接口。</p>
+</li>
+<li>
+<p>与 free-form 的本质区别：<strong>不发明新标准</strong>，只从预定义 MQM 空间选子集，保住 MQM 可解释性。</p>
+</li>
+</ul>
+<h3 id="3-3-路由模块与公式">3.3 路由模块与公式</h3>
+<p>先用一句大白话给每个 gate 定位，再上公式：</p>
+<p><strong>(a) Major-category router（&quot;该看哪几个大类&quot;，多标签分类）</strong></p>
+<ul>
+<li>取 Qwen3 末层、最后一个非 padding token 的 hidden state 作句表征：
+<strong>公式 (8)</strong>: <code>h(x,y) = H^(L)_{ℓ_i}</code>，<code>ℓ_i = Σ_t m_{i,t} − 1</code>（<code>m</code> = attention mask）</li>
+<li>多标签头：<strong>公式 (9)</strong> <code>z_c = w_c^T h + b_c</code>，<code>p_c = σ(z_c)</code>，<code>c ∈</code> 7 大类</li>
+<li><strong>训练损失（软标签加权 BCE，公式 10）</strong>: <code>L_cat = −Σ_{c∈C'} [ ω_c q_c log p_c + (1−q_c) log(1−p_c) ]</code>
+<ul>
+<li><code>q_c ∈ {0, 0.5, 1}</code> 是<strong>软监督</strong>，由 word-level span overlap 推出（强重叠 1、部分 0.5、否则 0）</li>
+<li><code>ω_c</code> 正类重加权缓解类别不均衡；全零（无错）样本额外<strong>下采样</strong></li>
+</ul>
+</li>
+<li><strong>推理是 recall-oriented（公式 11-12）</strong>: 留最高分大类 <code>c_1</code>，其余满足 <code>p_c ≥ τ_cat</code> <strong>或</strong> <code>p_c ≥ p_{c1} − δ</code> 则一起激活，最多 3 个；极低置信 fallback 到 <strong>Accuracy</strong>。宁可多召别漏。</li>
+</ul>
+<p><strong>(b) Correctness gate（&quot;要不要直接放过&quot;）</strong></p>
+<ul>
+<li><strong>公式 (4/13-14)</strong>: <code>p_ok = σ(w_ok^T h + b_ok)</code>，<code>p_ok ≥ τ_ok</code> → 判无错、提前终止</li>
+<li>Section 5.1 叫它 &quot;no-error gate&quot;，故意 recall-preserving——~95% 真有错 case 会被放行下去</li>
+</ul>
+<p><strong>(c) Expansion gate（&quot;compact 够不够&quot;）</strong></p>
+<ul>
+<li><strong>公式 (5/15-16)</strong>: <code>p_exp = σ(w_exp^T [h; e_3(x,y)] + b_exp)</code></li>
+<li><code>e_3(x,y)</code> = <strong>compact 评估后提取的特征</strong>——关键决策点：expansion 决策用到了 compact 的<strong>实际输出</strong>，不是纯凭输入猜。<code>p_exp &lt; τ_exp</code> 保留 compact，否则进 budget router。（原文 eq5 写 <code>e(x,y)</code>、eq15 写 <code>e_3(x,y)</code>，指同一物。）</li>
+</ul>
+<p><strong>(d) Budget router（&quot;扩到 medium 还是 full&quot;）</strong></p>
+<ul>
+<li><strong>公式 (17-18)</strong>: <code>b̂ = argmax_{b∈{medium,full}} π_b(x,y,e_3)</code>。medium = 更广但仍选择性；full = 激活选中大类下所有 subtype。</li>
+</ul>
+<h3 id="3-4-路由监督-utility-based-oracle-复现核心">3.4 路由监督：utility-based oracle（复现核心）</h3>
+<p>router 的监督标签靠一个 <strong>oracle</strong> 定义，对每条训练样本实际跑三种粒度、算 F1，挑效用最高的当金标准：</p>
+<ul>
+<li><strong>效用函数（公式 19）</strong>: <code>U(g) = F1(g) − λ · cost(g)</code>，其中 <code>F1(g)</code> 是<strong>用 gold label 算的 word-level F1</strong></li>
+<li><strong>oracle 粒度（公式 20）</strong>: <code>g* = argmax_{g∈{small,medium,full}} U(g)</code></li>
+<li>各 gate 监督：correctness gate <code>L_ok = BCE(a_ok, y_ok)</code>（21）；expansion gate 标签 <code>y_exp = I[g*≠small]</code>（22），<code>L_exp</code>（23）；budget router <strong>只在需扩样本上训</strong> <code>L_bud = I[g*≠small]·CE(π, index_B(g*))</code>（24）；<strong>总损失（25）</strong> <code>L = L_cat + L_ok + L_exp + L_bud</code></li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>复现要点 &amp; 缺口</strong>: (1) oracle 标签要对每条 dev 样本用 LLM 跑 3 次（small/medium/full）拿 F1，是训练前的一次性离线成本，强依赖 dev 有 gold span。(2) <strong><code>λ</code> 和 <code>cost(g)</code> 全篇没给值/定义</strong> [?]——而它俩直接决定 oracle 标签、进而决定整个 router 学什么，这是可复现性最大的黑洞。(3) 所有阈值 <code>τ_cat, δ, τ_ok, τ_exp</code> 也<strong>都没给数值</strong>，也没说是否在 dev 上 grid search [?]。</p>
+</blockquote>
+<h3 id="3-5-动态-span-检测-推理端">3.5 动态 span 检测（推理端）</h3>
+<ul>
+<li>从池里检索选中大类下的 subtype 描述：<strong>公式 (26)</strong> <code>R̂(x,y) = Top-k̂ ({r ∈ R_MQM : Major(r) ∈ Ĉ(x,y)})</code></li>
+<li>组装进 prompt，评审员输出 span：<strong>公式 (27/7)</strong> <code>Ŝ = f_eval(x, y, R̂(x,y))</code>。评审员被指示<strong>只输出从译文逐字复制的 span</strong>。</li>
+<li><strong>后处理（Appendix B.4）</strong>: 高重叠 span 合并 / 去重 / 过滤译文里不存在的非法 span / 可选地把 <strong>think 与 no-think 输出做 calibration 合并</strong>（⚠️ 这一步本身是隐藏的 self-ensemble，见 §6.1）。</li>
+</ul>
+<h3 id="3-6-训练与推理配置-复现必需">3.6 训练与推理配置（复现必需）</h3>
+<ul>
+<li><strong>Backbone</strong>: Qwen3-4B / Qwen3-8B，<strong>thinking mode</strong>，vLLM，RTX A6000。thinking prompt 额外 prime 一个 <code>&lt;think&gt;Okay,</code> 前缀。</li>
+<li><strong>Major-category router</strong>: frozen Qwen3-8B + 线性多标签头 + LoRA <code>r=4, α=8, dropout=0.05</code>，训 <strong>3 epochs</strong></li>
+<li><strong>Rubric-granularity router</strong>: LoRA <code>r=8, α=16, dropout=0.05</code>，训 <strong>6 epochs</strong>；两个 router 都 bf16</li>
+<li><strong>Span 评估解码</strong>: 确定性，<code>temperature=0.0, top_p=1.0</code>；vLLM max gen <code>3072</code>，max len <code>8192</code>，GPU mem util <code>0.90</code>，batch <code>8</code>/GPU</li>
+<li><strong>Prompt 缺口</strong> [?]: Appendix A.2–A.5 只列了 prompt 的<strong>名字/用途</strong>（<code>Baseline span prompt</code>、<code>Hierarchy merge: major-subtree detection prompt</code>、<code>Top-k-best minimal-span subtree prompt</code>、<code>Subtype-ranking prompt</code> 等），<strong>正文没贴任何一个 prompt 的实际文本</strong>。对一篇核心贡献是 rubric/prompt 设计的论文，prompt 全缺失是硬伤，需看代码。</li>
+</ul>
+<hr />
+<h2 id="4-数据集-wmt23-span-级-qe-zh-en-en-de-dev-训-router-test-评估">4. 数据集：WMT23 span 级 QE，Zh-En + En-De；dev 训 router、test 评估</h2>
+<ul>
+<li><strong>训练数据</strong>: WMT23 span-level QE <strong>development set</strong> 训 router（含 oracle 粒度标签构造，需 gold span）。有错/无错不均衡，靠全零样本下采样处理。</li>
+<li><strong>评估数据</strong>: WMT23 span-level QE <strong>test set</strong>，两个语向 <strong>Zh-En</strong> 和 <strong>En-De</strong>（Blain et al. 2023）。</li>
+<li><strong>指标</strong>: word-level Precision / Recall / F1 / MCC，预测 span 转 word-level 标签与 gold 比对。MQM subtype 只用于 rubric 构造/prompting，<strong>不作为直接评估目标</strong>。</li>
+</ul>
+<blockquote class="card card-info">
+<p>⚠️ <strong>数据规模天花板很低</strong>：只有 WMT23、只有 2 个语向、train/test 同分布。Limitations 自己承认跨标准、跨语言、unseen dataset 的鲁棒性 &quot;insufficiently explored&quot;。所有&quot;动态优于静态&quot;的结论都绑死在这一个 benchmark 上，无 seed / std / 置信区间。</p>
+</blockquote>
+<hr />
+<h2 id="5-关键结果-两语向两规模上-mcc-都涨-但涨幅几乎全来自-recall-暴涨-且跨规模行为不一致">5. 关键结果：两语向两规模上 MCC 都涨，但涨幅几乎全来自 recall 暴涨，且跨规模行为不一致</h2>
+<h3 id="主实验-table-1-word-level-wmt23">主实验（Table 1，word-level %，WMT23）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Zh-En P</th>
+<th>R</th>
+<th>F1</th>
+<th>MCC</th>
+<th>En-De P</th>
+<th>R</th>
+<th>F1</th>
+<th>MCC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CometKiwi</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>26.90</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>21.50</td>
+</tr>
+<tr>
+<td>DCSQE</td>
+<td>–</td>
+<td>–</td>
+<td>28.61</td>
+<td>28.12</td>
+<td>–</td>
+<td>–</td>
+<td>30.61</td>
+<td>27.11</td>
+</tr>
+<tr>
+<td>GEMBA</td>
+<td>–</td>
+<td>–</td>
+<td>16.11</td>
+<td>18.21</td>
+<td>–</td>
+<td>–</td>
+<td>13.21</td>
+<td>18.17</td>
+</tr>
+<tr>
+<td>Qwen3-4B</td>
+<td>17.04</td>
+<td>45.79</td>
+<td>24.84</td>
+<td>19.70</td>
+<td>16.31</td>
+<td>16.19</td>
+<td>16.25</td>
+<td>10.23</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>18.22</td>
+<td>53.55</td>
+<td>27.18</td>
+<td>23.36</td>
+<td>19.16</td>
+<td>23.43</td>
+<td>21.08</td>
+<td>14.76</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>21.94</td>
+<td>44.78</td>
+<td>29.45</td>
+<td>24.52</td>
+<td>23.99</td>
+<td>20.83</td>
+<td>22.30</td>
+<td>17.16</td>
+</tr>
+<tr>
+<td><strong>Ours-4B</strong></td>
+<td>19.71</td>
+<td>69.51</td>
+<td>30.71</td>
+<td>29.25</td>
+<td>31.75</td>
+<td>31.40</td>
+<td>31.57</td>
+<td>26.60</td>
+</tr>
+<tr>
+<td><strong>Ours-8B</strong></td>
+<td>22.29</td>
+<td>69.80</td>
+<td>33.78</td>
+<td>32.40</td>
+<td>22.68</td>
+<td>60.16</td>
+<td>32.94</td>
+<td>29.57</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>Zh-En：Ours-8B 最好，<strong>F1 33.78 / MCC 32.40</strong>，比 DCSQE 高 +5.17 F1 / +4.28 MCC，比同规模 Qwen3-8B MCC 高 <strong>+9.04</strong>（Ours-4B +9.55）。</li>
+<li>En-De：Ours-8B <strong>F1 32.94 / MCC 29.57</strong>，比 DCSQE 高 +2.33 F1 / +2.46 MCC。</li>
+</ul>
+<p><strong>审稿人最强攻击点（每条 2–3 句，证据侧）：</strong></p>
+<ol>
+<li>
+<p><strong>涨幅几乎全靠 recall 换来的</strong>。Zh-En Ours-8B recall 69.80 vs Qwen3-8B 53.55，precision 只有 22.29（相对 baseline 18.22 涨得有限）。对要&quot;给译员/系统指出错误&quot;的 QE 场景，22% precision 意味着 4/5 标错，实用性存疑。这更像&quot;把阈值调松、多标 span&quot;，而非&quot;评估更准&quot;。</p>
+</li>
+<li>
+<p><strong>跨规模 P/R 行为翻转，像调参 artifact</strong>。先看现象：En-De 上 Ours-4B 是 P 31.75 / R 31.40（平衡），Ours-8B 却是 P 22.68 / R 60.16（recall 翻倍、precision 掉）——同一框架在同一语向上，4B 和 8B 呈现相反的 P/R 取舍。再看推断：Table 9 里 Ours-8B En-De 从 &quot;+Expansion Gate&quot; R=30.10 突跳到 &quot;Full Dynamic&quot; R=60.16，这个 2 倍跳变只由 budget router 造成、且只在 8B En-De 出现，强烈提示阈值/预算被 per-setting tune 过。</p>
+</li>
+<li>
+<p><strong>Correctness gate 单独加是负收益</strong>（Table 2, Zh-En 8B）：Compact MCC 21.48 → +Correct Gate 20.74（降了）。真正起作用的是 Expansion Gate（28.88）。论文以&quot;级联三段式都有用&quot;叙述，但证据显示 correctness gate 本身拖后腿。</p>
+</li>
+<li>
+<p><strong>No-error gate 准确率低于多数类基线</strong>（Table 4）：Zh-En 准确率 52.22%，但样本 G-OK=1109 / G-Bad=555 共 1664，<strong>全预测 OK 的多数类基线就有 66.6%</strong>——gate 比闭眼猜还差 14 分。En-De 64.88% 也只比多数类 59.9% 高一点。论文用&quot;recall-preserving，保留 95% 错误样本&quot;解释，但那本质等于&quot;这个 gate 几乎不过滤、约等于没用&quot;。把一个准确率低于 baseline 的模块包装成设计特性，需要 push。</p>
+</li>
+<li>
+<p><strong>缺 same-backbone static rubric 对照</strong>。§4.2 原文其实描述了 Direct prediction 和 <strong>Static MQM rubric</strong> 两个 baseline，但 <strong>Table 1 只有 vanilla Qwen（=direct prediction），没有 same-backbone 的 static MQM rubric 行</strong>——论文声称有、主表里却缺席。它只以 Fixed Compact/Comprehensive 出现在 ablation。加上 CometKiwi/DCSQE/GEMBA 数值 &quot;taken from prior work&quot; 未必对齐（GPT-4 的 GEMBA 只有 16.11 F1，低得可疑），主表缺一个公平的强对照。</p>
+</li>
+<li>
+<p><strong>两个核心路由组件的 test 端准确率从未报告</strong>（已核全文，确无该表）。论文报了 major-category coverage（Table 3）和 no-error gate accuracy（Table 4），但<strong>没有任何数字</strong>告诉你 expansion gate / budget router 在 test 上路由对了没有。复杂度分析（§5.2）用的全是 oracle <code>g*</code>。也就是说：<strong>核心贡献（动态选粒度）的组件本身零直接评估</strong>，只能靠端到端 MCC 反推。</p>
+</li>
+</ol>
+<h3 id="消融-table-2-zh-en-qwen3-8b">消融（Table 2，Zh-En Qwen3-8B）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>P</th>
+<th>R</th>
+<th>F1</th>
+<th>MCC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compact（固定小）</td>
+<td>14.80</td>
+<td>65.63</td>
+<td>24.16</td>
+<td>21.48</td>
+</tr>
+<tr>
+<td>Comprehensive（固定全）</td>
+<td>10.89</td>
+<td>76.50</td>
+<td>19.07</td>
+<td>16.80</td>
+</tr>
+<tr>
+<td>+ Correct Gate</td>
+<td>13.70</td>
+<td>70.45</td>
+<td>22.95</td>
+<td>20.74</td>
+</tr>
+<tr>
+<td>+ Expansion Gate</td>
+<td>18.93</td>
+<td>71.79</td>
+<td>29.96</td>
+<td>28.88</td>
+</tr>
+<tr>
+<td><strong>Full Dynamic</strong></td>
+<td>22.29</td>
+<td>69.80</td>
+<td>33.78</td>
+<td>32.40</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>核心 tradeoff 定性<strong>扎实、不 challenge</strong>：固定 Comprehensive recall 最高（76.50）但 precision 最低（10.89）、MCC 垫底；Compact 保 precision 但漏复杂错误。Full Dynamic 在两语向两规模都拿最高 MCC。</li>
+</ul>
+<h3 id="router-可靠性分析-5-1">Router 可靠性分析（§5.1）</h3>
+<ul>
+<li><strong>Major-category coverage（Table 3，累积 recall）</strong>: Zh-En ≤1 大类覆盖 <strong>87%</strong>、≤2 达 97%、≤3 达 99%；En-De 更分散，≤1 覆盖 69%、≤2 81%、≤3 95%。→ 系统最多用 3 个大类，兼顾高 recall 与避免全空间噪声。</li>
+<li><strong>No-error gate（Table 4）</strong>: 准确率 Zh-En 52.2% / En-De 64.88%，故意偏向保留可疑 case（~95% 真错样本被保留），false-positive 不直接丢、交给下游 rubric 评审约束。（低于多数类基线的解读见上方攻击点 4。）</li>
+</ul>
+<h3 id="动态复杂度分析-5-2-figure-3-4">动态复杂度分析（§5.2，Figure 3/4）</h3>
+<p><img src="https://arxiv.org/html/2606.21559v1/images/rubric_complexity_curves.png" alt="Figure 3: 所需 rubric 粒度随翻译复杂度的平滑分布——左：随错误 span 数增加 Comprehensive 占比上升；右：源句越长越需要大空间" /></p>
+<p><img src="https://arxiv.org/html/2606.21559v1/images/rubric_complexity_bars.png" alt="Figure 4: 分桶统计——单 span/短句 Compact 主导；多 span/长句 Comprehensive 占比大增；Expanded 出现在中等复杂度做过渡" /></p>
+<ul>
+<li>相关性明确：错误 span 越多 / 源句越长 → 需要 Comprehensive 的比例稳步上升，Compact 失效，Expanded 是中等复杂度的过渡带。Appendix D 在 4B 和 En-De 上复现了同一趋势。</li>
+<li>⚠️ <strong>可能的循环论证</strong> [?]：B 版指出所谓&quot;所需粒度&quot;若就是 oracle <code>g*</code>（用 gold F1 事后算出），则&quot;复杂样本需要更宽 rubric&quot;和&quot;router 学会分配&quot;是<strong>用同一 oracle 定义</strong>推出的，不是独立验证。核对全文：原文用词是 &quot;required rubric granularity&quot;，<strong>没明说</strong> Fig 3/4 分层用的是 oracle 标签还是 test 端 router 预测。若是 oracle，则循环论证成立；若是 router 预测，则不成立——原文未坐实，保留为条件式质疑。</li>
+</ul>
+<h3 id="rubric-推理约束-不只是标签清单-appendix-e-最有价值的机制-claim">Rubric = 推理约束，不只是标签清单（Appendix E，最有价值的机制 claim）</h3>
+<ul>
+<li>自然假设：既然模型 free-form 时会同时输出 span 和其 subtype，那只保留&quot;被预测到的 subtype&quot;应能压缩 rubric 而不丢 span。<strong>实测相反</strong>：Zh-En Qwen3-8B 上，只留预测到的 subtype，word-level recall 从 ~<strong>0.70 掉到 0.46</strong>。</li>
+<li>解释：<code>R → reasoning paths → Ŝ</code>（公式 30）。更大的 rubric 空间会激活多条部分重叠的推理轨迹（adequacy / fluency / terminology / style / 结构对齐），即使某 subtype 最终没被选中，它出现在 rubric 里也能触发有用的中间推理、暴露额外候选 span。窄空间会让评审员<strong>过早收敛</strong>。</li>
+<li>→ 动态路由的目的不是&quot;最小化 rubric&quot;，而是&quot;给每条 case 一个足够有表达力的空间&quot;。（⚠️ 但这个 claim 同样只有单个 0.70→0.46 数字支撑，无多设置验证。）</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文的-comments">6.1 对论文的 Comments</h3>
+<ul>
+<li>
+<p><strong>最反直觉、也最该记的是 Appendix E 的 framing</strong>：rubric 不是最终打标签用的 label set，而是塑造评审员<strong>推理探索轨迹</strong>的 search-space controller。&quot;只保留预测到的 subtype，recall 从 0.70 掉到 0.46&quot;这个实验设计得聪明——它排除了&quot;是不是 subtype 预测错了&quot;这个 confound，直接证明<strong>是搜索空间本身在改变解码行为</strong>，而非标签匹配问题。如果让我做，我大概率会默认&quot;只留预测子类型 = 无损压缩&quot;，正是被这个实验证伪的直觉。这个视角比方法本身更值得记。</p>
+</li>
+<li>
+<p><strong>最有价值的独立批判：后处理 + compute 不对等的双重 confound</strong>。Ours 相对 vanilla Qwen3 的提升，有多少来自&quot;case-specific 分配&quot;、多少来自这套 ensemble-ish pipeline？两个具体来源：(1) <strong>compute 不对等</strong>——整条 pipeline 对每条难 case 要跑 LLM 多次（compact → 可能 medium/full 重跑 → think+no-think 双路 calibration），单样本推理成本可能是 vanilla 单次 forward 的 2–4 倍。所以&quot;Ours-4B 打赢 Qwen3-14B 单次&quot;很可能是<strong>拿更多 test-time compute 换来的</strong>，不是&quot;小模型顶大模型&quot;。(2) <strong>think+no-think calibration 是隐藏的 self-ensemble</strong>，本身就能涨 recall，和&quot;动态路由&quot;完全正交，却被埋在后处理里从没单独消融。论文缺一个 <strong>compute-matched / 固定 medium rubric + 同后处理</strong> 的对照来 isolate 掉这两项——很可能相当一部分增益来自它们而非动态路由本身。</p>
+</li>
+<li>
+<p><strong>no-error gate 低于多数类基线</strong>（52.22% &lt; 66.6%，Zh-En）：比闭眼猜还差 14 分。作者用&quot;故意 recall-preserving，保留 95% 有错样本&quot;justify，逻辑上说得通，但结合 Table 2 里 <code>+Correct Gate</code> 让 MCC 从 21.48 掉到 20.74，两个事实合起来说明：这个 gate 只负责&quot;别误伤真错样本&quot;（安全垫），既不是精准分流、也不是性能来源。把它包装成设计特性偏粉饰。</p>
+</li>
+<li>
+<p><strong>复现黑洞</strong>：<code>U(g)=F1(g)−λ·cost(g)</code> 里 <code>λ</code> 和 <code>cost(g)</code> 完全没给值/定义，而它直接决定 oracle 标签→整个 router 学什么；各阈值 <code>τ_cat, δ, τ_ok, τ_exp</code> 也无值、无调参说明；prompt 文本全缺失（只有名字）；budget router 的 <code>π_b</code> 用啥结构（又一个 LoRA 头？和 expansion gate 共享 backbone？）也没交代。这些叠加，论文基本不可复现。</p>
+</li>
+<li>
+<p><strong>跨规模是 artifact 的强信号</strong>：En-De 上 Ours-4B（P31.75/R31.40 平衡）与 Ours-8B（P22.68/R60.16 recall 主导）呈相反 P/R 风格，加上 8B En-De recall 从 30→60 的 budget-router 单点跳变——如果 routing 学到的是稳健规律，不该这样，更像 per-setting 调阈值的产物。（其余批判详见 §5，不在此复述。）</p>
+</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>论文 Limitations 自己点了 exploration-aware decoding——不只在 prompt 层面调 rubric，而是显式建模评审员的探索过程。如果 Appendix E 的&quot;rubric 影响解码轨迹&quot;成立，那把这个约束下沉到 <strong>decoding</strong>（约束/引导 beam）应该比在 prompt 里塞 subtype 更直接有效。</li>
+<li>&quot;rubric/prompt 作为 search-space controller&quot;这个 framing 若成立，会外溢到其它结构化 LLM-as-judge（代码评审、RAG 忠实度、多维写作评分）——不是&quot;写更好的 rubric&quot;，而是&quot;按样本控制暴露多宽的评估维度&quot;。<strong>但</strong>前提是有人先在更大、更多样的 benchmark 上把&quot;动态 vs 静态最优粒度&quot;和&quot;后处理/compute 增益&quot;干净拆开，否则这方向容易停在&quot;看起来涨点但说不清为什么&quot;。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>值得学的叙事闭环</strong>：先做诊断性实验（rubric 宽窄 → P/R tradeoff，Table 5 + Appendix E）建立 motivation，再上方法，最后用机制分析（0.70→0.46）反过来解释&quot;为什么方法有效&quot;。即便本文方法侧证据偏弱，它的<strong>现象侧观察（rubric 影响 decoding 探索）是能立住、可被后续工作复用的</strong>。Table 5 单 case 扫粒度（Baseline/Small/Medium/Full 的 P/R/F1 单调变化）是把抽象 tradeoff 讲清楚的最经济手段——一张表顶一段论证（但别忘了它是 cherry-pick）。</li>
+<li><strong>反面教材：oracle 信号复用</strong>。<code>g*</code>（用 gold F1 算）既用来训 router、又用来做&quot;复杂度需要宽 rubric&quot;的分析，形成循环论证。做这类&quot;自适应分配&quot;研究时，<strong>用于验证 motivation 的信号必须独立于用于训练/定义 oracle 的信号</strong>，否则分析部分证明不了额外的东西。更进一步的教训：核心组件（expansion/budget router）在 test 上到底路由对了没，必须有直接评估，而不是只报端到端 MCC。</li>
+</ul>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Team</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-NJU-NLP-ShujianHuang">MOC-Team-NJU-NLP-ShujianHuang</span> — Team: 黄书剑（通讯）组的又一篇工作，把研究边界从翻译 RL / 多语言推理扩到 span 级翻译质量评估，用轻量 router 为每条译文动态分配 MQM rubric 粒度（建议在该 MOC 下新增「翻译质量评估」小节）。</li>
+</ul>
+<p><strong>Topic</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Multilingual-Translation">MOC-Multilingual-Translation</span> — Topic: 为「翻译评测」线补上 case-specific 动态 rubric 视角——不同于 AutoMQM/MetricX 的固定评测配置，本文按样本难度动态选择 MQM 子类型搜索空间，并揭示 rubric 是塑造评审员探索轨迹的 search space 而非静态标签清单。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Turn-Averaged SAEs for Feature Discovery and Long-Context Attribution</span></a>
+<a class="paper-nav-link next" href="Reasoning-Fails-Where-Step-Flow-Breaks.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Reasoning Fails Where Step Flow Breaks</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: xu2026rubricasexperts</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

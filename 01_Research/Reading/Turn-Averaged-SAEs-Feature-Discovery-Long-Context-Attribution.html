@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turn-Averaged SAEs for Feature Discovery and Long-Context Attribution</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Turn-Averaged SAEs for Feature Discovery and Long-Context Attribution</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-per-token-sae-抓不住-整段回复的高层性质-而且长上下文下特征数随-token-线性爆炸"><span class="toc-num">02</span> 2. 关键问题：per-token SAE 抓不住"整段回复的高层性质"，而且长上下文下特征数随 token 线性爆炸</a></li>
+<li><a class="toc-link" href="#3-关键方法-把-sae-输入从-xt-换成整段均值-x-低通滤波-再用-nested-架构在一个模型里同时保留高层与-token-级特征"><span class="toc-num">03</span> 3. 关键方法：把 SAE 输入从 xt 换成整段均值 x̄（低通滤波），再用 nested 架构在一个模型里同时保留高层与 token 级特征</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-三种候选架构-最终主推-turn-averaged-nested">3.1 三种候选架构，最终主推 turn-averaged + nested</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-turn-averaged-attribution-graph-下游应用">3.2 Turn-averaged attribution graph（下游应用）</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-训练配置-复现清单">3.3 训练配置（复现清单）</a></li>
+<li><a class="toc-link" href="#4-数据集-lmsys-chat-1m-训练-评估横跨-chat-holdout-longbench-v2-长文档-sonnet-生成的-24-字段结构化摘要"><span class="toc-num">04</span> 4. 数据集：LMSYS-Chat-1M 训练，评估横跨 chat holdout、LongBench v2 长文档、Sonnet 生成的 24 字段结构化摘要</a></li>
+<li><a class="toc-link" href="#5-关键结果-整段说得全-与-单段最好认-天然对立-前者-turn-averaged-赢-后者-per-token-max-赢-归因还原最充分的是-nested-而非-turn-averaged"><span class="toc-num">05</span> 5. 关键结果："整段说得全"与"单段最好认"天然对立——前者 turn-averaged 赢、后者 per-token(max) 赢；归因还原最充分的是 nested 而非 turn-averaged</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-重建质量-table-1-mathrm-nmse-mathbb-e-x-hat-x-2-mathbb-e-x-2">5.1 重建质量（Table 1，$\mathrm{nMSE} = \mathbb{E}\|x-\hat{x}\|^2 / \mathbb{E}\|x\|^2$）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-定量-feature-评估-单段最好认-判别-vs-整段说得全-覆盖-四项-section-5-5-汇总">5.2 定量 feature 评估："单段最好认"（判别）vs"整段说得全"（覆盖）四项（Section 5.5 汇总）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-attribution-结果">5.3 Attribution 结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-附加-无监督识别-persona-feature-appendix-i">5.4 附加：无监督识别 persona feature（Appendix I）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#修订记录"><span class="toc-num">08</span> 📝 修订记录</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-07-07</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2606.28548" target="_blank">arXiv</a>
+    </div>
+    <h1>Turn-Averaged SAEs for Feature Discovery and Long-Context Attribution</h1>
+    <p class="authors">Kevin Der, Harish Kamath, Ben Thompson</p>
+    <div class="topic-row"><span class="topic-tag">Sparse_Autoencoders</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Attribution_Graphs</span> <span class="topic-tag">Long_Context</span> <span class="topic-tag">Feature_Discovery</span></div>
+</header>
+
+<h1>论文笔记: Turn-Averaged SAEs for Feature Discovery and Long-Context Attribution</h1>
+<blockquote class="card card-info">
+<p>来源说明：本笔记针对 arXiv:2606.28548 <strong>完整论文</strong>（含 8 章 + 9 附录、全套定量结果）。同一工作另有一个更短、preliminary 的 <strong>Circuits Update 博客预印版</strong>，本笔记以完整论文为准。</p>
+</blockquote>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Kevin Der（Anthropic Fellows Program）、Harish Kamath、Ben Thompson（均 Anthropic）</li>
+<li>发表：arXiv:2606.28548v1，cs.CL / cs.LG，2026-06-26，CC BY 4.0，未见会议信息</li>
+<li>一句话：把 SAE 的训练输入从&quot;每个 token 的激活&quot;换成&quot;一个 turn 内所有 token 激活的平均值&quot;，就能学到一批捕捉整段回复&quot;高层性质&quot;的 feature，而且特征数量不再随 context 长度线性爆炸。改动量几乎为零（均值和单向量同维，现有 SAE 代码一行不用改），但把 attribution graph 从&quot;几十万节点不可读&quot;变成&quot;几千节点能看&quot;。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-per-token-sae-抓不住-整段回复的高层性质-而且长上下文下特征数随-token-线性爆炸">2. 关键问题：per-token SAE 抓不住&quot;整段回复的高层性质&quot;，而且长上下文下特征数随 token 线性爆炸</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+论文里的 Example A（Section 4）：模型回复</p>
+<blockquote class="card card-info">
+<p>&quot;The highest number below 100 that does not contain the digit 9 is 95.&quot;</p>
+</blockquote>
+<p>这句是错的——95 本身就含数字 9，所以它连约束都不满足；满足&quot;不含 9&quot;的最大值应该是 <strong>88</strong>。现在你是可解释性研究者，想用 SAE 搞清楚&quot;模型这段回复到底有什么性质&quot;。你把这段话喂进一个标准 <strong>per-token SAE</strong>，看哪些 feature 被激活：拿到的是 &quot;digit sum calculations&quot;、&quot;numerical reasoning: digits, place values&quot; 这类——它们准确指出&quot;这段在讲数字&quot;，但<strong>没有任何一个 feature 告诉你&quot;答案是错的&quot;</strong>（Error recognition 那栏是 none found）。</p>
+<p>&quot;答错&quot;恰恰是这段回复最重要的一个<strong>行为属性（behavioral property）</strong>。它不落在某几个具体 token 上，而是分散在整段里的整体特征。per-token SAE 逐位置独立重建激活，训练目标里没有任何东西<strong>逼迫</strong>这种跨 token 的高层性质从 token 级细节里分离出来。</p>
+</blockquote>
+<p>从这个例子出发，问题分两层：</p>
+<p><strong>第一层：表征层面。</strong> per-token SAE 学出来的 feature 大量是低层的——单 token 探测器、词法/句法模式。论文 Section 3.1 的 intuition：一个 token 的表征里必须编码&quot;它的位置、下一个是什么&quot;，所以 per-token 激活天然被 token 级信息主导。而 topic、style、persona、safety trait 这类高层性质往往<strong>分散在很多 token 上</strong>（论文引 Chen et al. 2025 关于 persona 的证据），per-token feature 常在零散位置稀疏 fire，不平滑覆盖整段。</p>
+<p><strong>第二层：可扩展性/工程层面。</strong> attribution graph 这类分析工具的可用性直接取决于产物规模。节点数是 <code>#active_features × #layers</code>，per-token 分辨率下 active feature 数随序列长度线性增长。论文给的数字：一个 10 轮、250 token 的对话，per-token 图在 4 层上约 <strong>128K 节点</strong>——人根本没法看。</p>
+<ul>
+<li><strong>动机</strong>：既要一种能自然表达&quot;整段回复高层性质&quot;的 SAE feature，又要让特征数脱离 token 数、随&quot;turn 数&quot;缩放，让 attribution 在长上下文下重新可行。</li>
+<li><strong>之前的方法卡在哪</strong>：
+<ul>
+<li>标准 per-token SAE（Bricken 2023 等）：训练目标不区分高层/低层，且随 token 爆炸。</li>
+<li>Temporal SAE（Bhalla et al. 2025）：用对比 loss 鼓励<strong>相邻 token</strong> 激活平滑。但本文观察到概念性 feature 常在<strong>不相邻的散点</strong>上 fire，&quot;相邻平滑&quot;假设不成立——他们要的不是&quot;相邻平滑&quot;，而是&quot;整段的均值&quot;。</li>
+<li>persona vector（Chen et al. 2025 / Lu et al. 2026）：也用&quot;整段均值激活&quot;做差，但每个 persona 只抽<strong>一个方向</strong>，且要预先知道 persona。本文是无监督学一整本 32,768 维的 feature 字典。</li>
+</ul>
+</li>
+<li><strong>⚠️ 问题定义本身就埋了个雷</strong>：Section 2.3 作者自己承认，信息并非均匀分布在各 token 上——句号 token 编码整句摘要（Gurnee &amp; Tegmark 2023）、实体信息集中在名字最后一个 token（Geva et al. 2023）。这跟&quot;等权平均所有位置&quot;直接冲突，作者把这个矛盾 explicitly 留给了 future work。也就是说，方法的核心假设从一开始就有已知反例。</li>
+</ul>
+<p>我的想法：</p>
+<ol>
+<li>这个点很有意思，不仅是这个地方的10轮、250token的这个例子，在agentic coding场景下几十K、几百K长度的completion，这种情况下用SAE是根本不可能的。如何在agentic coding场景下用SAE来分析也是一个难点。</li>
+<li>这个方法的核心假设这个地方说的确实有道理，如果所有token不是相等权重的，那对所有token做平均就不是最合理的。但是这个地方只能说是一个没办法的办法，做了一个合理的近似。不过还是要做一个discussion的实验，用具体的实验来说明这个不同token的权重对于平均的影响有多大。</li>
+</ol>
+<hr />
+<h2 id="3-关键方法-把-sae-输入从-x_t-换成整段均值-x-低通滤波-再用-nested-架构在一个模型里同时保留高层与-token-级特征">3. 关键方法：把 SAE 输入从 x_t 换成整段均值 x̄（低通滤波），再用 nested 架构在一个模型里同时保留高层与 token 级特征</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+继续用 Example A（&quot;...is 95&quot; 那段错误回复）走一遍 <strong>turn-averaged SAE</strong> 的数据流：</p>
+<ol>
+<li><strong>输入</strong>：取这段 assistant 回复的所有 token，在某层（单层实验用 layer 19，约 70% 深度）拿每个 token 的 residual stream $x_t \in \mathbb{R}^{3584}$。</li>
+<li><strong>turn 平均</strong>：$\bar{x} = \frac{1}{|T|} \sum_t x_t$——把整段压成一个 3584 维向量。直觉：token 级高频细节（&quot;这是数字 5&quot;&quot;这是句号&quot;）在平均里互相抵消被抹平，&quot;这整段是个自信答错的数字谜题回答&quot;这种低频、跨位置的分量被保留。</li>
+<li><strong>编码</strong>：$\mathrm{enc}(\bar{x}) = \mathrm{BatchTopK}(W_{\mathrm{enc}}(\bar{x} - b_{\mathrm{dec}}) + b_{\mathrm{enc}})$，取 top-k=128 个 feature。</li>
+<li><strong>读取</strong>：top feature 里出现 &quot;Incorrect answers to digit-exclusion number puzzles&quot;、&quot;Confidently stating incorrect mathematical <strong>and numerical</strong> facts&quot;——<strong>&quot;答错&quot;这个行为属性被抓到了</strong>。</li>
+<li><strong>nested 版验证</strong>：nested SAE 也 recover 了 error-recognition 概念，说明这个属性来自&quot;turn 平均&quot;这个操作，而非某个架构的偶然。</li>
+</ol>
+</blockquote>
+<blockquote class="card card-info">
+<p>核心一句话（Section 3.1）：训练目标就是<strong>标准 SAE 重建 loss，唯一区别是输入</strong>——从 per-token 激活换成 turn 均值。因为均值和单向量同维，&quot;SAE 架构和训练代码一行都不用改&quot;。这也正是全文 Conclusion 的立意（line 548）：&quot;reshaping the training signal ... can compel SAE features toward desired characteristics&quot; ——turn averaging 只是这个更大 idea 的第一个 instance。</p>
+</blockquote>
+<h3 id="3-1-三种候选架构-最终主推-turn-averaged-nested">3.1 三种候选架构，最终主推 turn-averaged + nested</h3>
+<p><strong>(a) Turn-averaged SAE（基础版）</strong></p>
+<ul>
+<li>
+<p>定义：给定 token 跨度 T，$\bar{x} = \frac{1}{|T|} \sum_{t \in T} x_t$，在 $\bar{x}$ 上做标准重建：</p>
+<div class="math-display">$$
+  \mathcal{L} = \| \bar{x} - \mathrm{dec}(\mathrm{enc}(\bar{x})) \|^2
+  $$</div>
+<div class="math-display">$$
+  \mathrm{enc}(\bar{x}) = \mathrm{BatchTopK}\!\left( W_{\mathrm{enc}} (\bar{x} - b_{\mathrm{dec}}) + b_{\mathrm{enc}} \right)
+  $$</div>
+<div class="math-display">$$
+  \mathrm{dec}(z) = W_{\mathrm{dec}}\, z + b_{\mathrm{dec}}
+  $$</div>
+<p>符号：$x_t \in \mathbb{R}^{d_{\mathrm{model}}}$ 是位置 $t$ 的 residual stream；$\bar{x}$ 是跨度均值；$W_{\mathrm{enc}}, W_{\mathrm{dec}}, b_{\mathrm{enc}}, b_{\mathrm{dec}}$ 是编解码器参数；BatchTopK（Bussmann 2024）跨 batch 选 top-k 激活。</p>
+</li>
+<li>
+<p><strong>why averaging works（核心比喻）</strong>：把一段 token 的 hidden state 看成&quot;沿 token 维的信号&quot;。topic、behavior 这类广义概念是<strong>低频分量</strong>（很多位置都有体现）；token 级细节是<strong>高频分量</strong>。取均值 = <strong>低通滤波</strong>，保留低频、衰减高频。（⚠️ 这个&quot;低通滤波&quot;是 asserted 而非证明的，且与 §2.3 的&quot;信息集中在关键 token&quot;反例张力未做实验，见 §6.1。）</p>
+</li>
+<li>
+<p>局限：turn-averaged SAE <strong>无法重建 token 级细节</strong>。Table 1 里它的 per-token nMSE 高达 <strong>1.799</strong>（几乎没法重建单 token）。</p>
+</li>
+</ul>
+<p><strong>(b) Decoupled SAE（被否决的对照）</strong></p>
+<ul>
+<li>想法：分解 $x_t = \bar{x} + (x_t - \bar{x})$，训两个独立 SAE（一个吃均值、一个吃残差，各 k=64）。</li>
+<li><strong>为什么否决（关键设计洞见）</strong>：per-token SAE 的输入是 $h_t - \bar{x}$，它对&quot;ablate turn-averaged feature 造成的均匀平移&quot;是<strong>不变的</strong>——你改动 turn 级 feature，per-token 那部分感知不到，两套 feature 在因果上断开，attribution 做不了。加上固定 top-k 预算劈两半，重建更差（Table 1：per-token nMSE 0.212）。
+备注：从训练+推理联合的角度来看这个问题，per-token SAE是能接收到average-SAE的梯度的，这样是不是就能保证condition了？即使从推理角度看两个SAE之间是独立的，但是从训练角度两个SAE本身是一个联合分布，只要保证per-token SAE conditioned on average-SAE上的分布是合理的就行了。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>→ 讨论结论</strong>：这里叠了两层&quot;耦合&quot;，要拆开。① <strong>事实前提在原始 decoupled 里其实不成立</strong>：残差用的是真实均值 $x_t-\bar{x}$（非重建 $x_t-\hat{\bar{x}}$），两个 loss 无交叉项、无共享参数，per-token SAE 收不到 average-SAE 的梯度。要接通得改成 $x_t-\hat{\bar{x}}$。② <strong>但病根不在训练期统计耦合，而在推理/干预期的因果耦合</strong>：attribution 边是对训练好的模型做梯度/干预算出来的，活在计算图上、不在联合分布上。&quot;per-token conditioned on average 的分布合理&quot;给的是<strong>相关性不是因果边</strong>——残差按构造已把 turn-level 分量减干净，per-token 结构性地看不到它，因果边严格为 0。③ 因此能满足 attribution 的联合方式必须是<strong>参数共享 + per-token 重建直接用到 turn-level 特征</strong>，也就是 <strong>nested 本身</strong>；nested 不靠&quot;分布合理&quot;担保，而是&quot;一个 SAE 用全集特征重建 $x_t$、ablate inner 特征直接改 per-token 重建&quot;，因果边由构造存在。单纯 condition 分布不够。</p>
+</blockquote>
+<p><strong>(c) Nested SAE（主推的 hybrid）</strong></p>
+<ul>
+<li>
+<p>想法：在<strong>单个</strong> SAE 里，让一个<strong>子集</strong> feature 去最优重建均值，同时<strong>全集</strong> feature 重建 per-token。切成 inner <code>[0:h]</code> 和 outer <code>[h:d_sae]</code>：</p>
+<div class="math-display">$$
+  \mathcal{L} = \sum_t \| \mathrm{dec}(\mathrm{enc}(x_t)) - x_t \|^2 \;+\; \alpha \cdot \| \mathrm{dec}_h\!\left( \mathrm{enc}(\bar{x})[0{:}h] \right) - \bar{x} \|^2
+  $$</div>
+<ul>
+<li>第一项：全集 feature 重建 per-token（标准 SAE 项）。</li>
+<li>第二项：只用<strong>前 h 个</strong> decoder 方向，且 $\mathrm{enc}(\bar{x})[0{:}h]$ 表示在 TopK 之前把 $[h{:}]$ 置零，强制 inner partition 单独重建<strong>均值</strong> $\bar{x}$。</li>
+<li>inner/outer <strong>共享同一套 encoder/decoder</strong>——这是和 decoupled 的本质区别，因此不会因果断裂。这是整个 hybrid 设计的题眼。</li>
+<li>与 Matryoshka SAE（Bussmann 2025）几乎同形，<strong>唯一改动</strong>是 inner partition 的训练信号被&quot;turn 平均&quot;重塑过。</li>
+</ul>
+</li>
+<li>
+<p>超参：<code>α ∈ {0.25,0.5,1,2,4}</code> sweep，取 <strong>α=1.0</strong>；<code>d_sae=32,768</code>，<code>h=16,384</code>（内外各半），也试了 8,192/24,576。</p>
+</li>
+</ul>
+<h3 id="3-2-turn-averaged-attribution-graph-下游应用">3.2 Turn-averaged attribution graph（下游应用）</h3>
+<ul>
+<li><strong>核心 intuition</strong>：turn-averaged feature 把整段变成一个 feature 向量，节点数从 $N \times L \times k$ 降到 $T \times L \times k$（$N$=token 数，$T$=turn 数）。10 轮 250 token 的例子：<strong>~5K vs ~128K</strong> 节点（4 层）。这就是 attribution 从&quot;不可读&quot;变&quot;可读&quot;的全部来源。</li>
+<li>构建：用 circuit-tracer 框架（Ameisen &amp; Lindsey 2025），多层 SAE 在 layer 6/11/16/21（约 20/40/60/80% 深度）。节点 = &quot;某 feature 在某 turn、某层&quot;的激活。三种架构的 edge weight 公式<strong>完全相同，唯一差异是 $\alpha$ 的定义</strong>：Turn-averaged 的 $\alpha_{A,t} = \mathrm{enc}(\bar{x})_A$ 全段常数；Per-token / Nested 的 $\alpha_{A,t} = \mathrm{enc}(x_t)_A$ 随位置变。</li>
+</ul>
+<details>
+<summary>edge weight 完整公式（复现者再看）</summary>
+<div class="math-display">$$
+W_{A \to B} = \frac{1}{|T_A|} \sum_t \alpha_{A,t} \cdot \left( \hat{d}_A \cdot g_t \right)
+$$</div>
+<div class="math-display">$$
+g_t = \sum_{s \in T_B} \frac{1}{|T_B|} \left( \frac{\partial h_s^{L_B}}{\partial h_t^{L_A}} \right)^{\!\top} \hat{d}_B
+$$</div>
+<ul>
+<li>$|T_A|$/$|T_B|$：source/target turn 的 token 数。</li>
+<li>$\alpha_{A,t}$：source feature A 在 token $t$ 的激活值。</li>
+<li>$\hat{d}_A$：feature A 的<strong>单位</strong> decoder 方向。</li>
+<li>$g_t$：feature B 的<strong>平均</strong> pre-activation 对 source 位置 $t$ 的 residual stream 的梯度（对 target turn 内所有位置 $s$ 求平均）。</li>
+<li>两个 $\frac{1}{|T|}$ 归一化的 why：turn 平均让 feature 激活与 turn 长度无关，所以 edge 权重也应无关——故 source/target 各除以其 token 数。</li>
+</ul>
+</details>
+<h3 id="3-3-训练配置-复现清单">3.3 训练配置（复现清单）</h3>
+<ul>
+<li>模型：Qwen-2.5-7B-Instruct，<code>d_model=3584</code>；语料 LMSYS-Chat-1M；激活离线缓存。</li>
+<li>所有 SAE：BatchTopK，<code>d_sae=32,768</code>，<code>k=128</code>，Adam（β1=0.9, β2=0.999）。nMSE 对 LR 在 2× 范围内 &lt;0.5% 变化。</li>
+<li><strong>单层 SAE</strong>（Section 4/5，layer 19，仅 assistant turn）：TA LR 2e-4 bs 256 3 epoch（~4.7M）；per-token LR 1e-4 bs 512 1 epoch（~266M tokens）；nested LR 1e-4 bs 512 α=1.0 1 epoch，inner=[0:16384]/outer=[16384:32768]。</li>
+<li><strong>多层 SAE</strong>（Section 6 attribution，layer 6/11/16/21，<strong>user+assistant 都训</strong>）：TA LR 1.2e-4 bs 256 3 epoch（~9.6M）；per-token LR 1e-4 bs 512 1 epoch；nested 同上。
+<ul>
+<li>为什么 user+assistant 都训（Appendix G）：assistant-only SAE 重建 user turn 差 1.5–3×；两角色一起训把 user-turn nMSE 降 <strong>53–63%</strong>，拉平到 assistant 水平——这是 attribution 要覆盖 system/user turn 的必要条件。</li>
+</ul>
+</li>
+<li>效率：turn-averaged 一个 epoch ~1.58M samples，1.5h/4×H100；per-token 同数据是 266M tokens。</li>
+</ul>
+<hr />
+<h2 id="4-数据集-lmsys-chat-1m-训练-评估横跨-chat-holdout-longbench-v2-长文档-sonnet-生成的-24-字段结构化摘要">4. 数据集：LMSYS-Chat-1M 训练，评估横跨 chat holdout、LongBench v2 长文档、Sonnet 生成的 24 字段结构化摘要</h2>
+<ul>
+<li><strong>训练数据</strong>：LMSYS-Chat-1M（Zheng 2023，真实多轮对话）。turn 作为 span 单位；多层 SAE 用 user+assistant 双角色。</li>
+<li><strong>评估数据</strong>：
+<ul>
+<li><strong>定性 feature 探索</strong>：316,000 个 held-out assistant turn（53.2M tokens），<strong>人工浏览挑对比最鲜明</strong>的 case（例 A–C）。</li>
+<li><strong>长上下文泛化</strong>：LongBench v2（Bai 2024）文档，24K–32K tokens，整篇当<strong>一个 span</strong> 编码，比训练样本平均长约 <strong>150×</strong> 且来自不同语料——测&quot;同维度、随长度不变&quot;的泛化。⚠️ 只从 ~50 篇里<strong>挑了 2 篇</strong>展示（Appendix C：一篇金融、一篇实时草地渲染图形学论文）。</li>
+<li><strong>定量 feature 评估</strong>：从 LMSYS holdout 采 2,000 turn。用 Claude 给每个 feature 生成描述（top-25 activating examples）；用 <strong>Sonnet 4.6</strong> 生成每个 turn 的<strong>结构化摘要</strong>——24 字段、5 类（content / form / voice / function / meta，schema 见 Appendix D，由 Sonnet 4.6 设计，要求不许引用或改写原文）。</li>
+<li><strong>embedding 度量</strong>：Qwen3-Embedding-8B（Zhang 2025）嵌入 24 字段与 feature 描述算余弦相似度（确定性、无 LLM judge）。</li>
+<li><strong>attribution</strong>：per-paragraph case 用 Claude 合成的 12 段 system prompt + 8 query（Appendix F）；14 轮对话来自 LMSYS holdout；intervention/completeness/replacement 用 300 对话（n=2/4/6 各 100）。</li>
+</ul>
+</li>
+<li><strong>特征聚合的关键预处理</strong>：per-token 和 nested 要把 token 级激活聚合成一个 feature list，测了 <strong>sum</strong> 和 <strong>max</strong> 两种。<strong>summing 更能捕捉高层特征</strong>（默认，top-128 匹配训练 k）；max 擅长挑稀有、区分性强的 token 级 feature。</li>
+</ul>
+<p>备注：为什么不是turn-max SAE，假设一个turn有N个token，那就是N个d_model维度的向量先做max，然后在作为SAE的输入，进行训练或推理。从这个角度的话，我觉得max比average可能更好避免笔记最开始提到的不同token权重是否一致的问题。</p>
+<blockquote class="card card-info">
+<p><strong>→ 讨论结论</strong>（注意：这与论文测过的 per-token(max) 不同——那是事后对特征激活做 max 聚合，这里是对 residual 做 max-pool 当 SAE <strong>输入</strong>）。直觉对一半：信息若集中在某高幅值 token（§2.3 的句号/实体末 token），max 能保住峰值、average 会按 $1/N$ 稀释。但对论文目标（抓整段高层性质）turn-max 大概率更差：① <strong>off-manifold</strong>——average 是凸组合、仍是合法激活点（线性表征可加，attribution 沿 $d_A$ 干预有物理意义）；element-wise max 把不同 token 的不同维拼成&quot;缝合怪&quot;，不对应任何真实激活，破坏 attribution 赖以成立的线性结构。② <strong>符号问题</strong>：residual 负的大幅值也携带信息，max 系统性偏正、丢负峰。③ <strong>与&quot;低通滤波&quot;立意相反</strong>：average 压高频留低频，max 是峰值检测器、放大 token 级 spike——这正是 per-token(max) 赢判别而非覆盖的原因。可证伪预测：<strong>turn-max 会把特征往判别型推、用覆盖换判别，落在 TA 与 per-token(max) 之间</strong>。④ <strong>丢共识信号</strong>：高层属性靠很多 token 各偏一点点、average 建设性叠加成清晰方向，max 只取每维赢家、反映不了分布式共识。<strong>关键</strong>：max 没解决&quot;token 权重不等&quot;，只是把&quot;均匀权重&quot;换成&quot;每维赢家通吃&quot;，同样是固定非学习启发式；对症的修法是<strong>学习式/attention-weighted 池化</strong>（见 §6.2）。不过 turn-max 作为 ablation 很有价值，正好能干净检验 §2 那条感想里&quot;token 权重对平均影响多大&quot;的问题。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/example_a_features.png" alt="Appendix B: Example A 各 feature 的 top-activating 图。turn-averaged 与 nested 对整段 token 均匀高亮（一个激活值管一整段），per-token 则逐 token 按激活值高亮——直观展示&quot;turn 级 feature 对整段只有一个激活值&quot;" /></p>
+<hr />
+<h2 id="5-关键结果-整段说得全-与-单段最好认-天然对立-前者-turn-averaged-赢-后者-per-token-max-赢-归因还原最充分的是-nested-而非-turn-averaged">5. 关键结果：&quot;整段说得全&quot;与&quot;单段最好认&quot;天然对立——前者 turn-averaged 赢、后者 per-token(max) 赢；归因还原最充分的是 nested 而非 turn-averaged</h2>
+<blockquote class="card card-info">
+<p>一句话把三个赢家说清（把三个抽象指标翻成人话）：</p>
+<ul>
+<li><strong>能把一整段回复整体在讲什么、是什么风格/口吻，描述得最完整</strong> → turn-averaged 最强。</li>
+<li><strong>能只靠特征就把这一段从一堆段落里唯一认出来</strong> → per-token(max) 最强。</li>
+<li><strong>在归因图里能最充分地还原模型的因果行为（改动源特征时下游确实被解释到）</strong> → nested 最强。</li>
+</ul>
+<p><strong>没有任何单一架构全面胜出</strong>，且几乎所有指标都建立在 LLM 生成产物之上。</p>
+</blockquote>
+<h3 id="5-1-重建质量-table-1-mathrm-nmse-mathbb-e-x-hat-x-2-mathbb-e-x-2">5.1 重建质量（Table 1，$\mathrm{nMSE} = \mathbb{E}\|x-\hat{x}\|^2 / \mathbb{E}\|x\|^2$）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>d_sae</th>
+<th>k</th>
+<th>turn-avg nMSE</th>
+<th>per-token nMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Turn-averaged</td>
+<td>32,768</td>
+<td>128</td>
+<td><strong>0.097</strong></td>
+<td>1.799</td>
+</tr>
+<tr>
+<td>Per-token</td>
+<td>32,768</td>
+<td>128</td>
+<td>0.355</td>
+<td><strong>0.162</strong></td>
+</tr>
+<tr>
+<td>Nested</td>
+<td>16,384/16,384</td>
+<td>128</td>
+<td>0.116</td>
+<td>0.167</td>
+</tr>
+<tr>
+<td>Nested</td>
+<td>8,192/24,576</td>
+<td>128</td>
+<td>0.120</td>
+<td>0.169</td>
+</tr>
+<tr>
+<td>Decoupled</td>
+<td>16,384/16,384</td>
+<td>64+64</td>
+<td>0.128</td>
+<td>0.212</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>per-token SAE 去编码均值时 nMSE 高达 <strong>0.355</strong>——说明&quot;均值&quot;对一个只见过单 token 激活的模型是<strong>显著 off-distribution</strong> 的（这是&quot;turn 平均必须单独训&quot;的量化证据）。</li>
+<li>nested inner 同时扛两个 loss 项，turn-avg nMSE 仍达 0.116，per-token 0.167 几乎追平纯 per-token（0.162），<strong>一个模型同时拿下两端</strong>。</li>
+</ul>
+<h3 id="5-2-定量-feature-评估-单段最好认-判别-vs-整段说得全-覆盖-四项-section-5-5-汇总">5.2 定量 feature 评估：&quot;单段最好认&quot;（判别）vs&quot;整段说得全&quot;（覆盖）四项（Section 5.5 汇总）</h3>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/discrimination_bar.png" alt="Figure 1: 五种 SAE 配置的 10-way matching 判别准确率，per-token(max) 以 95.0% 领先" /></p>
+<ul>
+<li><strong>10-way matching（判别，2,000 turn，judge=Sonnet 4.6）</strong>：per-token(max) <strong>95.0%</strong> &gt; per-token(sum) 87.0% &gt; turn-averaged 73.9% &gt; nested(sum) 70.6% &gt; nested(max) 57.3%。max pooling 挑出稀有 token 级 feature，能唯一定位文本，故判别最强。nested top-128 里约 <strong>99% 是 inner（turn 级）feature</strong>（inner = 专门重建均值的那半字典，见 §3.1），等于半容量的 turn-averaged SAE，故判别弱。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/pairwise_tight.png" alt="Figure 2: Pairwise coverage 胜率矩阵，turn-averaged 平均胜率 87.9% 居首，nested(max) 仅 3.4% 垫底" /></p>
+<ul>
+<li><strong>Pairwise ranking（覆盖，20,000 trial）</strong>：turn-averaged 平均胜率 <strong>87.9%</strong>，对 per-token(max) 头对头 79.7%——与判别排名完全相反。完整排名：TA 87.9% &gt; per-token(max) 67.0% &gt; per-token(sum) 60.2% &gt; nested(sum) 31.5% &gt; nested(max) <strong>3.4%</strong>。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/ranking_option3_sidebyside.png" alt="Figure 3: 5-way ranking，turn-averaged 平均排名 2.03、44% 被排第一" /></p>
+<ul>
+<li><strong>5-way ranking（覆盖）</strong>：turn-averaged 平均 rank <strong>2.03</strong>、44% 排第一 &gt; per-token(sum) 2.36 &gt; per-token(max) 2.47 &gt; nested(sum) 3.36 &gt; nested(max) 4.79。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/embedding_bar.png" alt="Figure 4: k=3 时 embedding coverage 相似度，turn-averaged 0.663 略高于 nested(sum) 0.658" /></p>
+<ul>
+<li><strong>Embedding metric（覆盖，确定性、无 LLM judge）</strong>：turn-averaged <strong>0.663</strong>（k=3）&gt; nested(sum) 0.658 &gt; per-token(sum) 0.647 &gt; nested(max) 0.640 &gt; per-token(max) 0.617；排名在 k=1,2,3,5 全一致（Appendix H）。</li>
+<li><strong>一句话结论</strong>：一段话最容易靠&quot;最独特的细节&quot;被认出（判别 → per-token max 赢），但&quot;这段话整体在讲什么&quot;要靠覆盖（→ turn-averaged 赢）。作者据此<strong>推测</strong>（非实测）TA 更适合&quot;对整段/整回复操作&quot;的任务（长对话摘要、判断 persona/safety trait）。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>⚠️ [?] headline 87.9% 有个论文自身的数值矛盾</strong>：主文 §5.2 说 &quot;turn-averaged win 87.9% on average&quot;，且 Appendix E 明确 &quot;All results in the main text use Sonnet without prefill&quot;——但 Appendix E 表里 &quot;Sonnet without prefill&quot; 的 TA 平均胜率写的是 <strong>83.1%</strong>。同一个量（Sonnet-without-prefill 平均胜率）给了两个数（相差 ~5pp）。头对头 79.7% 对 Appendix E 的 74.8% 也有同样缺口。论文没解释，可能是子集/统计口径差异，也可能是笔误。<strong>保留 [?]，这是论文自身的内部不一致，不是我们的理解问题。</strong></p>
+<p><strong>⚠️ 审稿攻击点</strong>：embedding 指标 TA 对 nested(sum) 只领先 <strong>0.005</strong>（0.663 vs 0.658），无 CI、无显著性检验，很难说不在噪声内（2,000 turn 本可给二项 CI）。且该指标输入仍是 LLM 生成的 feature 描述，只是把 judge 换成 embedding，并未逃出&quot;LLM 产物评 LLM 产物&quot;的循环。</p>
+</blockquote>
+<h3 id="5-3-attribution-结果">5.3 Attribution 结果</h3>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/subgraph.png" alt="Figure 5: 14 轮对话的 turn-averaged attribution 子图，从早期 AI-safety/核武器/支配 feature，经 L16 越狱检测，流向 L21 退化输出" /></p>
+<ul>
+<li><strong>规模压缩</strong>：14 轮对话，pruning（保留贡献 80% logit 影响的节点、98% edge 影响的 edge）把图从 <strong>7,239 节点 / 10.4M edge → ~1,300 节点 / ~110K edge</strong>。</li>
+<li><strong>可读性对比（最抢眼的定性证据）</strong>：turn-averaged 子图给出一条可理解的因果链——L21 &quot;Repetitive/degenerate text output&quot; ← L16 &quot;Jailbreak prompts attempting to override AI safety rules&quot; ← L11 &quot;Nuclear weapons design details&quot; ← L6 &quot;AI safety disclaimer boilerplate&quot;。而 per-token 聚合<strong>没有&quot;对抗性 prompt 检测&quot;这个 feature</strong>，从退化节点回溯只能到 &quot;chemical compound names&quot;、&quot;JSON&quot; 这种与退化输出无因果关系的东西。（⚠️ 单条对话、人工在 UI 里手动连图——是 anecdote 不是 evidence，见 §6.1 的 absence-of-evidence 讨论。）</li>
+<li><strong>Per-paragraph attribution（Table 2）</strong>：12 段 system prompt、8 个针对性 query，每个 target 段的 attribution 增量 Δ（相对中性 query baseline，百分点）在<strong>所有 8 query、所有 3 架构上全为正</strong>。但幅度<strong>极小</strong>（+0.3 到 +1.9pp），且三架构<strong>几乎一模一样</strong>（如 §0 Identity：TA +1.8 / per-token +1.9 / nested +1.9）。⚠️ 这个实验只证明&quot;归因能工作&quot;，<strong>完全无法区分 TA 与 per-token 的优劣</strong>，且 n=1/query、无误差棒。总节点 4 层×128 feature×14 turn = 7,168。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/intervention_validation.png" alt="Figure 6: edge 权重与干预观测效应的 Spearman/Pearson 相关，turn-averaged 弱于另外两种，且随对话变长而下降" /></p>
+<ul>
+<li><strong>Intervention validation</strong>：沿 source feature 的 decoder 方向在 source turn 的<strong>每个位置</strong>加单位向量（per-token/nested 也是每个位置，不只 fire 的位置，以匹配 turn 级 edge 粒度），测 target pre-activation 变化。每图取 40 个最高权重跨层 edge，300 对话 × 3 架构 = <strong>36,000 次干预</strong>。Sign matching 三方法均 ~100%（任一图最低 95%）。per-token Spearman 最强，nested Pearson 最强，turn-averaged 显著但较弱（丢了高频分量）；相关性随对话变长下降（一阶近似漏掉更多高阶效应）。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2606.28548v1/figures/completeness_replacement.png" alt="Figure 7: completeness 与 replacement sufficiency 分数，nested &gt; per-token &gt; turn-averaged，跨所有对话长度一致" /></p>
+<ul>
+<li><strong>Completeness &amp; replacement（Figure 7）</strong>：<strong>nested 在两项 sufficiency 上都最高</strong>，排序 nested &gt; per-token &gt; turn-averaged，在所有对话长度上一致。值得注意：nested 的 per-token nMSE 略差于纯 per-token（0.167 vs 0.162），但 sufficiency 反而最高，且<strong>优于事后聚合的 per-token</strong>——说明 nested 架构天生更适合 turn 级 attribution。两项指标都随对话变长上升（原因待 future work）。</li>
+</ul>
+<h3 id="5-4-附加-无监督识别-persona-feature-appendix-i">5.4 附加：无监督识别 persona feature（Appendix I）</h3>
+<ul>
+<li>不需训练时知道 persona，事后用对比 prompt（正/负）生成 rollout，按 feature 在正/负 rollout 上的平均激活<strong>比值</strong>排序（排除 holdout density &gt;20% 的高频通用 feature），就能捞出 persona 相关 feature。</li>
+<li>例：sycophancy 的 turn-averaged top feature 有 &quot;Compliments, flattery, and praise&quot;、&quot;Enthusiastic affirmations and agreement&quot;；evil 的有 &quot;Roleplaying as evil personas promising to fulfill harmful requests&quot;（rollout ratio 269.1）。有噪声（如 quantitative trait 里混进 &quot;safety refusals&quot;），但整体能 surface 相关 feature。⚠️ 但作者<strong>明确声明没做架构间的定量对比</strong>——这条只是 demo，不能用来支撑&quot;TA 更适合整段任务&quot;。</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li>
+<p><strong>最该记住的一条：核心卖点&quot;turn-averaged 特征把整段说得更完整&quot;的因果归属站不住。</strong> 支撑它的覆盖度指标至少有四重混淆，作者一个都没排除：① 缺最基本的对照——直接拿原始均值向量做匹配，覆盖度会不会一样高甚至更高？若原始均值池化就够，那 SAE 字典在这个任务上零增值，卖点塌一半；② 可能只是容量差异——turn-averaged 把整本三万多维字典用来编一个向量，per-token 把预算摊到几十个 token 上，缺容量对齐的对照；③ 给两类 SAE 生成描述的自动解释提示不对称（作者自己承认），等于用一把偏向自己的尺子量出自己更好；④ 二十四字段的标准、逐段摘要、裁判全是同一个模型，等于自己定标准、自己生产被评对象、自己打分。</p>
+</li>
+<li>
+<p><strong>旗舰子图犯了&quot;没找到不等于不存在&quot;。</strong> &quot;per-token 找不到对抗检测特征&quot;是全文最抢眼的卖点，但它只说明在人肉剪枝后的可读图里没浮现，推不出 per-token SAE 里真的没有这个特征——把&quot;读不出来&quot;当成了&quot;不存在&quot;，而且样本量只有一个对话。</p>
+</li>
+<li>
+<p><strong>评估的地基不稳。</strong> 裁判换一个 prefill 开关就从瞎猜（49%）跳到 83%，指标本身极不稳定；全程疑似单随机种子（SAE 对初始化很敏感，特征分裂/死特征抖动大）；定性证据几乎全是手挑（长文档从约五十篇里挑两篇、归因只做一个对话且人工连图），选择偏差空间很大。</p>
+</li>
+<li>
+<p><strong>也有扎实处，别一味挑刺。</strong> 双角色训练与 assistant-only 的对照是诚实有用的消融；干预验证里 turn-averaged 输了也如实报告、没藏；边方向的符号匹配接近 100%，让人对数据本身加分。</p>
+</li>
+<li>
+<p><strong>一个我大概率想不到的漂亮点。</strong> 把 SAE 输入换成均值，本质是对&quot;沿 token 维的信号&quot;做低通滤波；改动量几乎为零（维度不变、代码不改），却把归因从不可用撬到可读——典型的&quot;换训练信号而非换架构&quot;的四两拨千斤。</p>
+</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>&quot;reshape training signal 而非改架构&quot;这条会被继续挖：均值只是最简单的池化。可预期 attention-weighted 池化（呼应 §2.3&quot;信息集中在句号/实体末 token&quot;）、可学习的 span 划分、多尺度（句/段/turn/文档）联合的 Matryoshka 变体，以及作者已点名的 natural language autoencoder。长文档泛化（150× 训练长度仍 work）说明天花板不低。</li>
+<li>真正能落地的判据将是<strong>下游任务准确率</strong>（persona 分类、越狱检测、长对话摘要），而不是 LLM-judge 的 coverage——本文缺的正是这一环，作者也把它列进 future work。后续大概率会补一个 ground-truth benchmark。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>诚实报告对立结果</strong>是这篇的品味亮点：设计判别 + 三个覆盖共四个评估，明说两轴给出相反排名，并把&quot;什么时候用哪个&quot;讲清楚。比&quot;我全面 SOTA&quot;更可信也更有指导性。同理，把 judge 敏感性单列附录（E）、主动自曝 prefill 会让结论崩，是很高的科研诚信标准。</li>
+<li><strong>但更进一步的 meta-lesson</strong>（本篇最锋利的一条）：当你发现一个指标在一个开关下从 chance 跳到 83%，正确反应是<strong>质疑指标本身</strong>，而不是挑一个好看的配置继续用它下结论。作者做到了前半（自曝），没做到后半（照用 87.9% 当 headline）。</li>
+<li><strong>先否决简单方案再引出复杂方案</strong>（decoupled → nested）的写法，让 nested 的每个设计选择都有&quot;为了修 decoupled 的哪个毛病&quot;的因果，而不是凭空冒出来。方法类论文值得抄的叙事结构。</li>
+</ul>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-Anthropic-Interpretability-Safety">MOC-Team-Anthropic-Interpretability-Safety</span> — Team: Anthropic Fellows Program（Kevin Der）+ Anthropic（Harish Kamath、Ben Thompson）产出，延续该团队用 SAE 做激活解读、attribution 与 persona/safety 审计的脉络。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 提出 turn-averaged SAE，把 SAE 特征提取的分析粒度从 per-token 升到 per-turn（一条 turn 的特征数从 n_tokens×L 降到 L），并据此把 attribution graph 从不可读的 per-token 规模压到 per-turn，是 SAE/电路特征提取与应用的新工具。</li>
+</ul>
+<p>直接论文连接（未被 MOC 覆盖的关系）：</p>
+<ul>
+<li><a class="wikilink" href="Automatically_Interpreting_Millions_of_Features-SAE自动解释.html" title="Automatically_Interpreting_Millions_of_Features-SAE自动解释">Automatically_Interpreting_Millions_of_Features-SAE自动解释</a> — 本文的 feature 描述、覆盖度评估全靠 autointerp 流水线，其可靠性正是 §6.1 攻击点的根源。</li>
+</ul>
+<hr />
+<p>#Research #Paper #Sparse_Autoencoders #Interpretability #Mechanistic_Interpretability #Attribution_Graphs #Long_Context #Feature_Discovery</p>
+<h2 id="修订记录">📝 修订记录</h2>
+<ul>
+<li>2026-07-07 「<span class="wikilink unresolved" title="...SAE-Per-Turn-Granularity">...SAE-Per-Turn-Granularity</span> 不存在」→ 核实该链接目标为库根目录下一个 0 字节空文件（等于不存在），删除来源说明与&quot;连接与发现&quot;里对该预印版笔记的两处死链引用。</li>
+<li>2026-07-07 「公式用 LaTeX 格式，包括所有公式」→ 把全文行内与展示公式（turn-averaged/nested loss、edge weight、nMSE 定义、各符号定义）从代码块/纯文本改写为 Obsidian LaTeX（<code>$...$</code> 与 <code>$$...$$</code>）。</li>
+<li>2026-07-07 「coverage/discrimination/attribution sufficiency 三词太抽象，讲人话」→ 把 §5 标题、开头一句话结论、§5.2 标题里的三个英文术语改成中文口语化描述（&quot;整段说得全&quot;/&quot;单段最好认&quot;/&quot;归因还原最充分&quot;）。</li>
+<li>2026-07-07 「§6.1 讲太多、中英夹杂、只留最关键几条」→ 把 §6.1 从九条精简为五条，改写成基本纯中文，保留最伤的批评（覆盖度因果归属、没找到≠不存在、评估地基不稳）＋一条平衡＋一条洞见。
+</li>
+</ul>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Verbalizable-Representations-Global-Workspace-Jacobian-Lens.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Verbalizable Representations Form a Global Workspace in Language Models</span></a>
+<a class="paper-nav-link next" href="Rubric-as-Experts-Case-Specific-MQM-Rubrics.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Rubric-as-Experts: Case-Specific MQM Rubrics for Translation Quality Evaluation</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: der2026turnaveraged</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

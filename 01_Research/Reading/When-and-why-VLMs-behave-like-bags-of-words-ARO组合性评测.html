@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>When and Why Vision-Language Models Behave like Bags-Of-Words, and What to Do About It?</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">When and Why Vision-Language Models Behave like Bags-Of-Words, and What to Do About It?</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#0-一句话"><span class="toc-num">01</span> 0. 一句话</a></li>
+<li><a class="toc-link" href="#1-背景信息"><span class="toc-num">02</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-vlm-到底有没有编码组合结构"><span class="toc-num">03</span> 2. 关键问题：VLM 到底有没有编码组合结构？</a></li>
+<li><a class="toc-link" href="#3-关键方法-最小对-benchmark-composition-aware-hard-negatives"><span class="toc-num">04</span> 3. 关键方法：最小对 benchmark + composition-aware hard negatives</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-aro-的构造-appendix-a-1-核心只有一句">3.1 ARO 的构造（Appendix A.1，核心只有一句）</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-negclip-的两个组件-section-4-appendix-c">3.2 NegCLIP 的两个组件（Section 4 + Appendix C）</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-与已有方法的区别">3.3 与已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集"><span class="toc-num">05</span> 4. 数据集</a></li>
+<li><a class="toc-link" href="#5-关键结果"><span class="toc-num">06</span> 5. 关键结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-table-6-单次运行-无-std">5.1 主实验（Table 6，单次运行，无 std）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-各模型在-aro-上的真实位置-table-2-汇总-table-5">5.2 各模型在 ARO 上的真实位置（Table 2 汇总 / Table 5）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-口径重建-由-table-2-原始格重算-论文未报告">5.3 口径重建（由 Table 2 原始格重算，论文未报告）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-3-的-retrieval-shortcut-实验-table-3-4-3-seeds">5.4 §3 的 retrieval shortcut 实验（Table 3/4，3 seeds）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-收益边界-修复之后仍然失败的地方">5.5 收益边界：修复之后仍然失败的地方</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">07</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">08</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-22</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2210.01936" target="_blank">arXiv</a>
+    </div>
+    <h1>When and Why Vision-Language Models Behave like Bags-Of-Words, and What to Do About It?</h1>
+    <p class="authors">Mert Yuksekgonul, Federico Bianchi, Pratyusha Kalluri, Dan Jurafsky, James Zou</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Model</span> <span class="topic-tag">Compositionality</span> <span class="topic-tag">Contrastive_Learning</span> <span class="topic-tag">Benchmark</span></div>
+</header>
+
+<h1>论文笔记: When and Why Vision-Language Models Behave like Bags-Of-Words, and What to Do About It?</h1>
+<h2 id="0-一句话">0. 一句话</h2>
+<p><strong>主句</strong>：retrieval 评测不要求组合信息 ⟹ 以 retrieval 为目标的对比预训练不提供&quot;学组合性&quot;的梯度压力 ⟹ 缺陷在标准指标上不可见 ⟹ 需要显式的词袋相同最小对 benchmark（ARO）才能看见。这条链的前两环成立，但 ARO 看见的东西<strong>不是论文标题说的&quot;模型是词袋&quot;，而是&quot;模型的语序/搭配偏好被校准到了错误方向，且在 64.7% 的数据上被一次疑似构造伪影钉死在 50%&quot;</strong>。</p>
+<p><strong>反句</strong>：ARO 的负例是模板自动生成、无人工校验 ⟹ 正负例在 plausibility/fluency 上存在系统性分布差异 ⟹ 一部分&quot;准确率&quot;可以纯靠文本拿到 ⟹ headline 数字主要由一个异常模型（Flava）和一批极小样本格子支撑 ⟹ 换成 instance-weighted 口径后 NegCLIP 与 X-VLM 打平。</p>
+<p>本文所有数字取自 arXiv v2 PDF（2022-10-06，18 页）；<code>-</code> 后文不再重复标注来源。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者/团队</strong>：Mert Yuksekgonul、Federico Bianchi、Pratyusha Kalluri、Dan Jurafsky、James Zou，Stanford University（Zou/Jurafsky 组）。</li>
+<li><strong>时间与会议</strong>：arXiv 2210.01936（2022-10），ICLR 2023。引用数约 674（2026-09 查询）。</li>
+<li><strong>代码</strong>：PDF v2 写 <code>https://github.com/mertyg/when-and-why-vlms-bow</code>（正式发布仓库名为 <code>vision-language-models-are-bows</code>，同作者）。</li>
+<li><strong>定位</strong>：一篇&quot;benchmark + 归因&quot;论文。它的持久遗产是 ARO 这个 benchmark 和 &quot;NegCLIP&quot; 这个基线方法名，不是它的因果结论。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-vlm-到底有没有编码组合结构">2. 关键问题：VLM 到底有没有编码组合结构？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>论文开篇就问：CLIP 能区分 &quot;the horse is eating the grass&quot; 和 &quot;the grass is eating the horse&quot; 吗？</p>
+<p>答案是不能，而且不是勉强不能：给一张马吃草的图 + 这两个候选做二选一（chance = 50%），BLIP 给错误那句 <strong>81% 的概率</strong>（Figure 1 caption）。</p>
+<p>先把两个护栏钉上再往下讲：</p>
+<ul>
+<li>随机错误在二选一里是 50%。<strong>81% 意味着模型不但有偏好，而且偏好错了方向。</strong> 这不是&quot;没学到&quot;，是&quot;学到了反的&quot;。</li>
+<li>这是论文挑出来的最坏个案，不是平均水平：BLIP 在 VG-Relation 整体是 0.59，高于 chance。</li>
+</ul>
+<p>这两句的词袋完全相同，只有主宾换了位置，所以任何真正的 bag-of-words 表示对两者的打分必然相同——这个二选一就是&quot;你是不是词袋&quot;的定义性探针。</p>
+<p><strong>而这恰好把论文的标题隐喻证伪了一半</strong>：真词袋预测的是 50%（无所谓），不是 81%（选错）。见 §6.1。</p>
+</blockquote>
+<ul>
+<li><strong>动机</strong>：VLM 在几十个 benchmark 上高分，但没人知道这些分数里有多少是组合理解。此前的 Winoground（Thrush et al. 2022）只有 400 例，还混杂常识推理与世界知识（Diwan et al. 2022），既缺统计效力，也没法把关系/属性/顺序单独拆出来测。</li>
+<li><strong>之前的方法卡在哪</strong>：规模与 curation 二选一——人工 curated 的数据集小到不能做细粒度结论，自动生成的又没人验证过标签噪声。本文选了规模这一侧，但<strong>从未偿还 curation 的欠账</strong>（§6.1 第 3 条）。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2210.01936v3/aro_dataset.png" alt="Figure 1：ARO 的组合性最小对" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2210.01936v3#S2.F1">原文 Figure 1</a>。比较词汇相同而关系或属性绑定不同的描述；模型必须判断谁对谁做了什么。图中的错误偏好直观说明，识别出物体不等于理解组合结构。</em></p>
+<h2 id="3-关键方法-最小对-benchmark-composition-aware-hard-negatives">3. 关键方法：最小对 benchmark + composition-aware hard negatives</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>同一匹马在 §4 原样回来。论文的解法就是把&quot;最小对&quot;塞进对比学习的 batch 里：</p>
+<p>原句 <code>The horse is eating the grass and the zebra is drinking the water</code>
+→ 交换名词：<code>The zebra is eating the grass and the horse is drinking the water</code>
+→ 交换动词短语：<code>The horse is drinking the grass and the zebra is eating the water</code></p>
+<p>两条句子语法正确、词袋相同、语义为假，进 batch 当负例。<strong>这是全文唯一需要真正记住的机制</strong>；N×2N 相似度矩阵和 K=3 近邻图都只是它的配菜。</p>
+</blockquote>
+<h3 id="3-1-aro-的构造-appendix-a-1-核心只有一句">3.1 ARO 的构造（Appendix A.1，核心只有一句）</h3>
+<p>遍历 GQA scene graph（底图来自 Visual Genome）→ 丢弃宽或高小于整图 1/4 的对象 → 要求两个对象不同类（Attribution 还要求两者属性也不同）→ <strong>裁剪出包含两个对象的最小包围框</strong> → 用模板 <code>the [obj1] is [rel] [obj2]</code> 填正例、交换两槽填负例 → 移除 <code>near</code>/<code>next to</code> 这类自对称关系。</p>
+<p><strong>唯一有判断力的一点</strong>：构造的全部用意是把两个候选做成<strong>同一个词袋</strong>，所以论文不需要任何语法性过滤——模板互换天然保证语法正确。这是它相对人工 curated benchmark 的核心取舍，也<strong>正是后来 SugarCrepe 攻击它的位置</strong>。</p>
+<h3 id="3-2-negclip-的两个组件-section-4-appendix-c">3.2 NegCLIP 的两个组件（Section 4 + Appendix C）</h3>
+<ul>
+<li><strong>Hard negative caption</strong>：用 spacy 交换 caption 中两个同类成分的位置，成分类型 5 种——nouns、adjectives、adverbs、verb phrases、noun phrases（NP 仅在 ≥3 token 时使用，避免与 noun swap 重叠）。每条 caption 至多得到 5 个负例；<strong>生成 0 个负例的 caption 直接从数据集删掉</strong>；<strong>每个 epoch 为每条 caption 采样 1 个</strong>进 batch。</li>
+<li><strong>Hard negative image</strong>：离线用 CLIP 算 MSCOCO 全部图像两两相似度，对每张图取 <strong>K = 3 个最近邻</strong>；训练时每图每 epoch 采样 1 个近邻图加入 batch，连同它的 caption 与 negative caption 一起。</li>
+<li><strong>损失</strong>：拼接 caption 得 T̃_{2N}，算 S̃ ∈ R^{N×2N}，行/列 cross-entropy 与 CLIP 相同，<strong>唯一差别是 negative caption 不参与列向损失</strong>（它没有匹配图像）。温度 τ / logit scale 全文未给 <code>[?]</code>。</li>
+<li><strong>训练配置</strong>：只 finetune <strong>CLIP ViT-B/32</strong>（非从头训练，作者自述算力限制），在 COCO train 上 <strong>5 epochs</strong>，lr ∈ {1e-5, 5e-6, 1e-6} 搜索，AdamW + 50 warmup steps + cosine annealing，<strong>按 COCO validation retrieval 选模</strong>。对照 <strong>CLIP-FT</strong>（同超参、不加 hard negatives）用于解耦 finetune 本身的效应。新版论文另给出 batch size N=1024、单卡 RTX 2080 Ti（PDF v2 无此句）。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2210.01936v3/clip_negatives.png" alt="Figure 3：图像近邻与文本扰动共同构成困难负例" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2210.01936v3#S4.F3">原文 Figure 3</a>。看图像侧近邻和文本侧词序扰动这两个入口：NegCLIP 同时改变两类负例。组合方案有效，并不能单独确定每个组件贡献多少。</em></p>
+<h3 id="3-3-与已有方法的区别">3.3 与已有方法的区别</h3>
+<p>论文自己在 Section 5 承认 X-VLM/BLIP 这类模型本来就用了高相似度 pair 做负例挖掘，据此主张&quot;只有 composition-aware 的负例才有效&quot;。但 <strong>NegCLIP 的图像侧（KNN over CLIP embeddings）本质上就是同一类挖掘</strong>，真正新的只有 caption 的词序扰动——<strong>而它从来没有被单独消融过</strong>（两个组件永远一起上）。novelty 与 evidence 的最脆弱处是同一个地方。</p>
+<h2 id="4-数据集">4. 数据集</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>子集</th>
+<th>构造来源</th>
+<th>规模</th>
+<th>形式</th>
+<th>chance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VG-Relation</td>
+<td>VG + GQA，48 个关系</td>
+<td>23,937</td>
+<td>图 + 2 句二选一</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>VG-Attribution</td>
+<td>VG + GQA，117 个属性对</td>
+<td>28,748</td>
+<td>图 + 2 句二选一</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>COCO-Order / Flickr30k-Order</td>
+<td>COCO / Flickr30k caption + 4 种扰动（Spacy POS）</td>
+<td>6,000</td>
+<td>原句 + 4 扰动，5 选 1</td>
+<td>0.20</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>合计 <strong>58,685</strong>，对应摘要的 &quot;&gt;50,000 test cases&quot;（比 Winoground 的 400 大约两个数量级）。</li>
+<li>4 种顺序扰动沿用 O'Connor &amp; Andreas 2021：shuffle nouns&amp;adjectives / shuffle all but nouns&amp;adjectives / shuffle trigrams / shuffle within trigrams；§3 的 retrieval 诊断另加 &quot;shuffle all words&quot;。</li>
+<li><strong>检索诊断用</strong>：COCO 5k images、Flickr30k 1k images（Karpathy split），指标 R@1 / R@5，每个扰动 3 seeds。</li>
+<li><strong>被测模型</strong>：CLIP ViT-B/32（唯一变体）、BLIP-Base、X-VLM-Base、FLAVA（<code>flava-full</code>）。BLIP/X-VLM 按数据集切换 finetuned checkpoint。</li>
+<li><strong>打分口径未定义</strong>：PDF 全文 <strong>&quot;ITM&quot; / &quot;logit&quot; / &quot;score&quot; 均 0 次命中</strong>，唯一被形式化写出的打分是 §4 里 CLIP 的 cosine 相似度。四个模型架构不同（双塔对比 vs 带融合 ITM 头）却在同一 chance 下直接比准确率，论文没有讨论也没有消融。</li>
+</ul>
+<h2 id="5-关键结果">5. 关键结果</h2>
+<p><strong>最关键的结论</strong>：ARO 确实暴露了缺陷，但按 instance-weighted 口径重建后，headline 的 &quot;+18pp / NegCLIP 是最强模型&quot; 缩水为 <strong>+8pp 且与 X-VLM 打平</strong>。</p>
+<h3 id="5-1-主实验-table-6-单次运行-无-std">5.1 主实验（Table 6，单次运行，无 std）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th>CLIP</th>
+<th>CLIP-FT</th>
+<th>NegCLIP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VG-Relation (macro)</td>
+<td>0.63</td>
+<td>0.63</td>
+<td><strong>0.81</strong></td>
+</tr>
+<tr>
+<td>VG-Attribution (macro)</td>
+<td>0.62</td>
+<td>0.65</td>
+<td><strong>0.71</strong></td>
+</tr>
+<tr>
+<td>Flickr30k-PRC</td>
+<td>0.59</td>
+<td>0.50</td>
+<td><strong>0.91</strong></td>
+</tr>
+<tr>
+<td>COCO-PRC</td>
+<td>0.46</td>
+<td>0.36</td>
+<td><strong>0.86</strong></td>
+</tr>
+<tr>
+<td>CIFAR10 / CIFAR100</td>
+<td>0.95 / 0.80</td>
+<td>0.95 / 0.80</td>
+<td>0.94 / 0.79</td>
+</tr>
+<tr>
+<td>ImageNet</td>
+<td>0.75</td>
+<td>0.74</td>
+<td>0.72</td>
+</tr>
+<tr>
+<td>Flickr30k Image / Text R@1</td>
+<td>0.59 / 0.78</td>
+<td>0.67 / 0.83</td>
+<td>0.67 / <strong>0.79</strong></td>
+</tr>
+<tr>
+<td>COCO Image / Text R@1</td>
+<td>0.30 / 0.50</td>
+<td>0.42 / 0.59</td>
+<td>0.41 / <strong>0.56</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>正文口径：VG-Relation 63%→81%，VG-Attribution 62%→71%，COCO-Order 46%→86%，Flickr30k-Order 59%→91%。</p>
+<p><strong>两个必须知道的读数</strong>：</p>
+<ul>
+<li>CLIP-FT 这条对照列是全文最重要的列。在 Order 上，纯 COCO finetune 反而让 PRC 变差（Flickr 0.59→0.50，COCO 0.46→0.36）——说明收益确实来自 hard negative 而非 finetune。但<strong>论文只用这个对照讲收益，从来没用它讲损失</strong>：相对 CLIP-FT，NegCLIP 在标准 retrieval 上丢 1–4 个 R@1 点（Flickr Text 0.83→0.79、COCO Text 0.59→0.56），ImageNet 0.74→0.72。正文却写 &quot;NegCLIP does not suffer in downstream tasks&quot;。</li>
+<li>论文把 2–3pp 当重要差异（BLIP spatial vs verbs），却把 3–4pp 的 retrieval 损失判为 &quot;no substantial loss&quot;——双重标准。</li>
+</ul>
+<h3 id="5-2-各模型在-aro-上的真实位置-table-2-汇总-table-5">5.2 各模型在 ARO 上的真实位置（Table 2 汇总 / Table 5）</h3>
+<p>VG-Relation 汇总行（macro；列序 CLIP / NegCLIP / CLIP-FT / XVLM / BLIP / Flava）：</p>
+<ul>
+<li>全关系 <strong>0.59 / 0.8 / 0.64 / 0.73 / 0.59 / 0.24</strong>；Spatial 0.56 / 0.66 / 0.57 / 0.74 / 0.66 / 0.34；Verbs 0.61 / 0.86 / 0.66 / 0.73 / 0.56 / 0.20。</li>
+<li><strong>在 chance=0.50 的 VG-Relation 上只有 Flava（0.24）真的低于 chance</strong>，CLIP/BLIP 0.59、X-VLM 0.73 都在 chance 之上。Figure 1 caption 那句 &quot;several models remain at or below chance level&quot; 在数据上站不住，除非改指子集。</li>
+<li>Attribution（chance 0.50）：BLIP 0.88、X-VLM 0.87、Flava 0.73、CLIP 0.62。<strong>只有 CLIP 勉强算 &quot;blunder&quot;</strong>，摘要那句 &quot;VLMs can blunder when linking objects to their attributes&quot; 只对 1/4 的模型成立，且无 per-attribute 表、无人类上限。</li>
+<li>Order（chance 0.20，Table 5，3 seeds）：Flickr30k-PRC — BLIP 0.369±0.009、CLIP 0.595±0.006、Flava 0.129±0.005、X-VLM 0.473±0.003；COCO-PRC — BLIP 0.321±0.001、CLIP 0.460±0.001、Flava 0.039±0.001、X-VLM 0.362±0.003。Flava 在 COCO 上比 chance 还低 16pp，论文只用 &quot;below chance&quot; 一笔带过。</li>
+</ul>
+<h3 id="5-3-口径重建-由-table-2-原始格重算-论文未报告">5.3 口径重建（由 Table 2 原始格重算，论文未报告）</h3>
+<p>论文全文只报 <strong>macro</strong>（Table 6 caption 与 Figure 1 的 y 轴都自认 Macro Accuracy），micro 一次没给。Table 2 的 45 行里 spatial 13 条、verbs 32 条，所以 grand macro 天然给 verbs 71% 的权重，而 verbs 只占全部实例的 8.7%。按 Freq 加权重算：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>CLIP</th>
+<th>CLIP-FT</th>
+<th>NegCLIP</th>
+<th>XVLM</th>
+<th>BLIP</th>
+<th>Flava</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>micro</td>
+<td>0.506</td>
+<td>0.539</td>
+<td><strong>0.586</strong></td>
+<td><strong>0.594</strong></td>
+<td>0.547</td>
+<td>0.448</td>
+</tr>
+</tbody>
+</table></div>
+<p>→ <strong>NegCLIP 0.586 与 X-VLM 0.594 基本打平</strong>（差 0.8pp，远在噪声内）。&quot;NegCLIP becomes the best model&quot; 只在 macro 口径下成立。而 CLIP 的 0.506 与 chance 0.50 实质上不可区分。</p>
+<p>增益分解：NegCLIP−CLIP 的 macro 增益共 <strong>+21.2pp，其中 +12.5pp（59%）来自 n&lt;50 的 26 条关系，这些关系合计只有 449 个样本 = benchmark 的 1.9%</strong>。具体例子：论文最爱讲的 <code>eating</code> 是 0.57→1.00，但 <strong>n=21</strong>（±10.9pp）。可信内核是 <code>wearing</code>（n=949，0.47→0.99）。</p>
+<h3 id="5-4-3-的-retrieval-shortcut-实验-table-3-4-3-seeds">5.4 §3 的 retrieval shortcut 实验（Table 3/4，3 seeds）</h3>
+<p>COCO 文本全词打乱，Text R@1：BLIP 0.814→0.690（−12.4pp / −15.2% rel）、CLIP 0.503→0.341（−16.2pp / −32.2%）、X-VLM 0.791→0.633（−15.8pp / −20.0%）、Flava 0.454→0.338（−11.6pp / −25.6%）。图像 9-patch 打乱更狠：X-VLM −32.8pp（−41.5%）、Flava −27.2pp（−59.9%）、CLIP −21.9pp（−43.5%）。</p>
+<p><strong>这环的方向成立，但措辞过度</strong>：绝对掉 8–33pp、相对掉 15–60%，把这叫 &quot;marginal&quot; 是措辞不是数据。更强的反驳是——<strong>如果模型真是纯词袋，这些降幅应该是 0；它们不是 0，所以这项实验恰恰证明模型在部分使用语序</strong>。它建立的是&quot;reduction&quot;，不是&quot;equivalence&quot;；而全文<strong>没有任何 BoW 编码器基线</strong>（没有&quot;词袋文本塔&quot;的 retrieval 成绩），所以降幅大小无法解释。</p>
+<h3 id="5-5-收益边界-修复之后仍然失败的地方">5.5 收益边界：修复之后仍然失败的地方</h3>
+<ul>
+<li><strong><code>to the left of</code> / <code>to the right of</code> Freq 各为 7,741，合计占 VG-Relation 的 64.7%，六个模型（含修好后的 NegCLIP）全部落在 0.49–0.52。</strong> 若 left/right 被钉在 0.50，即使模型在其余 35.3% 上做到 100%，micro 上限也只有 0.676——所以 &quot;NegCLIP 81%&quot; 绝不可能是逐样本正确率。</li>
+<li><strong>退化关系</strong>：<code>behind</code> 0.56 → CLIP-FT 0.34 → <strong>NegCLIP 0.29</strong>（n=574，低于 chance，六模型中倒数第二）；<code>under</code> 0.64→0.54→0.43（n=132）；<code>below</code> 0.56→0.48→0.46（n=209）。<strong>注意归因修正</strong>：−0.27 的总跌幅里约 81% 来自&quot;在 COCO 上 finetune 5 个 epoch&quot;这件事本身，hard negative 只再往下推了 0.05。三条关系都是随 finetune 单调退化。</li>
+<li><strong>论文挑的门面例子恰好是疗法失败的那两个</strong>：Introduction 贡献清单点名要你记住 &quot;to the right of&quot;（NegCLIP 0.50，n=7,741）与 &quot;behind&quot;（NegCLIP 0.29，n=574）。</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li>
+<p><strong>标题的自我拆台：所有 below-chance 证据都在反驳&quot;词袋&quot;假设，而不是支持它。</strong> BoW 的操作性预测是恰好 50%（二选一）/ 20%（五选一）——无所谓。低于 chance 意味着模型不但区分了两者，而且稳定地偏好错的那个：Flava COCO-PRC 0.039（chance 0.20）、Flava VG-Relation 0.24、CLIP <code>wearing</code> 0.47（n=949）、NegCLIP <code>behind</code> 0.29。论文把这类证据写成 &quot;VLMs behave like bags-of-words&quot; 的支持。<strong>更准确的描述是：VLM 不是词袋，它是一个语序/搭配偏好被校准到错误方向的读者；只有 left/right 那一大块才真的像词袋——而那一大块最有可能是构造伪影。</strong></p>
+</li>
+<li>
+<p><strong>最有可能改变结论的一个疑点：left/right 疑似镜像重复项。</strong> 两个 Freq 在 7,741 这个量级上精确相等几乎不可能是巧合 <code>[?]</code>。最自然的解释是同一对对象被同时标注了两个方向的 triplet，于是同一张裁剪图以镜像标签出现两次——第 2 项的假 caption 与第 1 项的真 caption 语义相同，任何确定性打分器必然在其中一项答错。<strong>若成立，这 15,482 项（64.7%）的准确率被构造性地钉在 50%，与模型能力无关。</strong> 用作者发布的数据查两分钟即可判定，论文既没确认也没排除。</p>
+</li>
+<li>
+<p><strong>用 scale 换了 curation，却从未测量换来的标签噪声。</strong> 负例是模板自动生成的，没有人工复核，也<strong>没有任何环节校验交换后的句子在该裁剪图中为假</strong>（垂直重叠时的 above/below、参照系不一致的 left/right、有黑斑的猫）。论文在 p.8 自己称 Winoground 是 curated，却没为放弃 curation 付出任何测量代价。</p>
+</li>
+<li>
+<p><strong>假阴性污染是未被点名的机制性问题，且它给出了可检验的预测。</strong> K=3 近邻图把&quot;很可能为真的 caption&quot;当成了负例——两张 CLIP 近邻图的 caption 往往几乎同义（&quot;a man riding a bike&quot; / &quot;a person on a bicycle&quot;），论文没有任何过滤。假阴性训练最典型的症状就是 retrieval 校准变差，而 Table 6 恰好符合：NegCLIP 相对 CLIP-FT 在标准 retrieval 上掉 1–4 个 R@1 点。</p>
+</li>
+<li>
+<p><strong>hard negative 教的是词汇绑定（lexical binding），不是空间推理。</strong> 收益集中在 <code>wearing</code>（n=949，0.47→0.99）这类&quot;词汇共现 + 物体身份基本可解&quot;的关系；退化集中在 <code>behind</code>/<code>under</code>/<code>below</code> 这类需要真实几何判断的遮挡与深度关系。这与&quot;收益本质上是 verbs 现象&quot;（91% 的实例上只涨不到 5 个点）、以及假阴性机制，是同一件事的三面。</p>
+</li>
+<li>
+<p><strong>统计基础比 headline 数字脆弱得多。</strong> Table 6 全部因果结论建立在<strong>一次 5-epoch finetune</strong> 上（Reproducibility Statement 自认未多次运行），且按 COCO validation retrieval 选模——而 retrieval 恰好是 NegCLIP 相对受损的那个指标。Table 5 报的 ±0.001 只度量&quot;扰动怎么抽&quot;，比它要界定的抽样噪声小约一个数量级（n≈5,000、p=0.32 时二项 SE≈0.0066 <code>[重算]</code>，n 值论文未给 <code>[?]</code>）。另外：正文说 Flava relations 25% 而 Table 2 印 0.24；正文说 PRC 用 5 seeds 而 Table 5 说 3 seeds；Table 6 的 CLIP VG-Relation 0.63 与 Table 2 的 0.59 不一致；Table 2 只列 45/48 个关系、Freq 合计 21,917 ≠ 23,937（2,020 例从未向读者展示却计入汇总）。</p>
+</li>
+<li>
+<p><strong>诊断 → 处方 → 复诊的循环是断的。</strong> NegCLIP 从未出现在 Table 3/4/5 里——论文没有任何证据表明&quot;修好之后的模型&quot;在它自己提出的 retrieval 扰动诊断上行为改变了。而且 §3.2 那一步（&quot;所以对比预训练没有激励学组合性&quot;）是纯类比论证：扰动实验从未在真正的预训练语料上做、从未测量 perturb 后的 contrastive loss、从未训练一个&quot;在扰动语料上对比学习&quot;的模型。这是全篇最弱一环，而论文&quot;要在预训练层面做算法改进&quot;的核心主张完全建立在这一环上。</p>
+</li>
+</ol>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li><strong>ARO 会被保留为基线，但会被重新加权。</strong> 2023 年的 SugarCrepe（Hsieh, Zhang, Ma, Kembhavi, Krishna, NeurIPS 2023 D&amp;B）已经裁定：这类模板生成的负例在 plausibility / fluency 上与正例存在系统性分布差异，<strong>一个不看图的 blind model 就能超过 SOTA VLM</strong>；重评后 <strong>NegCLIP 在 ARO+CREPE 上的改进被大幅高估</strong>（在 SugarCrepe 上无一超过 10%，最好的 NegCLIP 仍落后人类 23 个点）。SugarCrepe 举例的 ARO 缺陷样本第一条就是 &quot;The grass is eating the horse.&quot;——也就是本文的 Golden Case。</li>
+<li><strong>&quot;用自动生成的组合性负例训练&quot;这条路会被判定为部分失败</strong>，除非同时做到：困难负例的人工/LLM 校验、成分级消融、以及 instance-weighted 口径报告。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>一个 benchmark 论文最有力的姿态，是把&quot;为什么现有评测看不见这个缺陷&quot;讲成机制，而不是讲成&quot;我们的数据集更大&quot;。</strong> 本文 §3 的 retrieval 扰动设计（同时对 caption 和图像做破坏、两边互相印证）值得学；它把一句&quot;评测不够好&quot;变成了可测量的东西。</li>
+<li><strong>反面教训同样清楚</strong>：当你用 scale 换取 curation 时，欠账会以你意想不到的方式被讨回——本文的 64.7% 数据疑似被构造钉死在 chance，而论文从头到尾没去查。做 benchmark 的人必须做的第一件事，是问&quot;我的聚合数字的分子分母分别是什么、是不是同一批东西被数了两遍&quot;。</li>
+<li><strong>报告口径是一种论点</strong>。全文只报 macro 而不报 micro，不只是透明性问题：它直接决定了&quot;NegCLIP 是最好的模型&quot;这句话的真假。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li>
+<p><span class="wikilink unresolved" title="MOC-Multimodal-LLM-Reasoning">MOC-Multimodal-LLM-Reasoning</span> — Topic: 本篇补上该 MOC 缺失的&quot;表征侧地基&quot;：现有条目都在假设 VLM 的视觉表征可用，而 ARO 用 5 万+ 最小对立样本证明 CLIP/BLIP/FLAVA 在关系、属性、词序上仅达偶然水平，给这些&quot;在坏表征上继续优化&quot;的工作标定了天花板。</p>
+</li>
+<li>
+<p><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span> — Concept: 把&quot;评估范式利用&quot;从 RL 后训练推广到对比预训练——retrieval 指标 + InfoNCE 目标自身存在结构性弱点（袋装词即可拿高分），属&quot;优化目标覆盖面不足&quot;这一 hacking 家族，只是发生在表示学习而非策略优化阶段。</p>
+</li>
+<li>
+<p><span class="wikilink unresolved" title="MOC-Vision-Language-Compositionality">MOC-Vision-Language-Compositionality</span> — Topic: 新建建议。视觉语言组合性（ARO / Winoground / VL-Checklist / SugarCrepe / CREPE）已是稳定子领域，本篇与下面直接以 ARO 评测的 MACCO 投稿构成两份可挂载内容；现有 MOC 装不下这条线。</p>
+</li>
+<li>
+<p><strong>相关工作</strong>:</p>
+<ul>
+<li>见 <span class="wikilink unresolved" title="Cross-Modal Masked Compositional Concept Modeling for Enhancing Visio-Linguistic Compositionality/Submission">Cross-Modal Masked Compositional Concept Modeling for Enhancing Visio-Linguistic Compositionality/Submission</span> —— 本库唯一直接以 ARO 为主评测的工作，按 ARO-Relation/-Attribute/-Order 分面报数（+14.4% / +5.8% / +21.9% vs CLIP），本篇是该基准的原始出处。</li>
+<li>见 <a class="wikilink" href="LangGap-Diagnosing-Closing-Language-Gap-VLA.html" title="LangGap-Diagnosing-Closing-Language-Gap-VLA">LangGap-Diagnosing-Closing-Language-Gap-VLA</a> —— 同一失效模式在具身侧的镜像：固定场景视觉、只做语言侧最小扰动来检验语言模态是否真被组合性使用。</li>
+</ul>
+</li>
+<li>
+<p><strong>可关注后续</strong>: SugarCrepe（Hsieh et al., NeurIPS 2023）对 ARO 的可 hack 性裁定与 NegCLIP 重评。</p>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">A Systematic Study of Large Language Models for Task and Motion Planning With PDDLStream</span></a>
+<a class="paper-nav-link next" href="LangGap-Diagnosing-Closing-Language-Gap-VLA.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：LangGap: Diagnosing and Closing the Language Gap in Vision-Language-Action Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: yuksekgonul2023whenandwhy</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

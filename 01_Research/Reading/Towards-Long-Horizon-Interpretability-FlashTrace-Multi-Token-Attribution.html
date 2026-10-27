@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Towards Long-Horizon Interpretability: Efficient and Faithful Multi-Token Attribution for Reasoning LLMs</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Towards Long-Horizon Interpretability: Efficient and Faithful Multi-Token Attribution for Reasoning LLMs</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-推理链让-token-归因既慢又不准"><span class="toc-num">02</span> 2. 关键问题：推理链让 token 归因既慢又不准</a></li>
+<li><a class="toc-link" href="#3-关键方法-span-wise-聚合-递归归因-o-n-一次搞定"><span class="toc-num">03</span> 3. 关键方法：span-wise 聚合 + 递归归因 = O(N) 一次搞定</a></li>
+<li><a class="toc-link toc-sub" href="#span-的定义">Span 的定义</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-1-span-wise-aggregation">核心模块 1：Span-wise Aggregation</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-2-recursive-attribution">核心模块 2：Recursive Attribution</a></li>
+<li><a class="toc-link toc-sub" href="#方法流程代码示例">方法流程代码示例</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link toc-sub" href="#prompt-可复现性">Prompt / 可复现性</a></li>
+<li><a class="toc-link" href="#4-数据集-长上下文检索-多步推理-代码生成"><span class="toc-num">04</span> 4. 数据集：长上下文检索 + 多步推理 + 代码生成</a></li>
+<li><a class="toc-link" href="#5-关键结果-130x-加速-faithfulness-优势-但统计严谨性堪忧"><span class="toc-num">05</span> 5. 关键结果：130x 加速 + faithfulness 优势，但统计严谨性堪忧</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验">消融实验</a></li>
+<li><a class="toc-link toc-sub" href="#统计严谨性问题">统计严谨性问题</a></li>
+<li><a class="toc-link toc-sub" href="#缺失的-ablation">缺失的 ablation</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-16</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.01914" target="_blank">arXiv</a>
+    </div>
+    <h1>Towards Long-Horizon Interpretability: Efficient and Faithful Multi-Token Attribution for Reasoning LLMs</h1>
+    <p class="authors">Wenbo Pan, Zhichao Liu, Xianlong Wang, Haining Yu, Xiaohua Jia</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Feature_Attribution</span> <span class="topic-tag">Reasoning_Chain_Tracing</span> <span class="topic-tag">Long_Context</span></div>
+</header>
+
+<h1>论文笔记: Towards Long-Horizon Interpretability: Efficient and Faithful Multi-Token Attribution for Reasoning LLMs</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Wenbo Pan, Zhichao Liu, Xianlong Wang, Haining Yu, Xiaohua Jia</li>
+<li>团队/机构：论文未明确标注机构，Xiaohua Jia 可能与港中深/北工大相关 [?]</li>
+<li>发表时间：2026-02-02，arXiv preprint</li>
+<li>会议：投稿 ICML 2026（从 keywords &quot;Machine Learning, ICML&quot; 推测 [?]）</li>
+<li>引用数：1（截至元数据抓取时）</li>
+<li>并行工作 CAGE (Walker &amp; Ewetz, 2025) 也做多 hop 归因，但 granularity 是 sentence-level，计算代价更高</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-推理链让-token-归因既慢又不准">2. 关键问题：推理链让 token 归因既慢又不准</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>想象一个 multi-hop QA：模型被问&quot;X 出生一周后的日期是什么？&quot;。模型先生成推理链 T：&quot;X 出生于 1990-03-15，一周后是 1990-03-22&quot;，然后输出答案 O：&quot;1990-03-22&quot;。</p>
+<p>你想归因——输入里哪些 token 导致了这个答案？直觉上，包含&quot;1990-03-15&quot;的那句话才是关键。但现有方法一跑，归因权重几乎全堆在推理链 T 上（接近 90%），输入 I 只拿到不到 10%。为什么？自回归模型里每个 token 都直接条件于上一个 token，推理链内部的&quot;邻近依赖&quot;把归因权重吸走了。</p>
+<p>效率更惨：归因 M 个 output token 就得对每个 target token 独立跑一遍，总共 O(M·N) 次操作。推理链几百 token 时，IG 解释一个 5k-token generation 要 10+ 小时。</p>
+</blockquote>
+<p>两个问题有因果关系：推理链长（M 大）所以效率差；同时推理链长所以归因权重被 T 吸走，准确性也差。</p>
+<ul>
+<li><strong>Faithfulness drop</strong>：推理 token 吸走权重，ground-truth input 的 recovery rate 从 ~26% 跌到 &lt;10%（Figure 1b）。reasoning token 占 attribution mass 的比例从 ~80% 涨到 &gt;90%（Figure 1a）——增长速度比线性预期更陡 [?]。</li>
+</ul>
+<p><img src="https://arxiv.org/html/2602.01914v4/x1.png" alt="Figure 1: 推理链越长，归因权重越集中在推理 token 上，输入 token 的 recovery rate 急剧下降" /></p>
+<ul>
+<li><strong>Efficiency bottleneck</strong>：单 token 归因方法一次解释一个 token，对 M 个 target 要跑 M 次，O(M·N)。长上下文里 gradient-based methods（IG）直接 OOM。</li>
+<li>之前方法卡在哪：IFR/AttnLRP 只做 single-token target；perturbation 方法在长上下文本身就慢；gradient 方法 OOM。没有任何方法同时解决效率和忠实度。</li>
+</ul>
+<h2 id="3-关键方法-span-wise-聚合-递归归因-o-n-一次搞定">3. 关键方法：span-wise 聚合 + 递归归因 = O(N) 一次搞定</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>还是那个 multi-hop QA。</p>
+<p><strong>Hop 0（直接归因）</strong>：FlashTrace 把整个答案 span O 作为一个整体目标，用 span-wise aggregation 一次算出所有 context token 对这个 span 的贡献。核心 trick：$\mathbf{v}_j$（source token j 的 transformed vector）只依赖 j 不依赖 target position i，所以对 span S 内所有 i 求和时可以 factor out——$\mathbf{F}_{j \to S} = \mathbf{v}_j \cdot (\sum_{i \in S} \alpha_{i,j}^h)$，$\mathbf{v}_j$ 只算一次，attention weights 做 scalar 预聚合。O(M·N) 变成了 O(N)。</p>
+<p>结果跟问题一样：推理链 T 占大头，输入 I 占小头。</p>
+<p><strong>Hop 1（递归归因）</strong>：把 Hop 0 里 T 上拿到的权重当作&quot;新的 target weight&quot;。比如&quot;出生于 1990-03-15&quot;在 Hop 0 拿了 0.4 权重，&quot;一周后是 1990-03-22&quot;拿了 0.3。FlashTrace 用这些权重加权聚合 T 的表示，再跑一遍 span-wise 归因，问&quot;哪些输入 token 导致了这些重要的推理 token？&quot;——权重从 T 穿透回了 I。</p>
+<p><strong>最终聚合</strong>：$\mathbf{w}_{final} = \mathbf{w}_\mathbf{I}^{(0)} + \rho_0 \cdot \mathbf{w}_\mathbf{I}^{(1)}$。$\rho_0$ 是 Hop 0 中 T 占总权重的比例——推理吸收了 90% 的 mass，这 90% 在递归后才被真正分配到输入上。</p>
+</blockquote>
+<h3 id="span-的定义">Span 的定义</h3>
+<p><strong>Span = 一段连续的 token 位置</strong>，定义为 $S = \{s_{\text{start}}, \ldots, s_{\text{end}}\}$。它不是随意切割的 chunk，而是对应模型生成的 <strong>三个功能段</strong>：</p>
+<div class="math-display">$$\mathbf{S} = \mathbf{I} \circ \mathbf{T} \circ \mathbf{O}$$</div>
+<ul>
+<li><strong>I</strong> = 输入 token（用户 prompt）</li>
+<li><strong>T</strong> = 推理 token（thinking chain，即 <code>&lt;tool_call&gt;...</code> 里的内容）</li>
+<li><strong>O</strong> = 输出 token（最终答案）</li>
+</ul>
+<p>所以 &quot;span-wise attribution&quot; 的意思是把整段推理链 T 或整段答案 O 当作 <strong>一个整体目标</strong> 来归因，而不是逐 token 归因。论文没有做 sentence-level 或 chunk-level 的细分——span 的边界就是这三个天然的功能段。</p>
+<h3 id="整体架构">整体架构</h3>
+<p>FlashTrace = Span-wise Aggregation（效率）+ Recursive Attribution（faithfulness），两个模块解耦但组合使用。</p>
+<h3 id="核心模块-1-span-wise-aggregation">核心模块 1：Span-wise Aggregation</h3>
+<p><strong>关键洞察</strong>：attention 的贡献 $\mathbf{f}_{j \to i} = \alpha_{i,j}^h \cdot \mathbf{v}_j$ 里，$\mathbf{v}_j = \mathbf{x}_j W_V^h W_O^h$ 只依赖 source token j。所以 span 内求和可以把 $\mathbf{v}_j$ 提出来（Eq 8）。注意力权重是 scalar，先求和再乘 vector。这就是从 O(M·N·D) 降到 O(N·D) 的根源。</p>
+<p>这个 trick 的前提条件是 attention contribution 的 factorization 结构（$\alpha \cdot \mathbf{v}$）——gradient-based 方法没有这个结构，所以 IG 根本没法做类似的 span-wise 优化，直接 OOM。选择什么基础框架（proximity/attention-based vs gradient-based）决定了你能不能做 span-wise。</p>
+<p><strong>Proximity Metric（来自 ALTI/IFR）</strong>：</p>
+<div class="math-display">$$\text{Proximity}(\mathbf{z}, \mathbf{y}) = \max(0, -\|\mathbf{y} - \mathbf{z}\|_1 + \|\mathbf{y}\|_1)$$</div>
+<p>物理意义：如果把贡献 $\mathbf{z}$ 从 $\mathbf{y}$ 中去掉，$\mathbf{y}$ 的 L1 magnitude 会减少多少。用 L1 而不是 L2 是因为 Transformer 的向量空间是 high-dimensional, anisotropic 的。</p>
+<p><strong>Span-wise 聚合目标</strong>：</p>
+<p>$$\mathbf{Y}_S = \sum_{i \in S} \mathbf{y}_i \quad \text{(Eq 5)}$$
+$$\mathbf{F}_{j \to S} = \mathbf{v}_j \cdot \left(\sum_{i \in S} \alpha_{i,j}^h\right) \quad \text{(Eq 8)}$$</p>
+<p><strong>Per-layer 算法步骤（Algorithm 1）</strong>：</p>
+<p>Forward pass 缓存所有 layer 的 hidden states $\mathbf{X}^{in}, \mathbf{X}^{mid}, \mathbf{X}^{out}$ 和 attention maps $\mathbf{A}$。对每个 layer l：</p>
+<ol>
+<li>聚合 target representations：$\mathbf{Y}_S^{mid} = \sum_{i \in S} w_i \cdot \mathbf{X}_i^{mid}$，$\mathbf{Y}_S^{out} = \sum_{i \in S} w_i \cdot \mathbf{X}_i^{out}$</li>
+<li>预聚合 attention：$\boldsymbol{\alpha}^S = \sum_{i \in S} w_i \cdot \mathbf{A}_{i,:}^{(l)}$（按行求和）</li>
+<li>对每个 source token j：算 $\mathbf{v}_j&#x27; = (\mathbf{X}_j^{in} \odot \mathbf{s}_j) W_V W_O$（含 normalization scaling），然后 $\mathbf{C}_{j \to S} = \boldsymbol{\alpha}_j^S \cdot \mathbf{v}_j&#x27;$，proximity $e_j = \text{Prox}(\mathbf{C}_{j \to S}, \mathbf{Y}_S^{mid})$</li>
+<li>Residual importance：$e_{res} = \text{Prox}(\sum_{i \in S} w_i \cdot \mathbf{X}_i^{in}, \mathbf{Y}_S^{mid})$</li>
+<li>MLP importance：$e_{mlp} = \text{Prox}(\sum_{i \in S} w_i \cdot \text{MLP}(\mathbf{X}_i^{mid}), \mathbf{Y}_S^{out})$</li>
+<li>Normalize：token scores / (token scores + residual + MLP)，保证各层贡献归一化</li>
+</ol>
+<p>累加所有 layer 的 normalized scores 得到 $\mathbf{w}^{(k)}$。</p>
+<p><strong>Normalization linearization</strong>：RMSNorm/LayerNorm 被近似为 $\text{Norm}(\mathbf{x}) \approx \mathbf{x} \odot \mathbf{s}(\mathbf{x})$（Eq 13），$\mathbf{s}$ 固定为 forward pass 时的 scaling vector。这使得归因可以线性穿透 normalization layer。推测 RMSNorm 的 scaling：$\mathbf{s} = \frac{1}{\text{RMS}(\mathbf{x})} \cdot \gamma$ [?]，论文没有给出 $\mathbf{s}(\mathbf{x})$ 的具体公式。</p>
+<p><strong>MLP 的处理</strong>：被整体当作一个 contribution component，没有进一步分解 MLP 内部 token-to-token 的贡献（因为 MLP 不做 token 间信息交换，这是 ALTI/IFR 的传统做法）。</p>
+<h3 id="核心模块-2-recursive-attribution">核心模块 2：Recursive Attribution</h3>
+<p><strong>Hop 0</strong>：target = output span O，weight = 1 for all tokens in O。跑 Span-wise Aggregation 得到 $\mathbf{w}^{(0)}$，拆成 $\mathbf{w}_\mathbf{I}^{(0)}$ 和 $\mathbf{w}_\mathbf{T}^{(0)}$。</p>
+<p><strong>Hop 1</strong>：target = reasoning span T，weight = $w_t^{(0)}$（从 Hop 0 的 T 分数取出来）。跑 Span-wise Aggregation 得到 $\mathbf{w}^{(1)}$。</p>
+<p><strong>Flow ratio</strong>（完整定义见 Appendix Eq 23）：</p>
+<div class="math-display">$$\rho_{k} = \frac{\sum_{t \in S_{think}} w_t^{(k)}}{\sum_{\text{all } j} w_j^{(k)}} \quad \text{(Eq 23)}$$</div>
+<p>主文 Eq 11 只写了分子 $\rho_k = \sum_{t \in \mathbf{T}} w_t^{(k)}$，Appendix 给了完整比例形式。</p>
+<p><strong>Final aggregation</strong>：</p>
+<div class="math-display">$$\mathbf{w}_{final} = \mathbf{w}_\mathbf{I}^{(0)} + \sum_{k=1}^{K} \left(\prod_{j=0}^{k-1} \rho_j\right) \cdot \mathbf{w}_\mathbf{I}^{(k)} \quad \text{(Eq 12)}$$</div>
+<p>直觉：每 hop 有部分 mass 流入 I（被解释了），剩余 mass 流入 T（等待下一 hop 解释）。Hop 1 分给 I 的权重要乘 $\rho_0$，因为只有 $\rho_0$ 这么多的权重&quot;还需要解释&quot;。</p>
+<p><strong>递归 hop 数量</strong>：实验中 K=1。Table 7（MoreHopQA）：0 Hop RISE=0.127, MAS=0.209；1 Hop RISE=0.128, MAS=0.205。RISE 微微恶化 0.001，MAS 改善 0.004——两个指标对递归效果不一致，差异都在 0.001-0.004 范围内 [?]。论文声称&quot;even a single recursive hop improves faithfulness&quot;，但 RISE 指标实际恶化了。</p>
+<h3 id="方法流程代码示例">方法流程代码示例</h3>
+<p>以下 Python-style pseudocode 拆解 FlashTrace 的完整流程。输入是一段已经生成好的文本，分成三个 span：I（输入）、T（推理链）、O（答案）。</p>
+<pre><code class="language-python"># ============================================================
+# Step 0: 一次 forward pass，缓存所有中间量
+# ============================================================
+# 模型对完整序列 I∘T∘O 做一次 forward pass
+# 缓存每层 l 的:
+#   X_in[l]   — 进入 layer l 的 hidden states (N × D)
+#   X_mid[l]  — layer l 中 attention 输出后、MLP 输入前的 hidden states (N × D)
+#   X_out[l]  — layer l 最终输出的 hidden states (N × D)
+#   A[l]      — layer l 的 attention maps (N × N per head, 共 H heads)
+#   s[l]      — forward pass 时 RMSNorm 的 scaling vector (N × D)，固定下来不再变
+
+# ============================================================
+# Step 1: Span-wise Aggregation（核心效率模块）
+# ============================================================
+# 目标：对 span S 内所有 target token 一次算出每个 source token 的贡献
+# 关键 trick: v_j 只依赖 source j，不依赖 target i
+# 所以可以把 v_j 提出来，attention weights 先做 scalar sum
+
+def spanwise_attribution(S, w, cached):
+    &quot;&quot;&quot;
+    S: target span 的 token index 集合, e.g. {indices of O}
+    w: 每个 target token 的权重向量 (len(S)), 
+       Hop 0 时 w = [1, 1, ..., 1]（所有 O token 同等重要）
+       Hop 1 时 w = Hop 0 中 T 上拿到的权重
+    cached: forward pass 缓存的 X_in, X_mid, X_out, A, s
+    &quot;&quot;&quot;
+    total_scores = np.zeros(N)  # N = 全序列 token 数
+
+    for layer_l in range(L):
+        # --- 1. 聚合 target representations（加权求和） ---
+        Y_mid = sum(w[i] * cached.X_mid[l][S[i]] for i in range(len(S)))  # D-dim vector
+        Y_out = sum(w[i] * cached.X_out[l][S[i]] for i in range(len(S)))  # D-dim vector
+
+        # --- 2. 预聚合 attention weights（scalar sum，这是 O(M·N) → O(N) 的关键） ---
+        # 之前（naive per-token）: 对每个 target i, 每个 source j, 都要算 α_{i,j} · v_j → O(M·N·D)
+        # 现在: 先把所有 target i 的 attention weight 对同一个 source j 加起来
+        #       α_j^S = sum(w[i] * A_{S[i], j}^{(l)}) for all heads h  → 只是一个 scalar per j
+        alpha_preagg = np.zeros(N)  # scalar per source token
+        for i in range(len(S)):
+            for h in range(H):
+                # A_{S[i], :}^{(l, h)} 是第 h 个 head 中 target token S[i] 对所有 source 的 attention
+                alpha_preagg += w[i] * cached.A[l][h][S[i], :]  # 按行加权求和
+
+        # --- 3. 对每个 source token j，算 attention contribution ---
+        token_scores_l = np.zeros(N)
+        for j in range(N):
+            # v_j' = (x_j_in ⊙ s_j) * W_V * W_O   — 含 normalization linearization
+            # ⊙ s_j 是把 RMSNorm 近似为 x ⊙ s(x)，s 在 forward 时已固定
+            v_j = (cached.X_in[l][j] * cached.s[l][j]) @ W_V @ W_O  # D-dim vector, 只算一次!
+
+            # span-level contribution: scalar α_j^S × vector v_j
+            C_j_to_S = alpha_preagg[j] * v_j  # D-dim vector
+
+            # Proximity metric: C_j 对 Y_mid 有多大贡献？
+            # Prox(z, y) = max(0, -||y - z||_1 + ||y||_1)
+            # 物理含义：如果把贡献 z 从 y 中去掉，y 的 L1 norm 减少多少
+            e_j = proximity(C_j_to_S, Y_mid)
+            token_scores_l[j] = e_j
+
+        # --- 4. Residual 的重要性 ---
+        # residual connection: x_out = x_in + attn_out + mlp_out
+        # x_in 也直接流向 x_out，算 x_in 对 Y_mid 的 proximity
+        X_in_agg = sum(w[i] * cached.X_in[l][S[i]] for i in range(len(S)))
+        e_res = proximity(X_in_agg, Y_mid)
+
+        # --- 5. MLP 的重要性 ---
+        # MLP 不做 token 间通信，整体算一个 component
+        MLP_agg = sum(w[i] * MLP(cached.X_mid[l][S[i]]) for i in range(len(S)))
+        e_mlp = proximity(MLP_agg, Y_out)
+
+        # --- 6. Normalize per layer（保证每层总贡献 = 1） ---
+        total_raw = e_res + e_mlp + sum(token_scores_l)
+        token_scores_l_norm = token_scores_l / total_raw  # 每个 source token 的 normalized score
+
+        # 累加到全局
+        total_scores += token_scores_l_norm
+
+    return total_scores  # N-dim vector, 每个 input/reasoning/output token 的归因分数
+
+# ============================================================
+# Step 2: Recursive Attribution（核心 faithfulness 模块）
+# ============================================================
+# 问题: Hop 0 的结果里 T（推理链）占了 ~90% 权重，I（输入）只占 ~10%
+# 解决: 把 T 上的权重当作&quot;待解释的 mass&quot;，递归追问&quot;T 上的权重来自哪些 I token&quot;
+
+def flashtrace_full(I_indices, T_indices, O_indices, cached):
+    # --- Hop 0: 归因 output span O ---
+    w_0 = np.ones(len(O_indices))  # O 的每个 token 权重 = 1
+    scores_0 = spanwise_attribution(O_indices, w_0, cached)
+    # scores_0 是一个 N-dim vector，拆成 I 和 T 两部分
+    w_I_0 = scores_0[I_indices]   # 输入 token 在 Hop 0 的分数
+    w_T_0 = scores_0[T_indices]   # 推理 token 在 Hop 0 的分数
+
+    # flow ratio: T 在 Hop 0 中占多少比例？
+    rho_0 = sum(w_T_0) / sum(scores_0)  # ≈ 0.9（推理链吸走了 90% 的 mass）
+
+    # --- Hop 1: 归因 reasoning span T（用 Hop 0 的 T 权重作为 target weight） ---
+    w_1 = w_T_0  # 关键：不再是均匀权重，而是 Hop 0 里 T 拿到的权重
+    scores_1 = spanwise_attribution(T_indices, w_1, cached)
+    w_I_1 = scores_1[I_indices]   # 输入 token 在 Hop 1 的分数
+
+    # --- Final aggregation ---
+    # 直觉：
+    #   w_I_0 是 Hop 0 直接分给 I 的（约 10%）
+    #   rho_0 * w_I_1 是 Hop 0 流入 T 的部分（约 90%），经递归后重新分配到 I
+    #   两部分加起来才是 I 的真实贡献
+    w_final_I = w_I_0 + rho_0 * w_I_1
+
+    # 推理链越长，rho_0 越大，递归纠正的幅度越大
+    # 没有 T 时（direct answering），rho_0 ≈ 0，递归无用
+    return w_final_I
+
+# ============================================================
+# 为什么 span-wise 比 per-token 快？
+# ============================================================
+# Per-token (naive IFR extension):
+#   对 M 个 target token, 每个 target 独立跑一遍:
+#   for i in O_indices:       # M iterations
+#     for j in range(N):      # N iterations per target
+#       C_j_to_i = alpha_{i,j} * v_j   # D-dim multiply
+#   总复杂度: O(M · N · D)
+#
+# Span-wise (FlashTrace):
+#   alpha_preagg[j] = sum(alpha_{i,j} for i in S)  # scalar sum, O(M) per j → O(M·N) scalar ops
+#   C_j_to_S = alpha_preagg[j] * v_j               # 一次 D-dim multiply per j
+#   总复杂度: O(M·N) scalar ops + O(N·D) vector ops = O(N·D)
+#   v_j 只算一次，不随 span length M 增长！
+
+# ============================================================
+# 为什么递归能修复 faithfulness？
+# ============================================================
+# 自回归模型里 token i 几乎完全依赖 token i-1（adjacent dependency）
+# 所以 per-token 归因时，推理链内部的邻近 token 把权重全吸走
+#
+# Hop 0: O 的归因 → T 占 90%, I 占 10%
+# Hop 1: 把 T 的 90% 拿出来，问&quot;T 的权重来自哪里？&quot; → 权重穿透回了 I
+# 最终: I 的贡献 = 10% (直接) + 90% × (递归后分配到 I 的比例)
+#
+# 类比：
+#   你问&quot;谁的工资最高？&quot; → CEO (Hop 0)
+#   再问&quot;CEO 的工资来自哪个部门？&quot; → 市场部 (Hop 1)
+#   市场部的贡献 = 市场部直接工资 + CEO工资 × 市场部对CEO的贡献
+</code></pre>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>IFR/AttnLRP</th>
+<th>Perturbation/REAGENT</th>
+<th>CAGE（concurrent）</th>
+<th>FlashTrace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target</td>
+<td>单 token</td>
+<td>sentence-level</td>
+<td>sentence-level</td>
+<td>span-wise</td>
+</tr>
+<tr>
+<td>递归</td>
+<td>无</td>
+<td>无</td>
+<td>sentence-level 递归</td>
+<td>span-wise 递归 O(N) per hop</td>
+</tr>
+<tr>
+<td>效率</td>
+<td>O(M·N·D) per hop</td>
+<td>O(</td>
+<td>sentences</td>
+<td>) forward passes</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prompt-可复现性">Prompt / 可复现性</h3>
+<p>论文没有提供显式的 prompt template，只说使用 Qwen-3 8B Instruct 的 direct answering 和 CoT 两种配置 [?]。</p>
+<p>算法伪代码完整（Algorithm 1），公式链完整，符号解释清楚。主要不清晰的点：</p>
+<ul>
+<li>$\mathbf{s}(\mathbf{x})$ 的具体实现公式论文没有给出 [?]</li>
+<li>Layer score normalization 的精确公式只说&quot;normalized by the sum of all token contributions plus residual importance&quot;，推测是 $e_j / (e_{res} + e_{mlp} + \sum_j e_j)$ [?]</li>
+<li>Attention map 缓存需要 O(L·N^2) 显存，论文说可以&quot;recompute on-the-fly&quot;或&quot;memory-efficient attention&quot;，但没给具体策略</li>
+</ul>
+<p>硬件：5x A800 (80GB each, 400GB total)。</p>
+<h2 id="4-数据集-长上下文检索-多步推理-代码生成">4. 数据集：长上下文检索 + 多步推理 + 代码生成</h2>
+<ul>
+<li><strong>训练数据</strong>：无（post-hoc 归因方法不需要训练）</li>
+<li><strong>评估数据</strong>：</li>
+</ul>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据集</th>
+<th>类型</th>
+<th>规模</th>
+<th>覆盖场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RULER (NIAH)</td>
+<td>长上下文检索</td>
+<td>4k-32k tokens，mq q2/q4/q8 等变体</td>
+<td>单步 needle 检索</td>
+</tr>
+<tr>
+<td>RULER (VT)</td>
+<td>合成推理</td>
+<td>2-10 hop 变量追踪（h2c3/h4c1/h6c1/h10c1）</td>
+<td>multi-hop 变量依赖</td>
+</tr>
+<tr>
+<td>RULER (HotpotQA)</td>
+<td>长上下文+多步推理</td>
+<td>66 correct samples（1024 tokens）</td>
+<td>真实 multi-hop QA</td>
+</tr>
+<tr>
+<td>MoreHopQA</td>
+<td>多步推理</td>
+<td>100 correct samples</td>
+<td>3+ hop QA</td>
+</tr>
+<tr>
+<td>MATH</td>
+<td>数学推理</td>
+<td>100 correct samples</td>
+<td>competition-level 数学证明</td>
+</tr>
+<tr>
+<td>Aider</td>
+<td>代码生成</td>
+<td>133 Python exercises</td>
+<td>结构化输出归因</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>预处理</strong>：用 Qwen-3 8B Instruct 生成推理链，筛选正确回答样本，每组取 100 个（HotpotQA 取 66）。所有 RULER 实验固定 1024 tokens 上下文长度。</li>
+<li><strong>Ground truth</strong>：RULER 有显式 ground-truth token 标注，MATH/MoreHopQA 没有 token-level label，用 perturbation metrics 评估。</li>
+<li><strong>特殊处理</strong>：只保留正确回答样本做归因——这可能导致归因任务比实际使用场景更简单，因为实际应用中归因的目的恰恰是理解模型为什么出错 [?]。</li>
+</ul>
+<h2 id="5-关键结果-130x-加速-faithfulness-优势-但统计严谨性堪忧">5. 关键结果：130x 加速 + faithfulness 优势，但统计严谨性堪忧</h2>
+<h3 id="主实验结果">主实验结果</h3>
+<p><strong>效率（Figure 4）</strong>：5k target span，FlashTrace &lt; 20s，IFR &gt; 38min → 130x+ speedup。Gradient-based methods（IG, IG-Attn）在长上下文直接 OOM。FlashTrace memory 不随 target span length 增长（working memory O(N+D)）。</p>
+<p><img src="https://arxiv.org/html/2602.01914v4/x4.png" alt="Figure 4: 各方法在不同输入/生成长度下的时间和显存对比，FlashTrace 在速度-忠实度 Pareto 前沿上领先" /></p>
+<p>注意：130x 是跟 naive IFR extension 比。没有跟优化过的 sentence-level perturbation 比——后者只做 ~20-50 forward passes（Appendix D.2），比 IFR 的 M*N pass 快得多。如果把 sentence-level perturbation 也纳入时间对比，加速倍数可能只有 5-10x。</p>
+<p>另外，gradient methods 在最有意义的场景（长上下文 + 长推理链）里直接 OOM 退出比赛了。论文只在短上下文比较了 gradient 方法的 faithfulness，但在短上下文上推理链也短，faithfulness drop 本身就不严重——这是一个 confounding variable [?]。</p>
+<p><strong>RULER Recovery Rate（Table 1）</strong>：</p>
+<p>FlashTrace 在 multi-hop reasoning 场景（VT, HotpotQA）优势特别大——这正好是 reasoning token 吸权重最严重的场景。关键数据：</p>
+<ul>
+<li>VT h2c3: FlashTrace 0.698 vs IFR 0.136（+410% relative）</li>
+<li>VT h4c1: FlashTrace 0.755（VT 上最强数字）</li>
+<li>VT h10c1: FlashTrace 0.514 vs IFR 0.155（+230% relative）</li>
+<li>HotpotQA: FlashTrace 0.384 vs IFR 0.268</li>
+<li>mq q2: FlashTrace 0.483 vs IFR 0.471（差距很小）</li>
+<li>mq q8: FlashTrace 0.075 vs IFR 0.012——两者都崩了，FlashTrace 崩得慢一点</li>
+</ul>
+<p><strong>Faithfulness — RISE &amp; MAS（Table 1, 2）</strong>：</p>
+<ul>
+<li>MATH: FlashTrace RISE 0.348, MAS 0.446 vs IFR 0.354, 0.490（差距 RISE 0.006, MAS 0.044）</li>
+<li>MoreHopQA: FlashTrace RISE 0.128, MAS 0.205 vs IFR 0.146, 0.228（差距稍大）</li>
+<li>RULER: FlashTrace 的 RISE/MAS 在大多数配置上最低或接近最低</li>
+</ul>
+<p><strong>Faithfulness across reasoning lengths（Figure 5）</strong>：FlashTrace MAS 随推理长度增长基本稳定，baseline 随推理变长 faithfulness 下降。</p>
+<p><img src="https://arxiv.org/html/2602.01914v4/x5.png" alt="Figure 5: FlashTrace 的 MAS 在不同推理长度下保持稳定，baseline 方法随推理变长性能下降" /></p>
+<p><strong>Aider 代码生成（Table 4）</strong>：</p>
+<p>FlashTrace RISE 0.013, MAS 0.173 vs IFR (Last Line) 0.710, 0.782。但比较的是不同 target scope（FlashTrace 归因 full code span，IFR 归因 single line），本质上是 apples-to-oranges。IFR (Token) 用 Per-Token Avg 也有 RISE 0.707，FlashTrace 0.013——50x 差距更像是 metric 对 span target 的天然偏好，不一定是方法的优越性 [?]。</p>
+<p><strong>模型泛化（Table 5）</strong>：LLaMA-3.1-8B-It 上 FlashTrace 同样优于 baseline。</p>
+<h3 id="消融实验">消融实验</h3>
+<p><strong>Exhaustive Token-Level Rollout 对比（Table 3）</strong>：</p>
+<p>FlashTrace vs Exhaustive Rollout（MoreHopQA）：RISE 0.128 vs 0.116（FlashTrace 略差 10.2%），MAS 0.205 vs 0.193（差 6.4%）。Time: 0.72s vs 11.2s（93.6% 加速）。说明 span-wise 聚合是有效近似，精度损失很小但效率提升巨大。但只在一个数据集上验证 [?]。</p>
+<p><strong>Recursive Hops 消融（Table 7）</strong>：</p>
+<p>0→1→2→3 Hops（MoreHopQA）：RISE 0.127→0.128→0.130→0.133（持续恶化），MAS 0.209→0.205→0.206→0.209（改善后稳定）。两个指标不一致，差异都在 0.001-0.004 范围内。论文说&quot;critical causal dependencies are resolved within the first recursive step&quot;，但 RISE 数据不支持这个说法。</p>
+<h3 id="统计严谨性问题">统计严谨性问题</h3>
+<ul>
+<li><strong>涨幅可能不显著</strong>：MATH 上 RISE 差距仅 0.006，在 100 样本（HotpotQA 仅 66 个）上极可能不显著</li>
+<li><strong>Baseline 的 post-processing 偏帮 baseline</strong>：所有 baseline 的 reasoning token scores 被丢弃后 renormalize 到 input 上（Eq 31）。这实际上是在帮 baseline &quot;聚焦&quot;到 input——如果不做 renormalization，baseline 在多步推理场景可能更惨 [?]</li>
+<li><strong>Perturbation metric 定义被改了</strong>：RISE/MAS 标准实现是逐 token mask（step size = 1），这里改成 top 5% per step（20 steps，Appendix F.2）。这不是微调，是 metric 定义的变更，所有 faithfulness 比较的基础被替换了 [?]</li>
+</ul>
+<h3 id="缺失的-ablation">缺失的 ablation</h3>
+<ul>
+<li>没有 span-wise aggregation vs per-token then average 的直接对比</li>
+<li>没有 K=0 在 RULER 上 Recovery Rate（RULER 才是 recovery rate 可用的场景）</li>
+<li>没有 normalization linearization 的误差分析</li>
+<li>没有更大模型（70B+）的测试</li>
+<li>没有错误回答样本上的归因质量评估</li>
+</ul>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>span-wise 的核心 trick 不反直觉，但前提条件决定了可行性</strong>。把 $\mathbf{v}_j$ 提出来本质上就是&quot;矩阵乘法里把不依赖循环变量的部分提出来&quot;。但这个 trick 的前提是 attention contribution 有 factorization 结构（$\alpha \cdot \mathbf{v}$），gradient-based 方法没有这个结构，所以 IG 根本没法做类似优化。选择什么基础框架决定了你能不能做 span-wise。</p>
+<p><strong>reasoning token 吸权重的比例增长比线性预期更陡</strong>。Figure 1a 显示从 ~80% 到 &gt;90%，这个增长速度比&quot;每多一步就多吸收一点&quot;的线性预期更快 [?]——意味着推理链越长，input 的归因衰减越严重。</p>
+<p><strong>K=1 就够了——证据很弱</strong>。Table 7 上 MAS 只改善 0.004，RISE 反而恶化 0.001——这些差异都在噪声量级。但 Figure 7 的 mass shift 可视化直观可信——问题在于 mass shift ≠ 最终 metric 改善。一个可能的解释是：span-wise 聚合本身有&quot;模糊化&quot;效果——把整个推理链当成一个 span，一次递归就能把大部分权重穿透回去，不需要逐步穿透每个推理 step。但这也意味着精度有损（Table 3 里 FlashTrace 确实比 Exhaustive Rollout 略差）。</p>
+<p><strong>Normalization linearization 处理有点粗糙</strong>。固定 forward pass 的 $\mathbf{s}(\mathbf{x})$ 忽略了 normalization 的动态反馈效应。在短上下文可能无所谓，但在长推理链里 normalization 的 scaling 会随上下文显著变化——固定 $\mathbf{s}$ 可能引入累积误差 [?]。</p>
+<p><strong>Recovery Rate 和 perturbation metrics 之间的一致性没有验证</strong>。论文提出了 Recovery Rate 作为 metric（只在有 ground-truth 的合成数据上能用），在真实推理任务上只有 RISE/MAS。论文从未验证这两个 metric family 是否一致——如果 Recovery Rate 高但 RISE/MAS 也高，整个评估框架的可信度就崩了。</p>
+<p><strong>只筛选正确回答样本做归因偏离了 interpretability 的核心场景</strong>。归因的目的恰恰是理解模型为什么出错——如果你只能归因模型回答正确的情况，那归因对你的帮助在哪？</p>
+<p><strong>所有实验只在 8B 模型上做</strong>。8B 模型的推理链质量远不如 production 模型，推理链也更短。方法在大模型上可能完全失效。</p>
+<p><strong>Aider 实验 apples-to-oranges</strong>。不同 target scope 的 metric 不可直接比较。</p>
+<p><strong>gradient methods OOM 导致只在问题不严重的场景比较了最强对手</strong>。</p>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>Span-wise aggregation 的核心 trick（factor out $\mathbf{v}_j$，预聚合 attention weights 做 scalar sum）和 FlashAttention 有相似之处——都是通过 algebraic reordering 把 vector op 降成 scalar op。&quot;找到线性结构、把 vector op 降成 scalar op&quot;这种思路在 interpretability 里之前没人用过。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: FlashTrace 通过 span-wise 聚合和递归归因实现推理 LLM 中高效且忠实的多 token 归因，130x 加速并显著提升推理链归因的 faithfulness</li>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Causal-Agent-Replay-Counterfactual-Attribution.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Causal Agent Replay: Counterfactual Attribution for LLM-Agent Failures</span></a>
+<a class="paper-nav-link next" href="Qwen-Scope-SAE-Development-Tools.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Qwen-Scope: Turning Sparse Features into Development Tools for Large Language Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Pan2026FlashTrace</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

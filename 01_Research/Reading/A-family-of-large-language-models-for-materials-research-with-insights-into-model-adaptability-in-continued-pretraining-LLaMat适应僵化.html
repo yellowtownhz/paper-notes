@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与阅读结论"><span class="toc-num">01</span> 1. 背景信息与阅读结论</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型懂一句材料描述-是否就能按科研数据规范正确抽取"><span class="toc-num">02</span> 2. 关键问题：模型懂一句材料描述，是否就能按科研数据规范正确抽取？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先积累领域语料经验-再把它变成可调用的任务能力"><span class="toc-num">03</span> 3. 关键方法：先积累领域语料经验，再把它变成可调用的任务能力</a></li>
+<li><a class="toc-link toc-sub" href="#沿同一个例子走一遍">沿同一个例子走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#cif-分支-把晶体文件变成可训练的文本任务">CIF 分支：把晶体文件变成可训练的文本任务</a></li>
+<li><a class="toc-link" href="#4-数据与训练-复用前最需要核对的口径"><span class="toc-num">04</span> 4. 数据与训练：复用前最需要核对的口径</a></li>
+<li><a class="toc-link" href="#5-关键证据-有效的领域工具-与未完成的机制归因"><span class="toc-num">05</span> 5. 关键证据：有效的领域工具，与未完成的机制归因</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-领域训练组合有收益-但商业模型分差不是-cpt-的净贡献">5.1 领域训练组合有收益，但商业模型分差不是 CPT 的净贡献</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-结构化抽取的平均优势-掩盖了明显的子任务差异">5.2 结构化抽取的平均优势，掩盖了明显的子任务差异</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-适应僵化-有排序翻转-没有预训练量的因果结论">5.3 “适应僵化”：有排序翻转，没有预训练量的因果结论</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-晶体生成-成分合法性很强-结构合法性并非最优">5.4 晶体生成：成分合法性很强，结构合法性并非最优</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-值得复现的不是-老模型胜过新模型-而是同预算下的学习曲线">6.1 值得复现的不是“老模型胜过新模型”，而是同预算下的学习曲线</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-把-学会知识-和-按要求表达-分开-会改变训练预算分配">6.2 把“学会知识”和“按要求表达”分开，会改变训练预算分配</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-归因热图提供解释线索-还没有定位-僵化-机制">6.3 归因热图提供解释线索，还没有定位“僵化”机制</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://www.nature.com/articles/s42256-026-01199-8" target="_blank">arXiv</a>
+    </div>
+    <h1>LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</h1>
+    <p class="authors">Dhruv Ahlawat; Vaibhav Mishra; Somaditya Singh; Mohd Zaki; Vaibhav Bihani; Hargun Singh Grover; Biswajit Mishra; Santiago Miret; Mausam; N. M. Anoop Krishnan</p>
+    <div class="topic-row"><span class="topic-tag">Domain_Adaptation</span> <span class="topic-tag">Continued_Pretraining</span> <span class="topic-tag">Materials_Science</span> <span class="topic-tag">Model_Plasticity</span></div>
+</header>
+
+<h1>论文笔记: LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</h1>
+<h2 id="1-背景信息与阅读结论">1. 背景信息与阅读结论</h2>
+<p><strong>论文</strong> ：<em>A family of large language models for materials research with insights into model adaptability in continued pretraining</em>。IIT Delhi 为主，联合 Cerebras、Lila Sciences / Intel Labs；发表于 <strong>Nature Machine Intelligence 8, 435–448，2026-02-27</strong> 。前四位作者为共同贡献作者。</p>
+<p><strong>阅读范围</strong> ：正式版正文需要订阅，本次读完作者开放稿的主文与方法，并重点核对正式版公开补充材料中的数据、训练、结果、适应性分析和解释性实验。 <strong>这不是正式版正文的完整阅读</strong> 。下文以正式补充材料的数字为准，沿用旧稿方法时单独标明。</p>
+<ul>
+<li><strong><a href="https://www.nature.com/articles/s42256-026-01199-8">正式文章</a></strong> ：书目信息、摘要、公开 Figures 1–3。</li>
+<li><strong><a href="https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs42256-026-01199-8/MediaObjects/42256_2026_1199_MOESM1_ESM.pdf">S：正式补充材料</a></strong> ：下文的 S§、Table F.1 等均指此文件。引用页码为材料上印刷的页码。</li>
+<li><strong><a href="https://arxiv.org/html/2412.09560v2">P：arXiv v2</a></strong> ：2025-01-28，题为 <em>Foundational Large Language Models for Materials Research</em>，作者排序也与正式版不同。</li>
+<li><strong><a href="https://github.com/M3RG-IITD/llamat">作者代码与模型入口</a></strong> 。</li>
+</ul>
+<p>读完最值得留下四点：</p>
+<ol>
+<li><strong>领域 CPT、指令训练和任务训练的组合，能把小模型做成有效的材料信息抽取工具。</strong> 论文的主要贡献是训练与评测体系，没有提出新的网络结构或可塑性优化算法。</li>
+<li><strong>基准收益同时包含领域语义、标注习惯和输出格式的学习。</strong> 与直接调用商业模型的巨大分差，不能全部归功于新增材料知识。</li>
+<li><strong>更强底座不保证适配后更强，但也不能据此断言“预训练越多，模型越僵化”。</strong> 作者在 S§L 明确承认没有控制实验验证这个假说。</li>
+<li><strong>晶体生成需要拆开看：成分有效、结构有效、代理模型预测稳定是三件事。</strong> 论文有值得重视的结果，也有指标间的取舍。</li>
+</ol>
+<h2 id="2-关键问题-模型懂一句材料描述-是否就能按科研数据规范正确抽取">2. 关键问题：模型懂一句材料描述，是否就能按科研数据规范正确抽取？</h2>
+<p>用正式补充材料中的真实例子：输入讨论非均质铝合金的拉伸与弹性性质，任务要求给指定词逐一标注实体类型。只看其中三个词：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>词</th>
+<th>数据集标注 / LLaMat-3-Chat 输出</th>
+<th>GPT-4o 输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>heterogeneous</td>
+<td><code>b-dsc</code>，描述属性的起点</td>
+<td><code>b-mat</code>，材料实体起点</td>
+</tr>
+<tr>
+<td>aluminum</td>
+<td><code>b-mat</code>，材料实体起点</td>
+<td><code>i-mat</code>，材料实体内部</td>
+</tr>
+<tr>
+<td>alloys</td>
+<td><code>b-dsc</code>，描述属性的起点</td>
+<td><code>i-mat</code>，材料实体内部</td>
+</tr>
+</tbody>
+</table></div>
+<p>来源：S§N，pp.58–59。<code>b/i</code> 表示实体开始/内部，<code>mat/dsc</code> 表示材料/描述。</p>
+<p>GPT-4o 把三个词连成一个材料实体，从一般语言理解上并不荒谬；但不符合这份数据集的标注规则。若要把大量论文转成统一数据库，这类粒度错位会直接影响后续合并、关系抽取与统计。</p>
+<p><strong>这里同时有两个问题：懂不懂材料概念，熟不熟悉目标任务的表达约定。</strong> 这个例子不能独自证明 GPT-4o 缺乏材料知识，却很好地解释了为什么作者需要领域语料与有监督任务训练两个环节。也因此，后面评测必须追问：模型到底学到了多少知识，又学到了多少标签与格式？</p>
+<h2 id="3-关键方法-先积累领域语料经验-再把它变成可调用的任务能力">3. 关键方法：先积累领域语料经验，再把它变成可调用的任务能力</h2>
+<p><img src="../../assets/llamat-2026/fig1-training-pipeline.png" alt="正式版 Fig.1：LLaMat 的领域预训练及文本、晶体两条训练路径" /></p>
+<p><em>来源：<a href="https://www.nature.com/articles/s42256-026-01199-8/figures/1">正式版 Fig.1</a>。重点看共享领域预训练之后的两条分支：文本抽取助手与晶体生成器有各自的后续训练，并非一个最终 checkpoint 同时完成所有展示任务。</em></p>
+<h3 id="沿同一个例子走一遍">沿同一个例子走一遍</h3>
+<p><strong>① 领域 CPT：让底座反复看到材料表达。</strong> 作者从 LLaMA-2-7B、LLaMA-3-8B 出发，对模型参数做继续训练，仍使用自回归交叉熵目标。论文、晶体文件及其描述被当作 token 序列处理；没有显式加入材料本体、图网络或物理约束损失。对上例，CPT 提供的是合金、表征、性质等表达的上下文经验，不能仅凭 next-token prediction 保证学会 <code>b-dsc</code> 这样的目标标签。（P§2.1、§4.2；S§C）</p>
+<p><strong>② 指令训练：学会按问题组织输出。</strong> 开放稿的 Chat 路径依次使用通用 OpenOrca、数学题、材料指令数据。通用指令数据的作用是建立问答与指令遵循；数学数据用于维持定量问题处理能力。S Table E.2 的验证实验显示两类底座对 OpenOrca 数据量的反应不同，作者为 LLaMat-2、-3 分别选择 448k、576k 条样本，不能直接套同一配方。（P§4.2.2；S§E.2）</p>
+<p><strong>③ 联合任务训练：把语义映射到目标标注。</strong> 将材料 NLP 和结构化抽取任务的训练样本混合。对上例，训练目标明确规定哪些词是材料、哪些是描述，以及逐行输出的格式。推理时输入任务定义、候选标签、句子和待标注词，模型直接生成标签；没有额外检索步骤。论文展示的正确输出来自整个训练链条，不能据一条成功样例确定是哪一阶段起了作用。（P§4.2.3；S§M–N）</p>
+<p>这条路线与“只拿材料问答做 SFT”的区别，是先用更大规模的领域原文做 CPT，再训练接口和任务；与“直接问商业模型”的区别，还包括看过目标任务训练集。前者涉及知识适配，后者涉及监督条件，比较时要分别处理。</p>
+<h3 id="cif-分支-把晶体文件变成可训练的文本任务">CIF 分支：把晶体文件变成可训练的文本任务</h3>
+<p>CIF（晶体学信息文件）编码晶格参数、对称性和原子位置。作者用文件读取、原子计数、体积计算等 <strong>语法任务</strong> ，以及缺失元素预测、结构维度预测、条件生成等 <strong>语义任务</strong> 构造指令数据，再用 PEFT 适配结构生成。（P§2.3、§4.2.3；S§I、§J）</p>
+<p>我的理解是，这一设计把“能续写文件”拆成“能读字段、联系结构信息、再生成”几个可监督目标。 <strong>但学过这些任务，不等于输出会自动满足物理约束。</strong> 物理合理性仍要靠生成后的检查与能量模型评估；本文没有证明每一种辅助任务各自带来了多少增益。</p>
+<h2 id="4-数据与训练-复用前最需要核对的口径">4. 数据与训练：复用前最需要核对的口径</h2>
+<p>正式摘要概括为约 400 万篇材料论文、约 30B token，以及 175k 材料问答。实际复现应查看分阶段清单，不能把摘要数字直接当最终训练集大小。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据/阶段</th>
+<th>核心设置</th>
+<th>为什么影响判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPT</td>
+<td>材料论文占主导，混入约 3% RedPajama；另有 CIF 与社区文本</td>
+<td>通用文本用于缓解遗忘；不能把所有 token 都称为材料论文</td>
+</tr>
+<tr>
+<td>CIF 数据</td>
+<td>S Table E.1 列出 470,222 个训练样本；Table A.1 列出 6,941,865 个晶体指令训练样本</td>
+<td>文件数量与派生问答数量相差很大，不能混写</td>
+</tr>
+<tr>
+<td>文本评测</td>
+<td>S Table A.2：10 个材料 NLP 子任务、4 个英文子任务；结构化抽取含掺杂、一般材料、MOF；表格测试 737 张</td>
+<td>不同任务规模差异大，部分关系抽取测试只有几十例</td>
+</tr>
+<tr>
+<td>CPT 优化</td>
+<td>S Table D.1：一轮训练；峰值学习率分别为 <code>3e-4</code>、<code>7e-5</code>，10% warmup、cosine decay</td>
+<td>代际模型不是完全相同优化设置的受控比较</td>
+</tr>
+<tr>
+<td>训练开销</td>
+<td>S§D.3：LLaMat-2 CPT 用 8 张 A100 80GB 约 17 天；LLaMat-3 用 2 台 Cerebras CS2 约 3 天</td>
+<td>两组硬件不同，不能把时间比当成架构效率比</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>数据说明存在需复现者澄清的地方。</strong> S Table A.1 的 MatSciInstruct 训练量为 52,658，与摘要的材料问答总量不是同一层次；Table E.1 列出了分词器相关 token 数，部分列又有缺项。P 对 RedPajama 混合比例也有不同表述。这里保留总量级，不拼出一个看似精确的统一配方。[?] 若要复现，应以实际数据清单和配置核对每阶段的样本数、混合比例与训练步数。</p>
+<h2 id="5-关键证据-有效的领域工具-与未完成的机制归因">5. 关键证据：有效的领域工具，与未完成的机制归因</h2>
+<h3 id="5-1-领域训练组合有收益-但商业模型分差不是-cpt-的净贡献">5.1 领域训练组合有收益，但商业模型分差不是 CPT 的净贡献</h3>
+<p>先看同代底座接受任务微调后的对照，指标为十个材料子任务的 <strong>Mean Micro-F1</strong> ，即各子任务 micro-F1 的平均，不能解释成所有 token 汇总后的一个 micro-F1。（S Table F.1，p.32）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型家族</th>
+<th style="text-align:right">原始 base 模型 + FT</th>
+<th style="text-align:right">LLaMat-Chat 最终流程</th>
+<th style="text-align:right">差值（百分点，笔记者计算）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA-2 / LLaMat-2</td>
+<td style="text-align:right">91.662</td>
+<td style="text-align:right">93.326</td>
+<td style="text-align:right">+1.664</td>
+</tr>
+<tr>
+<td>LLaMA-3 / LLaMat-3</td>
+<td style="text-align:right">90.106</td>
+<td style="text-align:right">93.027</td>
+<td style="text-align:right">+2.921</td>
+</tr>
+</tbody>
+</table></div>
+<p>这支持 <strong>CPT 与后续指令训练的整体方案有效</strong> ，但两个端点并非只相差 CPT，不能把差值称为 CPT 的独立因果收益。</p>
+<p>相比之下，S Table F.2 中 GPT-4o 的相同平均指标为 68.25，落后很多。这里的商业模型没有接受相同的目标任务参数微调，因此展示的是“专门训练的工具对比直接调用通用服务”的效果，并非监督条件完全相同的知识能力竞赛。</p>
+<p>回到铝合金样例：熟悉 <code>b/i</code> 边界和数据集偏好的模型会获得实实在在的分数优势。要检验领域理解是否提高，至少还需要同监督量的对照，以及换一套标注规范或未见任务后的迁移测试。</p>
+<p><strong>“保留通用能力”的范围也应收窄。</strong> S Table A.2 中英文任务本身有训练样本；Table F.1 中 LLaMat-3-Chat 的英文 Mean Micro-F1 为 86.52，原始 LLaMA-3-Chat-FT 为 88.52。结果说明这套流程下仍能完成这些英文任务，不能概括为“所有通用能力无损保留”，也没有隔离出未经重新训练的能力保持。</p>
+<h3 id="5-2-结构化抽取的平均优势-掩盖了明显的子任务差异">5.2 结构化抽取的平均优势，掩盖了明显的子任务差异</h3>
+<p><img src="../../assets/llamat-2026/fig3-information-extraction.png" alt="正式版 Fig.3：文本结构化抽取与表格任务的结果" /></p>
+<p><em>来源：<a href="https://www.nature.com/articles/s42256-026-01199-8/figures/3">正式版 Fig.3</a>。看右下角 d：LLaMat-2 的优势突出在 regex-table 判断，composition-label 定位上商业模型反而更强。图中汇总标签与补充表的指标措辞不完全一致，下面逐项数字按 S Table F.2 的 Accuracy 口径记录。</em></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>表格子任务 Accuracy</th>
+<th style="text-align:right">LLaMat-2-Chat</th>
+<th style="text-align:right">LLaMat-3-Chat</th>
+<th style="text-align:right">GPT-4o</th>
+<th style="text-align:right">GPT-4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>判断是否适合用正则提取（regex）</td>
+<td style="text-align:right">0.878</td>
+<td style="text-align:right">0.836</td>
+<td style="text-align:right">0.414</td>
+<td style="text-align:right">0.466</td>
+</tr>
+<tr>
+<td>定位含完整成分信息的行/列（composition）</td>
+<td style="text-align:right">0.595</td>
+<td style="text-align:right">0.245</td>
+<td style="text-align:right">0.723</td>
+<td style="text-align:right">0.867</td>
+</tr>
+</tbody>
+</table></div>
+<p>来源：S Table F.2、§G，pp.33–34。第二行衡量的是 <strong>成分所在行列的定位</strong> ，并非所有化学成分数值都被准确抽出了。</p>
+<p>这比“全面超过商业模型”更有用：领域适配特别帮助某些专门判别，但通用表格定位仍可能是短板。选部署模型应按工作流中最重要的子任务，而不是只看平均分。</p>
+<p>还有一个评测风险：P§4.1.5 写明只评估可解析成 JSON 的输出；正式 S Table F.2 仍列出不同的 exact-match 分母，例如 LLaMat-3-Chat 为 <code>405/602</code>，LLaMat-2-Chat 为 <code>547/728</code>，GPT-4o 为 <code>52/737</code>。S Table L.3 也单列解析率。 <strong>不能把这些比值直接当作同一全量测试集上的成功率。</strong> 正式正文中的完整计分协议本次无法核对，复现时应同时报解析率、解析成功后的语义准确率、全量任务成功率。</p>
+<h3 id="5-3-适应僵化-有排序翻转-没有预训练量的因果结论">5.3 “适应僵化”：有排序翻转，没有预训练量的因果结论</h3>
+<p>最值得看的证据在 S Table L.1。注意模型名称：这里比较的是 <strong>LLaMA-Chat → LLaMA-Chat-FT</strong> ，不是 LLaMat 的 CPT 前后。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>MatNLP 子任务 Micro-F1</th>
+<th style="text-align:right">LLaMA-2-Chat → FT</th>
+<th style="text-align:right">LLaMA-3-Chat → FT</th>
+<th>能看到什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SC-CoMIcs 实体识别</td>
+<td style="text-align:right">16.39 → 90.82</td>
+<td style="text-align:right">38.26 → 79.58</td>
+<td>新底座起点更高，适配后反而落后</td>
+</tr>
+<tr>
+<td>structured-re 关系分类</td>
+<td style="text-align:right">9.61 → 100.00</td>
+<td style="text-align:right">83.58 → 100.00</td>
+<td>终点相同，较低起点自然有更大百分比涨幅</td>
+</tr>
+</tbody>
+</table></div>
+<p>第一行是值得研究的现象；第二行说明 <strong>相对提升率并不是纯粹的可塑性指标</strong> 。若使用作者表中的相对变化：</p>
+<div class="math-display">$$
+r = \frac{S_{\mathrm{after}}-S_{\mathrm{before}}}{S_{\mathrm{before}}},
+$$</div>
+<p>较低分母与指标天花板会共同放大代际差异。要讨论学习能力，应同时比较最终分数、绝对增量与同预算学习曲线。</p>
+<p>作者推测，大规模预训练形成了更强的先验，使后续更新更困难。不过， <strong>S§L（p.47）明确将此限定为观察，并说明未做控制实验验证</strong> 。两组模型还有参数规模、注意力结构、分词器、训练硬件和学习率等差异（S§C–D），无法把终点排序归因于原始预训练 token 数。</p>
+<p>也不要把现象扩成“LLaMA-3 总是更难适配”：§5.1 的完整流程相对 base+FT 的增量，在第三代反而更大；S Table L.1 的部分单任务也是第三代更好。 <strong>初始能力、某条训练路径的收益、最终工具性能，是三个不同问题。</strong></p>
+<h3 id="5-4-晶体生成-成分合法性很强-结构合法性并非最优">5.4 晶体生成：成分合法性很强，结构合法性并非最优</h3>
+<p>以下为无条件生成，来自 S Table J.1（p.39）。LLaMA-2-7B 是表中引用既有工作的生成基线，温度为 1.0。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align:right">结构有效率 ↑</th>
+<th style="text-align:right">成分有效率 ↑</th>
+<th style="text-align:right">M3GNet 预测稳定率 ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CDVAE</td>
+<td style="text-align:right">1.000</td>
+<td style="text-align:right">0.867</td>
+<td style="text-align:right">28.8%</td>
+</tr>
+<tr>
+<td>LLaMA-2-7B 生成基线</td>
+<td style="text-align:right">0.918</td>
+<td style="text-align:right">0.879</td>
+<td style="text-align:right">35.1%</td>
+</tr>
+<tr>
+<td>LLaMat-2-CIF</td>
+<td style="text-align:right">0.878</td>
+<td style="text-align:right">0.995</td>
+<td style="text-align:right">49.49%</td>
+</tr>
+<tr>
+<td>LLaMat-3-CIF</td>
+<td style="text-align:right">0.674</td>
+<td style="text-align:right">0.693</td>
+<td style="text-align:right">42.95%</td>
+</tr>
+</tbody>
+</table></div>
+<p>结构有效性检查原子间距离，成分有效性由 SMACT 检查电荷中性等条件，稳定性则依赖 M3GNet 代理能量评估。（S§J.1）LLaMat-2-CIF 的后两项有优势，但结构有效率低于两个所列既有基线；补充正文中“结构有效性提升尤其明显”的表述，不能脱离对照对象照抄。</p>
+<p>这组结果确实支持第二代在当前无条件生成流程中更好，却还不是普遍规律。 <strong>同表的条件生成中，LLaMat-3-CIF-C 结构有效率 0.811，高于第二代的 0.728</strong> ，排序取决于任务与指标。</p>
+<p>还需守住两条边界：代理模型预测稳定不等于 DFT 验证或实验可合成；密度、元素种类数的分布距离也不能直接证明结构新颖性。若要声称“发现新材料”，还需要结构去重、与训练集合的比对和更高精度验证。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-值得复现的不是-老模型胜过新模型-而是同预算下的学习曲线">6.1 值得复现的不是“老模型胜过新模型”，而是同预算下的学习曲线</h3>
+<p>排序翻转与终点趋同同时存在，说明只看百分比增幅会误判。 <strong>我的下一步实验</strong> 会选同一模型家族、同一架构的多个预训练 checkpoint，固定领域文本、监督标签与计算预算，并给各 checkpoint 同等的学习率搜索机会。分别画领域泛化、格式成功率和旧能力保持曲线。</p>
+<p>如果预训练越充分的 checkpoint 在这些控制下仍持续学得更慢、最终更差，才更接近“预训练导致可塑性下降”的证据。跨 LLaMA 代际比较适合提出问题，不足以完成归因。</p>
+<h3 id="6-2-把-学会知识-和-按要求表达-分开-会改变训练预算分配">6.2 把“学会知识”和“按要求表达”分开，会改变训练预算分配</h3>
+<p>铝合金标注案例、JSON 解析率以及表格子任务的分化，都表明输出约定是一部分瓶颈。 <strong>如果主要错误是字段、标签边界或格式，先做少量任务监督和约束输出更值得测试；如果换一种表达仍不理解概念，再投资 CPT。</strong></p>
+<p>可以把同一内容做成三种等价测试：自然语言回答、固定标签、JSON schema，再增加未见过的 schema。若收益只出现在训练过的表示方式上，就不能把它解释为广泛的领域知识迁移。论文的训练路线可复用，但这一步诊断应先于直接复制 30B-token 配方。</p>
+<h3 id="6-3-归因热图提供解释线索-还没有定位-僵化-机制">6.3 归因热图提供解释线索，还没有定位“僵化”机制</h3>
+<p>正式补充材料增加了 Feature Ablation 和 Layer Integrated Gradients：围绕一个玻璃成分与用途的提示，比较输入词对候选输出的归因。作者观察到部分 LLaMat-3 归因更均匀，并讨论领域关联可能变得分散。（S§P，Figs. P.1–P.2）</p>
+<p>我认为这最多提示 <strong>输入依赖方式改变</strong> 。单提示的输入归因没有测量参数更新困难、损失曲率或学习速率，也未排除分词差异、输出概率尺度及归因基线的影响。若沿机制可解释性方向推进，应先在一组受控概念上复现归因变化，再干预相关表示，检查能否恢复后续学习；不能直接用热图给“适应僵化”背书。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Continual-Learning">MOC-Continual-Learning</span> — Topic：把持续学习关注点从“旧知识是否遗忘”扩展到“新知识是否学得进去”；需要同时测保持与适应。</li>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span> — Concept：本文的适应僵化假说对应可塑性受限，不能与训练后旧能力下降混用；两者可能同时出现，也可能相互独立。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Activation Reward Models for Few-Shot Model Alignment</span></a>
+<a class="paper-nav-link next" href="Attention-in-Space-Functional-Roles-of-VLM-Heads-for-Spatial-Reasoning-Pro.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：Attention in Space: Functional Roles of VLM Heads for Spatial Reasoning（Pro）</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: ahlawat2026family</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

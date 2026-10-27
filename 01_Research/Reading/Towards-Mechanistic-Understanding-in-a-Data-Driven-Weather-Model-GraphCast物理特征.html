@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Towards mechanistic understanding in a data-driven weather model: internal activations reveal interpretable physical features</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Towards mechanistic understanding in a data-driven weather model: internal activations reveal interpretable physical features</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型里的-飓风特征-究竟是检测器还是动力学变量"><span class="toc-num">02</span> 2. 关键问题：模型里的“飓风特征”，究竟是检测器还是动力学变量？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先换一组可读坐标-再沿一个坐标做受控干预"><span class="toc-num">03</span> 3. 关键方法：先换一组可读坐标，再沿一个坐标做受控干预</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿-ida-案例走完数据流">3.1 沿 Ida 案例走完数据流</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-为什么一定要保留重构误差">3.2 为什么一定要保留重构误差？</a></li>
+<li><a class="toc-link" href="#4-数据与复现要点"><span class="toc-num">04</span> 4. 数据与复现要点</a></li>
+<li><a class="toc-link" href="#5-关键结果-气旋证据最强-海冰和周期特征仍需更严格的对照"><span class="toc-num">05</span> 5. 关键结果：气旋证据最强，海冰和周期特征仍需更严格的对照</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-sae-能让气旋信息更集中-但优势依赖概念">5.1 SAE 能让气旋信息更集中，但优势依赖概念</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-干预气旋特征有因果效应-但有效幅度有限">5.2 干预气旋特征有因果效应，但有效幅度有限</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-海冰特征很有吸引力-随机模型对照却提醒我们别过度命名">5.3 海冰特征很有吸引力，随机模型对照却提醒我们别过度命名</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2512.24440" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Towards mechanistic understanding in a data-driven weather model: internal activations reveal interpretable physical features</h1>
+    <p class="authors">['Theodore MacMillan', 'Nicholas T. Ouellette']</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Sparse_Autoencoders</span> <span class="topic-tag">AI_for_Science</span> <span class="topic-tag">Weather_Forecasting</span></div>
+</header>
+
+<h1>论文笔记：Towards mechanistic understanding in a data-driven weather model: internal activations reveal interpretable physical features</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<ul>
+<li><strong>作者 / 团队</strong>：Theodore MacMillan、Nicholas T. Ouellette；Stanford University。</li>
+<li><strong>版本</strong>：arXiv:2512.24440v1，2025-12-30。按该预印本记录；截至阅读时，arXiv 页面仅列 v1，作者代码仓库仍标注投稿 / 审稿中。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2512.24440v1">官方全文</a>、<a href="https://arxiv.org/pdf/2512.24440v1">PDF</a>、<a href="https://github.com/theodoremacmillan/graphcast-interpretability">作者代码</a>。已读正文与附录 A–E，并核对下列原图；未运行代码或复现实验。</li>
+</ul>
+<p><strong>值得记住的四点：</strong></p>
+<ol>
+<li>GraphCast 的内部状态可以分解出与热带气旋、海冰范围、昼夜变化等对应的 SAE 特征，但不同现象的证据强度差别很大。</li>
+<li>热带气旋特征不仅能被读出，还能用于调节模型预测的风暴强度；这是全文最强的机制证据。</li>
+<li>干预时保留 SAE 重构误差，并检查风速、气压等变量是否共同满足物理约束，比“激活图看起来像飓风”推进了一步。</li>
+<li><strong>物理上大体合理的输出，仍不能证明这个特征本身编码了完整的飓风动力学。</strong> 下游网络的自修复、特征混合和干预幅度都有待进一步排查。</li>
+</ol>
+<p>我的判断：这篇值得借鉴的是一条面向科学模型的验证路径——<strong>发现表征 → 操控预测 → 检查物理一致性</strong>。它还没有给出跨层电路，也没有发现新的物理定律。</p>
+<h2 id="2-关键问题-模型里的-飓风特征-究竟是检测器还是动力学变量">2. 关键问题：模型里的“飓风特征”，究竟是检测器还是动力学变量？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case：2021 年飓风 Ida。</strong> Figure 4B 中，SAE 特征 3243 的高激活区随 Ida 向美国海岸移动，与近地面强风区相伴。但仅凭这个现象，它可能只是在检测某种涡度或局部强风模式。即使它能准确标出飓风，也不代表 GraphCast 用它组织了飓风的后续演化。作者接着问：人为增加这个内部量，会不会得到一个更强、同时仍符合基本物理关系的飓风？</p>
+</blockquote>
+<p>这里的“失败”首先是<strong>解释方法的失败</strong>：预测准确率告诉我们输出好不好；单神经元可视化和相关性探针告诉我们信息在哪里，却都无法单独回答模型怎样使用信息。GraphCast 的一个节点嵌入还可能混合多种概念，因此直接把某个坐标叫作“飓风神经元”尤其危险（§2、§3）。</p>
+<p><img src="https://arxiv.org/html/2512.24440v1/fig_4.png" alt="Figure 4：热带气旋特征与 Ida、Hagibis 的空间演化" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2512.24440v1#S2.F4">Figure 4</a>。A 比较气旋标签、SAE 特征和单神经元的长期空间分布；B、C 展示同一特征跟随 Ida 和 Hagibis 移动。应看“跨地点追踪同类事件”，而不是只看某一张漂亮的激活图。这一步仍是相关性证据。</em></p>
+<h2 id="3-关键方法-先换一组可读坐标-再沿一个坐标做受控干预">3. 关键方法：先换一组可读坐标，再沿一个坐标做受控干预</h2>
+<h3 id="3-1-沿-ida-案例走完数据流">3.1 沿 Ida 案例走完数据流</h3>
+<p><strong>① 从天气场取得中间状态。</strong> GraphCast 接收当前和前一时刻的大气状态，输出下一时刻天气。其编码器把规则气象网格映射到球面图，经过 16 层消息传递，再解码回天气场。作者保持 GraphCast 参数固定，读取第 8 层每个节点的 512 维嵌入；节点是有地理位置的，因而某个特征在全体节点上的激活可以直接画成地图。</p>
+<p><strong>② 只训练一个旁路 SAE，寻找稀疏分解。</strong> 核心配置将 512 维状态映射到 4096 个候选特征，每个节点只保留 Top-32 激活：</p>
+<div class="math-display">$$
+\alpha_i=\operatorname{TopK}\!\left(W_{\rm enc}(v_i-b)\right),\qquad
+\hat v_i=W_{\rm dec}\alpha_i+b.
+$$</div>
+<p>这里，$v_i$ 是节点状态，$\alpha_i$ 是稀疏特征强度，$W_{\rm dec}$ 的每一列 $w_f$ 是原嵌入空间中的一个方向。解码器列向量约束为单位范数，避免通过任意缩放字典向量来改变激活幅值的含义。训练目标是重构原状态，并加辅助项让长期未激活的特征参与重构误差，缓解死特征问题（§2.1、Appendix C）。</p>
+<p>为什么要扩大维度再稀疏化？一个原始坐标可以混合多个天气因素；过完备字典提供更多候选方向，稀疏约束则要求每个局部状态只调用其中少量方向。<strong>这为可解释性创造条件，却不保证每个方向就是一个独立物理概念。</strong> 作者也试过 $L_1$ 正则 SAE，但更难控制死特征；TopK 直接固定稀疏预算，还允许只存非零激活。</p>
+<p><strong>③ 用外部天气标签给特征找含义。</strong> SAE 训练本身没有“飓风”标签。训练后，作者把热带气旋标注投影到模型网格，对每个特征分别拟合一个只有斜率和截距的 logistic probe：</p>
+<div class="math-display">$$
+p_{i,f}=\sigma(a_f\alpha_{i,f}+c_f).
+$$</div>
+<p>正负类损失分别求平均、各占一半，以处理负节点约为正节点 $10^4$ 倍的失衡。按探针表现，特征 3243 成为该配置下的最佳候选。<strong>无监督的是字典发现；“哪个特征代表气旋”的筛选使用了监督标签。</strong> 对照也在单个原始神经元上训练同形式探针，而非直接拿裸激活比较。</p>
+<p><strong>④ 修改特征后，让原模型继续预测。</strong> 从 Ida 于 2021-08-28 12:00 的状态启动，在每次预测的第 8 层把特征 3243 乘以 $1+\gamma$，再继续余下网络及自回归过程。总共 40 步，每步 6 小时，即 10 天（§3.1）。</p>
+<p>这里不是只在起点推一下，也没有在方法中额外限定一个“飓风中心”编辑掩码。作者按节点编辑这个特征；修改量随该节点当前激活而变，未激活处不新增该方向。</p>
+<h3 id="3-2-为什么一定要保留重构误差">3.2 为什么一定要保留重构误差？</h3>
+<p>直接把修改后的 SAE 重构送回 GraphCast，会同时引入“目标特征变化”和“SAE 未能重构的信息丢失”。论文保留原始重构残差：</p>
+<div class="math-display">$$
+v_{i,\rm mod}
+=W_{\rm dec}\tilde\alpha_i+b+(v_i-\hat v_i)
+=v_i+\gamma\alpha_{i,f}w_f.
+$$</div>
+<p>右侧是由原文 Eq. 6–9 得到的等价写法：只沿目标解码方向追加变化，其他残差原样保留。于是 $\gamma=0$ 精确恢复原状态；$\gamma=0.1$ 是将特征放大到 1.1 倍；$\gamma=-0.5$ 是减半，<strong>不是删除特征</strong>。</p>
+<p>回到 Ida：如果这个方向只是无关的读出信号，编辑未必改变预报；如果编辑只制造失真，气压与风速可能各变各的。作者因此同时观察风暴强度、路径及物理平衡。残差保留排除了重构误差这一类混淆，但没有自动保证编辑仍处于合理状态分布内。</p>
+<h2 id="4-数据与复现要点">4. 数据与复现要点</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>原文设置</th>
+<th>复现时的含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>被分析模型</td>
+<td>36.7M 参数 GraphCast；0.25° 分辨率、37 个气压层；内部图有 40,962 个节点</td>
+<td>主分析是一个已训练模型的中间层，不是跨模型结论</td>
+</tr>
+<tr>
+<td>SAE 激活数据</td>
+<td>§2.2 记为 1979–2019 的约 40 年 ERA5，每 6 小时做单步预测；每层约 23.9 亿节点向量</td>
+<td>这是节点样本数，不能当作同量级独立天气事件；采集单步与干预 rollout 要区分</td>
+</tr>
+<tr>
+<td>SAE 扫描范围</td>
+<td>$k\in\{16,32,64,128,256\}$；字典宽度 $\{2048,4096,8192,16384\}$；固定第 8 层</td>
+<td>更大字典不一定更容易用一个特征表达完整气旋</td>
+</tr>
+<tr>
+<td>SAE 训练</td>
+<td>batch 8192；学习率 $3\times10^{-4}$；辅助 TopK 为 512，权重 $1/32$；不重复使用数据</td>
+<td>连续 500 万节点样本未入选 TopK 的特征被判为 dead；部分高稀疏配置未充分激活全部字典</td>
+</tr>
+<tr>
+<td>气象标签</td>
+<td>2019–2021 年的热带气旋、大气河和大气阻塞标注；对齐四个 UTC 时刻并投影到图节点</td>
+<td>插值产生的非二元值按零处理，标签边界会影响检测指标</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>大气河</strong>（atmospheric river）是集中输送水汽的狭长带；<strong>大气阻塞</strong>（blocking）则是另一类持续性环流现象。SAE 的验证误差约在至少 20 年等效输入数据后进入平台，作者提醒这一点也依赖学习率等设置（Appendix C）；不能把它当作方法不可改变的数据下限。</p>
+<p>两处应保留的复现疑问：</p>
+<ul>
+<li><strong>[?] 数据划分</strong>：正文把 2019–2021 称为验证集，又在其中训练、选择探针，但未清楚报告另一个独立的探针测试划分；“1979–2019、40 年”的训练区间也未明确端点是否包含 2019。因此不把报告的 F1 自动解释为严格隔离的最终测试集性能，也不据此断言发生了泄漏。</li>
+<li><strong>[?] 损失写法</strong>：Appendix C 文字称重构项为 MSE，Eq. 17 却写成未平方的 $L_2$ 范数。精确复现应核对实现，不能仅按文字或公式择一猜测。</li>
+</ul>
+<p><a href="https://github.com/theodoremacmillan/graphcast-interpretability#readme">作者仓库 README</a> 当前将飓风 Colab demo 列为主要可运行产物，其余是大规模分析所用的工具与脚本；本笔记未验证完整训练管线能否直接复现。</p>
+<h2 id="5-关键结果-气旋证据最强-海冰和周期特征仍需更严格的对照">5. 关键结果：气旋证据最强，海冰和周期特征仍需更严格的对照</h2>
+<h3 id="5-1-sae-能让气旋信息更集中-但优势依赖概念">5.1 SAE 能让气旋信息更集中，但优势依赖概念</h3>
+<p>为了判断特征是否比原坐标更可读，作者比较单 SAE 特征探针和最佳单神经元探针。第 8 层、$k=32$、字典宽度 4096 下，气旋特征 3243 的 <strong>F1 为 0.48</strong>，最佳单神经元为 <strong>0.01</strong>（§2.5、Figure 4）。激活地图还展示了其在不同洋盆及两次风暴中的响应。</p>
+<p>这支持“气旋信息沿一个 SAE 方向更容易读出”，但 0.48 不是近乎完美的检测，也不证明 SAE 比所有读出方式都强。<strong>论文没有用完整 512 维状态的线性探针、匹配复杂度的其他方向作充分对照。</strong> 当前比较回答的是信息是否集中到单个坐标，而非有多少信息原先不存在。</p>
+<p>两个反例很有价值：大气河的最佳单神经元 F1 已有 <strong>0.30</strong>，与 SAE 的差距没有气旋那么悬殊；大气阻塞在所有扫描配置下的最佳 F1 仅 <strong>0.1</strong>，作者未找到令人信服的对应特征（Appendix D–E）。这既限制了“所有天气概念都会自动解缠”的说法，也不能反推 GraphCast 完全没有阻塞信息——它可能分布在多个特征、其他层或边状态中。</p>
+<p>小的原图核对问题：Figure 4A 图内标的是 neuron 299，图注却称 neuron 19，<strong>编号存在不一致 [?]</strong>；上述 0.01 来自正文的最佳单神经元结果，不依赖选择哪一个编号。</p>
+<h3 id="5-2-干预气旋特征有因果效应-但有效幅度有限">5.2 干预气旋特征有因果效应，但有效幅度有限</h3>
+<p><img src="https://arxiv.org/html/2512.24440v1/fig_5.png" alt="Figure 5：Ida 的特征干预与物理一致性诊断" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2512.24440v1#S3.F5">Figure 5</a>。A 是最低海平面气压，B 是最大 10 米风速，C 是路径；D、E 分别是静力平衡与质量连续性残差；F 对比实际环向风速与由压力梯度推算的风速。尤其应同时看红色大幅增强曲线的强度失控和物理残差恶化。</em></p>
+<p>实验取 $\gamma\in\{-0.5,-0.1,-0.05,0,0.05,0.1,0.5\}$，并与无干预及 ERA5 比较。增强特征总体使风速更大、中心气压更低；抑制则反向变化。除最大正向增强外，预测大体保留风暴移动及登陆后衰减的过程。<strong>$\gamma=0.5$ 出现失控且不物理的响应</strong>，所以这不是一个可任意旋转的“飓风强度旋钮”（§3.1）。</p>
+<p>物理检验包含三项（§3.2）：</p>
+<ul>
+<li><strong>静力平衡</strong>：检查垂直压力梯度与重力的近似平衡，$\partial p/\partial z=-\rho g$。</li>
+<li><strong>质量连续性</strong>：检查水平辐散与压力坐标下垂直速度梯度相抵，$\nabla_h\cdot v_h+\partial\omega/\partial p=0$。</li>
+<li><strong>气旋周围的梯度风平衡</strong>：在风眼中心坐标系比较压力梯度、离心项和科里奥利项，$g\,\partial Z/\partial r=v_\theta^2/r+fv_\theta$。其中 $Z$ 为位势高度、$r$ 为到中心的距离、$f$ 为科里奥利参数。</li>
+</ul>
+<p>第三项尤其有解释力：增强风暴时，模型不是只把“风速”这一个输出拉高，还同时改变了与它有力学关系的压力场。Figure 5F 中，中等编辑幅度下，实际风速曲线与压力梯度推算曲线大体对应。</p>
+<p>但“物理一致”必须加范围。Figure 5D 中 $\gamma=0.1$ 的静力残差已有明显升高；ERA5 自身也并非严格满足静力平衡，因此不能要求误差为零，也不能把低残差视作全部物理约束通过。本文没有检查所有守恒量、极端强度或所有风暴；正文称测试的其他气旋有类似响应，却没有给出对应样本数及跨风暴统计。</p>
+<p><strong>可支持的结论是：这个方向对模型预测的气旋强度有因果作用，部分编辑下多变量关系仍大体合理。</strong> 尚不能区分“特征本身带有完整物理抽象”和“下游网络把扰动修复成了合理天气场”；作者在 §3.2 也明确保留了 self-repair 解释。</p>
+<h3 id="5-3-海冰特征很有吸引力-随机模型对照却提醒我们别过度命名">5.3 海冰特征很有吸引力，随机模型对照却提醒我们别过度命名</h3>
+<p><img src="https://arxiv.org/html/2512.24440v1/fig_2.png" alt="Figure 2：不同时间尺度的特征与海冰范围对照" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2512.24440v1#S2.F2">Figure 2</a>。C 的红线为外部海冰范围，北极与南极特征随季节收缩、扩展；D 展示昼夜相关特征。关注激活与物理参照的对应，同时注意图中没有证明海冰变量对预测的因果作用。</em></p>
+<p>作者先用时间功率谱筛选周期特征，再查看空间激活。特征 1710、1437 分别与北极、南极海冰范围相符，参照来自 NSIDC Sea Ice Index V4；海冰范围不是 GraphCast 显式输入或输出的变量（§2.3、Figure 2C）。</p>
+<p>这表明内部状态含有可提取的、与未显式提供变量对应的信息。<strong>“未显式输入海冰”不等于“从训练数据之外获得知识”</strong>：温度、季节和地理位置等输入中的相关线索仍可能支持这种对应。论文只展示相关性，没有证明模型单独维护并使用了一个海冰状态。</p>
+<p>关键对照是：对<strong>随机初始化 GraphCast</strong> 的激活训练 SAE，仍能看到昼夜和季节周期峰（Figure 12）。因此周期峰本身可以继承自输入数据；训练后特征更贴近天气现象的比较主要是可视化层面的（Figure 13），尚不足以把每个周期特征都归因于学得的动力学。</p>
+<p>作者还发现沿内部球面网格激活的 <strong>grid-locked features</strong>（Figure 3）。这是可解释性帮助暴露架构痕迹的例子，但它们是否损害预报并未验证：多尺度图中有的节点拥有更长、更密的连接，本来就可能承担不同计算。</p>
+<h2 id="6-insights">6. Insights</h2>
+<p><strong>1. 这里最值得继续做的是拆开“编辑立即产生的关系”和“模型后来修复出的关系”。</strong> 残差保留确保无编辑时状态不变，却不能排除余下网络的补偿；而 Ida 实验在每个预测步都重复编辑。下一轮可以比较只编辑首步与持续编辑、不同干预层，以及首次输出和长 rollout 的物理残差，并加扰动范数匹配的随机方向或其他活跃特征对照。若只有继续演化后平衡才恢复，就更支持自修复；若特定方向在首次输出中就选择性维持气旋力学关系，概念解释才更强。</p>
+<p><strong>2. 海冰结果的下一步应排除“季节地图”，而非再找几张相似图片。</strong> 随机模型已有周期峰，而海冰也强烈依赖季节和位置。可以先用月份、经纬度及局地温度建立简单基线，再考察特征是否额外解释同季节的年际海冰异常，尤其是异常年份；随后干预特征，看响应是否落在合理的近海气象变量上。这样才能从“能给这个方向起名”推进到“这个方向携带了不可被简单背景变量替代的状态信息”。</p>
+<p><strong>3. Grid-locked 特征提示一个容易忽略的 SAE 混淆：节点未必是同质样本。</strong> 作者用共享 SAE 处理所有图节点，但多尺度连接让节点的计算角色不同。我的判断是，先按节点度数和网格层级分组分析重构与特征响应，比直接删除这些“伪特征”更稳妥；再在改变网格朝向或结构的模型中追踪它们。只有证明某方向主要随网格而非天气变化，并测出其对预报的作用，才能区分有用的结构路由和有害的架构偏差。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic/Area：把 SAE 的“特征发现—干预”延伸到天气模型，并用输出场的物理约束检验解释。</li>
+<li><span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span> — Concept：气旋方向具有局部操控效力，但编辑幅度、下游补偿及未显式建模的边状态限制了线性坐标的解释范围。</li>
+<li><a class="wikilink" href="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界.html" title="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界">Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界</a> — 两者都保留重构残差并进入闭环；天气场的物理平衡提供了比“任务成功 / 失败”更细的约束，但同样不能仅凭行为变化宣称单因素被独立控制。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
+<a class="paper-nav-link next" href="Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Toward Engineering AGI：用可执行约束检验 LLM 的工程设计能力</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: macmillan2025mechanisticweather</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

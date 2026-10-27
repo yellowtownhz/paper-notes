@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Better Activation Oracles</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Building Better Activation Oracles</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-现有-ao-幻觉多-太模糊-而且没法干净地评测-答的是不是激活里的信息-根本分不清"><span class="toc-num">02</span> 2. 关键问题：现有 AO 幻觉多、太模糊，而且没法干净地评测——"答的是不是激活里的信息"根本分不清</a></li>
+<li><a class="toc-link" href="#3-关键方法-四个正交改动叠在-karvonen-2025-配方上-一个新评测套件-aobench"><span class="toc-num">03</span> 3. 关键方法：四个正交改动叠在 Karvonen 2025 配方上 + 一个新评测套件 AObench</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-整体架构">3.1 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-核心模块-四个改进-按对-aobench-贡献从大到小排">3.2 核心模块（四个改进，按对 AObench 贡献从大到小排）</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-训练流程">3.3 训练流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-aobench-评测套件-开源贡献-针对-text-inversion-鲁棒性设计">3.4 AObench 评测套件（开源贡献，针对 text-inversion 鲁棒性设计）</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-与已有方法的区别">3.5 与已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集-on-policy-cot-驱动的对话数据-自监督-lens-数据"><span class="toc-num">04</span> 4. 数据集：on-policy CoT 驱动的对话数据 + 自监督 lens 数据</a></li>
+<li><a class="toc-link" href="#5-关键结果-对话数据集替换是单项最大功臣-整条-ladder-从-0-244-涨到-0-435"><span class="toc-num">05</span> 5. 关键结果：对话数据集替换是单项最大功臣；整条 ladder 从 +0.244 涨到 +0.435</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主-ablation-ladder-fig-7-最核心的图">5.1 主 ablation ladder（Fig.7，最核心的图）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-hallucination-与-vagueness-分解-fig-8">5.2 Hallucination 与 Vagueness 分解（Fig.8）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-injection-strength-fig-6">5.3 Injection strength（Fig.6）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-评测度量三件套-a-1-对复现-扩展最实用">5.4 评测度量三件套（§A.1，对复现/扩展最实用）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-负面结果-作者很诚实">5.5 负面结果（作者很诚实）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-没有的东西">5.6 没有的东西</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-13</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2606.02609" target="_blank">arXiv</a>
+    </div>
+    <h1>Building Better Activation Oracles</h1>
+    <p class="authors">Jan Bauer, Celeste De Schamphelaere, Adam Karvonen, Niclas Luick, Neel Nanda</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Activation_Oracles</span> <span class="topic-tag">LLM_Internals</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Text_Inversion</span></div>
+</header>
+
+<h1>论文笔记: Building Better Activation Oracles</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Jan Bauer（MATS / Gatsby Unit, UCL）和 Celeste De Schamphelaere（MATS / Ghent University）共同一作，equal contribution，作者顺序随机抽，承担全部实验与写作。Niclas Luick（MATS / Hamburg）提出 multilayer AO 的最初想法并做了 consensus sampling 的早期探索。Adam Karvonen（Independent）是<strong>原 Activation Oracle 论文（Karvonen et al. 2025）的一作</strong>，这次给自己的工作做 mentor。Neel Nanda 是资深 mentor。</li>
+<li>发表：arXiv 2606.02609，2026-05-23。非会议论文，属于 MATS cohort 10.0 的 sprint 产出（作者明说 funded and compute by MATS）。</li>
+<li>定位：这不是&quot;提出新方法&quot;，而是对 Karvonen et al. 2025 原始 AO 的<strong>工程化打磨 + 评测套件开源</strong>。作者自己一句话定性：&quot;capability improvements are marginal, but quality of life improvements are quite substantial&quot;——能力提升有限，但可用性大幅提升。</li>
+<li>开源（三件套，原文 footnote 1）：
+<ul>
+<li>主代码仓 <code>github.com/japhba/activation_oracles</code></li>
+<li>模型与数据集 HF collection <code>huggingface.co/collections/ceselder/building-better-activation-oracles</code></li>
+<li>AObench 评测任务仓 <code>github.com/ceselder/cot-oracle</code></li>
+<li>对话数据集 <code>huggingface.co/datasets/ceselder/cot-oracle-convqa-chunked-sonnet</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-现有-ao-幻觉多-太模糊-而且没法干净地评测-答的是不是激活里的信息-根本分不清">2. 关键问题：现有 AO 幻觉多、太模糊，而且没法干净地评测——&quot;答的是不是激活里的信息&quot;根本分不清</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>想象你拿 Karvonen 2025 那版 AO 去做 Qwen3-8B 的 sycophancy（谄媚）检测。你给它一段激活，问&quot;模型现在在谄媚吗？&quot; AO 张口就答 <strong>&quot;No&quot;</strong>——不管你问什么它都先说 No，accuracy 看起来接近 chance（Jakkli et al. 2026 就报告这种 near-chance）。但如果你不看它吐的那个 token、而是看 &quot;Yes&quot;/&quot;No&quot; 两个 token 的 <strong>logit 差</strong>，AUC 其实有 <strong>0.83</strong>（§A.1，Fig.9）。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/vagueness_ladder.png" alt="Figure 9: 二分类任务中 AUC 与 accuracy 的对比，揭示默认答 No 的偏差" /></p>
+<blockquote class="card card-info">
+<p>这就是当前 AO 的三重困境：</p>
+<ul>
+<li><strong>幻觉（hallucination）</strong>——编造激活里根本没有的具体细节；</li>
+<li><strong>模糊（vagueness）</strong>——说一堆放之四海皆准的套话，换个 prompt 它还这么说，不可证伪；</li>
+<li><strong>评测被 text-inversion 污染</strong>——AO 可能只是从激活反推出上下文文本，再照着文本答题，分数高不代表真读懂了&quot;模型在想什么&quot;。AO 和被解释模型是同一个 base model，它内部完全可能访问到同样的信息，绕过 activation 这个输入。</li>
+</ul>
+</blockquote>
+<ul>
+<li><strong>是什么</strong>：AO 是 finetune 过的 LLM，吃原始模型某位置的 residual stream activation 作为额外输入，用自然语言回答&quot;模型此刻内部状态&quot;的问题。属于 scalable, end-to-end interpretability 这条新范式（Steinhardt 2025、LatentQA、NLA 等都是同一条线）。</li>
+<li><strong>为什么是问题</strong>：Jakkli et al. 2026 系统记录了 AO 在实际使用中基本没法用——hallucination 让研究者不敢信、vagueness 让结论不可证伪。这篇就是要缓解前两个（易用性），并尝试构造一个对第三个相对鲁棒的评测。</li>
+<li><strong>已有方法为什么解决不了</strong>（标准三件套来自 Karvonen 2025）：
+<ol>
+<li><strong>LatentQA（Pan et al. 2024）做对话数据</strong>——作者识别出三个毛病：(a) 问题是关于一个复杂用户 prompt 的细节，答案常常<strong>根本不在 activation 里</strong>，逼模型 text inversion 甚至瞎猜；(b) 问的是 off-policy 用户 prompt 细节，<strong>不针对模型内部推理</strong>；(c) 由现已过时的 o1 生成。LatentQA 本质上在<strong>奖励 vagueness 和 text-inversion</strong>。</li>
+<li><strong>FineWeb 上的 past/future-lens 自监督目标</strong>——在预训练文本上预测前后 token，&quot;你不需要知道模型在想什么，只要知道前文在说什么就行&quot;，surface statistics 能把 loss 压得很低但跟 capability 解耦（作者明确警告&quot;loss going down does not always translate to capability&quot;）。</li>
+<li><strong>评测缺一套抗 text-inversion 的 benchmark</strong>——&quot;分数涨了&quot;根本不知道是真涨还是反推文本的能力涨了。</li>
+</ol>
+</li>
+</ul>
+<p>一句话：问题不是&quot;AO 能不能答&quot;，而是答的东西到底是激活里的、还是它偷偷从上下文反推的、还是它编的——这三者现有方法分不清。</p>
+<hr />
+<h2 id="3-关键方法-四个正交改动叠在-karvonen-2025-配方上-一个新评测套件-aobench">3. 关键方法：四个正交改动叠在 Karvonen 2025 配方上 + 一个新评测套件 AObench</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>换个例子——backtracking（模型为什么会反悔），这是 AO 最能体现独特价值的开放性&quot;why&quot;问题（§5 Outlook 作者原话）。改进后的训练流程：</p>
+<ol>
+<li><strong>造对话数据</strong>：拿一批 Qwen3-8B 自己生成的 CoT rollout（on-policy！），让 Sonnet 4.6 在 CoT 中间某位置 i 处切一刀成 prefix / suffix，写一个关于 suffix 的问题，约束是&quot;光看 prefix 文字答不出（防 text-inversion），但 prefix 在位置 i 的激活里有望答出（solvability）&quot;。比如前缀推理到&quot;假设 x=3...&quot;，问题可能是&quot;模型接下来打算检验哪个边界条件？&quot;——答案在后缀，但前缀的 activation 里可能已经 encode 了&quot;打算检验上界&quot;的意图。</li>
+<li><strong>喂多层激活</strong>：不只取单层，而是取 layer 21–25 五个连续层。因为&quot;为什么 backtrack&quot;这种信息是分散在多个 token 的激活里的，单个 final-token activation 会误导性地显得很弱（Fig.10：final token 只有 1.26/5，给最后 50 个 token 就到 2.10/5，超过 black-box baseline）。</li>
+<li><strong>past/future-lens 也换成 on-policy CoT 数据</strong>：不再从 FineWeb 预训练文本预测 token。</li>
+<li><strong>调大 injection 强度（约 2×）</strong>：帮模型克服&quot;平等对待每个 token&quot;的先验，把被注入的 activation 当成 load-bearing token。</li>
+</ol>
+<p>最终在 backtracking 这种开放问题上，AO 输出变得更具体（&quot;模型识别到第二步的假设与第四步的结论矛盾，准备回退到分支选择点&quot;），而不是含糊套话。</p>
+</blockquote>
+<blockquote class="card card-info">
+<p>核心思想引用原文（§1）：
+&quot;We propose to partially alleviate these problems by constructing a better conversational dataset, feeding activations from multiple layers and multiple token positions, training on on-policy data and increasing the magnitude of the activation injection.&quot;</p>
+</blockquote>
+<h3 id="3-1-整体架构">3.1 整体架构</h3>
+<p>AO 本身结构不动（还是 Qwen3-8B base + LoRA finetune，activation 通过 norm-matched injection 加到第 2 个 transformer layer 之后的 residual stream）。这篇改的是<strong>训练数据配方</strong>和<strong>注入超参</strong>，不动模型结构。</p>
+<h3 id="3-2-核心模块-四个改进-按对-aobench-贡献从大到小排">3.2 核心模块（四个改进，按对 AObench 贡献从大到小排）</h3>
+<p><strong>(a) 换对话数据集——单步最大 jump（+0.244 → +0.310，Fig.3，n=3 seeds）</strong></p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/ablation_convqa.png" alt="Figure 3: 替换对话数据集后的独立效果对比" /></p>
+<p>Motivation：LatentQA 问的&quot;不是 activation 里有的东西&quot;，逼模型 text inversion。</p>
+<p>做法（Fig.2）：用 Sonnet 4.6 从目标模型 on-policy CoT 切分构造 QA 对。</p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/past-future-og.png" alt="Figure 2: 对话数据集构造流程，从 CoT 切分生成问答对" />关键设计是切分点 i 的选择——显式被指导成&quot;问题从前缀文字答不出（anti-text-inversion）但从前缀 activation 有望答出（solvability）&quot;。训练时 AO 看 prefix 对应位置的 activation + 这个问题，目标是答出 suffix 相关内容。这个&quot;solvability + anti-text-inversion&quot;的对偶约束是全文最核心的方法学贡献。</p>
+<p><strong>（b) 喂多层（layer 18 → 22 单层 +0.025；单层 22 → 5 层 21-25 再 +0.05，Fig.4）</strong></p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/layer_sweep.png" alt="Figure 4: 层选择消融，Layer 22 及多层提取的性能对比" /></p>
+<p>Motivation：原配方从 25%/50%/75% 随机抽一层，但已知大部分 feature 集中在 55–80% 层范围。Layer 22（≈62% 深度）是峰值，喂 5 个连续层再涨一截，最大增益出在 model-diffing 任务。</p>
+<p>[? 论文未给 Qwen3-8B 总层数；layer 22 = 62% 是原文给的，22/0.62≈35.5 反推约 36 层，属合理推断但原文未证实。]</p>
+<p>作者诚实提醒：多层让 context 变长、训练变慢，&quot;大多数收益其实只要选一个 ~65% 深度的单层就能拿到&quot;。</p>
+<p><strong>（c) on-policy past/future-lens（isolated +0.244 → +0.274，Fig.5，n=3 seeds）</strong></p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/ablation_onpolicy.png" alt="Figure 5: 替换为 on-policy CoT 数据后 AObench 分数的提升" /></p>
+<p>Motivation：FineWeb 是预训练语料，预测未来 token 不需要懂&quot;模型在想什么&quot;。换成模型自己 rollout 的 CoT，任务更 solvable，也更贴合真实使用场景（agent trace 都是 on-policy）。</p>
+<p>效果存在但 modest（作者自承 &quot;the magnitude of the effect is modest&quot;）。⚠️ 重要 caveat（§4 Caveats）：这个 ablation <strong>不干净</strong>——因为对话数据集本身也是从 on-policy CoT 构造的，两者的贡献有重叠，on-policy lens 的独立贡献可能被高估。</p>
+<p><strong>（d) 调 injection 强度（整体 AObench 微涨；hallucination 79% → 85%，Fig.6）</strong></p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/steering_ablation.png" alt="Figure 6: 注入强度消融实验，增大强度对性能的边际影响" /></p>
+<p>Motivation：LM 对 token 的&quot;均匀加权先验&quot;压住了被注入的单 token activation；加大 norm 帮模型把它当成 load-bearing。</p>
+<p>注入公式沿用 Karvonen et al. 2025（<strong>原文未给新公式，以下引自 Karvonen 2025</strong>，本文只调了强度标量 α，约 2×，原 α 具体值论文未披露）：</p>
+<pre><code>h'_2 = h_2 + α · (||h_2|| / ||a||) · a
+</code></pre>
+<p><code>h_2</code> 是第 2 层后的 residual stream，<code>a</code> 是被注入的 activation 向量，<code>α</code> 是强度标量。本质：把外来 activation 缩放到和目标位置 residual stream 同 norm，再按 α 加上去。</p>
+<p>对比 NLA（Fraser-Taliente et al. 2026）的&quot;完全替换 token embedding + 固定 scalar&quot;：作者在 Qwen3-8B 上试过，显著差于 additive 方案（无正式 ablation，但&quot;every run&quot;都更差）。作者的 hypothesis：第 1 层 residual stream 和后续层的 cosine similarity 异常小（第 1 层独有），过了第 1 层后 cosine similarity 层间稳定，所以在第 2 层后注入时残差流已在&quot;正确的 basis&quot;里。</p>
+<h3 id="3-3-训练流程">3.3 训练流程</h3>
+<ul>
+<li>Base model：Qwen3-8B（§3.4 原文点名 &quot;on Qwen3-8B&quot;）。</li>
+<li>Finetune：LoRA（§A.2 警告 &quot;Be careful when changing LoRA rank or LoRA alpha&quot;）。[? rank/alpha 具体值论文未给]</li>
+<li>训练长度：<strong>所有 run 统一 50M tokens</strong>（比 Karvonen 原版 65M 略欠拟合，作者承认绝对性能还能涨，但相对排序在当前 budget 下已稳定）。</li>
+<li>Learning rate：跨 run matched。具体数值未给。[?]</li>
+<li>Seeds：原文措辞是 &quot;with multiple seeds where compute allowed&quot;；Fig.3 和 Fig.5 的 caption 明确标 n=3，其他图的 seed 数未明示。主图误差棒是 95% CI of seed mean。</li>
+<li>硬件/算力：MATS program 提供，具体未披露。[?]</li>
+</ul>
+<h3 id="3-4-aobench-评测套件-开源贡献-针对-text-inversion-鲁棒性设计">3.4 AObench 评测套件（开源贡献，针对 text-inversion 鲁棒性设计）</h3>
+<p>设计原则（§A.2）：每个 task 都要 (1) <strong>Solvability</strong>——理想 AO 应该能解；(2) <strong>抗 text-inversion</strong>——black-box monitor（只看文本不看 activation）难以作弊。</p>
+<p>关键 eval：</p>
+<ul>
+<li><strong>Hallucination 复合分</strong> = 4 个子任务的 normalized 平均：&quot;Not Obviously Wrong&quot;、&quot;Identify Problem Domain&quot;、&quot;Detect Missing Info&quot;、&quot;Predict Hidden Number&quot;（§A.6）。</li>
+<li><strong>Vagueness</strong> = inverse of &quot;Response Specificity&quot;。</li>
+<li><strong>&quot;Not Just Reading Tokens&quot;</strong>——喂<strong>完全相同的 token 集合、但不同的 upstream context</strong>，看 AO 是否给出不同答案。这是对 text-inversion 最干净的检验（文本相同，差异只能来自 activation），作者称观察到 &quot;significant uplift&quot;（§A.6）。<strong>但只在 Fig.12 per-eval 图里给柱状图，正文没给可引用数值。</strong></li>
+<li>&quot;Identify Persona&quot;、&quot;Detect Taboo&quot;：沿用 Karvonen et al. 2025。</li>
+</ul>
+<p><strong>评测度量三件套</strong>（§A.1，对任何 AO 工作都适用，非常实用）：</p>
+<ol>
+<li><strong>二分类用 AUC 不用 accuracy</strong>：Qwen-based AO 倾向默认答 &quot;No&quot;，fixed-threshold accuracy 接近随机（sycophancy 0.50），但 Yes/No logit margin 信号强（AUC 0.83）。</li>
+<li><strong>对比 black-box baseline 时 sweep AO 的 context window</strong>：backtracking 只给 final-token activation 是 1.26/5，给最后 50 个 token 就到 2.10/5 超过 baseline。默认报 ≥20 token context。</li>
+<li><strong>Consensus sampling 降幻觉</strong>（§A.1 + Fig.11）：sample k 次保留 ≥τ 一致的。Taboo secret-word：单次 46.6%；k=10、consensus≥0.8 时保留 19.4% 样本、precision 94.3%。训练无关的便宜 trick。</li>
+</ol>
+<p><strong>附录里两个容易被忽略的发现</strong>：</p>
+<ul>
+<li><strong>§A.3 多位置降幻觉</strong>：hallucinations 随喂入的 activation 位置数<strong>近似线性下降</strong>——因为相关信息分散在多 token，不必集中在单一 activation。</li>
+<li><strong>§A.5 位置采样差异</strong>：这版把 activation 位置采样从 Karvonen 的&quot;有时连续 n、有时单点&quot;改成&quot;随机子集&quot;；ablation 后无显著变化。</li>
+</ul>
+<h3 id="3-5-与已有方法的区别">3.5 与已有方法的区别</h3>
+<ul>
+<li>对比 Karvonen et al. 2025（原版 AO）：本文是其配方的工程改进版，结构不动，改数据 + 注入超参。</li>
+<li>对比 NLA（Fraser-Taliente et al. 2026）：NLA 用替换 embedding 注入 + LatentQA conversational finetune。作者认为 NLA 的自监督重构路线（从 activation bootstrap 自然语言）比 past/future-lens 更有前途，但 NLA 仍在用 LatentQA，会受本文识别的同样问题影响——作者建议 NLA 也换本文的 conversational dataset，或者从多次 NLA rollout 的 consensus topic 里 bootstrap 出 QA。</li>
+<li>对比 linear probe：<strong>窄任务 post-training 上 AO 只能 match linear probe，从未显著超过</strong>（§1、§A.2 反复强调）。这是一个重要且略消极的结论。</li>
+</ul>
+<hr />
+<h2 id="4-数据集-on-policy-cot-驱动的对话数据-自监督-lens-数据">4. 数据集：on-policy CoT 驱动的对话数据 + 自监督 lens 数据</h2>
+<ul>
+<li><strong>对话数据</strong>：<code>ceselder/cot-oracle-convqa-chunked-sonnet</code>——Sonnet 4.6 从 Qwen3-8B on-policy CoT 切分生成 QA。[? 具体规模（多少条 QA）论文未给]</li>
+<li><strong>past/future-lens 自监督数据</strong>：原配方 FineWeb（Penedo et al. 2024）→ 本文换成 on-policy CoT rollouts。[? 具体 corpus 来源、领域分布论文未明确，§A.2 footnote 7 提到 &quot;Our chain-of-thought corpus consisted disproportionately of math&quot;，暗示目前偏数学]</li>
+<li><strong>二分类任务</strong>：沿用 Karvonen et al. 2025 的一套（清单未完整列出）。[?]</li>
+<li><strong>评估数据 AObench</strong>：开源在 <code>github.com/ceselder/cot-oracle</code>。复用 Karvonen 的若干 model organisms（Identify Persona、Detect Taboo）。per-eval 明细见 Fig.12，prompt 见 §A.6（正文未完整贴出）。</li>
+<li><strong>配比策略</strong>：建议训练时每个阶段至少 10% 数据来自其他任务以防 catastrophic forgetting（§A.2）。试过 2-epoch（先 90% lens + 10% conv，再 90% conv + 10% lens）无显著 uplift（§A.2 footnote 6）。</li>
+<li><strong>超参缺失项</strong>（论文本身的复现短板，不是笔记遗漏）：正文 + appendix <strong>没有给</strong> LoRA rank/alpha、LR 数值、batch size、optimizer、硬件规模、对话数据集规模。对一篇号召别人复现的&quot;foundation&quot;工作，这是硬伤。</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-对话数据集替换是单项最大功臣-整条-ladder-从-0-244-涨到-0-435">5. 关键结果：对话数据集替换是单项最大功臣；整条 ladder 从 +0.244 涨到 +0.435</h2>
+<blockquote class="card card-info">
+<p>所有数字 chance-adjusted，50M tokens，matched LR，95% CI of seed mean。</p>
+</blockquote>
+<h3 id="5-1-主-ablation-ladder-fig-7-最核心的图">5.1 主 ablation ladder（Fig.7，最核心的图）</h3>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/ablation_waterfall.png" alt="Figure 7: AObench 消融阶梯图，各改进逐步叠加的效果" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Recipe 阶段</th>
+<th>Chance-adjusted AObench</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adam baseline（Karvonen 2025 原配方）</td>
+<td><strong>+0.244</strong></td>
+<td>Fig.7</td>
+</tr>
+<tr>
+<td>+ 对话数据集换掉（LatentQA → 新数据集）</td>
+<td><strong>+0.310</strong>（单步最大 jump）</td>
+<td>Fig.3，<strong>isolated</strong>（n=3）</td>
+</tr>
+<tr>
+<td>+ on-policy past/future-lens</td>
+<td><strong>+0.274</strong></td>
+<td>Fig.5，<strong>isolated</strong>（n=3）</td>
+</tr>
+<tr>
+<td>+ 多层（layer 21-25）</td>
+<td>见 Fig.4</td>
+<td>单层 22 vs 18：+0.025；5 层 vs 单层 22：+0.05</td>
+</tr>
+<tr>
+<td>+ 2× injection 强度</td>
+<td>最终小 gain</td>
+<td>Fig.6 / Fig.7 ladder</td>
+</tr>
+<tr>
+<td><strong>Full recipe</strong></td>
+<td><strong>+0.435</strong></td>
+<td>Fig.7，<strong>cumulative ladder</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ <strong>关键区分</strong>：Fig.3 和 Fig.5 是<strong>单变量 isolate</strong> 的数（+0.244→+0.310 和 →+0.274），Fig.7 是<strong>累加 ladder</strong>（最终 +0.435）。两者<strong>不能直接叠加</strong>——变量间有交互。而且 on-policy lens 那一阶因为和对话数据集同源（都是 on-policy CoT），独立贡献可能被高估。</p>
+<h3 id="5-2-hallucination-与-vagueness-分解-fig-8">5.2 Hallucination 与 Vagueness 分解（Fig.8）</h3>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/hallucination_ladder.png" alt="Figure 8: 各改进步骤对 hallucination 指标的逐级影响" /></p>
+<ul>
+<li><strong>Hallucination</strong>：68.8% → <strong>84.6%</strong>（full recipe）。⚠️ 反直觉点：换对话数据集后分数<strong>先升</strong>——作者解释是新数据集训练模型做更具体 claim，更容易被判为 hallucination；accounting for this 后才单调上升。这直接暴露了 LLM-judge-based 评测对 prompt phrasing 很敏感，是度量假象不是真退步。</li>
+<li><strong>Vagueness</strong>（chance-adjusted）：0.076 → <strong>0.205</strong>。对话数据集 + 多层贡献了绝大部分 gain。</li>
+</ul>
+<h3 id="5-3-injection-strength-fig-6">5.3 Injection strength（Fig.6）</h3>
+<p>整体 AObench 提升微小，但 hallucination 指标从 79% → 85%，作者因此仍推荐认真调这个超参。</p>
+<h3 id="5-4-评测度量三件套-a-1-对复现-扩展最实用">5.4 评测度量三件套（§A.1，对复现/扩展最实用）</h3>
+<ul>
+<li><strong>AUC vs Accuracy</strong>（Fig.9）：sycophancy accuracy 0.50，ROC AUC <strong>0.83</strong>。</li>
+<li><strong>Context window sweep</strong>（Fig.10）：backtracking final-token-only 1.26/5 → last-50-tokens <strong>2.10/5</strong>，超过 black-box baseline；~20 token 处追平 baseline。</li>
+<li><strong>Consensus@10</strong>（Fig.11）：Taboo 单 token 46.6% → 共识 ≥0.8 时保留 19.4% 样本、precision 94.3%。</li>
+</ul>
+<h3 id="5-5-负面结果-作者很诚实">5.5 负面结果（作者很诚实）</h3>
+<ul>
+<li><strong>窄任务 post-training 没用</strong>（§1 + §A.2 + §A.4）：在 Ivanova et al. 2026 的 hard CoT interp tasks 上窄训，<strong>始终只能 match linear probe，从没显著超过</strong>。作者反复强调（footnote 5：&quot;a very consistent observation&quot;）。</li>
+<li><strong>DPO / GRPO RL 全军覆没</strong>（§A.4）：DPO 经常 mode collapse，LLM judge 难标 good/bad。GRPO 用五条 rubric（原文措辞）：(1) Passing the &quot;swap test&quot;；(2) Is the answer specific and falsifiable?；(3) Does the response add any meaningful insight?；(4) Is it <strong>not clearly, obviously wrong</strong>?（注意是&quot;无明显错误&quot;这个弱判据，不是 correctness）；(5) Is the oracle following instructions?。结果&quot;some evals 涨、另一些退步&quot;，作者<strong>自己不 confidence</strong> 最终 checkpoint 更有用。瓶颈在 LLM judge 可靠性。</li>
+<li><strong>两-epoch 训练无 uplift</strong>（§A.2 footnote 6）。</li>
+</ul>
+<h3 id="5-6-没有的东西">5.6 没有的东西</h3>
+<ul>
+<li>没有 SOTA 对比表（AO 这条赛道只有 Karvonen 2025 一家，本文就是改进它）。</li>
+<li>没有生产验证。</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li>
+<p><strong>最该被拷问的一点：footnote 4 的 text-only baseline 性能&quot;相近&quot;。</strong> 作者跑过一个&quot;不给 activation、只给到该位置为止文本&quot;的同款模型 baseline（§A.2 footnote 4），发现 <strong>&quot;performance was similar&quot;</strong>，但&quot;we are sufficiently uncertain that we do not feel comfortable sharing this result as strong evidence&quot;。如果一个只读文本的同模型能 match AO，那 AO 作为&quot;monitorability tool&quot;（用 activation 才能答的卖点）就被根本动摇——它可能只是个更绕路的文本阅读器。<strong>作者自己慌到不敢公开的结果，恰恰是最该被读者严肃对待的。</strong> 这比&quot;窄训只 match probe&quot;更严重，因为它直接威胁&quot;AO 用了 activation 特有信息&quot;这个核心 claim。Note：作者辩解说 AO 在&quot;这个特定 activation 里有没有这个信息&quot;这一陈述上仍有价值，但这已经是退守二线了。</p>
+</li>
+<li>
+<p><strong>反直觉：最大收益来自换数据集，不是任何架构改动。</strong> 在一个 end-to-end interpretability 方法论论文里，读者本能期待架构创新，结果单项最大功臣是&quot;用 Sonnet 4.6 重新生成一遍 QA 数据&quot;（+0.244→+0.310）。这说明 AO 当前的瓶颈在<strong>训练信号的语义质量</strong>（问的东西到底在不在 activation 里），而不在模型容量。&quot;solvability + anti-text-inversion&quot;这个对偶约束是全文最有迁移价值的方法学——对所有&quot;用 LM 解释 LM 内部&quot;的任务（NLA、probing、steering）都适用。</p>
+</li>
+<li>
+<p><strong>&quot;Not Just Reading Tokens&quot; 是全文最强的反 text-inversion 证据，却被埋没。</strong> 这个 eval 的设计是教科书级干净：相同 token、不同 upstream context，如果 AO 答案不同就证明它用了 activation 特有信息。但作者只在 Fig.12 给柱状图、正文没给可引用数值、没单列成图、没进 ablation。一篇要反驳&quot;AO 只是反推文本&quot;的论文，把自己最强的证据轻忽处理，这是结构性的遗憾。</p>
+</li>
+<li>
+<p><strong>如果让我来做，想不到的点</strong>：让一个更强的模型（Sonnet 4.6）在切分时就主动避开&quot;前缀文本能答&quot;的情况，把&quot;solvability + anti-text-inversion&quot;显式写成生成约束。这比手工设计 QA 模板高明得多。</p>
+</li>
+<li>
+<p><strong>做得不足</strong>：</p>
+<ol>
+<li>关键超参（LoRA rank/alpha、LR、batch size、硬件、对话数据规模）几乎全没给数字。作为&quot;训练 recipe 改进&quot;论文，复现门槛偏高。</li>
+<li>所有结论建立在 50M tokens（自承 undertrained）上。没给&quot;训到 65M 后排序是否仍稳&quot;的证据。</li>
+<li>Hallucination &quot;先升后降&quot;的解释（&quot;模型说更具体的话所以被判更多 hallucination&quot;）合理但<strong>没被定量验证</strong>，只是 plausible story。我会要求补一个 human-judged 的 hallucination 子集做 sanity check——现在的 LLM-judge 评测本身不可靠。</li>
+<li>既然 conv 数据是最大功臣，那&quot;同样的 conv 数据喂给一个不注入 activation 的模型能涨多少&quot;这个对照缺失。footnote 4 部分回答了，但没和 conv 数据叠加测。</li>
+</ol>
+</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>
+<p><strong>作者押注的方向（§5 原文）</strong>：NLA（Natural Language Autoencoders）会是比 past/future-lens 更好的 pretrain 方式，因为它能从 activation 直接 bootstrap 出自然语言 ground truth。作者给了两条具体改进路线——(i) 用本文的 solvability+targetedness 原则重建 conversational data；(ii) 从多次 NLA rollout 的 consensus topic 里 bootstrap 出 QA。我认同这个判断，<strong>但前提是 NLA 得先把 LatentQA 换掉</strong>（本文的教训直接适用，否则只是换了个自监督目标还是踩同款坑）。</p>
+</li>
+<li>
+<p><strong>&quot;AO 只能 match linear probe、从未超过&quot;暗示 AO 的价值区间会被挤压。</strong> 如果 AO 在窄、可 probe 化的任务上只有 linear probe 的信息量，那 AO 相对 probe 的<strong>唯一优势可能只是&quot;输出自然语言&quot;</strong>——AO 不是&quot;更强的探针&quot;，而是&quot;可读性更好的探针&quot;。它的真正价值会被挤压到&quot;线性探针覆盖不了的、开放性、跨 token 的语义问题&quot;（如 backtracking 的 why），这会反过来重塑 AObench 的设计——窄任务会逐渐被剔除。</p>
+</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li>
+<p><strong>&quot;先建 eval 再改方法&quot;的顺序</strong>：作者先吃透 Jakkli et al. 2026 的 failure mode 分类（hallucination / vagueness / text-inversion），再让每个训练改动对应到一个 eval 维度。这种&quot;eval-driven recipe iteration&quot;比&quot;先调方法再找 eval 凑数&quot;扎实得多，ablation ladder 因此讲得通。</p>
+</li>
+<li>
+<p><strong>&quot;loss 下降 ≠ capability 上升&quot;（§A.2）是对所有自监督 interp 方法的元警告。</strong> past/future-lens 有漂亮的 scaling law 但可能只是在拟合 surface statistics——proxy loss 的下降和&quot;真的读懂 activation&quot;之间存在系统性鸿沟。这是做自监督 interpretability 的人必须时刻警惕的。</p>
+</li>
+<li>
+<p><strong>诚实度是这篇 sprint 工作的可信度来源</strong>：§A.4 把 RL 失败全摆出来（DPO mode collapse、GRPO 自己都不 confidence），§A.2 承认 on-policy ablation 不干净、窄训只 match probe。这种&quot;把 caveat 写进 caption 而不是藏进 footnote&quot;的风格让负面结果可被引用。</p>
+</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Author-NeelNanda">MOC-Author-NeelNanda</span> — MocType: Author: Neel Nanda 作为资深 mentor 参与（MATS cohort 10.0 sprint），延续其在可扩展端到端可解释性方向的研究轨迹；本文是其团队 Activation Oracle 工程化改进及 AObench 评测套件工作。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — MocType: Topic: 属于可扩展端到端可解释性路线（Activation Oracles），通过改进训练数据配方与多层激活注入缓解 AO 的幻觉与模糊问题，并开源首个抗 text-inversion 的评测套件 AObench。</li>
+</ul>
+<p><strong>附记（原文纠错）</strong>：原文 §3.3（on-policy 段）写 &quot;We swap fineweb for on-policy corpus in (Fig.6)&quot;，但 Figure 6 是 steering_ablation（注入强度），on-policy 实际对应 <strong>Figure 5</strong>。这是论文自身的图号错引。</p>
+<hr />
+<p>#Research #Paper #可解释性 #activation-oracles #端到端可解释性 #机制可解释性
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Thought Anchors: Which LLM Reasoning Steps Matter?</span></a>
+<a class="paper-nav-link next" href="Does-Fine-Tuning-LLMs-on-New-Knowledge-Encourage-Hallucinations-SFT新知识幻觉.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Bauer2026BetterAO</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

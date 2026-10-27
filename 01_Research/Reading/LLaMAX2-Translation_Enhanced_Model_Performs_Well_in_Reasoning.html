@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLaMAX2 - Your Translation-Enhanced Model also Performs Well in Reasoning</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">LLaMAX2 - Your Translation-Enhanced Model also Performs Well in Reasoning</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-翻译增强模型为何丧失推理能力"><span class="toc-num">02</span> 2. 关键问题：翻译增强模型为何丧失推理能力</a></li>
+<li><a class="toc-link toc-sub" href="#动机">动机</a></li>
+<li><a class="toc-link toc-sub" href="#根因分析">根因分析</a></li>
+<li><a class="toc-link toc-sub" href="#核心洞见">核心洞见</a></li>
+<li><a class="toc-link" href="#3-数据集-0-8b-tokens-的精选平行语料"><span class="toc-num">03</span> 3. 数据集：0.8B tokens 的精选平行语料</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#数据处理流程-6-步">数据处理流程（6 步）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-layer-selective-tuning"><span class="toc-num">04</span> 4. 关键方法：Layer-Selective Tuning</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#内部编码器-解码器假设">内部编码器-解码器假设</a></li>
+<li><a class="toc-link toc-sub" href="#核心发现-中间层的敏感性">核心发现：中间层的敏感性</a></li>
+<li><a class="toc-link toc-sub" href="#两阶段训练算法">两阶段训练算法</a></li>
+<li><a class="toc-link toc-sub" href="#最优配置">最优配置</a></li>
+<li><a class="toc-link toc-sub" href="#训练配置">训练配置</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键实验-仅-0-8b-tokens-即可达到-sota-翻译性能"><span class="toc-num">05</span> 5. 关键实验：仅 0.8B tokens 即可达到 SOTA 翻译性能</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-翻译性能对比-table-1">主实验：翻译性能对比（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#多语言任务结果-table-2">多语言任务结果（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-层选择-table-3">消融实验：层选择（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-两阶段-vs-单阶段-table-4">消融实验：两阶段 vs 单阶段（Table 4）</a></li>
+<li><a class="toc-link toc-sub" href="#推理能力保持">推理能力保持</a></li>
+<li><a class="toc-link" href="#6-golden-case-翻译样本的层选择性处理"><span class="toc-num">06</span> 6. Golden Case：翻译样本的层选择性处理</a></li>
+<li><a class="toc-link toc-sub" href="#输入样本">输入样本</a></li>
+<li><a class="toc-link toc-sub" href="#处理流程">处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#关键决策点">关键决策点</a></li>
+<li><a class="toc-link toc-sub" href="#最终输出">最终输出</a></li>
+<li><a class="toc-link" href="#7-insights-从-instruct-model-开始-层选择性微调"><span class="toc-num">07</span> 7. Insights：从 Instruct Model 开始 + 层选择性微调</a></li>
+<li><a class="toc-link toc-sub" href="#7-1-论文评价">7.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#7-2-领域启发">7.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#7-3-方法论启发">7.3 方法论启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#与多语言可解释性研究的关联">与多语言可解释性研究的关联</a></li>
+<li><a class="toc-link toc-sub" href="#与翻译增强方法的关联">与翻译增强方法的关联</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-03-09</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2510.09189v1" target="_blank">arXiv</a>
+    </div>
+    <h1>LLaMAX2 - Your Translation-Enhanced Model also Performs Well in Reasoning</h1>
+    <p class="authors">Changjiang Gao, Zixian Huang, Jingyang Gong, Shujian Huang, Lei Li, Fei Yuan</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_LLM</span> <span class="topic-tag">Machine_Translation</span> <span class="topic-tag">Layer_Selective_Tuning</span> <span class="topic-tag">Instruction_Tuning</span></div>
+</header>
+
+<h1>论文笔记: LLaMAX2 - Your Translation-Enhanced Model also Performs Well in Reasoning</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>作者</strong></td>
+<td>Changjiang Gao, Zixian Huang, Jingyang Gong, Shujian Huang, Lei Li, Fei Yuan</td>
+</tr>
+<tr>
+<td><strong>团队</strong></td>
+<td>南京大学、香港大学、卡内基梅隆大学、上海人工智能实验室</td>
+</tr>
+<tr>
+<td><strong>发表</strong></td>
+<td>ACL 2026 (投稿中)</td>
+</tr>
+<tr>
+<td><strong>时间</strong></td>
+<td>2025 年 10 月 (arXiv:2510.09189)</td>
+</tr>
+<tr>
+<td><strong>代码</strong></td>
+<td>https://github.com/CONE-MT/LLaMAX2.0</td>
+</tr>
+<tr>
+<td><strong>模型</strong></td>
+<td>Qwen3-XPlus-8B, Qwen3-XPlus-14B（开源）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-关键问题-翻译增强模型为何丧失推理能力">2. 关键问题：翻译增强模型为何丧失推理能力</h2>
+<h3 id="动机">动机</h3>
+<p>通用 LLM（如 GPT-5、Claude 4、Gemini 2.5、DeepSeek-R1）在推理任务上表现出色，但翻译增强型 LLM（如 Tower-Plus、Hunyuan-MT）在推理任务上显著退步。</p>
+<blockquote class="card card-info">
+<p>&quot;General Large Language Models (LLMs) excel in reasoning, but those enhanced for translation struggle with reasoning tasks.&quot;</p>
+</blockquote>
+<h3 id="根因分析">根因分析</h3>
+<p>现有翻译增强流水线的结构性缺陷：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>传统做法</th>
+<th>问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>起始模型</strong></td>
+<td>从 Base Model 开始</td>
+<td>Instruct Model 已具备的推理能力被丢弃</td>
+</tr>
+<tr>
+<td><strong>数据需求</strong></td>
+<td>数十亿至万亿 tokens</td>
+<td>Hunyuan-MT (1311B)、Sailor2 (500B)、Tower-Plus (32B)</td>
+</tr>
+<tr>
+<td><strong>训练流程</strong></td>
+<td>CPT → SFT → PPO/DPO</td>
+<td>复杂流程易导致 catastrophic forgetting</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="核心洞见">核心洞见</h3>
+<ol>
+<li><strong>基础推理技能具有通用性</strong>：数学规则、编程结构跨语言共享，无需用多语言重新学习</li>
+<li><strong>Instruct Model 已具备高质量能力</strong>：经过精心选择的指令数据微调，难以通过后训练复制</li>
+<li><strong>问题不在翻译数据本身</strong>：而在起始模型选择和训练策略</li>
+</ol>
+<h2 id="3-数据集-0-8b-tokens-的精选平行语料">3. 数据集：0.8B tokens 的精选平行语料</h2>
+<h3 id="训练数据">训练数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>数据来源</strong></td>
+<td>NLLB + OPUS-100</td>
+</tr>
+<tr>
+<td><strong>语言覆盖</strong></td>
+<td>17 种语言</td>
+</tr>
+<tr>
+<td><strong>总规模</strong></td>
+<td>0.8B tokens（对比 Hunyuan-MT 1311B、Tower-Plus 32B）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="数据处理流程-6-步">数据处理流程（6 步）</h3>
+<ol>
+<li><strong>格式统一化</strong>：转换为 JSONL 格式</li>
+<li><strong>字符清洗</strong>：清理无效字符和标点</li>
+<li><strong>SimHash 去重</strong>：删除冲突 &gt;2 的样本</li>
+<li><strong>语言标签过滤</strong>：使用 FastText 过滤错误语言标签</li>
+<li><strong>质量评估</strong>：排除损失高于 FLORES-101 开发集 90% 分位数的样本</li>
+<li><strong>指令格式化</strong>：添加清晰、多样的任务指令</li>
+</ol>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>数据集</th>
+<th>指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>翻译</strong></td>
+<td>FLORES-101</td>
+<td>spBLEU, xComet</td>
+</tr>
+<tr>
+<td><strong>多语言任务</strong></td>
+<td>XNLI, MGSM, xIFEval, XStoryCloze, XCOPA, XGPQA, XWinograd</td>
+<td>Accuracy</td>
+</tr>
+<tr>
+<td><strong>推理任务</strong></td>
+<td>BBEH, AIME2024/2025, OlympiadBench, LiveMathBench 等 15 个基准</td>
+<td>Accuracy / Pass@1</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-关键方法-layer-selective-tuning">4. 关键方法：Layer-Selective Tuning</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>：从 Instruct Model 出发，仅使用平行数据进行层选择性调优，冻结中间层以保留推理能力。</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<pre><code>Instruct Model (Qwen3)
+       ↓
+Stage 1: 训练底部 k 层（编码层）
+       ↓
+Stage 2: 训练顶部 m 层（解码层）
+       ↓
+Qwen3-XPlus (翻译增强 + 推理保持)
+</code></pre>
+<h3 id="内部编码器-解码器假设">内部编码器-解码器假设</h3>
+<p>Decoder-only 模型的层级功能分工：</p>
+<ul>
+<li><strong>底层</strong>（接近 embedding）：负责信息编码（encoding）</li>
+<li><strong>顶层</strong>（远离 embedding）：负责解码生成（decoding）</li>
+<li><strong>中间层</strong>：处理共享语义推理，冻结以保持通用能力</li>
+</ul>
+<h3 id="核心发现-中间层的敏感性">核心发现：中间层的敏感性</h3>
+<p><strong>单层训练实验（Figure 2）</strong>：</p>
+<ul>
+<li>训练中间层（尤其是 Layer 20）导致翻译性能显著下降</li>
+<li>中间层捕获更通用、可迁移的表示</li>
+</ul>
+<p><img src="https://arxiv.org/html/2510.09189v1/x2.png" alt="Figure 2: 英语到16种语言的平均翻译性能对比" /></p>
+<p><strong>梯度核范数分析（Figure 3）</strong>：</p>
+<ul>
+<li>核范数反映模型参数对输入变化的敏感度</li>
+<li>约 20 层附近展现最高敏感性</li>
+</ul>
+<p><img src="https://arxiv.org/html/2510.09189v1/x3.png" alt="Figure 3: Qwen3-XPlus训练流程概览，包括数据构建和层选择性调优策略" /></p>
+<h3 id="两阶段训练算法">两阶段训练算法</h3>
+<p><strong>Stage 1：训练底部 k 层</strong></p>
+<pre><code>for epoch l = 1 to L do
+    Shuffle D_multi
+    for each batch D_1 ∈ D_multi do
+        l_1 = Σ -log P_{θ_1}(y|x)
+        θ_bottom_k ← θ_bottom_k - η∇_{θ_bottom_k} l_1
+    end for
+end for
+</code></pre>
+<p><strong>Stage 2：训练顶部 m 层</strong></p>
+<pre><code>for epoch l = 1 to L do
+    Shuffle D_multi
+    for each batch D_2 ∈ D_multi do
+        l_2 = Σ -log P_{θ_2}(y|x)
+        θ_top_m ← θ_top_m - η∇_{θ_top_m} l_2
+    end for
+end for
+</code></pre>
+<h3 id="最优配置">最优配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>设置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>底部层数</strong></td>
+<td>4 层（Layer 1-4）</td>
+</tr>
+<tr>
+<td><strong>顶部层数</strong></td>
+<td>15 层（跳过 Layer 20）</td>
+</tr>
+<tr>
+<td><strong>中间层</strong></td>
+<td>冻结</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="训练配置">训练配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>设置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>基础模型</strong></td>
+<td>Qwen3-8B / Qwen3-14B</td>
+</tr>
+<tr>
+<td><strong>学习率</strong></td>
+<td>1e-5</td>
+</tr>
+<tr>
+<td><strong>最小学习率</strong></td>
+<td>2e-6</td>
+</tr>
+<tr>
+<td><strong>调度器</strong></td>
+<td>Cosine scheduler</td>
+</tr>
+<tr>
+<td><strong>Warmup ratio</strong></td>
+<td>0.03</td>
+</tr>
+<tr>
+<td><strong>训练轮次</strong></td>
+<td>1 epoch</td>
+</tr>
+<tr>
+<td><strong>硬件</strong></td>
+<td>8 × NVIDIA H800 GPU</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>起始模型</th>
+<th>数据量</th>
+<th>训练阶段</th>
+<th>推理保持</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tower-Plus</td>
+<td>Base Model</td>
+<td>32B tokens</td>
+<td>CPT+SFT+RL</td>
+<td>差</td>
+</tr>
+<tr>
+<td>Hunyuan-MT</td>
+<td>Base Model</td>
+<td>1311B tokens</td>
+<td>CPT+SFT+RL</td>
+<td>差</td>
+</tr>
+<tr>
+<td><strong>LLaMAX2</strong></td>
+<td><strong>Instruct Model</strong></td>
+<td><strong>0.8B tokens</strong></td>
+<td><strong>仅 SFT</strong></td>
+<td><strong>优</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键实验-仅-0-8b-tokens-即可达到-sota-翻译性能">5. 关键实验：仅 0.8B tokens 即可达到 SOTA 翻译性能</h2>
+<h3 id="主实验-翻译性能对比-table-1">主实验：翻译性能对比（Table 1）</h3>
+<h4>低资源语言性能提升（x→sw 斯瓦希里语）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>spBLEU</th>
+<th>xComet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-8B</td>
+<td>3.49</td>
+<td>12.52</td>
+</tr>
+<tr>
+<td><strong>Qwen3-XPlus-8B</strong></td>
+<td><strong>18.60</strong> (+15.11)</td>
+<td><strong>50.99</strong> (+38.47)</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>5.87</td>
+<td>15.33</td>
+</tr>
+<tr>
+<td><strong>Qwen3-XPlus-14B</strong></td>
+<td><strong>20.02</strong> (+14.15)</td>
+<td><strong>57.66</strong> (+42.33)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：在低资源语言上实现 <strong>15+ spBLEU</strong> 和 <strong>40+ xComet</strong> 的显著提升。</p>
+<h3 id="多语言任务结果-table-2">多语言任务结果（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>AVG</th>
+<th>XNLI</th>
+<th>MGSM</th>
+<th>xIFEval</th>
+<th>XStoryCloze</th>
+<th>XCOPA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-8B</td>
+<td>55.30</td>
+<td>42.44</td>
+<td>44.87</td>
+<td><strong>81.68</strong></td>
+<td>58.08</td>
+<td>60.40</td>
+</tr>
+<tr>
+<td><strong>Qwen3-XPlus-8B</strong></td>
+<td><strong>56.93</strong></td>
+<td><strong>44.79</strong></td>
+<td><strong>50.36</strong></td>
+<td>80.49</td>
+<td><strong>59.24</strong></td>
+<td><strong>61.44</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：仅使用通用平行语料，无任务特定多语言数据，在 7 个任务中 <strong>5 个超越起始模型</strong>。</p>
+<h3 id="消融实验-层选择-table-3">消融实验：层选择（Table 3）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>Layer</th>
+<th>en→x</th>
+<th>x→en</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-8B</td>
+<td>-</td>
+<td>28.91</td>
+<td>35.26</td>
+</tr>
+<tr>
+<td><strong>Bottom only</strong></td>
+<td>4</td>
+<td><strong>36.53</strong></td>
+<td>29.64</td>
+</tr>
+<tr>
+<td><strong>Top only</strong></td>
+<td>15</td>
+<td>28.92</td>
+<td><strong>36.39</strong></td>
+</tr>
+<tr>
+<td><strong>Bottom 4 + Top 15</strong></td>
+<td>-</td>
+<td><strong>32.82</strong></td>
+<td><strong>38.02</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：</p>
+<ul>
+<li>仅训练底部 4 层即可超越基线（en→x: 28.91 → 36.53）</li>
+<li><strong>Bottom 4 + Top 15</strong> 组合达到最优性能</li>
+</ul>
+<h3 id="消融实验-两阶段-vs-单阶段-table-4">消融实验：两阶段 vs 单阶段（Table 4）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>x→en Avg</th>
+<th>en→x Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-8B</td>
+<td>35.26</td>
+<td>28.91</td>
+</tr>
+<tr>
+<td>One-Stage</td>
+<td>37.86</td>
+<td>31.95</td>
+</tr>
+<tr>
+<td><strong>Two-Stage</strong></td>
+<td><strong>38.02</strong></td>
+<td><strong>32.81</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>：两阶段训练在低资源语言上优势明显（sw en→x: 23.32 → 26.53）。</p>
+<h3 id="推理能力保持">推理能力保持</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型类型</th>
+<th>推理表现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>通用 Instruct (Qwen3)</td>
+<td>强（基准）</td>
+</tr>
+<tr>
+<td>翻译增强（传统 Tower-Plus）</td>
+<td>显著退化</td>
+</tr>
+<tr>
+<td><strong>翻译增强（LLaMAX2）</strong></td>
+<td><strong>与 Qwen3 持平</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-golden-case-翻译样本的层选择性处理">6. Golden Case：翻译样本的层选择性处理</h2>
+<h3 id="输入样本">输入样本</h3>
+<p>翻译任务：English → Swahili</p>
+<h3 id="处理流程">处理流程</h3>
+<ol>
+<li><strong>Tokenization</strong>：将输入 tokenize 为 token 序列</li>
+<li><strong>Bottom Layers (1-4) 编码</strong>：
+<ul>
+<li>捕获源语言的语法和语义信息</li>
+<li><strong>Stage 1 训练后优化</strong></li>
+</ul>
+</li>
+<li><strong>Middle Layers (5-19) 推理</strong>：
+<ul>
+<li><strong>冻结</strong>：保持通用推理能力</li>
+<li>处理跨语言语义对齐</li>
+</ul>
+</li>
+<li><strong>Top Layers (21-35) 解码</strong>：
+<ul>
+<li>生成目标语言 tokens</li>
+<li><strong>Stage 2 训练后优化</strong></li>
+</ul>
+</li>
+</ol>
+<h3 id="关键决策点">关键决策点</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>功能</th>
+<th>参数状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bottom 4</td>
+<td>编码源语言信息</td>
+<td><strong>可训练</strong></td>
+</tr>
+<tr>
+<td>Middle 15</td>
+<td>共享语义推理</td>
+<td>冻结</td>
+</tr>
+<tr>
+<td>Top 15</td>
+<td>解码目标语言</td>
+<td><strong>可训练</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="最终输出">最终输出</h3>
+<ul>
+<li>Qwen3-8B baseline: xComet ~12.52</li>
+<li>Qwen3-XPlus-8B: xComet ~50.99（提升 38+ 分）</li>
+</ul>
+<h2 id="7-insights-从-instruct-model-开始-层选择性微调">7. Insights：从 Instruct Model 开始 + 层选择性微调</h2>
+<h3 id="7-1-论文评价">7.1 论文评价</h3>
+<p><strong>方法设计的简洁性</strong>：从 Instruct Model 出发、仅使用 SFT 阶段、0.8B tokens 数据，打破了&quot;翻译增强需要海量数据和复杂流程&quot;的固有认知。</p>
+<p><strong>出乎意料的发现</strong>：</p>
+<ol>
+<li><strong>数据效率惊人</strong>：仅 0.8B tokens 即可超越使用 1311B tokens 的 Hunyuan-MT</li>
+<li><strong>推理能力完整保留</strong>：在 15 个推理数据集上与原始 Qwen3 持平</li>
+<li><strong>Layer 20 的特殊地位</strong>：单独训练该层导致翻译性能显著下降</li>
+</ol>
+<h3 id="7-2-领域启发">7.2 领域启发</h3>
+<p><strong>训练范式的范式转换</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>传统范式</th>
+<th>LLaMAX2 范式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Model → CPT → SFT → RL</td>
+<td>Instruct Model → Layer-Selective SFT</td>
+</tr>
+<tr>
+<td>海量数据（数十亿至万亿 tokens）</td>
+<td>精选数据（0.8B tokens）</td>
+</tr>
+<tr>
+<td>推理能力退化</td>
+<td>推理能力保持</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>&quot;从终点出发&quot;的设计思路</strong>：</p>
+<ul>
+<li>不问&quot;如何从 Base Model 训练出翻译能力&quot;</li>
+<li>问&quot;如何在已有翻译和推理能力的基础上增强翻译&quot;</li>
+<li>起点选择决定了解决方案的复杂度</li>
+</ul>
+<h3 id="7-3-方法论启发">7.3 方法论启发</h3>
+<p><strong>层选择性调优的普适性</strong>：</p>
+<ul>
+<li>翻译任务：有效</li>
+<li>代码生成任务：有效</li>
+<li>推测：任何需要&quot;保持通用能力 + 增强特定能力&quot;的场景都适用</li>
+</ul>
+<p><strong>数据质量 &gt; 数据量</strong>：</p>
+<ul>
+<li>6 步数据清洗流程确保数据质量</li>
+<li>0.8B 精选数据 &gt; 1311B 原始数据</li>
+</ul>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<ol>
+<li><strong>新训练配方</strong>：从 Instruct Model 出发 + Layer-Selective Tuning + 仅 SFT 阶段</li>
+<li><strong>数据效率</strong>：仅 0.8B tokens 达到 SOTA 翻译性能</li>
+<li><strong>推理保持</strong>：在翻译增强的同时完整保持推理能力</li>
+<li><strong>开源贡献</strong>：发布 Qwen3-XPlus-8B 和 Qwen3-XPlus-14B 模型</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>XGPQA 任务未超越起始模型</strong>：知识密集型任务需要领域特定数据</li>
+<li><strong>语言覆盖有限</strong>：仅训练 17 种语言</li>
+<li><strong>层级选择启发式</strong>：k=4, m=15 的选择基于经验观察，缺乏理论指导</li>
+<li>[?] <strong>模型层数待确认</strong>：Qwen3-8B 实际层数需查阅官方文档</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>层级选择自动化</strong>：开发基于梯度核范数或激活模式的自动层选择方法</li>
+<li><strong>与 RL 结合</strong>：在 SFT 后使用 RL（如 GRPO）进一步优化翻译质量</li>
+<li><strong>扩展语言覆盖</strong>：验证在超低资源语言上的效果</li>
+<li><strong>理论分析</strong>：深入研究中间层冻结为何能保持推理能力</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="与多语言可解释性研究的关联">与多语言可解释性研究的关联</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>关键发现</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>U 形分布：底层/顶层语言特化</td>
+<td>支撑本文的层级分工假设</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>中间层处理共享语义推理</td>
+<td>解释为何冻结中间层能保持推理能力</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>MWork 三阶段</td>
+<td>与底层→中间→顶层的分工对应</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="与翻译增强方法的关联">与翻译增强方法的关联</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>方法</th>
+<th>与本文关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="wikilink" href="GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation.html" title="GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation">GRRM_Group_Relative_Reward_Modeling_for_Machine_Translation</a></td>
+<td>GRPO + GQM Reward Model</td>
+<td>可作为 SFT 后的 RL 阶段</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span></li>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="On_the_Role_of_Parallel_Data_in_Cross_lingual_Transfer_Learning.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">On the Role of Parallel Data in Cross-lingual Transfer Learning</span></a>
+<a class="paper-nav-link next" href="Just_Go_Parallel-Improving_Multilingual_Capabilities_LLMs.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Just Go Parallel: Improving the Multilingual Capabilities of Large Language Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Gao et al. (2025). LLaMAX2: Your Translation-Enhanced Model also Performs Well in Reasoning. arXiv:2510.09189</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

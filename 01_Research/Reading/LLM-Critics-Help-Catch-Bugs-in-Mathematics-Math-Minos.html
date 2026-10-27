@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Critics Help Catch Bugs in Mathematics</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">LLM Critics Help Catch Bugs in Mathematics</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-二元正确性标签告诉-verifier-错了-却没有教它-错在哪里"><span class="toc-num">02</span> 2. 关键问题：二元正确性标签告诉 verifier “错了”，却没有教它“错在哪里”</a></li>
+<li><a class="toc-link toc-sub" href="#golden-case-终局答案正确-不代表推理过程可靠">Golden Case：终局答案正确，不代表推理过程可靠</a></li>
+<li><a class="toc-link toc-sub" href="#为什么不直接让-gpt-4-批改">为什么不直接让 GPT-4 批改？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先用语言反馈教会-怎么看-再用二元标签教会-怎么打分"><span class="toc-num">03</span> 3. 关键方法：先用语言反馈教会“怎么看”，再用二元标签教会“怎么打分”</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-golden-case-一条错误解答如何穿过-math-minos">3.1 Golden Case：一条错误解答如何穿过 Math-Minos</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-形式化-监督的-带宽-发生了什么变化">3.2 形式化：监督的“带宽”发生了什么变化</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-训练配置">3.3 训练配置</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-与-直接用-llm-critic-的本质区别">3.4 与“直接用 LLM critic”的本质区别</a></li>
+<li><a class="toc-link" href="#4-数据集-3-万条高带宽反馈-配合-44-万条低带宽标签"><span class="toc-num">04</span> 4. 数据集：3 万条高带宽反馈，配合 44 万条低带宽标签</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-训练数据">4.1 训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-评估数据">4.2 评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-一条没有被充分交代的数据链">4.3 一条没有被充分交代的数据链</a></li>
+<li><a class="toc-link" href="#5-关键结果-提升稳定但不大-最有说服力的是控制实验而非绝对分数"><span class="toc-num">05</span> 5. 关键结果：提升稳定但不大，最有说服力的是控制实验而非绝对分数</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-best-of-256-主实验-table-2">5.1 Best-of-256 主实验（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-ppo-table-3">5.2 PPO（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-哪些实验真正解释了提升来自哪里">5.3 哪些实验真正解释了提升来自哪里？</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-数据效率-值得关注-但-700-不等于系统成本降了-7-倍">5.4 数据效率：值得关注，但“700%”不等于系统成本降了 7 倍</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-false-positive-与跨模型附录-有启发-但证据等级较低">5.5 False positive 与跨模型附录：有启发，但证据等级较低</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#8-证据账本"><span class="toc-num">08</span> 8. 证据账本</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-19</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://aclanthology.org/2025.findings-acl.753/" target="_blank">arXiv</a>
+    </div>
+    <h1>LLM Critics Help Catch Bugs in Mathematics</h1>
+    <p class="authors">Bofei Gao, Zefan Cai, Runxin Xu, Peiyi Wang, Ce Zheng, Runji Lin, Keming Lu, Dayiheng Liu, Chang Zhou, Wen Xiao, Tianyu Liu, Baobao Chang</p>
+    <div class="topic-row"><span class="topic-tag">Reward_Modeling</span> <span class="topic-tag">Mathematical_Reasoning</span> <span class="topic-tag">Process_Reward_Model</span> <span class="topic-tag">Natural_Language_Feedback</span></div>
+</header>
+
+<h1>论文笔记: LLM Critics Help Catch Bugs in Mathematics</h1>
+<blockquote class="card card-info">
+<p><strong>一句话结论</strong>：Math-Minos 不让生成式 critic 参与线上推理，而是先用 3 万条“逐步自然语言批改”教会 verifier 怎样看错误，再用 44 万条二元标签把这种能力压回一个高效的 ORM/PRM 分类头；它的价值不只是 1～2 个点的提升，而是展示了“训练时使用昂贵而丰富的监督，部署时保留廉价的标量接口”这条路线。</p>
+</blockquote>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>论文</strong>：<em>LLM Critics Help Catch Bugs in Mathematics: Towards a Better Mathematical Verifier with Natural Language Feedback</em></li>
+<li><strong>作者与团队</strong>：Bofei Gao 等；北京大学、阿里巴巴、微软、威斯康星大学麦迪逊分校</li>
+<li><strong>发表</strong>：Findings of ACL 2025，pp. 14588–14604</li>
+<li><strong>代码</strong>：<a href="https://github.com/KbsdJames/MATH-Minos">KbsdJames/MATH-Minos</a></li>
+<li><strong>研究对象</strong>：用于数学推理的 Outcome Reward Model（ORM）与 Process Reward Model（PRM）</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-二元正确性标签告诉-verifier-错了-却没有教它-错在哪里">2. 关键问题：二元正确性标签告诉 verifier “错了”，却没有教它“错在哪里”</h2>
+<h3 id="golden-case-终局答案正确-不代表推理过程可靠">Golden Case：终局答案正确，不代表推理过程可靠</h3>
+<p>假设模型解一道利润题：</p>
+<ol>
+<li>前两步列式正确；</li>
+<li>第三步把每周收入从 $2,500$ 错算成 $37,500$；</li>
+<li>后面又发生一次抵消错误，最后答案碰巧回到正确值。</li>
+</ol>
+<p>如果只用最终答案训练 ORM，这条解答的标签仍可能是 <strong>True</strong>。模型得到的监督只有一个 bit：整条轨迹正确。它看不到第三步的计算错误，更不知道“中间有错但结论碰巧正确”是危险的 false positive。</p>
+<p>PRM 虽然把标签细化到每一步，但每一步通常仍只有 True/False。它比 ORM 定位得更准，却依旧没有回答：这是计算错误、逻辑跳步、问题理解偏离，还是前面错误的累积后果？</p>
+<p>这就是论文瞄准的信息瓶颈：</p>
+<blockquote class="card card-info">
+<p>二元标签适合做最终分类接口，却不是高效学习“如何评价推理”的最佳教学信号。</p>
+</blockquote>
+<h3 id="为什么不直接让-gpt-4-批改">为什么不直接让 GPT-4 批改？</h3>
+<p>最直觉的方案是直接把题目和解答交给 GPT-4，让它判断并解释。但论文先做了一个必要的 sanity check：在 500 个题目—解答样本上，GPT-4-turbo 的直接评价准确率如下（Table 1）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th style="text-align:right">GSM8K</th>
+<th style="text-align:right">MATH</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Outcome Evaluation</td>
+<td style="text-align:right">95.1</td>
+<td style="text-align:right">62.0</td>
+</tr>
+<tr>
+<td>Process Evaluation</td>
+<td style="text-align:right">85.1</td>
+<td style="text-align:right">59.7</td>
+</tr>
+</tbody>
+</table></div>
+<p>MATH 上接近 60% 的结果说明：<strong>让同一个 LLM 同时发现错误和解释错误，生成的解释并不天然可信</strong>。因此这篇论文没有把 GPT-4 当裁判，而是把它降级成一个“拿着参考标签写批注的助教”。</p>
+<h2 id="3-关键方法-先用语言反馈教会-怎么看-再用二元标签教会-怎么打分">3. 关键方法：先用语言反馈教会“怎么看”，再用二元标签教会“怎么打分”</h2>
+<p><img src="https://arxiv.org/html/2406.14024v4/data_creation.png" alt="Math-Minos 的 label-aware 数据构造流程" /></p>
+<p><em>Figure 2 的关键不是 prompt 更长，而是任务被拆开了：已有标签负责“判”，GPT-4 只负责“释”。这降低了 critic 的认知负担，但也把标签质量变成了整条链路的上限。</em></p>
+<h3 id="3-1-golden-case-一条错误解答如何穿过-math-minos">3.1 Golden Case：一条错误解答如何穿过 Math-Minos</h3>
+<p>继续用上面的利润题走一遍完整流程。</p>
+<p><strong>第一步：把标签塞进 prompt。</strong> 训练数据本来就有每一步的 True/False。Math-Minos 将题目、逐步解答及对应标签一起交给 GPT-4-turbo。若某一步为 False，要求解释具体错误；若为 True，则简述为什么成立；最后还要给出整条解答的最终判断。</p>
+<p><strong>第二步：生成逐步自然语言批改。</strong> GPT-4 不再自己猜第三步是否错误，而是在已知 <code>Label: False</code> 的条件下解释：模型错误地把周收入乘上了不该出现的因子，因此该步数值不成立。研究生再检查生成结果。论文从 PRM800K phase-one 与 Math-Shepherd 子集中得到 <strong>30,000 条</strong>这种反馈。</p>
+<p><strong>第三步：Stage 1 生成式 SFT。</strong> 用完整批改文本微调 MetaMATH-Mistral-7B。此时目标不是输出一个分数，而是逐 token 复现“每一步为什么对/错”。丰富监督迫使模型学习错误类型、局部因果关系和评价语言。</p>
+<p><strong>第四步：Stage 2 分类训练。</strong> 丢掉生成任务，给同一模型接分类头，再用 <strong>440,000 条</strong>二元数据训练 ORM 或 PRM；其中 30,000 条与 Stage 1 重合，另加 410,000 条 Math-Shepherd 数据。</p>
+<p><strong>第五步：部署时只打分。</strong> 在 Best-of-256 或 PPO 中，Math-Minos 与普通 ORM/PRM 一样只需一次前向计算产生标量，不生成批改文本。也就是说，critic 是训练教师，不是推理时组件。</p>
+<p><img src="https://arxiv.org/html/2406.14024v4/Method.png" alt="Math-Minos 的两阶段训练框架" /></p>
+<p><em>Figure 3 展示了真正的设计取舍：把自然语言解释限制在 Stage 1，Stage 2 恢复标准 verifier 的接口和速度。</em></p>
+<h3 id="3-2-形式化-监督的-带宽-发生了什么变化">3.2 形式化：监督的“带宽”发生了什么变化</h3>
+<p>对解答 $s=(s_1,\ldots,s_K)$，传统 PRM 为每一步预测正确概率 $\hat y_{s_i}$：</p>
+<div class="math-display">$$
+\mathcal{L}_{\text{PRM}}=-\sum_{i=1}^{K}\left[y_{s_i}\log \hat y_{s_i}+(1-y_{s_i})\log(1-\hat y_{s_i})\right].
+$$</div>
+<p>它回答的是“第 $i$ 步对不对”。Stage 1 则学习一段反馈 token 序列 $x_{1:T}$：</p>
+<div class="math-display">$$
+\mathcal{L}_{\text{SFT}}=-\sum_{t=1}^{T}\log p(x_t\mid x_{&lt;t},q,s,y).
+$$</div>
+<p>这里 $y$ 是已知的逐步标签。语言反馈携带错误位置、错误类型和解释，而 Stage 2 再把这些内部表征投影回二元决策边界。作者没有引入新的结构性模块，创新主要发生在**监督课程（curriculum）**上。</p>
+<h3 id="3-3-训练配置">3.3 训练配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>基座/数据</th>
+<th style="text-align:right">学习率</th>
+<th style="text-align:right">Batch size</th>
+<th>目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stage 1</td>
+<td>MetaMATH-Mistral-7B；30K 自然语言反馈</td>
+<td style="text-align:right">$5\times10^{-6}$</td>
+<td style="text-align:right">256</td>
+<td>next-token prediction</td>
+</tr>
+<tr>
+<td>Stage 2 ORM</td>
+<td>440K 二元标签</td>
+<td style="text-align:right">$3\times10^{-6}$</td>
+<td style="text-align:right">512</td>
+<td>outcome classification</td>
+</tr>
+<tr>
+<td>Stage 2 PRM</td>
+<td>440K 二元标签</td>
+<td style="text-align:right">$2\times10^{-6}$</td>
+<td style="text-align:right">512</td>
+<td>step classification</td>
+</tr>
+<tr>
+<td>PPO</td>
+<td>GSM8K/MATH 训练集</td>
+<td style="text-align:right">$1\times10^{-7}$</td>
+<td style="text-align:right">论文附录配置</td>
+<td>ORM reward</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="3-4-与-直接用-llm-critic-的本质区别">3.4 与“直接用 LLM critic”的本质区别</h3>
+<ul>
+<li><strong>生成式 critic</strong>：每个候选答案都生成评价，信息丰富但推理慢，且评价自身可能出错。</li>
+<li><strong>普通 ORM/PRM</strong>：推理快，但训练信号稀疏。</li>
+<li><strong>Math-Minos</strong>：只在训练时承担生成成本，以自然语言反馈初始化评价能力；在线阶段仍是分类器。</li>
+</ul>
+<p>因此标题里的 “LLM Critics” 容易造成误解：这篇工作的 critic 主要是<strong>离线数据教师</strong>，不是在线自我反思模块。</p>
+<h2 id="4-数据集-3-万条高带宽反馈-配合-44-万条低带宽标签">4. 数据集：3 万条高带宽反馈，配合 44 万条低带宽标签</h2>
+<h3 id="4-1-训练数据">4.1 训练数据</h3>
+<ul>
+<li><strong>自然语言反馈</strong>：30K，来自 PRM800K phase-one 与 Math-Shepherd 子集；GPT-4-turbo 按已有逐步标签生成，研究生检查。</li>
+<li><strong>二元监督</strong>：Stage 2 共 440K，其中 30K 与反馈数据重合，另有 410K Math-Shepherd 数据。</li>
+<li><strong>对照公平性</strong>：普通 ORM/PRM baseline 同样使用 440K 二元样本，主对比控制了 Stage 2 数据量；Math-Minos 额外拥有 Stage 1 的 GPT-4 反馈与人工检查成本。</li>
+</ul>
+<h3 id="4-2-评估数据">4.2 评估数据</h3>
+<ul>
+<li><strong>GSM8K</strong>：7,473 train / 1,319 test。</li>
+<li><strong>MATH</strong>：7,500 train / 5,000 test；verification 使用与既有工作一致的 MATH500 子集。</li>
+<li><strong>Verification</strong>：MetaMATH-Mistral-7B 生成 256 个候选，verifier rerank；另报告 Self-Consistency（SC）及 SC+Reward Model。</li>
+<li><strong>PPO</strong>：在 GSM8K/MATH 训练集上用 ORM 提供 reward；未验证 PRM-PPO。</li>
+</ul>
+<h3 id="4-3-一条没有被充分交代的数据链">4.3 一条没有被充分交代的数据链</h3>
+<p>论文写了“研究生检查”，但没有报告检查人数、通过/修改比例、标注一致性、成本或 feedback 与给定标签冲突时的处理规则。这个缺口很关键，因为 Appendix B 又发现：不少 GPT-4 反馈实际上与原先的 <code>True</code> 标签矛盾。换言之，label-aware prompt 一方面依赖标签降低难度，另一方面又可能通过解释暴露标签噪声；论文没有把这套冲突消解机制说清楚。</p>
+<h2 id="5-关键结果-提升稳定但不大-最有说服力的是控制实验而非绝对分数">5. 关键结果：提升稳定但不大，最有说服力的是控制实验而非绝对分数</h2>
+<h3 id="5-1-best-of-256-主实验-table-2">5.1 Best-of-256 主实验（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">GSM8K</th>
+<th style="text-align:right">MATH500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MetaMATH-Mistral-7B + SC</td>
+<td style="text-align:right">84.1</td>
+<td style="text-align:right">34.6</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td style="text-align:right">86.2</td>
+<td style="text-align:right">35.9</td>
+</tr>
+<tr>
+<td><strong>Math-Minos (ORM)</strong></td>
+<td style="text-align:right"><strong>87.3</strong></td>
+<td style="text-align:right"><strong>37.4</strong></td>
+</tr>
+<tr>
+<td>PRM</td>
+<td style="text-align:right">87.1</td>
+<td style="text-align:right">36.7</td>
+</tr>
+<tr>
+<td><strong>Math-Minos (PRM)</strong></td>
+<td style="text-align:right"><strong>87.6</strong></td>
+<td style="text-align:right"><strong>37.8</strong></td>
+</tr>
+<tr>
+<td>SC + ORM</td>
+<td style="text-align:right">86.6</td>
+<td style="text-align:right">37.6</td>
+</tr>
+<tr>
+<td><strong>SC + Math-Minos (ORM)</strong></td>
+<td style="text-align:right"><strong>88.2</strong></td>
+<td style="text-align:right"><strong>38.3</strong></td>
+</tr>
+<tr>
+<td>SC + PRM</td>
+<td style="text-align:right">86.8</td>
+<td style="text-align:right">37.8</td>
+</tr>
+<tr>
+<td><strong>SC + Math-Minos (PRM)</strong></td>
+<td style="text-align:right"><strong>87.8</strong></td>
+<td style="text-align:right"><strong>38.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>按表中数字重算：</p>
+<ul>
+<li>直接 ORM：GSM8K <strong>+1.1</strong>，MATH500 <strong>+1.5</strong>；</li>
+<li>直接 PRM：GSM8K <strong>+0.5</strong>，MATH500 <strong>+1.1</strong>；</li>
+<li>SC+ORM：<strong>+1.6 / +0.7</strong>；</li>
+<li>SC+PRM：<strong>+1.0 / +0.8</strong>。</li>
+</ul>
+<p>正文对部分增量的口头概括与表格并不完全一致，以上以 Table 2 原始数值为准。效果方向在 ORM/PRM、GSM8K/MATH 上一致，但论文没有报告多随机种子、标准差或显著性检验，因此“稳定”只能指跨设置同向，不能理解为统计显著。</p>
+<h3 id="5-2-ppo-table-3">5.2 PPO（Table 3）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">GSM8K</th>
+<th style="text-align:right">MATH500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MetaMATH-Mistral-7B</td>
+<td style="text-align:right">77.9</td>
+<td style="text-align:right">28.6</td>
+</tr>
+<tr>
+<td>+ ORM-PPO</td>
+<td style="text-align:right">81.8</td>
+<td style="text-align:right">31.3</td>
+</tr>
+<tr>
+<td><strong>+ Math-Minos(ORM)-PPO</strong></td>
+<td style="text-align:right"><strong>83.6</strong></td>
+<td style="text-align:right"><strong>32.8</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Math-Minos 相对普通 ORM-PPO 提升 <strong>+1.8 / +1.5</strong>。这说明 Stage 1 学到的评价表征不仅能 rerank，也能作为策略优化的 reward；但只验证了 ORM，不能外推到更细粒度的 PRM-PPO。</p>
+<h3 id="5-3-哪些实验真正解释了提升来自哪里">5.3 哪些实验真正解释了提升来自哪里？</h3>
+<h4>Label-aware 不是 prompt 小技巧，而是必要条件（Table 4）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>反馈构造</th>
+<th style="text-align:right">Meta-evaluation</th>
+<th style="text-align:right">Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无自然语言反馈的 ORM</td>
+<td style="text-align:right">85.9</td>
+<td style="text-align:right">86.2</td>
+</tr>
+<tr>
+<td>GPT-4 直接批改，不给标签</td>
+<td style="text-align:right">86.2</td>
+<td style="text-align:right">85.8</td>
+</tr>
+<tr>
+<td><strong>给标签后再解释</strong></td>
+<td style="text-align:right"><strong>88.1</strong></td>
+<td style="text-align:right"><strong>88.2</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>不给标签的 GPT-4 反馈在 verification 上反而低于 baseline。这个负结果很重要：收益不是“多喂一点 CoT”自动产生的，而取决于反馈是否可靠、是否对准评价任务。</p>
+<h4>教师能力存在阈值（Table 5）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>教师</th>
+<th style="text-align:right">GSM8K</th>
+<th style="text-align:right">MATH500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无反馈</td>
+<td style="text-align:right">86.2</td>
+<td style="text-align:right">35.9</td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td style="text-align:right">87.3</td>
+<td style="text-align:right">37.4</td>
+</tr>
+<tr>
+<td>Qwen2-72B</td>
+<td style="text-align:right">87.5</td>
+<td style="text-align:right">36.8</td>
+</tr>
+<tr>
+<td>Mistral-7B</td>
+<td style="text-align:right">85.4</td>
+<td style="text-align:right">34.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>Qwen2-72B 大体复现收益，而 Mistral-7B 生成的反馈让结果下降。自然语言标签并不天然比二元标签强；<strong>低质量的高带宽监督可以更高效地教错东西</strong>。</p>
+<h4>两阶段都需要，但消融不是完全同口径（Table 6）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th style="text-align:right">Meta-evaluation</th>
+<th style="text-align:right">Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>w/o Stage 1</td>
+<td style="text-align:right">85.7</td>
+<td style="text-align:right">86.2</td>
+</tr>
+<tr>
+<td>w/o Stage 2</td>
+<td style="text-align:right">82.8</td>
+<td style="text-align:right">84.7</td>
+</tr>
+<tr>
+<td><strong>完整 Math-Minos</strong></td>
+<td style="text-align:right"><strong>88.0</strong></td>
+<td style="text-align:right"><strong>88.2</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>去掉 Stage 1 能证明自然语言预训练贡献明显。去掉 Stage 2 时，生成模型只能通过“过滤”而非同样的排序接口工作，推理规则也发生了变化；所以它说明完整系统需要分类阶段，却不是一个干净的、只隔离 Stage 2 表征贡献的消融。</p>
+<h3 id="5-4-数据效率-值得关注-但-700-不等于系统成本降了-7-倍">5.4 数据效率：值得关注，但“700%”不等于系统成本降了 7 倍</h3>
+<p>在 20,000 条 GSM8K 候选解答构成的 meta-evaluation 上，Math-Minos 约 120 step 后超过普通 ORM；作者据曲线估算约 60K 二元数据即可胜过使用 440K 数据的 baseline，并称数据效率提高超过 700%。</p>
+<p>这个结果支持“丰富反馈能减少二元样本需求”，但有两个口径问题：</p>
+<ol>
+<li>$440K/60K\approx7.33$ 倍，论文的“700% improvement”把倍数与百分比混在了一起；</li>
+<li>这没有计入 30K GPT-4 调用、研究生检查和额外 Stage 1 训练的成本。</li>
+</ol>
+<p>更准确的结论应是：<strong>二元监督样本效率约提高到 7 倍量级；端到端标注与计算成本是否下降，论文没有证明。</strong></p>
+<h3 id="5-5-false-positive-与跨模型附录-有启发-但证据等级较低">5.5 False positive 与跨模型附录：有启发，但证据等级较低</h3>
+<ul>
+<li>Appendix B 从 <strong>训练集</strong>取 600 个“最终答案对、过程有错”的样本：普通 ORM recall 74%、平均 reward 0.234；Math-Minos 为 92%、0.105。结果符合方法动机，但训练集评估不能证明泛化。</li>
+<li>ACL 最终版 Appendix A 新增跨 policy/base 实验：LLaMA-2-7B:MetaMATH 上 ORM@256 为 73.2/26.8，Math-Minos 为 75.6/28.8；Qwen2-MATH-1.5B-Instruct 上为 88.9/75.8 对 90.2/76.9（GSM8K/MATH500）。这缓解了“只对一个生成器有效”的担忧。</li>
+<li>但同一最终版的 Limitations 仍写“experiments were conducted solely on a model with 7 billion parameters”，与 Appendix A 的 1.5B 实验冲突，应是版本更新遗漏，不能据此宣称作者已经系统研究 scaling law。</li>
+</ul>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<h4>Insight 1：最漂亮的地方，是把“解释能力”当训练脚手架，而不是产品接口</h4>
+<p><strong>证据</strong>：Stage 1 用自然语言反馈做生成式训练；Stage 2 回到 ORM/PRM 分类；Best-of-256 与 PPO 都能直接使用最终模型。</p>
+<p><strong>推理</strong>：如果在线生成 critique，延迟会随候选数放大，而且 critique 本身还要被验证。Math-Minos 只让语言承担表征塑形，把线上需要的功能压缩成标量。这与知识蒸馏相似，但被蒸馏的不是教师答案，而是“评价一个推理过程时应该关注什么”。</p>
+<p><strong>判断</strong>：这比“让模型多想几步再打分”更有工程品味。丰富监督未必需要成为丰富输出；训练接口和部署接口可以有意不对称。</p>
+<h4>Insight 2：Label-aware curation 把问题从“教师会不会判断”转成了“上游标签可不可信”</h4>
+<p><strong>证据</strong>：GPT-4 直接过程评价在 MATH 上只有 59.7%；给定标签后的反馈才带来收益。与此同时，Appendix B 发现大量 GPT-4 反馈与原 <code>True</code> 标签矛盾。</p>
+<p><strong>推理</strong>：给标签确实降低了教师任务难度，却不是免费午餐。当标签错时，prompt 要求教师为错误结论编理由；如果教师拒绝迎合，反馈又会和监督标签冲突。人工复核其实是决定数据质量的关键模块，而论文只用一句话带过。</p>
+<p><strong>判断</strong>：后续工作不应只研究更强 teacher，而应显式建模“标签—解释冲突”：保留冲突样本、二次裁决并赋置信度，可能比无条件服从标签更有效。</p>
+<h4>Insight 3：论文证明了“自然语言反馈有用”，尚未证明“自然语言是最佳载体”</h4>
+<p><strong>证据</strong>：强教师反馈有效，弱教师反馈有害；同 token 规模的普通 GPT-4 CoT 蒸馏没有同等收益（Appendix D）。</p>
+<p><strong>推理</strong>：真正起作用的可能是错误位置、错误类型和局部因果解释，而不是自然语言本身。若把批改结构化为 <code>{step, error_type, cause, correction, confidence}</code>，信息更可控，也可能减少幻觉和复核成本。</p>
+<p><strong>判断</strong>：自然语言是验证“高带宽监督”假设的方便起点，不一定是最终的数据协议。最值得做的下一组消融，是在等 token、等教师成本下比较自由文本、结构化 critique 与反事实修正。</p>
+<h4>Insight 4：结果可信度处于“方向可靠、幅度未定”</h4>
+<p><strong>证据</strong>：ORM/PRM、verification/PPO、GSM8K/MATH 的提升方向一致；但绝对增益多为 0.5～1.8 点，没有 seed、方差和显著性检验，false-positive 分析还使用训练集。</p>
+<p><strong>推理</strong>：多设置同向降低了偶然性解释，但不能回答收益对随机初始化、候选采样和数据过滤是否稳定。</p>
+<p><strong>判断</strong>：可以相信自然语言评价预训练是一个有效方向；不能据现有证据相信“700%”或某个小数点后的提升会稳定复现。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>Reward model 很可能继续沿着“训练时可解释、推理时可压缩”的方向发展：训练阶段同时预测标量、错误类型、局部 rationale 和置信度，部署时根据场景选择只输出分数或按需展开解释。真正的分水岭不是 ORM 与 PRM，而是 verifier 是否获得了足够密集、可校验的过程监督。</p>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇论文最值得学习的不是两阶段训练本身，而是它先用 Table 1 证伪了一个看似自然的方案——“直接让 GPT-4 批改就好”——再用 Table 4 把改进归因到 label-aware，而不是只展示最终 SOTA。好的方法论文不仅要证明方案有效，还要说明最接近的朴素替代为什么不工作。</p>
+<p>相反，它也展示了一个常见写作风险：当附录后补实验后，Limitations 没有同步更新；当数据效率用百分比包装时，标注与训练成本没有统一口径。越是醒目的 claim，越应该给出最保守、可复算的定义。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reinforcement-Learning">MOC-Reinforcement-Learning</span> — Topic：Math-Minos 用自然语言反馈预训练 reward model，再将能力压回可用于 reranking 与 PPO 的标量接口。</li>
+<li><a class="wikilink" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html" title="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models">Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models</a> — Concept：两者都认为只看 outcome 不足；Math-Minos 把 rationale 用作训练阶段的高带宽监督，后者进一步追问 reward model 在推理时给出的理由是否与分数一致。</li>
+</ul>
+<h2 id="8-证据账本">8. 证据账本</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>笔记中的判断</th>
+<th>论文证据</th>
+<th>证据强度</th>
+<th>限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>直接让 GPT-4 批改不可靠</td>
+<td>Table 1，500 个样本</td>
+<td>中</td>
+<td>样本规模小，prompt 细节影响大</td>
+</tr>
+<tr>
+<td>Math-Minos 改善 verification</td>
+<td>Table 2，GSM8K/MATH500，Best-of-256</td>
+<td>中高</td>
+<td>无 seed/方差/显著性检验</td>
+</tr>
+<tr>
+<td>可用于策略优化</td>
+<td>Table 3，ORM-PPO</td>
+<td>中</td>
+<td>未测试 PRM-PPO</td>
+</tr>
+<tr>
+<td>收益依赖 label-aware 反馈</td>
+<td>Table 4</td>
+<td>高</td>
+<td>仍依赖上游标签质量</td>
+</tr>
+<tr>
+<td>收益依赖强教师</td>
+<td>Table 5</td>
+<td>中高</td>
+<td>只比较三个教师模型</td>
+</tr>
+<tr>
+<td>两阶段均有贡献</td>
+<td>Table 6</td>
+<td>中</td>
+<td>w/o Stage 2 的推理接口不一致</td>
+</tr>
+<tr>
+<td>二元数据效率约 7 倍</td>
+<td>convergence curve / meta-evaluation</td>
+<td>中低</td>
+<td>未计 GPT-4、人工复核和 Stage 1 成本</td>
+</tr>
+<tr>
+<td>更能识别 false positive</td>
+<td>Appendix B，600 个训练样本</td>
+<td>低</td>
+<td>训练集评估，不能说明泛化</td>
+</tr>
+<tr>
+<td>能迁移到其他 policy/base</td>
+<td>Appendix A，LLaMA-2-7B 与 Qwen2-1.5B</td>
+<td>中</td>
+<td>设置少，正文 limitation 与附录冲突</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Circuit-Tracing-Attribution-Graphs.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Circuit Tracing: Revealing Computational Graphs in Language Models</span></a>
+<a class="paper-nav-link next" href="Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: gao2025llmcritics</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

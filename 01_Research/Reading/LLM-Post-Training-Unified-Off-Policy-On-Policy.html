@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Language Model Post-Training: A Unified View of Off-Policy and On-Policy Learning</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Large Language Model Post-Training: A Unified View of Off-Policy and On-Policy Learning</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-post-training-的概念框架为什么是破碎的"><span class="toc-num">02</span> 2. 关键问题：LLM Post-Training 的概念框架为什么是破碎的？</a></li>
+<li><a class="toc-link" href="#3-数据集"><span class="toc-num">03</span> 3. 数据集</a></li>
+<li><a class="toc-link" href="#4-关键方法-三层框架统一-post-training"><span class="toc-num">04</span> 4. 关键方法：三层框架统一 Post-Training</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-整体架构-三个分析层次">4.1 整体架构：三个分析层次</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-核心概念一-trajectory-provenance">4.2 核心概念一：Trajectory Provenance</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-核心概念二-effective-support-与-functional-roles">4.3 核心概念二：Effective Support 与 Functional Roles</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-核心概念三-behavioral-consolidation-系统级角色">4.4 核心概念三：Behavioral Consolidation（系统级角色）</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-方法归类-核心洞见">4.5 方法归类（核心洞见）</a></li>
+<li><a class="toc-link toc-sub" href="#4-6-边界案例分析-table-7">4.6 边界案例分析（Table 7）</a></li>
+<li><a class="toc-link toc-sub" href="#4-7-hybrid-pipelines-的逻辑">4.7 Hybrid Pipelines 的逻辑</a></li>
+<li><a class="toc-link" href="#5-关键结果-框架的解释力"><span class="toc-num">05</span> 5. 关键结果：框架的解释力</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-为什么-on-policy-rl-不自动-import-新行为">5.1 为什么 On-Policy RL 不自动 import 新行为？</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-为什么-distillation-应该理解为-consolidation">5.2 为什么 Distillation 应该理解为 Consolidation？</a></li>
+<li><a class="toc-link" href="#6-golden-case-一个-multi-stage-pipeline-的行为分析"><span class="toc-num">06</span> 6. Golden Case：一个 multi-stage pipeline 的行为分析</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-1-effective-support-的操作性定义">疑问 1: Effective Support 的操作性定义？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-2-expansion-vs-reshaping-的边界判断">疑问 2: Expansion vs Reshaping 的边界判断？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-3-on-policy-rl-在什么条件下能-expansion">疑问 3: On-Policy RL 在什么条件下能 Expansion？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-4-consolidation-的-evaluation">疑问 4: Consolidation 的 Evaluation？</a></li>
+<li><a class="toc-link" href="#8-insights"><span class="toc-num">08</span> 8. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-对论文本身的-comments">8.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-研究品味">8.2 研究品味</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-14</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.07941" target="_blank">arXiv</a>
+    </div>
+    <h1>Large Language Model Post-Training: A Unified View of Off-Policy and On-Policy Learning</h1>
+    <p class="authors">Shiwan Zhao, Zhihu Wang, Xuyang Zhao, Jiaming Zhou, Caiyue Xu, Chenfei Liu, Liting Zhang, Yuhang Jia, Yanzhe Zhang, Hualong Yu, Zichen Xu, Qicheng Li, Yong Qin</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Post-Training</span> <span class="topic-tag">Trajectory_Analysis</span> <span class="topic-tag">Off-Policy_Learning</span> <span class="topic-tag">Online_Learning</span> <span class="topic-tag">Survey</span></div>
+</header>
+
+<h1>论文笔记: Large Language Model Post-Training: A Unified View of Off-Policy and On-Policy Learning</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Shiwan Zhao 等 13 位作者</li>
+<li><strong>团队</strong>: 京东科技 (JD Tech)</li>
+<li><strong>发表时间</strong>: 2026 年 4 月</li>
+<li><strong>类型</strong>: 综述论文</li>
+</ul>
+<p>有意思的是，这篇综述的野心不是&quot;整理现有方法&quot;，而是重构整个 post-training 的认知框架。作者认为现有文献都是按方法名或目标函数家族来组织的——SFT 单独讲，preference optimization 单独讲，RLHF 和 RLVR 分开讲——这种分法忽略了更本质的问题：这些方法都在干预同一个底层对象，就是 <strong>model behavior induced by trajectory distribution</strong>。</p>
+<p>作者主张用 <strong>trajectory provenance（轨迹来源）</strong> 作为顶层组织轴，而不是按方法名分。</p>
+<hr />
+<h2 id="2-关键问题-llm-post-training-的概念框架为什么是破碎的">2. 关键问题：LLM Post-Training 的概念框架为什么是破碎的？</h2>
+<p>这篇综述在回答一个问题：<strong>&quot;SFT、DPO、RLHF、RLVR、蒸馏……这些方法到底在干什么？它们之间的关系是什么？为什么强系统总是组合使用而不是只选一个？&quot;</strong></p>
+<p>之前的方法卡在哪里了？作者说主要是&quot;碎片化&quot;：</p>
+<ul>
+<li>按 method family 或 objective form 组织，而不是按 behavioral bottleneck 组织</li>
+<li>比较 SFT vs RLHF 时，争论的是&quot;哪个更好&quot;，而不是&quot;它们分别解决什么问题&quot;</li>
+<li>导致一个后果：大家不理解为什么 frontier systems 都是 multi-stage pipeline</li>
+</ul>
+<hr />
+<h2 id="3-数据集">3. 数据集</h2>
+<p>作为综述，本文不涉及具体训练数据。但论文系统梳理了以下主要方法家族涉及的典型数据类型：</p>
+<p><strong>Off-Policy 方法的数据来源</strong>:</p>
+<ul>
+<li>演示数据 (demonstrations)</li>
+<li>偏好对 (preference pairs)</li>
+<li>验证过的轨迹 (verified traces)</li>
+<li>合成教师输出 (synthetic teacher outputs)</li>
+<li>回放数据 (replayed traces)</li>
+</ul>
+<p><strong>On-Policy 方法的数据来源</strong>:</p>
+<ul>
+<li>学习者生成的 rollouts</li>
+<li>基于这些 rollouts 的奖励/偏好/验证信号</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-三层框架统一-post-training">4. 关键方法：三层框架统一 Post-Training</h2>
+<h3 id="4-1-整体架构-三个分析层次">4.1 整体架构：三个分析层次</h3>
+<p>论文的核心贡献是一个三层框架：</p>
+<pre><code>Layer 1: Trajectory Provenance (顶层组织轴)
+    ├── Off-policy learning (外部轨迹)
+    └── On-policy learning (学习器生成的轨迹)
+
+Layer 2: Supervision Interface (次要描述层)
+    ├── Token targets (SFT)
+    ├── Preferences (DPO, etc.)
+    ├── Reward-derived signals (RLHF, RLVR)
+    ├── Verifier/process feedback
+    └── Teacher-guided targets (distillation)
+
+Layer 3: Functional Roles (解释性视角)
+    ├── Effective Support Expansion (让有用行为可达)
+    ├── Policy Reshaping (在可达区域内改进)
+    └── Behavioral Consolidation (跨阶段保留/转移)
+</code></pre>
+<h3 id="4-2-核心概念一-trajectory-provenance">4.2 核心概念一：Trajectory Provenance</h3>
+<p><strong>为什么用 trajectory provenance 做顶层轴？</strong></p>
+<p>作者的观点很直接：<strong>most consequential distinction is not the algebraic form of the loss, but the source of the trajectories on which learning occurs</strong>。</p>
+<p>翻译一下：loss 长什么样没那么重要，重要的是&quot;在哪些轨迹上学习&quot;。</p>
+<ul>
+<li>
+<p><strong>Off-policy</strong>: 在外部提供的轨迹上更新。好处是可以&quot;expose the learner to behaviors it would not yet reliably generate on its own&quot;。坏处是&quot;learner-state mismatch&quot;——训练时的 prefix 分布和部署时自己 rollout 的分布不一样。</p>
+</li>
+<li>
+<p><strong>On-policy</strong>: 在学习器自己生成的轨迹上更新。好处是可以直接修正&quot;只有在自己 rollout 时才会出现的错误&quot;。坏处是&quot;不能自动导入学习器几乎不会访问的行为&quot;。</p>
+</li>
+</ul>
+<h3 id="4-3-核心概念二-effective-support-与-functional-roles">4.3 核心概念二：Effective Support 与 Functional Roles</h3>
+<p>这是论文最有价值的分析工具。作者用 occupancy measure 定义了 state-action space 上的 <strong>effective support</strong>：</p>
+<div class="math-display">$$\mathcal{E}_{\epsilon}(\pi; \mathcal{D}_x) = \{(s,a): d^{\pi}_{\mathcal{D}_x}(s,a) \geq \epsilon\}$$</div>
+<p>其中 $d^{\pi}_{\mathcal{D}_x}(s,a)$ 是 normalized state-action occupancy measure：</p>
+<div class="math-display">$$d^{\pi_{\theta}}_{\mathcal{D}_x}(s,a) = \mathbb{E}_{x \sim \mathcal{D}_x, y \sim \pi_{\theta}(\cdot|x)}\left[\sum_{t=1}^{T(y)} \eta_t(y) \mathbf{1}\{s_t = s, a_t = a\}\right]$$</div>
+<p>直观理解：$\mathcal{E}_{\epsilon}$ 是&quot;模型在实际 rollout 中真正会访问的 state-action 区域&quot;。</p>
+<p>基于此，三个 functional roles：</p>
+<p><strong>1. Effective Support Expansion</strong>
+$$\mathcal{E}_{\epsilon}(\pi_1; \mathcal{D}_x) \setminus \mathcal{E}_{\epsilon}(\pi_0; \mathcal{D}_x) \neq \varnothing$$
+&quot;原来几乎不会访问的 state-action 现在变得可达了&quot;。</p>
+<p><strong>2. Policy Reshaping</strong>
+在 shared effective support $\mathcal{C}_{\epsilon}(\pi_0, \pi_1; \mathcal{D}_x)$ 内部重新分配概率质量。不扩大可达区域，但在可达区域内改进行为。</p>
+<p><strong>3. Support Attrition（诊断性概念）</strong>
+定义被丢弃的有效区域：
+$$\mathcal{A}_{\epsilon}(\pi_0, \pi_1; \mathcal{D}_x) = \mathcal{E}_{\epsilon}(\pi_0; \mathcal{D}_x) \setminus \mathcal{E}_{\epsilon}(\pi_1; \mathcal{D}_x)$$
+这不是一个正向角色，而是用来分析遗忘、退化、阶段间能力丢失。</p>
+<h3 id="4-4-核心概念三-behavioral-consolidation-系统级角色">4.4 核心概念三：Behavioral Consolidation（系统级角色）</h3>
+<p>Consolidation 关注的是行为能否跨阶段、跨模型、跨部署设置保留/转移/压缩。四个子维度：</p>
+<ul>
+<li><strong>Retention</strong>: 跨阶段保持收益</li>
+<li><strong>Transfer</strong>: 从教师/搜索/验证器传递到学生</li>
+<li><strong>Amortization</strong>: 把昂贵的运行时行为（反思、搜索、验证）编译成更便宜的直接策略</li>
+<li><strong>Compression</strong>: 蒸馏到更小的部署模型</li>
+</ul>
+<p><strong>Amortization 这个概念值得多说几句</strong>。现代推理系统（如 o1、R1）在推理时做大量搜索、反思、验证。Distillation 的核心价值不只是&quot;压小&quot;，而是<strong>把这种昂贵的运行时计算 amortize 到模型参数里</strong>。</p>
+<p>这意味着：distillation 的成功不只是&quot;学生复制教师的输出&quot;，而是&quot;学生学会了教师需要搜索才能得到的行为&quot;——这是为什么 on-policy distillation 往往比 off-policy distillation 更有效的原因。</p>
+<h3 id="4-5-方法归类-核心洞见">4.5 方法归类（核心洞见）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Provenance</th>
+<th>Typical Role</th>
+<th>作者的解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SFT</td>
+<td>Off-policy</td>
+<td><strong>Expansion 或 Reshaping</strong></td>
+<td>取决于 supervision data 和 learner 现有 support 的关系。如果 demonstration 暴露了 learner 不会自己生成的结构 → expansion；如果只是 calibrate 已有的行为 → reshaping</td>
+</tr>
+<tr>
+<td>Preference Optimization</td>
+<td>Off-policy</td>
+<td><strong>Reshaping</strong></td>
+<td>chosen/rejected 通常都来自 learner 已经能生成的行为，主要是在 reweight</td>
+</tr>
+<tr>
+<td>RLHF/RLVR</td>
+<td>On-policy</td>
+<td><strong>Reshaping</strong></td>
+<td>改善 learner 自己访问的 state 上的行为。但在 strong rollout guidance 下也可能 contribute to expansion</td>
+</tr>
+<tr>
+<td>Distillation</td>
+<td>看 instance</td>
+<td><strong>Consolidation</strong></td>
+<td>不应视为独立 provenance regime。off-policy 时是 teacher traces；on-policy 时是 teacher correction on learner rollouts。系统层面主要是 transfer/compress</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>SFT 的具体例子</strong>（Table 3）：</p>
+<ul>
+<li><strong>Expansion 例子</strong>: MetaMath、MammoTH、MathScale、LIMO —— supervision 引入了 learner 不会自己生成的 reasoning structure</li>
+<li><strong>Reshaping 例子</strong>: alignment、style calibration —— learner 已经能产生这类行为，SFT 只是 reweight</li>
+</ul>
+<h3 id="4-6-边界案例分析-table-7">4.6 边界案例分析（Table 7）</h3>
+<p>论文专门处理了一些容易混淆的情况：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>Provenance 判断</th>
+<th>为什么不简单</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offline DPO vs Online DPO</td>
+<td>Offline: off-policy; Online: on-policy-like</td>
+<td>同一个 preference objective，但轨迹来源变了</td>
+</tr>
+<tr>
+<td>Verifier-guided filtering vs correction</td>
+<td>Filtering: off-policy; Correction: on-policy</td>
+<td>同一个验证器，但前者策划静态数据，后者监督 learner rollouts</td>
+</tr>
+<tr>
+<td>Teacher traces vs teacher correction</td>
+<td>Traces: off-policy; Correction: on-policy</td>
+<td>同样的教师机制，但学生被优化的位置不同</td>
+</tr>
+<tr>
+<td>Self-improvement with cached traces</td>
+<td>Mixed</td>
+<td>新鲜 learner-state 纠正和存储轨迹混合</td>
+</tr>
+</tbody>
+</table></div>
+<p>这些边缘情况展示了：<strong>同一个&quot;方法名&quot;在 trajectory provenance 视角下可能是完全不同的 regime</strong>。</p>
+<h3 id="4-7-hybrid-pipelines-的逻辑">4.7 Hybrid Pipelines 的逻辑</h3>
+<p>作者的 claim：<strong>hybrid pipelines 不是&quot;乱堆方法&quot;，而是有结构性的必然</strong>。</p>
+<p>一个典型的三阶段逻辑：</p>
+<ol>
+<li>Support Expansion (off-policy): 暴露 learner 不会自己发现的有用行为</li>
+<li>Learner-State Reshaping (on-policy): 修正 learner 自己 rollout 时的错误</li>
+<li>Consolidation: 把 induced behavior 保留/转移/压缩到可部署的形式</li>
+</ol>
+<p><strong>关键风险</strong>：stage-transition attrition——行为在一个阶段被 induce 出来，但在下一阶段丢失了。</p>
+<p>交接点为什么脆弱？</p>
+<ul>
+<li>Stage 1 (SFT) 学到的是在特定 prefix 分布下的行为</li>
+<li>Stage 2 (RL) 在自己 rollout 的分布上优化</li>
+<li><strong>问题</strong>：如果 RL 阶段的 rollout 分布和 SFT 阶段的 prefix 分布差异太大，SFT 诱导的行为可能在 RL 阶段根本没有被访问到</li>
+</ul>
+<p>这解释了为什么&quot;interleaved SFT-RL&quot;往往比&quot;hard handoff&quot;更稳定——软化了分布转变。</p>
+<hr />
+<h2 id="5-关键结果-框架的解释力">5. 关键结果：框架的解释力</h2>
+<p>作为综述，这篇论文没有新实验。但它对已有方法的重新解读很有价值：</p>
+<h3 id="5-1-为什么-on-policy-rl-不自动-import-新行为">5.1 为什么 On-Policy RL 不自动 import 新行为？</h3>
+<p>关键点：<strong>on-policy RL acts on states the learner already visits</strong>。如果你的 rollout 分布里根本没有某个好的 reasoning path，RL 也没法 reinforce 它。</p>
+<p>这解释了为什么&quot;先用 SFT establish behavior，再用 RL refine&quot;是合理的——不是叠 buff，是解决不同的 bottleneck。</p>
+<p>例外：under <strong>structured rollout guidance</strong>（self-hints、templates、scaffolded prompting），on-policy 方法也可能 contribute to expansion。</p>
+<p><strong>关键判断标准</strong>：如果 guidance 的来源是<strong>外部固定的</strong>（template、强制分解结构），那可能 contribute to expansion；如果 guidance 的来源是<strong>模型自己生成的</strong>（self-hints），那还是在已有的 effective support 内打转。</p>
+<h3 id="5-2-为什么-distillation-应该理解为-consolidation">5.2 为什么 Distillation 应该理解为 Consolidation？</h3>
+<p>作者的观点：distillation 的 central role 往往是 <strong>&quot;carry forward behaviors that were first induced elsewhere into a form that can be reused, deployed, or further transferred&quot;</strong>。</p>
+<p>这和传统&quot;compression&quot;视角不同——不是把大模型压小，而是&quot;保留和转移已获得的能力&quot;。</p>
+<hr />
+<h2 id="6-golden-case-一个-multi-stage-pipeline-的行为分析">6. Golden Case：一个 multi-stage pipeline 的行为分析</h2>
+<p>论文没有给出具体的样本处理案例，但可以用一个假设场景说明框架的用途：</p>
+<p><strong>场景</strong>: 训练一个数学推理模型</p>
+<p><strong>Stage 1: SFT on high-quality CoT traces</strong></p>
+<ul>
+<li>Provenance: Off-policy (外部提供的 reasoning traces)</li>
+<li>Role: Support Expansion</li>
+<li>效果: 模型学会了&quot;step-by-step decomposition&quot;的 reasoning structure——这是预训练模型不 reliable 地生成的</li>
+<li>风险: 演示格式可能 narrow，teacher-forced prefix 和实际 rollout 可能不匹配</li>
+</ul>
+<p><strong>Stage 2: RLVR with verifier</strong></p>
+<ul>
+<li>Provenance: On-policy (learner 自己的 rollouts)</li>
+<li>Role: Policy Reshaping</li>
+<li>效果: 在 learner 自己生成的 intermediate steps 上，verifier 给 feedback，修正 branch choice</li>
+<li>风险: RL 可能 overwrite 之前 SFT 诱导的行为；奖励 hacking</li>
+</ul>
+<p><strong>Stage 3: Distill to smaller model</strong></p>
+<ul>
+<li>Provenance: Off-policy (teacher traces on learner rollouts 或 teacher outputs)</li>
+<li>Role: Consolidation</li>
+<li>效果: 把 expensive RL-induced behavior 转移到 cheap deployment model</li>
+<li>风险: 迁移不完整；学生复制了输出形式但没继承中间推理行为</li>
+</ul>
+<hr />
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<h3 id="疑问-1-effective-support-的操作性定义">疑问 1: Effective Support 的操作性定义？</h3>
+<p>论文定义了 state-action space 上的 effective support $\mathcal{E}_{\epsilon}$，但承认这是 &quot;operational rather than strictly measure-theoretic notion&quot;。</p>
+<ul>
+<li><strong>我目前的理解</strong>: 这是一个分析工具，实际上很难精确测量（state space 太大）。论文提到 completion-level empirical support 和 pass@k 作为 proxy，但这些和 state-action 级别的 support 有 gap。</li>
+<li><strong>想搞清楚的是</strong>: 有没有更好的 proxy？——Reviewer 补充：用 pass@k 作为 rough diagnostic：pass@1 低 + pass@k 高 → reshaping；pass@k 也低 → expansion。对特定任务，可以定义 key state patterns（如&quot;正确使用了某个推理策略&quot;），然后统计这些 patterns 在采样中的出现率。</li>
+</ul>
+<h3 id="疑问-2-expansion-vs-reshaping-的边界判断">疑问 2: Expansion vs Reshaping 的边界判断？</h3>
+<p>论文说 SFT 可以是 expansion 或 reshaping，&quot;depending on supervision data and learner's existing effective support&quot;。</p>
+<ul>
+<li><strong>我目前的理解</strong>: 如果 demonstration 里的 behavior 在 learner 的 rollout 里几乎不出现 → expansion；如果已经出现但比例不对 → reshaping</li>
+<li><strong>想搞清楚的是</strong>: 如何 operationally 判断？——Reviewer 补充：一个可能的诊断方法是在当前模型上做大量 sampling，统计 target behavior 的出现率：如果出现率接近 0（比如 pass@100 都不出一次）→ expansion 优先级高；如果能出现但比例低、或出现后质量不稳定 → reshaping 优先级高。</li>
+</ul>
+<h3 id="疑问-3-on-policy-rl-在什么条件下能-expansion">疑问 3: On-Policy RL 在什么条件下能 Expansion？</h3>
+<p>论文提到 under &quot;structured rollout guidance&quot;，on-policy RL 也可能 expansion。但这个条件比较模糊。</p>
+<ul>
+<li><strong>我目前的理解</strong>: 如果 scaffold/template 强制 learner 进入它本来不会访问的 state → 这些 state 上的 improvement 可能扩张 effective support</li>
+<li><strong>想搞清楚的是</strong>: 这算不算&quot;真正的 expansion&quot;？——Reviewer 补充：如果 scaffold 是&quot;运行时依赖&quot;（部署时也需要 scaffold），那这不是真正的 expansion——模型的 native policy 仍然无法独立访问那个状态。但如果部署时可以带 scaffold，这种&quot;expansion with assistance&quot;仍然有价值。可以定义&quot;有 scaffold 时&quot;和&quot;无 scaffold 时&quot;的 effective support，然后看差值。</li>
+</ul>
+<h3 id="疑问-4-consolidation-的-evaluation">疑问 4: Consolidation 的 Evaluation？</h3>
+<p>论文说 consolidation 是关于&quot;behavior 是否跨阶段保留&quot;，但没有给出具体的 evaluation protocol。</p>
+<ul>
+<li><strong>我目前的理解</strong>: 需要比较 before/after transfer 的行为，不仅是 end-task score，还要看 intermediate reasoning patterns</li>
+<li><strong>想搞清楚的是</strong>: 有没有成熟的方法来 measure &quot;retention&quot;、&quot;portability&quot;、&quot;handoff fidelity&quot;？——Reviewer 补充：Retention 测量：比较 transfer 前后，在相同测试集上的行为一致性（不只是 score，还要看 intermediate patterns）；Portability 测量：在不同 distribution 的测试集上比较泛化能力；Handoff fidelity 测量：用教师模型和学生模型生成相同输入的轨迹，计算轨迹相似度（token-level 或 semantic-level）。</li>
+</ul>
+<hr />
+<h2 id="8-insights">8. Insights</h2>
+<h3 id="8-1-对论文本身的-comments">8.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的点</strong>：</p>
+<ol>
+<li>
+<p><strong>Distillation 不是第三个 regime</strong>——这个分类我之前真没想过。传统视角把 distillation 当成一个独立的方法家族，但论文论证它其实是&quot;教师引导的监督接口&quot;，可以应用在 off-policy 或 on-policy 两种 regime 上。这解释了为什么有些 distillation 工作是 offline 的（教师输出），有些是 online 的（在学生 rollouts 上修正）。</p>
+</li>
+<li>
+<p><strong>SFT 的角色不是固定的</strong>——论文指出 SFT 可以是 expansion（暴露新行为）也可以是 reshaping（校准已有行为），取决于&quot;监督数据覆盖了什么&quot;vs&quot;学习者当前有效支持是什么&quot;。这比简单地认为 SFT = imitation 要精细得多。</p>
+</li>
+<li>
+<p><strong>On-policy RL 不自动 import 新行为</strong>——这个点很 sharp：如果 learner 的 rollout 分布里没有某个好的 reasoning path，再怎么 RL 也 reinforce 不到它。这解释了为什么&quot;先用 SFT establish behavior，再用 RL refine&quot;是合理的——不是叠 buff，是解决不同的 bottleneck。</p>
+</li>
+</ol>
+<p><strong>如果让我来做，哪些是想不到的</strong>：</p>
+<ul>
+<li>把 trajectory provenance 作为最高组织轴——我可能还是会按 objective family 组织，因为这是最自然的分类</li>
+<li>把 consolidation 单独拎出来作为系统级角色——我可能只会在 distillation 章节提一句&quot;可以保留行为&quot;，而不会把它上升到整个框架的核心概念</li>
+</ul>
+<p><strong>做得不够好的地方</strong>：</p>
+<ul>
+<li>Effective support 的 operationalization 不够 concrete。定义了数学形式，但测量方法还是 heuristic</li>
+<li>Open problems 部分列了很多问题，但没有指出哪些是&quot;最关键&quot;的</li>
+<li>对 &quot;support attrition&quot; 的讨论更多是诊断性的，没有给出 mitigation strategies</li>
+</ul>
+<h3 id="8-2-研究品味">8.2 研究品味</h3>
+<p>读完这篇论文，<strong>我自己的研究习惯会怎么改变</strong>？</p>
+<p>之前我总是在比&quot;哪个方法更好&quot;，这篇论文让我意识到应该先问&quot;当前瓶颈是什么&quot;。这是一个诊断视角的转变——不是问&quot;SFT vs RLHF 谁更强&quot;，而是问&quot;当前瓶颈是不可达行为还是 learner-state 失败&quot;。</p>
+<p>具体来说：拿到一个表现不好的系统，我会先做 pass@k 诊断——pass@1 低但 pass@k 高，说明行为可达但选错，应该 reshaping；pass@k 也低，说明行为不可达，应该 expansion。这个诊断框架比盲目试方法要有方向感得多。</p>
+<hr />
+<h2 id="9-总结">9. 总结</h2>
+<ul>
+<li><strong>核心创新</strong>: 提出了以 <strong>trajectory provenance</strong> 为顶层轴的 post-training 统一框架，用 <strong>functional roles</strong> (expansion/reshaping/consolidation) 解释不同方法的 behavioral effect。核心洞见是&quot;不同方法解决不同瓶颈，hybrid pipeline 是瓶颈协调而非方法堆叠&quot;。</li>
+<li><strong>局限性</strong>: Effective support 的 operationalization 还不够 concrete；open problems 部分列了很多但缺乏优先级</li>
+<li><strong>改进方向</strong>:
+<ul>
+<li>开发 effective support 的 practical measurement（pass@k 作为 rough diagnostic）</li>
+<li>研究 stage-transition attrition 的 mitigation（interleaved training 作为一种思路）</li>
+<li>建立 consolidation evaluation 的 protocol</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li><strong>On-Policy Distillation</strong>: 见 <a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a>——这正是论文提到的 &quot;On-Policy Teacher-Guided Transfer&quot; 的具体实例</li>
+<li><strong>Distillation Provenance</strong>: 见 <a class="wikilink" href="Tracing-Provenance-in-LLM-Reasoning-Distillation.html" title="Tracing-Provenance-in-LLM-Reasoning-Distillation">Tracing-Provenance-in-LLM-Reasoning-Distillation</a>——从另一角度分析 distillation 后学生学到了什么</li>
+<li><strong>Self-Distillation 范式</strong>: 见 <a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a>、<a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a>——on-policy self-distillation 的代表工作</li>
+<li><strong>蒸馏 MOC</strong>: 见 <span class="wikilink unresolved" title="MOC-蒸馏">MOC-蒸馏</span>——论文对 distillation 的重新解读（作为 consolidation 而非 compression）与蒸馏 MOC 的讨论相关</li>
+<li><strong>Exposure Bias 概念 MOC</strong>: 见 <span class="wikilink unresolved" title="MOC-Exposure-Bias">MOC-Exposure-Bias</span>——本文以 trajectory provenance 为顶层轴，正是 exposure bias 所栖身的&quot;on-policy vs off-policy&quot;分类轴本身的统一处理</li>
+</ul>
+<hr />
+<p>#Research #Paper #LLM-Post-Training #Trajectory-Provenance #Survey
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Tracing-Provenance-in-LLM-Reasoning-Distillation.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Where Did This Sentence Come From? Tracing Provenance in LLM Reasoning Distillation</span></a>
+<a class="paper-nav-link next" href="A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">A Brain-like Synergistic Core in LLMs Drives Behaviour and Learning</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhao2026posttraining_unified</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

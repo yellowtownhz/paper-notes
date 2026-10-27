@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：Exploring the Translation Mechanism of Large Language Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：Exploring the Translation Mechanism of Large Language Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-翻译的内部计算机制-哪些组件驱动翻译-如何工作-能否靶向优化"><span class="toc-num">02</span> 2. 关键问题：LLM 翻译的内部计算机制——哪些组件驱动翻译、如何工作、能否靶向优化</a></li>
+<li><a class="toc-link toc-sub" href="#动机">动机</a></li>
+<li><a class="toc-link toc-sub" href="#三个递进的研究问题">三个递进的研究问题</a></li>
+<li><a class="toc-link toc-sub" href="#与已有工作的区别">与已有工作的区别</a></li>
+<li><a class="toc-link" href="#3-数据集-基于对比翻译对的词级翻译分析数据集"><span class="toc-num">03</span> 3. 数据集：基于对比翻译对的词级翻译分析数据集</a></li>
+<li><a class="toc-link toc-sub" href="#分析数据">分析数据</a></li>
+<li><a class="toc-link toc-sub" href="#反事实扰动策略-4-类">反事实扰动策略（4 类）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-子空间干预路径补丁-在翻译引导子空间内进行精确因果分析"><span class="toc-num">04</span> 4. 关键方法：子空间干预路径补丁——在翻译引导子空间内进行精确因果分析</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块-subspace-intervened-path-patching">核心模块：Subspace-Intervened Path Patching</a></li>
+<li><a class="toc-link toc-sub" href="#行为分析方法">行为分析方法</a></li>
+<li><a class="toc-link toc-sub" href="#靶向微调策略-targeted-sft">靶向微调策略（Targeted SFT）</a></li>
+<li><a class="toc-link toc-sub" href="#训练配置">训练配置</a></li>
+<li><a class="toc-link toc-sub" href="#子空间方法-vs-标准方法的实证对比-table-9">子空间方法 vs 标准方法的实证对比（Table 9）</a></li>
+<li><a class="toc-link" href="#5-关键实验-仅-5-的注意力头驱动-llm-翻译-靶向微调-64-个头即可媲美全参数微调"><span class="toc-num">05</span> 5. 关键实验：仅 <5% 的注意力头驱动 LLM 翻译，靶向微调 64 个头即可媲美全参数微调</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-关键组件检测-figure-1">主实验：关键组件检测（Figure 1）</a></li>
+<li><a class="toc-link toc-sub" href="#三类功能头的行为模式-section-5-1-figure-4-5">三类功能头的行为模式（Section 5.1, Figure 4-5）</a></li>
+<li><a class="toc-link toc-sub" href="#mlp-的迭代处理-section-5-2-figure-6-7">MLP 的迭代处理（Section 5.2, Figure 6-7）</a></li>
+<li><a class="toc-link toc-sub" href="#靶向微调结果-table-2">靶向微调结果（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-table-4-5">消融实验（Table 4-5）</a></li>
+<li><a class="toc-link toc-sub" href="#跨语言迁移验证-table-3">跨语言迁移验证（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#训练阶段一致性-section-4-4-table-1">训练阶段一致性（Section 4.4, Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#扩展验证">扩展验证</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link" href="#7-insights-翻译能力的涌现源于预训练-非微调"><span class="toc-num">07</span> 7. Insights：翻译能力的涌现源于预训练，非微调</a></li>
+<li><a class="toc-link toc-sub" href="#核心洞见">核心洞见</a></li>
+<li><a class="toc-link toc-sub" href="#批判性思考点">批判性思考点</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#核心区分-激发翻译行为-vs-翻译质量">⚠️ 核心区分：激发翻译行为 vs 翻译质量</a></li>
+<li><a class="toc-link toc-sub" href="#翻译行为-vs-翻译质量的机制对比">翻译行为 vs 翻译质量的机制对比</a></li>
+<li><a class="toc-link toc-sub" href="#密切相关工作">密切相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#方法论关联">方法论关联</a></li>
+<li><a class="toc-link toc-sub" href="#技术脉络">技术脉络</a></li>
+<li><a class="toc-link toc-sub" href="#未来方向-从-能否翻译-到-翻译质量">未来方向：从"能否翻译"到"翻译质量"</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-24</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2502.11806" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：Exploring the Translation Mechanism of Large Language Models</h1>
+    <p class="authors">Hongbin Zhang, Kehai Chen, Xuefeng Bai, Xiucheng Li, Yang Xiang, Min Zhang</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Translation_Capability</span> <span class="topic-tag">Attention_Head_Analysis</span> <span class="topic-tag">English-Centric_Hypothesis</span> <span class="topic-tag">Causal_Analysis</span></div>
+</header>
+
+<h1>论文笔记：Exploring the Translation Mechanism of Large Language Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>详细信息</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>作者</strong></td>
+<td>Hongbin Zhang, Kehai Chen, Xuefeng Bai, Xiucheng Li, Yang Xiang*, Min Zhang*（*通讯作者）</td>
+</tr>
+<tr>
+<td><strong>团队</strong></td>
+<td>哈尔滨工业大学（深圳）计算与智能研究院；鹏城实验室</td>
+</tr>
+<tr>
+<td><strong>邮箱</strong></td>
+<td>azure.starzhang@gmail.com, {chenkehai,baixuefeng,lixiucheng}@hit.edu.cn, xiangy@pcl.ac.cn, zhangmin2021@hit.edu.cn</td>
+</tr>
+<tr>
+<td><strong>发表</strong></td>
+<td>NeurIPS 2025</td>
+</tr>
+<tr>
+<td><strong>日期</strong></td>
+<td>2025 年 2 月（arXiv 初版），2026 年 1 月 15 日（v3）</td>
+</tr>
+<tr>
+<td><strong>论文</strong></td>
+<td>https://arxiv.org/abs/2502.11806</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="2-关键问题-llm-翻译的内部计算机制-哪些组件驱动翻译-如何工作-能否靶向优化">2. 关键问题：LLM 翻译的内部计算机制——哪些组件驱动翻译、如何工作、能否靶向优化</h2>
+<h3 id="动机">动机</h3>
+<p>LLM 在多语言翻译上表现出色，但其内部核心翻译机制（即使在最基础的词级翻译层面）仍缺乏充分理解。先前的分析集中在表层语言现象（如神经元激活模式、中间表示），属于观察性研究，未能揭示翻译背后的计算机制基础。</p>
+<blockquote class="card card-info">
+<p>&quot;Despite these successes, a comprehensive understanding of the internal core mechanisms underlying LLM translation is still lacking, even for the fundamental word-level translation.&quot;</p>
+</blockquote>
+<h3 id="三个递进的研究问题">三个递进的研究问题</h3>
+<ol>
+<li><strong>哪些组件</strong>对 LLM 翻译至关重要？</li>
+<li>这些关键组件展现出<strong>什么行为模式</strong>？</li>
+<li>靶向微调这些组件能否<strong>提升翻译能力</strong>？</li>
+</ol>
+<h3 id="与已有工作的区别">与已有工作的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>已有工作</th>
+<th>本文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>架构</strong></td>
+<td>聚焦 encoder-decoder 的 NMT 模型（Bau et al., 2019; Voita et al., 2019）</td>
+<td>首次研究 decoder-only LLM 的翻译机制</td>
+</tr>
+<tr>
+<td><strong>方法</strong></td>
+<td>标准 path patching 干预整个激活向量，受多义性干扰</td>
+<td>提出 subspace-intervened path patching，在翻译子空间内精确干预</td>
+</tr>
+<tr>
+<td><strong>深度</strong></td>
+<td>观察性分析（神经元激活、表示探测）</td>
+<td>因果分析 + 行为表征 + 实证验证（三位一体）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="3-数据集-基于对比翻译对的词级翻译分析数据集">3. 数据集：基于对比翻译对的词级翻译分析数据集</h2>
+<h3 id="分析数据">分析数据</h3>
+<ul>
+<li><strong>语言覆盖</strong>：5 种语言——英语 (En)、中文 (Zh)、俄语 (Ru)、德语 (De)、法语 (Fr)</li>
+<li><strong>数据规模</strong>：139 个中文单词、120 个德语、115 个俄语、118 个法语（均为单 token 词）</li>
+<li><strong>正样本 X+</strong>：包含翻译逻辑的 prompt，如 <code>&quot;English: book - 中文: &quot;</code>，且筛选模型能正确翻译的样本</li>
+<li><strong>负样本 X-</strong>：反事实句子，保留语法结构但破坏翻译逻辑，如将 <code>&quot;中文&quot;</code> 替换为 <code>&quot;Nothing&quot;</code></li>
+</ul>
+<h3 id="反事实扰动策略-4-类">反事实扰动策略（4 类）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>操作类型</th>
+<th>实现机制</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target Nullification</td>
+<td>用非语言概念替换目标语言标识</td>
+<td><code>{tgt_lang}</code> → &quot;Void&quot;/&quot;Null&quot;</td>
+</tr>
+<tr>
+<td>Action Distortion</td>
+<td>用无关动作替换翻译动词</td>
+<td>&quot;translate&quot; → &quot;eat&quot;/&quot;delete&quot;</td>
+</tr>
+<tr>
+<td>Semantic Obfuscation</td>
+<td>修改任务名词</td>
+<td>&quot;translation&quot; → &quot;color&quot;/&quot;flavor&quot;</td>
+</tr>
+<tr>
+<td>Paradox Insertion</td>
+<td>引入自相矛盾修饰语</td>
+<td>&quot;into {tgt_lang}&quot; → &quot;into a silent rock&quot;</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li>翻译性能：WMT23/WMT24 测试集（Zh⇔En、De⇔En）</li>
+<li>通用能力：MMLU（多任务理解）、ARC（推理）、SIQA（社会常识）</li>
+<li>跨语言迁移：En⇔Cs、En⇔Ja 翻译任务</li>
+<li>扩展验证：低资源语言（Swahili、Bengali、Arabic）、句级翻译（WMT23 En→Zh）、多语言数学推理（MGSM）</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-子空间干预路径补丁-在翻译引导子空间内进行精确因果分析">4. 关键方法：子空间干预路径补丁——在翻译引导子空间内进行精确因果分析</h2>
+<h3 id="整体架构">整体架构</h3>
+<p>三阶段递进框架：</p>
+<ol>
+<li><strong>组件检测</strong>：通过 subspace-intervened path patching 发现翻译关键组件</li>
+<li><strong>行为分析</strong>：通过注意力可视化和 MLP 表示投影表征组件功能</li>
+<li><strong>靶向优化</strong>：仅微调关键组件验证其对句级翻译的泛化性</li>
+</ol>
+<h3 id="核心模块-subspace-intervened-path-patching">核心模块：Subspace-Intervened Path Patching</h3>
+<p><strong>与标准 path patching 的区别</strong>：标准方法干预组件的整个激活向量，但激活往往具有多义性（polysemanticity），同时编码多个无关概念。本文方法仅在翻译相关的低维子空间内进行干预，隔离翻译的特定因果机制。</p>
+<p><strong>Step 1：翻译引导子空间识别</strong></p>
+<p>对组件 c，利用 N 个对比数据对计算对比激活向量：</p>
+<div class="math-display">$$\Delta a_c^{(i)} = a_c(X_+^{(i)}) - a_c(X_-^{(i)})$$</div>
+<p>构建激活差异矩阵 $M_c \in \mathbb{R}^{d \times N}$，将其分解为两个正交子空间：</p>
+<div class="math-display">$$\min_{S_c, E_c, \Gamma} ||M_c - S_c \mathbf{1}^\top - E_c \Gamma^\top||_F \quad s.t. \quad \text{Span}(S_c) \perp \text{Span}(E_c)$$</div>
+<ul>
+<li>$S_c \in \mathbb{R}^{d \times 1}$：通用翻译引导子空间（跨数据集共享的翻译方向）</li>
+<li>$E_c \in \mathbb{R}^{d \times r}$：数据特定子空间</li>
+</ul>
+<p>通过 SVD 求解（Algorithm 1），获得 $S_c$。</p>
+<p><strong>直观解释</strong>：把激活变化拆成两部分——&quot;大家都有的翻译信号&quot;（$S_c$）和&quot;每个样本独有的特征&quot;（$E_c$）。就像把一桶混水过滤出纯净的翻译&quot;精华&quot;。</p>
+<p><strong>Step 2：子空间投影补丁</strong></p>
+<p>设 $W_c$ 为 $S_c$ 的正交基矩阵，投影算子 $P_{S_c} = W_c W_c^T$，则补丁后的激活为：</p>
+<div class="math-display">$$\tilde{a}_c = W_c W_c^T a_c(X_-^{(i)}) + (I - W_c W_c^T) a_c(X_+^{(i)})$$</div>
+<blockquote class="card card-info">
+<p>在翻译子空间内用反事实激活替换，子空间外保留原始激活，从而精确测量该子空间对翻译输出的因果效应。</p>
+</blockquote>
+<p><strong>直观解释</strong>：只把&quot;翻译相关&quot;的部分换成反事实样本的激活，保留其他所有功能不变。类比：给一个人换心脏，只换心脏，不把整个胸腔都换掉。</p>
+<h3 id="行为分析方法">行为分析方法</h3>
+<p><strong>注意力头分析</strong>：利用加权值输出 $O^{(i,j)} = ||A^{(i,j)}(x W_V^{(i,j)})||_F$ 分析 END 位置对所有 Key token 的注意力分布，据此将头分为三类功能角色。</p>
+<p><strong>MLP 分析</strong>：利用 unembedding 矩阵 $W_U$ 作为诊断探针，计算 MLP 输入/输出与翻译相关 token 嵌入的余弦相似度：</p>
+<div class="math-display">$$\langle MLP_{out} - MLP_{in}, \text{TOK} \rangle = \frac{MLP_{out} - MLP_{in}}{||MLP_{out} - MLP_{in}||} \cdot \frac{W_U[\text{TOK}]}{||W_U[\text{TOK}]||}$$</div>
+<h3 id="靶向微调策略-targeted-sft">靶向微调策略（Targeted SFT）</h3>
+<p>仅微调检测到的翻译关键组件（top-64 attention heads），冻结其余参数。训练数据：WMT17-22 + Flores-200 人工平行语料。</p>
+<h3 id="训练配置">训练配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>设置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础模型</td>
+<td>LLaMA2-7B/13B, Mistral-7B</td>
+</tr>
+<tr>
+<td>微调参数</td>
+<td>64个关键 attention heads（约0.27B参数，&lt;5%总量）</td>
+</tr>
+<tr>
+<td>学习率</td>
+<td>$2 \times 10^{-5}$</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>128</td>
+</tr>
+<tr>
+<td>训练轮次</td>
+<td>2 epochs</td>
+</tr>
+<tr>
+<td>硬件</td>
+<td>8 × NVIDIA A100 80GB</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="子空间方法-vs-标准方法的实证对比-table-9">子空间方法 vs 标准方法的实证对比（Table 9）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>翻译方向</th>
+<th>方法</th>
+<th>平均 logit 变化</th>
+<th>Knockout Top-5 准确率下降</th>
+<th>Targeted SFT（BLEU/COMET/BLEURT）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>En→Zh</td>
+<td>标准</td>
+<td>-2.69%</td>
+<td>-25%</td>
+<td>27.3/79.8/62.4</td>
+</tr>
+<tr>
+<td>En→Zh</td>
+<td><strong>子空间</strong></td>
+<td><strong>-4.47%</strong></td>
+<td><strong>-39%</strong></td>
+<td><strong>28.9/80.5/63.1</strong></td>
+</tr>
+<tr>
+<td>En→Sw</td>
+<td>标准</td>
+<td>-3.12%</td>
+<td>-28%</td>
+<td>1.83/51.5/40.9</td>
+</tr>
+<tr>
+<td>En→Sw</td>
+<td><strong>子空间</strong></td>
+<td><strong>-6.81%</strong></td>
+<td><strong>-42%</strong></td>
+<td><strong>3.91/55.1/43.7</strong></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-关键实验-仅-5-的注意力头驱动-llm-翻译-靶向微调-64-个头即可媲美全参数微调">5. 关键实验：仅 &lt;5% 的注意力头驱动 LLM 翻译，靶向微调 64 个头即可媲美全参数微调</h2>
+<h3 id="主实验-关键组件检测-figure-1">主实验：关键组件检测（Figure 1）</h3>
+<p><strong>稀疏性</strong>：仅极少数头（&lt;5%）显著影响翻译性能，关键头集中在中间层（12-20）和最后两层。</p>
+<p><img src="https://arxiv.org/html/2502.11806v3/x1.png" alt="Figure 1: 不同翻译方向下各注意力头和MLP的重要性热图" /></p>
+<p><strong>跨语言可迁移性</strong>：共享源/目标语言的语言对（如 En⇒Zh 与 Fr⇒Zh）关键头重叠率 &gt;70%，双向翻译对（如 Fr⇔En）重叠率 &gt;60%。</p>
+<p><strong>Knockout 验证（Figure 2）</strong>：逐步敲除关键头导致翻译准确率从 ~95% 骤降至 ~20%（敲除 5 个），而敲除随机头准确率稳定在 ±2% 以内。</p>
+<p><img src="https://arxiv.org/html/2502.11806v3/x7.png" alt="Figure 2: 逐步敲除关键组件后翻译准确率的变化曲线" /></p>
+<h3 id="三类功能头的行为模式-section-5-1-figure-4-5">三类功能头的行为模式（Section 5.1, Figure 4-5）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>头类型</th>
+<th>注意力模式</th>
+<th>功能</th>
+<th>示例头</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Source Heads</strong></td>
+<td>集中注意源语言 token</td>
+<td>跨语言词汇对齐</td>
+<td>(18, 17)</td>
+</tr>
+<tr>
+<td><strong>Indicator Heads</strong></td>
+<td>尖锐关注翻译指示符（语言标识、冒号等）</td>
+<td>翻译模式识别与句法边界检测</td>
+<td>(27, 14), (4, 14)</td>
+</tr>
+<tr>
+<td><strong>Positional Heads</strong></td>
+<td>均匀分布于相邻 token</td>
+<td>管理上下文依赖和语法一致性</td>
+<td>(4, 31)</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="https://arxiv.org/html/2502.11806v3/x10.png" alt="Figure 4: 中→英翻译中三类关键注意力头的注意力值可视化" /></p>
+<p><img src="https://arxiv.org/html/2502.11806v3/x14.png" alt="Figure 5: 各类关键头在不同输入token上注意力值的均值和标准差" /></p>
+<h3 id="mlp-的迭代处理-section-5-2-figure-6-7">MLP 的迭代处理（Section 5.2, Figure 6-7）</h3>
+<ul>
+<li><strong>接收阶段</strong>（层 15-25）：$\langle MLP_{in}, SRC \rangle$ 显著增加，源语言信息被编码</li>
+<li><strong>生成阶段</strong>（层 25-31）：$\langle MLP_{in}, SRC \rangle$ 下降，$\langle MLP_{out} - MLP_{in}, TGT \rangle$ 增加，转向目标翻译</li>
+</ul>
+<p><img src="https://arxiv.org/html/2502.11806v3/x16.png" alt="Figure 6: MLP输入输出与翻译相关token的相关性分析" /></p>
+<ul>
+<li><strong>英语中心中介表示（Figure 7）</strong>：非英语翻译对（如 De/Ru⇒Zh）中，MLP 中间表示与英语 unembedding 向量的相似度在层 16-26 显著高于其他语言，表明 LLM 采用&quot;桥接翻译&quot;机制——先将源语言处理为英语中心潜在空间，再生成目标语言</li>
+</ul>
+<p><img src="https://arxiv.org/html/2502.11806v3/x18.png" alt="Figure 7: MLP表示与各语言unembedding向量的相关性，揭示英语中心桥接机制" /></p>
+<p><strong>Pearson 相关性分析 (Table 16)</strong>：</p>
+<ul>
+<li>英语相似度与 BLEU-1 相关性：<strong>0.905</strong></li>
+<li>英语相似度与 TER 相关性：<strong>-0.919</strong></li>
+</ul>
+<h3 id="靶向微调结果-table-2">靶向微调结果（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>训练速度</th>
+<th>微调参数</th>
+<th>Zh⇒En (BLEU/COMET/BLEURT)</th>
+<th>En⇒Zh</th>
+<th>MMLU</th>
+<th>常识推理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA2-7B 基线</td>
+<td>-</td>
+<td>-</td>
+<td>15.6/73.1/56.6</td>
+<td>17.0/74.1/55.9</td>
+<td>45.9</td>
+<td>55.3</td>
+</tr>
+<tr>
+<td>+ Full SFT</td>
+<td>17 sam./s</td>
+<td>6.7B</td>
+<td>20.4/78.7/63.9</td>
+<td>30.3/80.7/62.9</td>
+<td><strong>42.6</strong> ↓</td>
+<td><strong>50.2</strong> ↓</td>
+</tr>
+<tr>
+<td>+ <strong>Targeted SFT</strong></td>
+<td><strong>33 sam./s</strong></td>
+<td><strong>0.27B</strong></td>
+<td><strong>21.3/79.1/64.3</strong></td>
+<td><strong>30.7/81.4/64.3</strong></td>
+<td><strong>46.0</strong></td>
+<td><strong>55.7</strong></td>
+</tr>
+<tr>
+<td>+ Random SFT</td>
+<td>33 sam./s</td>
+<td>0.27B</td>
+<td>16.9/76.9/61.1</td>
+<td>26.4/79.3/61.6</td>
+<td>45.9</td>
+<td>54.9</td>
+</tr>
+</tbody>
+</table></div>
+<p>三大优势：(1) 翻译性能超越全参数 SFT；(2) 通用能力不退化（MMLU 46.0 vs 42.6）；(3) 训练速度提升 2 倍，参数量仅 4%。</p>
+<h3 id="消融实验-table-4-5">消融实验（Table 4-5）</h3>
+<p><strong>注意力头数量</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>微调 Heads 数</th>
+<th>Tuned Params</th>
+<th>Zh⇒En BLEU/COMET/BLEURT</th>
+<th>MMLU Acc.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>top-8</td>
+<td>0.017B</td>
+<td>18.7/78.1/63.0</td>
+<td>46.1</td>
+</tr>
+<tr>
+<td>top-16</td>
+<td>0.034B</td>
+<td>20.0/78.4/63.5</td>
+<td>45.9</td>
+</tr>
+<tr>
+<td>top-32</td>
+<td>0.067B</td>
+<td>20.4/78.6/63.8</td>
+<td>45.8</td>
+</tr>
+<tr>
+<td><strong>top-64</strong></td>
+<td><strong>0.134B</strong></td>
+<td><strong>21.3/79.1/64.3</strong></td>
+<td><strong>45.9</strong></td>
+</tr>
+<tr>
+<td>top-128</td>
+<td>0.268B</td>
+<td>21.3/79.1/64.4</td>
+<td>45.5↓</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>MLP 数量</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Ablating</th>
+<th>Tuned Params</th>
+<th>Zh⇒En BLEU/COMET/BLEURT</th>
+<th>MMLU Acc.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Top-64 heads</td>
+<td>0.27B</td>
+<td>21.3/79.1/64.3</td>
+<td>45.8</td>
+</tr>
+<tr>
+<td>+top-1 MLP</td>
+<td>0.41B</td>
+<td>21.8/79.1/64.5</td>
+<td>45.7</td>
+</tr>
+<tr>
+<td>+top-5 MLP</td>
+<td>0.95B</td>
+<td>22.1/79.2/64.6</td>
+<td><strong>44.2</strong>↓</td>
+</tr>
+<tr>
+<td>+all MLP</td>
+<td>4.62B</td>
+<td>22.5/79.4/64.7</td>
+<td><strong>42.8</strong>↓</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>：64 个 heads 是性能与通用能力保持的最佳平衡点。</p>
+<h3 id="跨语言迁移验证-table-3">跨语言迁移验证（Table 3）</h3>
+<p>使用 En⇒Zh 检测的关键 heads 在其他语言对上的效果：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方向</th>
+<th>Base BLEU/COMET</th>
+<th>Targeted SFT BLEU/COMET</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>En⇒Cs</td>
+<td>4.4/63.6</td>
+<td><strong>20.8/80.3</strong></td>
+</tr>
+<tr>
+<td>En⇒Ja</td>
+<td>6.1/73.3</td>
+<td><strong>15.3/81.9</strong></td>
+</tr>
+<tr>
+<td>Cs⇒En</td>
+<td>23.7/77.9</td>
+<td><strong>33.5/83.5</strong></td>
+</tr>
+<tr>
+<td>Ja⇒En</td>
+<td>10.8/72.9</td>
+<td><strong>18.7/80.0</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>：翻译关键 heads 具有跨语言泛化能力。</p>
+<h3 id="训练阶段一致性-section-4-4-table-1">训练阶段一致性（Section 4.4, Table 1）</h3>
+<ul>
+<li>CPT 对翻译关键头产生显著分布偏移（K-S 检验 p &lt; 0.00001），影响 17/32 头</li>
+<li>SFT 未产生显著偏移（p = 0.355），仅影响 8/32 头</li>
+<li><strong>结论</strong>：翻译能力在预训练阶段形成，SFT 仅做局部校准</li>
+</ul>
+<h3 id="扩展验证">扩展验证</h3>
+<ol>
+<li><strong>低资源语言</strong>：稀疏性和可迁移性在低资源语言对（Swahili、Bengali、Arabic）中依然存在</li>
+<li><strong>句级翻译</strong>：词汇级和句级翻译的关键头重叠率达 <strong>46.9%</strong></li>
+<li><strong>多语言数学推理（MGSM）</strong>：关键头仅占 <strong>3.95%</strong>，ablate top-10 导致推理准确率下降 <strong>60%</strong></li>
+</ol>
+<hr />
+<h2 id="6-golden-case-一条数据的完整流程">6. Golden Case：一条数据的完整流程</h2>
+<p><strong>输入样本</strong>：<code>&quot;中文: 云 - English: _&quot;</code>（Zh⇒En 词级翻译）</p>
+<p><strong>处理流程</strong>：</p>
+<ol>
+<li>
+<p><strong>Token 分类</strong>：</p>
+<ul>
+<li>IND（指示符）：<code>&quot;中文&quot;</code>, <code>&quot;:&quot;</code>, <code>&quot;-&quot;</code>, <code>&quot;English&quot;</code> — 建立翻译上下文框架</li>
+<li>SRC（源语言）：<code>&quot;云&quot;</code> — 待翻译内容</li>
+<li>TGT（目标语言）：<code>&quot;cloud&quot;</code> — 模型生成的翻译</li>
+</ul>
+</li>
+<li>
+<p><strong>组件级处理</strong>（在 LLaMA2-7B 中）：</p>
+</li>
+</ol>
+<p><strong>阶段1（Layer 0-14）：信息收集</strong></p>
+<ul>
+<li>MLP 输入与源语言 token 相似度 $\langle MLP_{in}, SRC \rangle$ 接近零</li>
+<li>关键 attention heads 尚未激活</li>
+</ul>
+<p><strong>阶段2（Layer 15-25）：源信息编码</strong></p>
+<ul>
+<li>Source Head (18, 17) 提取源语言 token &quot;云&quot;</li>
+<li>Indicator Head (27, 14) 识别翻译指示符 &quot;English&quot;、&quot;中文&quot;</li>
+<li>Positional Head (4, 31) 维护位置信息</li>
+<li>$\langle MLP_{in}, SRC \rangle$ 显著上升（源信息被编码）</li>
+<li>$\langle MLP_{in}, IND \rangle$ 开始上升</li>
+</ul>
+<p><strong>阶段3（Layer 25-31）：目标生成</strong></p>
+<ul>
+<li>源语言相似度下降，转向目标语言</li>
+<li>$\langle MLP_{out} - MLP_{in}, TARGET \rangle$ 渐进增加</li>
+<li>中间表示在 Layer 19-27 显式解析为英语 &quot;cloud&quot;</li>
+</ul>
+<ol start="3">
+<li>
+<p><strong>最终输出</strong>：<code>&quot;中文: 云 - English: cloud&quot;</code></p>
+</li>
+<li>
+<p><strong>关键决策点</strong>：</p>
+</li>
+</ol>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>决策内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source Head</td>
+<td>定位&quot;云&quot;是待翻译的源词</td>
+</tr>
+<tr>
+<td>Indicator Head</td>
+<td>识别目标是英语输出</td>
+</tr>
+<tr>
+<td>MLP (mid-layers)</td>
+<td>将&quot;云&quot;映射到英语中心表示 &quot;cloud&quot;</td>
+</tr>
+<tr>
+<td>Final MLP</td>
+<td>输出目标 token</td>
+</tr>
+</tbody>
+</table></div>
+<ol start="5">
+<li><strong>反事实对照</strong>：若输入为 <code>&quot;中文: 云 - Nothing: _&quot;</code>（X-），Indicator Heads 无法锁定翻译目标语言，翻译流程被中断，模型不输出正确翻译。</li>
+</ol>
+<hr />
+<h2 id="7-insights-翻译能力的涌现源于预训练-非微调">7. Insights：翻译能力的涌现源于预训练，非微调</h2>
+<h3 id="核心洞见">核心洞见</h3>
+<ol>
+<li><strong>预训练是翻译能力的根本来源</strong>：随机初始化模型无翻译关键 heads，预训练后才涌现；SFT 仅做局部参数调整（K-S test p=0.355，无显著分布偏移）</li>
+<li><strong>英语中心表示由预训练数据分布决定</strong>：Qwen2.5（中文主导）的桥接语言是中文而非英语</li>
+<li><strong>稀疏性是通用机制</strong>：在低资源语言（Swahili、Bengali）、句级翻译、多语言数学推理任务中均观察到 &lt;5% 关键组件的稀疏模式</li>
+<li><strong>翻译可解释性方法具有任务无关的泛化潜力</strong>：可延伸至推理、摘要等任务的机制分析</li>
+</ol>
+<h3 id="批判性思考点">批判性思考点</h3>
+<ol>
+<li>
+<p><strong>English-centric 机制的普适性</strong>：论文主要验证了涉及英语的翻译对（如 De/Ru⇒Zh），但对于完全不涉及英语的翻译对（如 Zh⇒Ru）是否也存在类似的&quot;pivot&quot;机制？如果是，pivot 语言是什么？</p>
+</li>
+<li>
+<p><strong>MLP 分析方法的根本局限（⚠️ 重要发现）</strong>：论文指出早期层 MLP 对输出 logit 影响可忽略，但这可能源于<strong>测量工具的空间错位</strong>而非 MLP 真的不重要：</p>
+<ul>
+<li><strong>LLaMA2 使用 untied embeddings</strong>：embedding 矩阵 $W_E$ 和 unembedding 矩阵 $W_U$ 不共享参数</li>
+<li><strong>论文方法</strong>：用 $W_U$ 的列向量作为&quot;探针&quot;分析 MLP 激活，计算余弦相似度</li>
+<li><strong>空间错位问题</strong>：早期层 MLP 离输入端近，其激活在<strong>输入 embedding 空间</strong>表示；而 $W_U$ 代表<strong>输出空间</strong>的表示</li>
+<li><strong>结论</strong>：用输出空间的探针测量输入空间的激活 → 空间不对齐 → <strong>低估了早期层 MLP 的实际作用</strong></li>
+<li><strong>改进方向</strong>：对于早期层应使用 $W_E$（输入 embedding）作为探针，或研究输入/输出 embedding 空间的对齐程度</li>
+</ul>
+</li>
+<li>
+<p><strong>关键头的稳定性</strong>：关键头在不同输入分布下的稳定性如何？是否存在输入依赖的动态路由机制？</p>
+</li>
+<li>
+<p><strong>低资源语言的验证深度</strong>：虽然论文在 Appendix 中提到低资源语言验证，但细节不够充分</p>
+</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p>首次系统性揭示 decoder-only LLM 的翻译机制：翻译由稀疏子集（&lt;5%）的专门化 attention heads 驱动，MLP 将信息整合为英语中心的潜在表示。并提出 Targeted SFT 策略，仅微调 64 个头（&lt;5% 参数）即可达到全参数微调性能。</p>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>方法依赖模型内部激活</strong>，难以应用于闭源系统</li>
+<li><strong>语言覆盖</strong>：主要在 5 种常用语言上验证，低资源语言验证有限</li>
+<li><strong>任务复杂度</strong>：聚焦词汇级别翻译，句子级别和文档级别翻译机制仍需深入</li>
+<li><strong>模型规模</strong>：主要在 LLaMA2-7B 上详细分析，更大模型的机制是否一致待验证</li>
+<li><strong>计算开销</strong>：Subspace identification 需要额外计算成本</li>
+<li><strong>性别偏见</strong>：女性职业名词翻译准确率显著低于男性（48% vs 73%），反映训练语料中的性别偏见</li>
+<li><strong>专业领域</strong>：在专业领域（医疗、法律）翻译上，Targeted SFT 性能略低于 Full SFT</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li>开发模型无关的分析框架，拓展至闭源模型</li>
+<li>扩展分析至更多语言对（特别是低资源语言）和更大规模模型</li>
+<li>探索文档级别翻译、上下文感知翻译的机制</li>
+<li>研究如何缓解英语中心表示带来的性别/文化偏见</li>
+<li>将 Targeted SFT 策略与 LoRA 等参数高效方法结合，进一步降低微调成本</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="核心区分-激发翻译行为-vs-翻译质量">⚠️ 核心区分：激发翻译行为 vs 翻译质量</h3>
+<p>本文定位的是<strong>激发翻译行为的关键模块</strong>，回答&quot;模型<em>能否</em>翻译&quot;的问题。但当前 LLM 多语言能力的瓶颈已从&quot;有无翻译能力&quot;转向&quot;如何提升翻译质量&quot;。以下论文从不同角度研究翻译质量相关的机制：</p>
+<h3 id="翻译行为-vs-翻译质量的机制对比">翻译行为 vs 翻译质量的机制对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>论文</th>
+<th>研究问题</th>
+<th>关键发现</th>
+<th>对质量提升的启示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本文</strong></td>
+<td>哪些组件激发翻译？</td>
+<td>&lt;5% heads 驱动翻译行为</td>
+<td>Targeted SFT 仅提升行为触发，非质量优化</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>多语言处理流程？</td>
+<td>MWork 三阶段 + 0.13% 神经元</td>
+<td>理解层→推理层→生成层的质量瓶颈不同</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>语言特异性在哪？</td>
+<td>~1% 神经元 + U形分布</td>
+<td>底层/顶层是语言处理关键，中间层共享语义</td>
+</tr>
+<tr>
+<td><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>中间表示偏向？</td>
+<td>概念空间英语偏向</td>
+<td>英语偏向可能导致翻译中的文化/语义损失</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="密切相关工作">密切相关工作</h3>
+<ul>
+<li><a class="wikilink" href="How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a>：Zhao et al., NeurIPS 2024，提出 MWork 三阶段工作流（理解→任务解决→生成），与本文的三类功能头（Source/Indicator/Positional）形成互补视角</li>
+<li><a class="wikilink" href="Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a>：Tang et al., ACL 2024，发现 ~1% FFN 神经元承载多语言能力，U形分布揭示底层/顶层是语言处理关键区域</li>
+<li><a class="wikilink" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a>：Wendler et al., 2024，使用 Logit Lens 揭示中间层英语偏向，与本文 MLP 英语中心表示发现相互印证</li>
+</ul>
+<h3 id="方法论关联">方法论关联</h3>
+<ul>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a>：翻译模型优化实践，使用两阶段训练（SFT+RL），聚焦工程优化</li>
+<li><a class="wikilink" href="PEGRL-Post-Editing_Guided_RL_for_MT.html" title="PEGRL-Post-Editing_Guided_RL_for_MT">PEGRL-Post-Editing_Guided_RL_for_MT</a>：翻译 RL 的高方差问题解决方案</li>
+<li><a class="wikilink" href="MADLAD-400-Multilingual_Document-Level_Dataset.html" title="MADLAD-400-Multilingual_Document-Level_Dataset">MADLAD-400-Multilingual_Document-Level_Dataset</a>：多语言文档级数据集</li>
+<li><a class="wikilink" href="Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a>：线性表示假设</li>
+<li><a class="wikilink" href="Beyond_Data_Filtering-Knowledge_Localization_SGTM.html" title="Beyond_Data_Filtering-Knowledge_Localization_SGTM">Beyond_Data_Filtering-Knowledge_Localization_SGTM</a>：知识定位方法</li>
+</ul>
+<h3 id="技术脉络">技术脉络</h3>
+<ul>
+<li><strong>Path Patching</strong>: Wang et al. (2023), Zhang et al. (2025) - 因果分析方法</li>
+<li><strong>Activation Patching</strong>: Heimersheim and Nanda (2024), Zhang and Nanda (2024)</li>
+<li><strong>English as Pivot</strong>: Wendler et al. (2024), Zhao et al. (2024b) - 证实 English 的隐式计算枢纽作用</li>
+<li><strong>Attention Head Roles</strong>: Voita et al. (2019), Behnke and Heafield (2020) - 编码器-解码器架构中的头功能分类</li>
+</ul>
+<h3 id="未来方向-从-能否翻译-到-翻译质量">未来方向：从&quot;能否翻译&quot;到&quot;翻译质量&quot;</h3>
+<ol>
+<li><strong>质量关键组件定位</strong>：借鉴本文的 subspace-intervened path patching，分析哪些组件影响翻译质量（BLEU/COMET）而非仅行为触发</li>
+<li><strong>跨层质量瓶颈分析</strong>：结合 MWork 三阶段，定位理解层/推理层/生成层各自的质量瓶颈</li>
+<li><strong>语言特异性质量优化</strong>：利用 LAPE 发现的语言特异性神经元分布，针对性优化低资源语言翻译质量</li>
+<li><strong>英语偏向的质量影响</strong>：研究概念空间英语偏向如何导致翻译中的语义/文化损失</li>
+</ol>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span></li>
+<li><span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Group_then_Scale-Dynamic_MoE_Multilingual_LLM.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">论文笔记：Group then Scale: Dynamic Mixture-of-Experts Multilingual Language Model</span></a>
+<a class="paper-nav-link next" href="Do_Llamas_Work_in_English-多语言LLM的潜在语言.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Do Llamas Work in English? On the Latent Language of Multilingual Transformers</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Zhang et al. (2025). Exploring the Translation Mechanism of Large Language Models. arXiv:2502.11806</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activation Reward Models for Few-Shot Model Alignment</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Activation Reward Models for Few-Shot Model Alignment</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-评估器会把-写得好看-误当成-回答正确"><span class="toc-num">02</span> 2. 关键问题：评估器会把“写得好看”误当成“回答正确”</a></li>
+<li><a class="toc-link" href="#3-关键方法-把偏好示例变成-选哪些头-写入什么-怎样读分数"><span class="toc-num">03</span> 3. 关键方法：把偏好示例变成“选哪些头、写入什么、怎样读分数”</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着猫与狗的例子走一遍">3.1 沿着猫与狗的例子走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-为什么先选头-而不是把向量加到所有地方">3.2 为什么先选头，而不是把向量加到所有地方？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-为什么用-pca-具体改写的又是什么">3.3 为什么用 PCA，具体改写的又是什么？</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-奖励从哪里来">3.4 奖励从哪里来？</a></li>
+<li><a class="toc-link" href="#4-数据与协议-少样本的预算要按层次看"><span class="toc-num">04</span> 4. 数据与协议：少样本的预算要按层次看</a></li>
+<li><a class="toc-link" href="#5-关键结果-同底座有提升-但结论要按任务拆开"><span class="toc-num">05</span> 5. 关键结果：同底座有提升，但结论要按任务拆开</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-通用奖励判断-有增益-也有子任务退步">5.1 通用奖励判断：有增益，也有子任务退步</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-preferencehack-对长度偏差的纠正最突出">5.2 PreferenceHack：对长度偏差的纠正最突出</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-消融-简单激活差分已经很接近完整方法">5.3 消融：简单激活差分已经很接近完整方法</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-噪声与样本量-作者的趋势概括比图表更乐观">5.4 噪声与样本量：作者的趋势概括比图表更乐观</a></li>
+<li><a class="toc-link" href="#6-insights-下一步最值得验证什么"><span class="toc-num">06</span> 6. Insights：下一步最值得验证什么</a></li>
+<li><a class="toc-link toc-sub" href="#复现前需要澄清的原文问题">复现前需要澄清的原文问题</a></li>
+<li><a class="toc-link" href="#7-连接与阅读边界"><span class="toc-num">07</span> 7. 连接与阅读边界</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2507.01368" target="_blank">arXiv</a>
+    </div>
+    <h1>Activation Reward Models for Few-Shot Model Alignment</h1>
+    <p class="authors">Tianning Chai, Chancharik Mitra, Brandon Huang, Gautam Rajendrakumar Gare, Zhiqiu Lin, Assaf Arbelle, Leonid Karlinsky, Rogerio Feris, Trevor Darrell, Deva Ramanan, Roei Herzig</p>
+    <div class="topic-row"><span class="topic-tag">Reward_Modeling</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Few_Shot_Learning</span> <span class="topic-tag">Reward_Hacking</span> <span class="topic-tag">Interpretability</span></div>
+</header>
+
+<h1>论文笔记: Activation Reward Models for Few-Shot Model Alignment</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<p>Tianning Chai、Chancharik Mitra 等，<strong>Findings of ACL 2026</strong>，正式版共 17 页，包含附录。团队包括 UC Berkeley、CMU，以及 Apple、Xerox、IBM Research；机构按正式版首页记录。<a href="https://aclanthology.org/2026.findings-acl.1709/">正式版与元数据</a>｜<a href="https://aclanthology.org/2026.findings-acl.1709.pdf">PDF</a>｜<a href="https://arxiv.org/html/2507.01368v1">arXiv v1</a></p>
+<p><strong>值得读的是一种快速改造评估器的方法：冻结已有模型，用少量偏好示例选出注意力头、替换其激活，再把答案 token 的概率当作奖励。</strong> 本文最值得记住四点：</p>
+<ul>
+<li><strong>适配发生在模型内部。</strong> 它把少样本示例变成可重复使用的激活干预，而非每次只靠提示词提醒评估标准。</li>
+<li><strong>最强收益出现在特定评分偏差上。</strong> 通用偏好判断也有提升，但“超过 GPT-4o”必须限定到论文的模型、数据与评测协议。</li>
+<li><strong>无需微调基模，不等于无需优化。</strong> 方法仍用 REINFORCE 搜索注意力头，需要带标签数据、验证过程和计算预算。</li>
+<li><strong>静态判断更准确，与持续抵抗奖励投机之间仍有距离。</strong> 本文没有把该奖励接入策略训练，验证优化压力下的表现。</li>
+</ul>
+<p><strong>版本说明。</strong> 以下方法与数字以 ACL 正式版为准。2025 年 7 月 2 日的 arXiv v1 在 §3.3 使用均值激活表述；正式版改为加权 PCA，并增加了标签噪声实验。不能把旧版方法和新版消融混为同一配方。两版一致的 Figure 1、2 使用 arXiv HTML 中可核对的原图，新增 Figure 3 来自正式版 PDF。</p>
+<h2 id="2-关键问题-评估器会把-写得好看-误当成-回答正确">2. 关键问题：评估器会把“写得好看”误当成“回答正确”</h2>
+<p><strong>Golden Case 来自论文 Figure 2。</strong> 图片里是一只橘白猫趴在行李上。正确描述很朴素；错误描述却把它写成棕黑色的狗，并进一步扩写为流畅的长句、条理分明的列表，或带赞美语气的文字。事实错了，表面质量却更像“好答案”。</p>
+<p><img src="../../assets/papers/activation-reward-models/fig2-preferencehack-arxiv-v1.png" alt="PreferenceHack 中同一错误事实的三种包装" /></p>
+<p><em>Figure 2，<a href="https://arxiv.org/html/2507.01368v1/fig2.png">原图来源</a>。重点看第二行：红字中的物种和颜色错误始终存在，变化的是长度、格式与积极语气。该图展示数据构造，不是这两个个案的模型评分记录。</em></p>
+<p>问题不是评估器不会输出一个分数，而是<strong>分数可能追随与真实质量相关、却并不可靠的表面特征</strong>。如果换一种偏好或新发现一种漏洞，重新收集大量数据微调奖励模型很重；直接加几个 ICL 示例，又未必能纠正模型原有的判断习惯。</p>
+<p>Activation RM 的问题设定因此很具体：已有一个可访问内部激活的 LLM/LMM，再给它少量带标签的偏好示例，能否快速改造它的评分行为？这与从零训练一个通用奖励模型不同，也不是直接让生成策略学会新的行为。</p>
+<h2 id="3-关键方法-把偏好示例变成-选哪些头-写入什么-怎样读分数">3. 关键方法：把偏好示例变成“选哪些头、写入什么、怎样读分数”</h2>
+<h3 id="3-1-沿着猫与狗的例子走一遍">3.1 沿着猫与狗的例子走一遍</h3>
+<p>下面用同一案例解释数据流；流程依据 §3 与 Appendix B，<strong>不为该图片虚构具体分数或头的位置</strong>。</p>
+<ol>
+<li><strong>输入示例。</strong> 用若干类似的带标签比较告诉评估器：忠于图像的描述应胜过流畅但错误的描述。每条示例包含任务、候选回答和偏好标签；论文用成对模板组织这些信息。</li>
+<li><strong>读取内部状态。</strong> 在处理示例时，收集输入末 token 的注意力头输出。操作位置在注意力头输出的投影层之前；模型原有权重冻结。</li>
+<li><strong>选择干预位置与向量。</strong> 搜索哪些头被替换后能改善偏好预测，并用加权 PCA 聚合示例激活。最终保存选头集合及相应的干预激活。</li>
+<li><strong>处理新图片与候选描述。</strong> 在相同位置替换激活，让模型在这一干预条件下评分。成对接口比较输出 A、B 的 token 概率；单回答接口读出“Yes”的概率。</li>
+</ol>
+<p>预期行为是把“忠于图像”放在措辞包装之前，给猫的正确描述更高偏好。但它仍依赖基模的视觉与语言能力：如果模型根本不能区分图中的猫与狗，少量激活示例不保证凭空补齐识别能力。</p>
+<p><img src="../../assets/papers/activation-reward-models/fig1-pipeline-arxiv-v1.png" alt="Activation RM 的示例适配与概率评分两阶段" /></p>
+<p><em>Figure 1，<a href="https://arxiv.org/html/2507.01368v1/figs/Activation_RM_figure_v2.png">原图来源</a>。上半部产生干预位置和激活，下半部复用它们。图中是成对的 A/B 概率比较，不要与正文的单回答“Yes”接口混淆。</em></p>
+<h3 id="3-2-为什么先选头-而不是把向量加到所有地方">3.2 为什么先选头，而不是把向量加到所有地方？</h3>
+<p>不同注意力头承担的功能不同，全局修改容易同时破坏与评分无关的计算。作者为每个头定义一个是否干预的 Bernoulli 变量：</p>
+<div class="math-display">$$
+b_{l,m}\sim\operatorname{Bernoulli}(\sigma(\theta_{l,m})),\qquad
+\lambda_j=\{(l,m):\sigma(\theta_{l,m})&gt;0.5\}.
+$$</div>
+<p>这里 $l,m$ 是层和头的编号，$j$ 是偏好标准，$\theta$ 控制选中概率，$\lambda_j$ 是最终干预集合。每次采样一组头，执行激活干预、计算目标答案的损失，再用 REINFORCE 调整选头概率（§3.2、Appendix B.1、Algorithm 1）。</p>
+<p>Appendix B.1 报告每步采样 <strong>32 个掩码</strong>，使用 Adam、学习率 <strong>0.1</strong>，最终一般选中 <strong>10%–30%</strong> 的头。这里训练的是额外的选头参数，不更新基模权重。因此更准确的成本描述是“<strong>不微调基模的偏好适配</strong>”。论文给出单张 A100 80GB 的运行硬件，却没有完整报告适配耗时和推理吞吐，尚不能据此断言整体比 LoRA 更便宜。</p>
+<h3 id="3-3-为什么用-pca-具体改写的又是什么">3.3 为什么用 PCA，具体改写的又是什么？</h3>
+<p>作者认为，人类标签不一致或示例异常会污染提取到的激活，直接求均值可能把噪声一起写回模型。正式版 §3.3 将主成分按解释方差比例加权：</p>
+<div class="math-display">$$
+\mu_j^{\mathrm{ARM}}=\sum_{i=1}^{k}w_i v_i,\qquad
+w_i=\frac{\rho_i}{\sum_{t=1}^{k}\rho_t}.
+$$</div>
+<p>$v_i$ 是样例激活的第 $i$ 个主成分方向，$\rho_i$ 是对应解释方差比例；$\mu_j^{\mathrm{ARM}}$ 是待注入的激活，替换选中头的输出。这里依照作者的简写记号，没有补造其未交代的张量组织方式。</p>
+<p>直觉是让跨示例的主要变化方向支配干预，减少零散扰动。<strong>但“方差大”本身不意味着“更接近真实偏好”。</strong> 如果示例里长度或措辞是主要变化源，PCA 也可能保留这些捷径。并且，主成分方向有正负号不唯一性；直接加权方向向量不像投影重建那样天然消除这个问题。正式版没有充分交代 $k$、方向定号以及中心化后的均值/尺度如何处理，复现时需要核对实现，不能仅凭这一公式唯一恢复算法。[?]</p>
+<h3 id="3-4-奖励从哪里来">3.4 奖励从哪里来？</h3>
+<p>单回答接口询问“该回答是否满足指定标准”，取：</p>
+<div class="math-display">$$
+s(r\mid p)=P_{F;\lambda_j,\mu_j}(\text{Yes}\mid q(p,r,j)).
+$$</div>
+<p>$q$ 含任务 $p$、回答 $r$ 与评价标准；下标表示模型 $F$ 已应用上述激活干预。成对接口则把两个候选同时放入模板，比 $P(A\mid q)$ 与 $P(B\mid q)$（Figure 1、Appendix B.2）。两者都是读取输出概率，不必生成完整评价再解析。</p>
+<p>与直接 token-probability scoring 相比，新增的是偏好相关的内部干预；与最接近的 <strong>Sparse Attention Vectors（SAV）</strong> 相比，作者强调把少样本头激活用于奖励建模，结合去噪与输出 token 概率，而非只基于头特征做分类。Table 1、2 的 SAV 对照很重要：它能检查收益是否超出了“使用内部激活”这个宽泛想法。</p>
+<p>作者称这种分数经过校准，但本文没有提供概率校准曲线或跨任务尺度验证。<strong>一个可排序的“Yes”概率，不自动等于可跨偏好标准比较的奖励。</strong></p>
+<h2 id="4-数据与协议-少样本的预算要按层次看">4. 数据与协议：少样本的预算要按层次看</h2>
+<p>主实验用 <strong>Qwen2.5-VL-7B、LLaVA-OneVision-7B</strong>；附录另有 Granite Vision 2B 的小规模补充。下面区分样例池与每次提示中实际放入的示例数（Appendix C、Table 5、6）。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>评测</th>
+<th>适配样例池与测试集</th>
+<th>检验对象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RewardBench</td>
+<td>每个主题 split 的前 130 条用于适配，其余测试</td>
+<td>通用文本偏好判断</td>
+</tr>
+<tr>
+<td>Multimodal RewardBench</td>
+<td>每个主题 split 的前 130 条用于适配，其余测试</td>
+<td>图文回答的正确性、偏好、安全等</td>
+</tr>
+<tr>
+<td>PreferenceHack</td>
+<td>每个 split 80 条适配、920 条测试</td>
+<td>长度、格式、积极语气三种偏差，分别在文本与图文中测试，共六个 split</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>因此“最多 130 个样本”不是所有任务合计只用 130 条。</strong> 8-shot judge 每次提示放 8 个示例；ARM 可利用较大的样例池提取激活并选头。这是两个适配过程的比较，不是严格相同示例曝光量的对照。选头还涉及验证集，其规模与它在上述预算中的具体划分不够明确。[?]</p>
+<p>PreferenceHack 用 GPT-4o-mini 构造带偏差的候选。正式版 Appendix C.2 的细节比正文更具体：文本长度任务来自 TLDR，偏差回答是冗长重复的摘要，且要求不添加新事实；积极语气任务来自 Alpaca，改写时删掉有用信息并加入奉承；格式任务来自 HH-RLHF，把 rejected 回答改成貌似合理但无帮助的列表。图文任务来自 SUGARCREPE，保留错误图像描述的事实错误，再施加三种包装。</p>
+<p>这个区别有用：<strong>不是每个非首选回答都因事实错误被拒绝</strong>，长度任务还涉及冗余与摘要质量。统一指标是成对判断准确率；它测量对已知偏差的识别和适配，并未模拟策略模型主动寻找新的漏洞。</p>
+<h2 id="5-关键结果-同底座有提升-但结论要按任务拆开">5. 关键结果：同底座有提升，但结论要按任务拆开</h2>
+<h3 id="5-1-通用奖励判断-有增益-也有子任务退步">5.1 通用奖励判断：有增益，也有子任务退步</h3>
+<p>Table 1 的 Qwen2.5-VL-7B 结果如下。只列 Overall，避免与各任务等权的 Macro Avg. 混用；GPT-4o 是论文给定协议下的闭源参照。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">RewardBench Overall（%）</th>
+<th style="text-align:right">Multimodal RewardBench Overall（%）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>零样本 judge</td>
+<td style="text-align:right">71.97</td>
+<td style="text-align:right">66.88</td>
+</tr>
+<tr>
+<td>8-shot judge</td>
+<td style="text-align:right">74.56</td>
+<td style="text-align:right">65.98</td>
+</tr>
+<tr>
+<td>SAV</td>
+<td style="text-align:right">74.50</td>
+<td style="text-align:right">67.50</td>
+</tr>
+<tr>
+<td><strong>Activation RM</strong></td>
+<td style="text-align:right"><strong>77.24</strong></td>
+<td style="text-align:right"><strong>69.27</strong></td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td style="text-align:right">87.63</td>
+<td style="text-align:right">55.43</td>
+</tr>
+</tbody>
+</table></div>
+<p>在文本 RewardBench 上，ARM 比 8-shot judge 高 <strong>2.68 个百分点</strong>、比 SAV 高 <strong>2.74 点</strong>；在多模态上比 SAV 高 <strong>1.77 点</strong>。这是比“全面超越”更有解释力的结论：<strong>这套干预在同底座的总体指标上有效，但通常是中等幅度的增益。</strong></p>
+<p>正文 §6.1 的“所有 split 都优于基线”不符合表格：Qwen 的 Chat Hard 为 <strong>57.06%</strong>，低于 8-shot judge 的 <strong>61.35%</strong>。LLaVA 的多模态结果更说明聚合指标的局限：Safety 从零样本的 <strong>4.90%</strong> 升至 <strong>81.62%</strong>，Correctness 却从 <strong>53.54%</strong> 降至 <strong>49.90%</strong>。需要按目标任务决定是否采用，而非只看 Overall。</p>
+<h3 id="5-2-preferencehack-对长度偏差的纠正最突出">5.2 PreferenceHack：对长度偏差的纠正最突出</h3>
+<p>Table 2 中，同一 Qwen 底座的 ARM 在六种偏差上均高于其列出的各基线。选取最相关的比较：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">长度</th>
+<th style="text-align:right">格式</th>
+<th style="text-align:right">积极语气</th>
+<th style="text-align:right">图像＋长度</th>
+<th style="text-align:right">图像＋格式</th>
+<th style="text-align:right">图像＋积极语气</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen 零样本 judge</td>
+<td style="text-align:right">1.41</td>
+<td style="text-align:right">41.63</td>
+<td style="text-align:right">88.70</td>
+<td style="text-align:right">18.75</td>
+<td style="text-align:right">48.30</td>
+<td style="text-align:right">82.15</td>
+</tr>
+<tr>
+<td>Qwen SAV</td>
+<td style="text-align:right">73.50</td>
+<td style="text-align:right">65.75</td>
+<td style="text-align:right">93.80</td>
+<td style="text-align:right">78.65</td>
+<td style="text-align:right">70.35</td>
+<td style="text-align:right">88.90</td>
+</tr>
+<tr>
+<td><strong>Qwen ARM</strong></td>
+<td style="text-align:right"><strong>78.37</strong></td>
+<td style="text-align:right"><strong>68.26</strong></td>
+<td style="text-align:right"><strong>96.74</strong></td>
+<td style="text-align:right"><strong>84.25</strong></td>
+<td style="text-align:right"><strong>75.50</strong></td>
+<td style="text-align:right"><strong>91.80</strong></td>
+</tr>
+<tr>
+<td>GPT-4o</td>
+<td style="text-align:right">3.91</td>
+<td style="text-align:right">48.04</td>
+<td style="text-align:right">92.39</td>
+<td style="text-align:right">22.35</td>
+<td style="text-align:right">55.78</td>
+<td style="text-align:right">87.65</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>数值为偏好准确率，单位 %。</em></p>
+<p>长度与图像＋长度相对零样本 judge 分别提升 <strong>76.96、65.50 点</strong>，说明原来的评分方式在这些构造数据上会系统性选错。但 SAV 已纠正了很大一部分偏差；ARM 相对 SAV 的额外收益是 <strong>4.87、5.60 点</strong>。这让核心贡献更清楚：内部激活适配本身很有用，完整 ARM 在其上继续改善，而不是全部收益都应归于 PCA 或“Yes”概率。</p>
+<p>“超越 GPT-4o”在这里成立，但不能外推成总体能力更强。Table 1 的文本 RewardBench 仍有明显差距，而且 Table 2 并非让 GPT-4o 也获得同样的内部适配能力。另一边，LLaVA ARM 的文本长度准确率只有 <strong>49.24%</strong>，说明这套方法仍受底座与任务组合制约。</p>
+<h3 id="5-3-消融-简单激活差分已经很接近完整方法">5.3 消融：简单激活差分已经很接近完整方法</h3>
+<p>Table 3 在 Qwen2.5-VL-7B、RewardBench 上比较：均值激活相加 <strong>62.47%</strong>，首个 PCA 向量替换 <strong>74.73%</strong>，均值激活差分 <strong>75.48%</strong>，完整 ARM <strong>77.24%</strong>（均为 Overall）。相加甚至低于零样本 judge，说明<strong>干预的位置、方向和操作方式确实重要，不能把“加一个偏好向量”当作通用解法</strong>。</p>
+<p>但完整方法只比均值差分高 <strong>1.76 点</strong>，且表中没有重复运行的不确定区间。若要复现，我会先把差分法作为低复杂度基线，再判断 PCA 和选头搜索的增益是否值得额外成本。</p>
+<p>同表的 LoRA 为 <strong>73.56%</strong>；§6.3 说明其 rank=16、训练 3 个 epoch、使用 130 个示例。这支持 ARM 在该少样本配置下有竞争力，不能推出它优于充分调参、更多数据训练的奖励模型。表中也没有把“去噪、选头、评分接口”完整拆成控制变量实验，所以各组件的独立贡献还没有完全分离。</p>
+<h3 id="5-4-噪声与样本量-作者的趋势概括比图表更乐观">5.4 噪声与样本量：作者的趋势概括比图表更乐观</h3>
+<p><img src="../../assets/papers/activation-reward-models/fig3-label-noise-acl.png" alt="正式版的标签噪声实验" /></p>
+<p><em>ACL 正式版 Figure 3，<a href="https://aclanthology.org/2026.findings-acl.1709.pdf#page=8">PDF 第 8 页</a>，这里只截取图表。看粉色 ARM 曲线：Length、Positivity 基本平稳，Format 则随噪声变化明显。图中未给出误差棒。</em></p>
+<p>Figure 3 展示 0%–30% 标签噪声下，ARM 相比 LoRA 更稳定；不过 Format 的准确率从无噪声约 <strong>64%</strong> 降到 30% 噪声时约 <strong>53%</strong>，不能把“稳定”理解成所有任务几乎不下降。更需要核对的是，Length 的无噪声点约 <strong>99%</strong>，与 Table 2 两个底座的结果都对不上；图注及附近文字没有说明足以解释差异的模型与设置。这些是读图近似值，<strong>暂不把该图当作与 Table 2 同设置的定量结论</strong>。[?]</p>
+<p>样本量也有两个不同变量。Table 6 增大独立样例池时，12 条已经达到 <strong>76.06%</strong>，130 条为 <strong>77.24%</strong>；40 条却低于 20 条，因此只有“小样本已有较强表现”的清楚证据。Table 5 增加每次输入的 shots，LLaVA 从 2-shot 的 <strong>68.84%</strong> 降至 4-shot 的 <strong>64.91%</strong>，Qwen 从 2-shot 的 <strong>75.82%</strong> 降至 8-shot 的 <strong>64.91%</strong>。Appendix A.2 所说的更多 shots 通常更好，不能直接由该表支持。</p>
+<h2 id="6-insights-下一步最值得验证什么">6. Insights：下一步最值得验证什么</h2>
+<p><strong>1. 它更像少样本评估器校正，还不是偏好机制的完整解释。</strong> 选头与激活替换改变了行为，这是有价值的干预证据；但论文没有解释选中头究竟编码事实一致性、答案位置，还是措辞特征。沿猫/狗案例，最有区分度的实验是固定事实、交换长度与格式，再换一批物体测试同一组头。只有在这些反事实条件下仍保持正确偏好，才能更有力地说它捕捉到了目标标准，而非另一种捷径。</p>
+<p><strong>2. “抗噪声”还不能归因于 PCA 去噪。</strong> 作者用较平稳的噪声曲线解释 PCA 的作用，但缺少相同选头、相同评分接口下的“有/无 PCA × 噪声水平”对照。随机错标签和系统性错误偏好也不同：如果标注始终偏爱长回答，最大方差方向可能强化而非消除它。下一步应分别注入随机翻转和结构化偏差，检验这套聚合到底在过滤什么。</p>
+<p><strong>3. 真正的对齐检验应让策略主动追逐这个奖励。</strong> PreferenceHack 给定了固定候选；部署后，策略会生成评分器此前没见过的答案。应固定 ARM，用它做 best-of-N 或短程策略优化，同时用独立评价测真实质量，并画出“ARM 奖励上涨—真实质量是否同步上涨”的曲线。这个实验能把“识别已知包装错误”推进到“优化压力下仍可靠”，也直接检验单回答概率是否是可用的奖励。</p>
+<h3 id="复现前需要澄清的原文问题">复现前需要澄清的原文问题</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>原文依据</th>
+<th>本笔记的处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>选头步数不一致</td>
+<td>§5.1 写 600；Appendix B.1、Algorithm 1 写 200</td>
+<td>两种记录都保留，不擅自选定</td>
+</tr>
+<tr>
+<td>PCA 实现不足以唯一复现</td>
+<td>§3.3 给加权主成分公式，未充分定义 $k$、定号与尺度处理</td>
+<td>标记待查实现，而非补造默认值</td>
+</tr>
+<tr>
+<td>split 数量与类型冲突</td>
+<td>§5.2 写 seven，并列 numerical/orientation；§4、Table 2、Appendix C.2 是六类</td>
+<td>采用有实验结果对应的六类</td>
+</tr>
+<tr>
+<td>数据预算与图表设置需核对</td>
+<td>验证集划分不清；Figure 3 与 Table 2 的 clean 点不对应</td>
+<td>不据此计算同设置噪声下降率或总数据成本</td>
+</tr>
+</tbody>
+</table></div>
+<p>论文链接的<a href="https://chancharikmitra.github.io/ActivationRM/">项目页</a>在本次阅读时返回 HTTP 404（2026-10-26），所以未能据此核查完整提示模板和实现。这里记录的是该入口当前不可访问，不据此断言作者没有在其他位置公开代码。</p>
+<h2 id="7-连接与阅读边界">7. 连接与阅读边界</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic：把注意力头干预用于偏好评估，并保留“可操控”与“机制已解释”的区别。</li>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span> — Concept：提供固定候选上的评分偏差测试，与策略优化过程中涌现的 reward hacking 形成实验层次上的对照。</li>
+</ul>
+<p>已阅读 ACL 正式版正文与附录，核对主结果、消融和相关原图，并比较 arXiv v1 的方法表述。本笔记没有运行模型、复现数据集或重做实验；数字为作者报告，标出的不一致仍待实现或作者说明解决。</p>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">EngiBench — A Benchmark for Evaluating Large Language Models on Engineering Problem Solving</span></a>
+<a class="paper-nav-link next" href="A-family-of-large-language-models-for-materials-research-with-insights-into-model-adaptability-in-continued-pretraining-LLaMat适应僵化.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">LLaMat——材料领域适配有效，但“适应僵化”还只是待验证的解释</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: chai-etal-2026-activation</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Large Concept Models: Latent Reasoning in an Adaptive Semantic Space</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Dynamic Large Concept Models: Latent Reasoning in an Adaptive Semantic Space</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-打破token级别统一计算的低效假设"><span class="toc-num">02</span> 2. 关键问题：打破token级别统一计算的低效假设</a></li>
+<li><a class="toc-link" href="#3-数据集-基于标准预训练语料"><span class="toc-num">03</span> 3. 数据集：基于标准预训练语料</a></li>
+<li><a class="toc-link" href="#4-关键方法-四阶段分层next-token-prediction架构"><span class="toc-num">04</span> 4. 关键方法：四阶段分层Next-Token Prediction架构</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#数学形式化">数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块详解">核心模块详解</a></li>
+<li><a class="toc-link toc-sub" href="#训练技巧">训练技巧</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键实验-r-4时flops减少34-平均准确率提升2-69"><span class="toc-num">05</span> 5. 关键实验：R=4时FLOPs减少34%，平均准确率提升2.69%</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#关键发现">关键发现</a></li>
+<li><a class="toc-link" href="#6-golden-case"><span class="toc-num">06</span> 6. Golden case</a></li>
+<li><a class="toc-link toc-sub" href="#延伸讨论-为什么不直接用更大的词表">延伸讨论：为什么不直接用更大的词表？</a></li>
+<li><a class="toc-link toc-sub" href="#进一步追问-concept级别计算不也是均匀的吗">进一步追问：concept级别计算不也是均匀的吗？</a></li>
+<li><a class="toc-link" href="#8-个人总结"><span class="toc-num">07</span> 8. 个人总结</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">08</span> 9. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-01-31</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/html/2512.24617v2" target="_blank">arXiv</a>
+    </div>
+    <h1>Dynamic Large Concept Models: Latent Reasoning in an Adaptive Semantic Space</h1>
+    <p class="authors">ByteDance Seed, University of Manchester, Mila, Tsinghua University, M-A-P</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Architecture</span> <span class="topic-tag">Latent_Reasoning</span> <span class="topic-tag">Efficient_Inference</span></div>
+</header>
+
+<h1>论文笔记: Dynamic Large Concept Models: Latent Reasoning in an Adaptive Semantic Space</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者团队</strong>: ByteDance Seed、University of Manchester、Mila - Quebec AI Institute、Tsinghua University、M-A-P 联合研究</li>
+<li><strong>发表时间</strong>: January 5, 2026</li>
+<li><strong>会议/期刊</strong>: arXiv预印本</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-打破token级别统一计算的低效假设">2. 关键问题：打破token级别统一计算的低效假设</h2>
+<ul>
+<li><strong>动机</strong>: 当前LLMs对每个token分配相同的计算资源，但自然语言的信息密度高度不均匀——长段可预测tokens与稀疏但语义关键的转折点交替出现。这导致计算冗余和模型容量的系统性错配。</li>
+<li><strong>核心洞察</strong>: 有效推理需要一个学习得到的中间粒度：既非原始tokens（太细，计算浪费），也非预定义句子（太粗，不灵活），而是端到端从数据中学习边界的语义连贯的&quot;concepts&quot;。</li>
+<li><strong>未解决问题</strong>:
+<ul>
+<li>Latent reasoning方法在连续隐藏空间推理但无显式token生成</li>
+<li>Sentence-level concept models依赖固定的人工定义分割</li>
+<li>两者都无法让模型学习<strong>在哪里</strong>集中语义计算</li>
+</ul>
+</li>
+</ul>
+<h2 id="3-数据集-基于标准预训练语料">3. 数据集：基于标准预训练语料</h2>
+<blockquote class="card card-info">
+<p>论文未详细说明具体训练数据组成</p>
+</blockquote>
+<ul>
+<li><strong>训练数据</strong>: 使用标准LLM预训练语料，与baseline使用相同数据以保证公平对比</li>
+<li><strong>评估数据</strong>:
+<ul>
+<li>12个zero-shot benchmarks用于下游任务评估</li>
+<li>包含推理主导任务（reasoning-dominant tasks）</li>
+<li>涵盖语言理解和推理能力的多维度评估</li>
+</ul>
+</li>
+</ul>
+<h2 id="4-关键方法-四阶段分层next-token-prediction架构">4. 关键方法：四阶段分层Next-Token Prediction架构</h2>
+<blockquote class="card card-info">
+<p>DLCM将&quot;思考什么&quot;(concept形成)与&quot;如何思考&quot;(压缩潜在空间推理)显式解耦</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p>![DLCM Overvie<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>(https://arxiv.org/html/2512.24617v2/x1.png)</p>
+<p>四阶段流程:</p>
+<ol>
+<li><strong>Encoding</strong>: 轻量级encoder提取细粒度token表示</li>
+<li><strong>Dynamic Segmentation</strong>: 学习的边界检测器识别语义断点</li>
+<li><strong>Concept-Level Reasoning</strong>: 在压缩的concept序列上进行深度推理（主要计算集中在此）</li>
+<li><strong>Token-Level Decoding</strong>: 通过causal cross-attention重建token级预测</li>
+</ol>
+<h3 id="数学形式化">数学形式化</h3>
+<p>$$\mathbf{H} = \mathcal{E}(\mathbf{x}) \quad \text{(Encoding)}$$
+$$\mathbf{C} = \Phi(\mathbf{H}) \quad \text{(Segmentation \&amp; Pooling)}$$
+$$\mathbf{Z} = \mathcal{M}(\mathbf{C}) \quad \text{(Concept Reasoning)}$$
+$$\hat{\mathbf{y}} = \mathcal{D}(\Psi(\mathbf{H}, \mathbf{Z})) \quad \text{(Decoding)}$$</p>
+<p>其中 $\mathcal{E}$ 是encoder，$\Phi$ 是分割-池化操作，$\mathcal{M}$ 是concept-level transformer，$\mathcal{D}$ 是decoder，$\Psi$ 是cross-attention扩展。</p>
+<h3 id="核心模块详解">核心模块详解</h3>
+<h4>(1) Encoder</h4>
+<ul>
+<li>标准causal Transformer处理原始tokens $\mathbf{x}=[x_1,\dots,x_<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>$</li>
+<li>产生细粒度表示 $\mathbf{H}=[\mathbf{h}_1,\dots,\mathbf{h}_<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span> \in \mathbb{R}^{L \times d_{\text{token}}}$</li>
+<li>同时服务于边界检测和最终token级解码</li>
+</ul>
+<h4>(2) Dynamic Segmentation (边界检测 &amp; 池化)</h4>
+<ul>
+<li><strong>边界检测条件</strong>: $\text{sim}(\mathbf{h}_t, \mathbf{h}_{t-1}) &lt; \tau \Rightarrow \text{boundary}$</li>
+<li>通过测量相邻token表示的局部不相似度识别语义断点</li>
+<li>边界从模型自身的潜在空间通过端到端优化涌现</li>
+<li><strong>池化</strong>: 每个segment内的tokens进行mean pooling得到concept表示</li>
+</ul>
+<h4>(3) Concept-Level Reasoning</h4>
+<ul>
+<li>高容量transformer在压缩的concept序列上进行深度推理</li>
+<li><strong>大部分计算发生在这一阶段</strong></li>
+<li>模型容量重新分配：从冗余token处理转移到concept级推理</li>
+</ul>
+<h4>(4) Decoder Cross-Attention</h4>
+<ul>
+<li>使用causal mask确保自回归性质</li>
+<li>Query来自encoder的token embeddings</li>
+<li>Key, Value来自Concept Model的输出</li>
+</ul>
+<h3 id="训练技巧">训练技巧</h3>
+<h4>Compression-aware Scaling Law</h4>
+<ul>
+<li>推导了考虑压缩比的缩放定律: $L(N, D, R, P)$</li>
+<li>显式建模总参数$N$、数据$D$、压缩比$R$、concept-backbone分配$P$之间的交互</li>
+<li>支持在等FLOPs约束下的架构选择</li>
+</ul>
+<h4>Decoupled μP (Maximal Update Parametrization)</h4>
+<ul>
+<li>针对异构架构调整μP以防止训练不稳定</li>
+<li><strong>关键发现</strong>: 由于模型宽度解耦，token级组件、concept backbone、embeddings的学习率需要独立调整</li>
+<li>最优有效学习率与特定宽度成反比: $\eta \propto \text{width}^{-1}$</li>
+</ul>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>粒度</th>
+<th>边界</th>
+<th>限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard LLM</td>
+<td>Token级</td>
+<td>无</td>
+<td>均匀计算，浪费资源</td>
+</tr>
+<tr>
+<td>LCM</td>
+<td>句子级</td>
+<td>固定人工定义</td>
+<td>粒度太粗，不灵活</td>
+</tr>
+<tr>
+<td>H-NET</td>
+<td>Byte级</td>
+<td>学习</td>
+<td>未在现代LLM pipeline验证</td>
+</tr>
+<tr>
+<td><strong>DLCM</strong></td>
+<td><strong>Concept级</strong></td>
+<td><strong>端到端学习</strong></td>
+<td><strong>自适应计算分配</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键实验-r-4时flops减少34-平均准确率提升2-69">5. 关键实验：R=4时FLOPs减少34%，平均准确率提升2.69%</h2>
+<blockquote class="card card-info">
+<p>DLCM在保持或提升性能的同时显著降低计算成本</p>
+</blockquote>
+<h3 id="主实验结果">主实验结果</h3>
+<ul>
+<li><strong>压缩比 R=4</strong>:
+<ul>
+<li>FLOPs减少高达 <strong>34%</strong></li>
+<li>将节省的容量重新分配到更大的推理backbone</li>
+<li>12个zero-shot benchmarks平均准确率提升 <strong>+2.69%</strong></li>
+</ul>
+</li>
+<li><strong>最大增益</strong>: 出现在推理主导任务(reasoning-dominant tasks)上</li>
+</ul>
+<h3 id="关键发现">关键发现</h3>
+<ul>
+<li>DLCM在处理高信息量、低可预测性的tokens（concept开头）上表现出色</li>
+<li>结构偏置使模型能够根据语义结构（而非表面token数量）自适应分配计算</li>
+<li>验证了compute redistribution策略的有效性</li>
+</ul>
+<h2 id="6-golden-case">6. Golden case</h2>
+<p>考虑句子 &quot;The cat sat on the mat&quot;：</p>
+<ul>
+<li>传统LLM：对每个token (The, cat, sat, on, the, mat) 分配相同计算</li>
+<li>DLCM：
+<ul>
+<li>边界检测识别出语义单元: [bos toke<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>, [The ca<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>, [sat o<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span>, [the ma<span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span></li>
+<li>池化为4个concepts: $C_1, C_2, C_3, C_4$</li>
+<li>在concept空间进行深度推理</li>
+<li>通过cross-attention恢复token级预测</li>
+</ul>
+</li>
+</ul>
+<p>这种设计让模型在语义转折点（如&quot;sat&quot;引入新动作）集中更多计算，而在可预测tokens（如&quot;the&quot;）上节省资源。</p>
+<h1>7. Insights：计算资源应该跟随信息密度分配</h1>
+<ul>
+<li><strong>层次化推理是关键</strong>: 人类先在抽象概念层面推理，再承诺具体表达；LLM也应该如此</li>
+<li><strong>学习边界优于预定义</strong>: 让模型自己发现语义断点，比人工规则更灵活</li>
+<li><strong>FLOPs-performance trade-off可以打破</strong>: 通过智能重分配计算，可以同时降低成本和提升性能</li>
+<li><strong>μP需要针对异构架构调整</strong>: 不同宽度的模块需要独立设置学习率</li>
+</ul>
+<h3 id="延伸讨论-为什么不直接用更大的词表">延伸讨论：为什么不直接用更大的词表？</h3>
+<p><strong>问题</strong>: 既然concept比token信息密度高，为何不直接训练一个足够大的词表，让&quot;the cat&quot;、&quot;sat on&quot;天然成为词表中的单元？</p>
+<p><strong>回答</strong>:</p>
+<ol>
+<li><strong>静态 vs 动态边界</strong>: 大词表的分词是预定义的，但同一字符串在不同上下文中的最优边界不同。如&quot;the cat sat&quot;和&quot;the cat food&quot;中，&quot;the cat&quot;的边界应该不同。DLCM通过 $\text{sim}(h_t, h_{t-1})$ 基于当前上下文表示动态决定。</li>
+<li><strong>组合爆炸</strong>: 覆盖2-gram需要 $O(V^2)$ 词表，绝大多数组合稀疏、训练不充分、OOV问题严重。</li>
+<li><strong>计算分配未解决</strong>: 即使有完美大词表，仍在每个大token上均匀分配计算；DLCM的核心是压缩后用更深网络做推理。</li>
+<li><strong>端到端涌现</strong>: DLCM让边界与下游任务联合优化，学到&quot;对预测有帮助的边界&quot;而非&quot;语言学合理的边界&quot;。</li>
+</ol>
+<p><strong>结论</strong>: 问题不是&quot;分词不够好&quot;，而是&quot;应该在哪里投入更多思考&quot;——需要上下文动态决定，非静态词表能解决。</p>
+<h3 id="进一步追问-concept级别计算不也是均匀的吗">进一步追问：concept级别计算不也是均匀的吗？</h3>
+<p><strong>问题</strong>: DLCM压缩到concept后，每个concept上的计算量不还是一样的？和大词表有什么本质区别？</p>
+<p><strong>承认局限</strong>: 这个质疑是对的。DLCM<strong>没有</strong>实现&quot;不同concept分配不同计算量&quot;——每个concept经过相同深度的backbone。</p>
+<p><strong>DLCM真正做的是计算重分配，而非计算差异化</strong>:</p>
+<ul>
+<li>传统LLM: 100 tokens × 24层 = 2400 token-layer</li>
+<li>DLCM: 100 tokens × 4层(enc) + 25 concepts × 48层(backbone) + 100 tokens × 4层(dec) ≈ 2000等效</li>
+<li>在相近FLOPs下，把深度推理集中在更少、更抽象的单元上</li>
+</ul>
+<p><strong>论文motivation有overclaim</strong>: 严格来说不是&quot;计算跟着信息密度走&quot;，而是&quot;在更抽象的语义单元上做更深推理，减少token级重复劳动&quot;。</p>
+<p><strong>未来改进方向 - DLCM + MoE实现真正的计算差异化</strong>:</p>
+<ul>
+<li><strong>Layer-wise Skip机制</strong>: 让模型在每一层都可以选择&quot;跳过&quot;该层，类似early exit但更细粒度。不同concept根据自身复杂度决定经过多少层。</li>
+<li><strong>实现方式</strong>: 每层增加一个轻量级的skip gate，对每个concept输出skip概率；训练时用Gumbel-Softmax或强化学习优化。</li>
+<li><strong>潜在问题</strong>: 推理加速不友好——不同concept的计算图不一致，难以batch并行，对CUDA kernel优化、KV cache管理、speculative decoding等技术都不友好。这是动态计算分配方案的通病。</li>
+<li><strong>相关思考</strong>: 见 <span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span></li>
+</ul>
+<h2 id="8-个人总结">8. 个人总结</h2>
+<p>(待补充)</p>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<blockquote class="card card-info">
+<p>搜索库中是否有相关的 Research 论文或 Work 项目，并建立双链</p>
+</blockquote>
+<ul>
+<li><strong>相关工作</strong>: 与 <span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span> 中MoE的条件计算思想相关，但DLCM从信息密度角度而非参数效率角度解决问题</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Self-Distillation_Enables_Continual_Learning.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Self-Distillation Enables Continual Learning</span></a>
+<a class="paper-nav-link next" href="TranslateGemma-MT_Gemma_3.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">TranslateGemma Technical Report</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: DLCM2026</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

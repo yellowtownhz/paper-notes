@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token-Importance Guided Direct Preference Optimization (TI-DPO)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Token-Importance Guided Direct Preference Optimization (TI-DPO)</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-dpo-忽略-token-重要性差异-偏好学习过于粗粒度"><span class="toc-num">02</span> 2. 关键问题：DPO 忽略 token 重要性差异 + 偏好学习过于粗粒度</a></li>
+<li><a class="toc-link" href="#3-数据集-多任务评测覆盖知识-推理-代码-真实性"><span class="toc-num">03</span> 3. 数据集：多任务评测覆盖知识、推理、代码、真实性</a></li>
+<li><a class="toc-link toc-sub" href="#评估-benchmark">评估 Benchmark</a></li>
+<li><a class="toc-link toc-sub" href="#基座模型">基座模型</a></li>
+<li><a class="toc-link" href="#4-关键方法-梯度归因算-token-importance-triplet-loss-引入中间态"><span class="toc-num">04</span> 4. 关键方法：梯度归因算 token importance + Triplet Loss 引入中间态</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-整体思路">4.1 整体思路</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-token-level-mdp-形式化">4.2 Token-Level MDP 形式化</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-token-importance-计算-gradient-attribution">4.3 Token Importance 计算（Gradient Attribution）</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-weighted-token-level-bradley-terry-model">4.4 Weighted Token-Level Bradley-Terry Model</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-weighted-dpo-loss">4.5 Weighted DPO Loss</a></li>
+<li><a class="toc-link toc-sub" href="#4-6-triplet-loss-第二个核心创新">4.6 Triplet Loss（第二个核心创新）</a></li>
+<li><a class="toc-link toc-sub" href="#4-7-ti-dpo-总-loss">4.7 TI-DPO 总 Loss</a></li>
+<li><a class="toc-link toc-sub" href="#4-8-理论保证">4.8 理论保证</a></li>
+<li><a class="toc-link toc-sub" href="#4-9-algorithm-1-流程">4.9 Algorithm 1 流程</a></li>
+<li><a class="toc-link toc-sub" href="#4-10-关键图表">4.10 关键图表</a></li>
+<li><a class="toc-link" href="#5-关键结果-truthfulqa-和-ifeval-显著领先"><span class="toc-num">05</span> 5. 关键结果：TruthfulQA 和 IFEval 显著领先</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验结果-table-1-三个模型平均">5.1 主实验结果 (Table 1, 三个模型平均)</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-分模型结果">5.2 分模型结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-消融实验-table-2">5.3 消融实验 (Table 2)</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-token-importance-分布-figure-4">5.4 Token Importance 分布 (Figure 4)</a></li>
+<li><a class="toc-link" href="#6-golden-case-医疗建议场景的-token-importance-分配"><span class="toc-num">06</span> 6. Golden Case：医疗建议场景的 token importance 分配</a></li>
+<li><a class="toc-link toc-sub" href="#response-a-preferred-yw">Response A (Preferred, $yw$)</a></li>
+<li><a class="toc-link toc-sub" href="#response-b-intermediate-anchor">Response B (Intermediate, anchor)</a></li>
+<li><a class="toc-link toc-sub" href="#response-c-non-preferred-yl">Response C (Non-Preferred, $yl$)</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-1-triplet-loss-里的-y-intermediate-output-具体是怎么来的">疑问 1: Triplet loss 里的 $y$（intermediate output）具体是怎么来的？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-2-token-importance-计算的开销">疑问 2: Token importance 计算的开销</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-3-lemma-4-1-的-covariance-假设是否总是成立">疑问 3: Lemma 4.1 的 covariance 假设是否总是成立？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-4-training-data-来源和-triplet-的构造">疑问 4: Training data 来源和 triplet 的构造</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-5-超参数-gamma-beta-margin-alpha-的具体取值">疑问 5: 超参数 $\gamma$、$\beta$、margin $\alpha$ 的具体取值</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-6-token-importance-与-reward-model-的关系">疑问 6: Token Importance 与 Reward Model 的关系</a></li>
+<li><a class="toc-link" href="#8-insights"><span class="toc-num">08</span> 8. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-对论文本身的-comments">8.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-研究品味">8.2 研究品味</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-18</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2505.19653" target="_blank">arXiv</a>
+    </div>
+    <h1>Token-Importance Guided Direct Preference Optimization (TI-DPO)</h1>
+    <p class="authors">Ning Yang, Hai Lin, Yibo Liu, Baoliang Tian, Guoqing Liu, Haijun Zhang</p>
+    <div class="topic-row"><span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Preference_Alignment</span> <span class="topic-tag">DPO</span> <span class="topic-tag">Token-level_Optimization</span> <span class="topic-tag">Contrastive_Learning</span> <span class="topic-tag">Feature_Attribution</span></div>
+</header>
+
+<h1>论文笔记: Token-Importance Guided Direct Preference Optimization (TI-DPO)</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Ning Yang, Hai Lin, Yibo Liu, Baoliang Tian, Guoqing Liu, Haijun Zhang</li>
+<li><strong>团队</strong>: Institute of Automation, Chinese Academy of Sciences; Microsoft Research AI4Science; ByteDance; University of Science and Technology Beijing</li>
+<li><strong>发表时间</strong>: 2025-05-26 (arXiv), ICLR 2026 Oral</li>
+<li><strong>arXiv ID</strong>: 2505.19653</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-dpo-忽略-token-重要性差异-偏好学习过于粗粒度">2. 关键问题：DPO 忽略 token 重要性差异 + 偏好学习过于粗粒度</h2>
+<p>DPO 有两个硬伤：</p>
+<ol>
+<li>
+<p><strong>Token 一视同仁</strong>：生成 response 时，有的 token 是关键决策点（比如医疗建议里的 &quot;safe&quot; vs &quot;risk&quot;），有的只是填充。但 DPO 把所有 token 当成等权，这就导致真正重要的 token 被&quot;稀释&quot;了。</p>
+</li>
+<li>
+<p><strong>二元比较太粗糙</strong>：传统 DPO 只做 &quot;good vs bad&quot; 二选一。但人类偏好其实是连续梯度——有些 response 比另一些好一点点，不是非黑即白。</p>
+</li>
+</ol>
+<p>之前的方法卡在哪里了？</p>
+<ul>
+<li><strong>TDPO</strong> 尝试了 token-level DPO，但没有 importance weighting，还是等权处理。</li>
+<li><strong>TIS-DPO</strong> 用概率差估计 token importance，但这种方法容易 bias——模型预测概率本身就可能不准，容易被 contrastive model 的不一致输出带偏。</li>
+<li>各种 DPO 变体都还是 binary comparison，没人用 triplet 结构来引入&quot;中间态&quot;。</li>
+</ul>
+<hr />
+<h2 id="3-数据集-多任务评测覆盖知识-推理-代码-真实性">3. 数据集：多任务评测覆盖知识、推理、代码、真实性</h2>
+<h3 id="评估-benchmark">评估 Benchmark</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>任务类型</th>
+<th>规模/说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MMLU</td>
+<td>知识广度</td>
+<td>57 个学科的多选题</td>
+</tr>
+<tr>
+<td>GSM8K</td>
+<td>数学推理</td>
+<td>小学数学应用题</td>
+</tr>
+<tr>
+<td>MATH</td>
+<td>高级数学</td>
+<td>高难度数学问题</td>
+</tr>
+<tr>
+<td>MT-Bench</td>
+<td>对话能力</td>
+<td>GPT-4 judge</td>
+</tr>
+<tr>
+<td>Arena-Hard</td>
+<td>复杂指令处理</td>
+<td>MT-Bench 增强版</td>
+</tr>
+<tr>
+<td>TruthfulQA</td>
+<td>真实性</td>
+<td>adversarial questions 检测幻觉</td>
+</tr>
+<tr>
+<td>GPQA</td>
+<td>科学问答</td>
+<td>448 个研究生级别多学科多选题</td>
+</tr>
+<tr>
+<td>IFEval</td>
+<td>指令遵循</td>
+<td>500 个可验证任务</td>
+</tr>
+<tr>
+<td>HumanEval</td>
+<td>代码生成</td>
+<td>pass@1 指标</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="基座模型">基座模型</h3>
+<ul>
+<li>Llama-3.2-3B-Instruct</li>
+<li>Llama-3.1-8B-Instruct</li>
+<li>Mistral-7B-v0.3</li>
+</ul>
+<p>[?] 训练数据的具体来源和采样策略论文中没有详细说明，只提到使用 preference dataset $\mathcal{D}=\{(x, y_w, y_l)\}$。</p>
+<hr />
+<h2 id="4-关键方法-梯度归因算-token-importance-triplet-loss-引入中间态">4. 关键方法：梯度归因算 token importance + Triplet Loss 引入中间态</h2>
+<h3 id="4-1-整体思路">4.1 整体思路</h3>
+<p>TI-DPO 做了两件事：</p>
+<ol>
+<li>用<strong>梯度归因</strong>计算每个 token 的 importance weight，把优化&quot;聚焦&quot;到关键 token 上</li>
+<li>引入<strong>Triplet Loss</strong>，构建 $(y_w, y, y_l)$ 三元关系，把 preference learning 从&quot;分类问题&quot;变成了&quot;metric learning 问题&quot;</li>
+</ol>
+<h3 id="4-2-token-level-mdp-形式化">4.2 Token-Level MDP 形式化</h3>
+<p>把 text generation 建模成 token-level MDP：$\mathcal{M}=(\mathcal{S}, \mathcal{A}, \mathcal{P}, r, \rho_0)$</p>
+<ul>
+<li>State $s_t = [x, y^{&lt;t}]$：input prompt + 已生成的 token</li>
+<li>Action $a_t = y^t$：下一个 token 选择</li>
+<li>Reward $r$：每个 token 对应的 reward</li>
+</ul>
+<h3 id="4-3-token-importance-计算-gradient-attribution">4.3 Token Importance 计算（Gradient Attribution）</h3>
+<p>这是论文的第一个核心创新——用梯度来做 importance estimation，而非概率估计。</p>
+<p><strong>为什么用梯度</strong>：梯度直接反映了&quot;改变这个 token embedding 对最终 reward 的影响有多大&quot;。梯度是 data-driven 的，直接 quantifies causal contribution。概率估计（如 TIS-DPO）只看输出概率差异，容易被 contrastive model 的不一致输出带偏。</p>
+<p><strong>计算流程</strong>：</p>
+<p><strong>Step 1: 计算梯度</strong></p>
+<p>对于 token embedding $e_i$，计算其对 policy log-probability 的梯度：</p>
+<div class="math-display">$$\bar{G}_i = \frac{1}{t}\sum_{j=1}^{t}\nabla_{e_i}\log\pi_\theta(y^j|x, y^{&lt;j})$$</div>
+<p>物理意义：这个梯度衡量了 token $e_i$ 对生成每个后续 token $y^j$ 的&quot;影响力&quot;。梯度大 = 这个 token 很重要，改动它会对生成结果产生大影响。</p>
+<p>为什么平均？因为要平衡 local 和 global importance——每个 token 的生成只依赖 prefix，但梯度本身已经包含历史依赖。</p>
+<p><strong>Step 2: 计算 Importance Score</strong></p>
+<div class="math-display">$$I_i = ||\bar{G}_i||_1 = \sum_k |\bar{G}_i[k]|$$</div>
+<p>用 L1 norm 把梯度向量变成一个 scalar score。这里 $k$ 是 gradient vector 的各个 component。</p>
+<p><strong>Step 3: 归一化</strong></p>
+<div class="math-display">$$w_t = \frac{I_i - \min(\mathcal{I}_t)}{\max(\mathcal{I}_t) - \min(\mathcal{I}_t)}$$</div>
+<p>把 importance score 归一化到 [0, 1]，其中 $\mathcal{I}_t = \{I_j | j \in \mathcal{T}_t\}$ 是当前 state 所有 token 的 importance score 集合。</p>
+<p><strong>有意思的地方</strong>：这个公式保证了至少有一个 token weight=0，至少有一个 weight=1（如果 importance 有差异）。这样形成了明确的&quot;spotlight&quot;——让模型知道该聚焦哪里。</p>
+<h3 id="4-4-weighted-token-level-bradley-terry-model">4.4 Weighted Token-Level Bradley-Terry Model</h3>
+<p>带权重的 BT model：</p>
+<div class="math-display">$$p^*(y_w \succ y_l) = \frac{\exp\left(\sum_{t=1}^{T_w} w_t^w \cdot r_\phi(s_t^w, a_t^w)\right)}{\exp(\cdots) + \exp\left(\sum_{t=1}^{T_l} w_t^l \cdot r_\phi(s_t^l, a_t^l)\right)}$$</div>
+<p>这里 $w_t^w$ 和 $w_t^l$ 是 preferred 和 non-preferred response 的 token importance weights。</p>
+<h3 id="4-5-weighted-dpo-loss">4.5 Weighted DPO Loss</h3>
+<div class="math-display">$$\mathcal{L}_{DPO-w} = -\mathbb{E}_{(x,y_w,y_l)\sim\mathcal{D}}\left[\log\sigma\left(\Delta r_{token}(x, y_w, y_l, w_t^w, w_t^l)\right)\right]$$</div>
+<p>其中：</p>
+<div class="math-display">$$\Delta r_{token} = \sum_{t=1}^{T_w} w_t^w \log\frac{\pi_\theta(y_w^t|x, y_w^{&lt;t})}{\pi_{ref}(y_w^t|x, y_w^{&lt;t})} - \sum_{t=1}^{T_l} w_t^l \log\frac{\pi_\theta(y_l^t|x, y_l^{&lt;t})}{\pi_{ref}(y_l^t|x, y_l^{&lt;t})}$$</div>
+<p>对比原始 DPO loss，这里的核心变化是把 token-level log ratio 加权累加，而不是整个 sequence 的 log ratio。权重高的 token 对 loss 影响更大——这些是 gradient 认定的&quot;关键位置&quot;。</p>
+<h3 id="4-6-triplet-loss-第二个核心创新">4.6 Triplet Loss（第二个核心创新）</h3>
+<p><strong>动机</strong>：binary comparison (good vs bad) 太粗糙。人类偏好有梯度——有些回答&quot;还行但不够好&quot;。用 triplet 结构（preferred-intermediate-non-preferred）可以捕捉这个连续性。</p>
+<div class="math-display">$$\mathcal{L}_{triplet} = \mathbb{E}\left[\max\left(0, \underbrace{\sum_{t=1}^{T_w}\left\|\log\frac{\pi_\theta(y^t|x, y^{&lt;t})}{\pi_{ref}} - \log\frac{\pi_\theta(y_w^t|x, y_w^{&lt;t})}{\pi_{ref}}\right\|_2^2}_{\text{Bring }y\text{ closer to }y_w} - \underbrace{\sum_{t=1}^{T_l}\left\|\log\frac{\pi_\theta(y_l^t|x, y_l^{&lt;t})}{\pi_{ref}} - \log\frac{\pi_\theta(y^t|x, y^{&lt;t})}{\pi_{ref}}\right\|_2^2}_{\text{Push }y\text{ away from }y_l} + \alpha\right)\right]$$</div>
+<p>物理意义：</p>
+<ul>
+<li>$y$ 是模型生成的中间态输出（anchor）</li>
+<li>第一个 term：让 $y$ 往 $y_w$（preferred）靠拢（pull toward good）</li>
+<li>第二个 term：让 $y$ 离 $y_l$（non-preferred）远一点（push away from bad）</li>
+<li>$\alpha$ 是 margin，确保拉开足够的距离</li>
+</ul>
+<p><strong>这个地方值得注意</strong>：triplet loss 在 embedding learning 里很经典（FaceNet 时代就用了），但用在 preference alignment 的 log-ratio space 上是个新思路。它把 preference learning 从&quot;分类问题&quot;变成了&quot;metric learning 问题&quot;——不是简单的黑白分明，而是构建一个连续的 metric space。</p>
+<h3 id="4-7-ti-dpo-总-loss">4.7 TI-DPO 总 Loss</h3>
+<div class="math-display">$$\mathcal{L}_{TI-DPO} = \mathcal{L}_{DPO-w} + \gamma\mathcal{L}_{triplet}$$</div>
+<p>$\gamma$ 是超参数，控制 triplet loss 的贡献权重。论文实验中设 $\gamma &lt; \beta$ [?]。</p>
+<h3 id="4-8-理论保证">4.8 理论保证</h3>
+<p><strong>Lemma 4.1</strong>: 存在 $\alpha &gt; 1$ 使得：</p>
+<div class="math-display">$$\mathbb{E}[\Delta r_{token}] \geq \alpha \cdot \mathbb{E}[\Delta r_{global}]$$</div>
+<p>这里 $\Delta r_{global}$ 是原始 DPO 的 log ratio（sequence level），$\Delta r_{token}$ 是加权后的。</p>
+<p>直觉理解：因为 importance weight 与 reward 正相关（preferred response），负相关（non-preferred response），加权后的 reward difference 必定比不加权的更大。weight 起到了&quot;放大差异&quot;的作用。</p>
+<p><strong>Theorem 4.2 (Tighter Loss Bound)</strong>:</p>
+<div class="math-display">$$\mathcal{L}_{TI-DPO} \leq \mathcal{L}_{DPO} - \beta\Delta_{triplet}$$</div>
+<p>$\Delta_{triplet} &gt; 0$ 是 triplet loss 相关的系数。</p>
+<p><strong>数学推导要点</strong>（Appendix A.2）：</p>
+<ol>
+<li>对 sigmoid 用 Jensen's inequality 得到 convex bound</li>
+<li>利用 Lemma 4.1 的 $\alpha &gt; 1$ 条件</li>
+<li>构造函数 $g(\alpha) = \log(1+e^{-\alpha z}) + (\alpha-1)z$，证明 $\alpha&gt;1$ 时 $g(\alpha) &lt; g(1)$</li>
+<li>结合 triplet loss 的正贡献</li>
+</ol>
+<p>这个定理的意义是——TI-DPO 的优化目标理论上比 DPO 更 tight，训练更稳定。不是靠实验硬证明，而是有数学保证。</p>
+<h3 id="4-9-algorithm-1-流程">4.9 Algorithm 1 流程</h3>
+<pre><code>Input: Dataset D, hyperparameters β, α, γ
+Initialize: πθ ← πref
+
+for each epoch:
+  1. Sample batch (x, y_w, y_l) ~ D
+  2. Forward pass: compute πθ and πref for all tokens
+  3. Compute token importance weights via gradient attribution
+  4. Compute Δr_token (weighted DPO log-ratio)
+  5. Sample intermediate output y ~ πθ
+  6. Compute triplet loss
+  7. Aggregate: L_TI-DPO = L_DPO-w + γ * L_triplet
+  8. Update θ
+</code></pre>
+<p><strong>关键细节</strong>：</p>
+<ul>
+<li>intermediate output $y$ 是在线从 $\pi_\theta$ sample 的（Algorithm 1 line 13），不是预先准备的 [?]</li>
+<li>gradient 计算 embedding level，不是 parameter level</li>
+</ul>
+<h3 id="4-10-关键图表">4.10 关键图表</h3>
+<p><img src="https://arxiv.org/html/2505.19653v1/extracted/figures/x1.png" alt="Figure 1: TruthfulQA and IFEval Performance vs Training Steps" /></p>
+<p>训练过程中 TI-DPO 的 accuracy 稳步提升，在 TruthfulQA 和 IFEval 上都超越了所有 baseline。</p>
+<p><img src="https://arxiv.org/html/2505.19653v1/extracted/figures/x3.png" alt="Figure 2: Multi-dimensional Performance Radar" /></p>
+<p>TI-DPO 在 Reasoning、Instruction-Following、Reliability 维度表现突出。</p>
+<p><img src="https://arxiv.org/html/2505.19653v1/extracted/figures/x4.png" alt="Figure 3: Case Demo - Medical Advice" /></p>
+<p>展示了三种 response 的 token importance weight 分布。Preferred response 中关键词如 &quot;seek medical attention promptly&quot; 获得高权重。</p>
+<hr />
+<h2 id="5-关键结果-truthfulqa-和-ifeval-显著领先">5. 关键结果：TruthfulQA 和 IFEval 显著领先</h2>
+<h3 id="5-1-主实验结果-table-1-三个模型平均">5.1 主实验结果 (Table 1, 三个模型平均)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>MMLU</th>
+<th>GSM8K</th>
+<th>GPQA</th>
+<th>HumanEval</th>
+<th>TruthfulQA</th>
+<th>IFEval</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DPO</td>
+<td>65.3</td>
+<td>69.3</td>
+<td>24.0</td>
+<td>61.0</td>
+<td>56.7</td>
+<td>70.0</td>
+<td>57.7</td>
+</tr>
+<tr>
+<td>GRPO</td>
+<td>70.7</td>
+<td>75.7</td>
+<td>28.0</td>
+<td>64.3</td>
+<td>59.9</td>
+<td>74.0</td>
+<td>62.1</td>
+</tr>
+<tr>
+<td><strong>TI-DPO</strong></td>
+<td><strong>70.0</strong></td>
+<td><strong>73.0</strong></td>
+<td><strong>26.0</strong></td>
+<td><strong>67.0</strong></td>
+<td><strong>62.0</strong></td>
+<td><strong>75.7</strong></td>
+<td><strong>62.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键提升</strong>：</p>
+<ul>
+<li>TruthfulQA: +5.3 vs DPO (56.7 → 62.0)，+2.1 vs GRPO (59.9 → 62.0)</li>
+<li>IFEval: +5.7 vs DPO (70.0 → 75.7)，+1.7 vs GRPO (74.0 → 75.7)</li>
+<li>HumanEval: +6.0 vs DPO (61.0 → 67.0)，代码生成能力提升显著</li>
+</ul>
+<p><strong>有意思的是</strong>：TI-DPO 在 reasoning 和 reliability 维度优势明显。论文的解释是——这些维度需要精准的 token-level control，正是 TI-DPO 的优势所在。</p>
+<h3 id="5-2-分模型结果">5.2 分模型结果</h3>
+<p><strong>LLaMA-3.2-3B (Table 6)</strong>：</p>
+<ul>
+<li>TI-DPO: HumanEval 68.0, IFEval 82.0, TruthfulQA 57.0</li>
+<li>DPO: HumanEval 62.0, IFEval 78.0, TruthfulQA 52.0</li>
+</ul>
+<p><strong>LLaMA-3.1-8B (Table 7)</strong>：</p>
+<ul>
+<li>TI-DPO: HumanEval 80.0, IFEval 86.0, TruthfulQA 63.0</li>
+<li>DPO: HumanEval 74.0, IFEval 82.0, TruthfulQA 58.0</li>
+</ul>
+<p><strong>Mistral-7B-v0.3 (Table 8)</strong>：</p>
+<ul>
+<li>TI-DPO: HumanEval 53.0, IFEval 59.0, TruthfulQA 66.0</li>
+<li>DPO: HumanEval 47.0, IFEval 50.0, TruthfulQA 60.0</li>
+</ul>
+<h3 id="5-3-消融实验-table-2">5.3 消融实验 (Table 2)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>General</th>
+<th>Math</th>
+<th>Reasoning</th>
+<th>Code</th>
+<th>Instr-Follow</th>
+<th>Reliability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Instruct</td>
+<td>0.634</td>
+<td>0.777</td>
+<td>0.266</td>
+<td>0.280</td>
+<td>0.515</td>
+<td>0.768</td>
+</tr>
+<tr>
+<td><strong>Full TI-DPO</strong></td>
+<td><strong>0.654</strong></td>
+<td><strong>0.807</strong></td>
+<td><strong>0.346</strong></td>
+<td><strong>0.330</strong></td>
+<td><strong>0.635</strong></td>
+<td><strong>0.868</strong></td>
+</tr>
+<tr>
+<td>No Triplet Loss</td>
+<td>0.640</td>
+<td>0.790</td>
+<td>0.320</td>
+<td>0.310</td>
+<td>0.605</td>
+<td>0.830</td>
+</tr>
+<tr>
+<td>Uniform Weight</td>
+<td>0.640</td>
+<td>0.782</td>
+<td>0.305</td>
+<td>0.290</td>
+<td>0.580</td>
+<td>0.800</td>
+</tr>
+<tr>
+<td>Random Weight</td>
+<td>0.637</td>
+<td>0.778</td>
+<td>0.280</td>
+<td>0.285</td>
+<td>0.550</td>
+<td>0.780</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>消融分析</strong>：</p>
+<ul>
+<li><strong>Importance weight 的价值</strong>：Baseline → Random → Uniform → Full，顺序提升所有维度。说明 gradient-based weight 不是可有可无，而是真正捕捉了 semantic importance。</li>
+<li><strong>Triplet loss 的价值</strong>：去掉 triplet 后，Instr-Follow 从 0.635 降到 0.605（-0.030），Reliability 从 0.868 降到 0.830（-0.038）。这两个维度最需要&quot;梯度式&quot;偏好学习。</li>
+<li><strong>组合效应</strong>：Full method 的 Reasoning (0.346) vs Base (0.266)，提升 +0.08，是所有维度增幅最大的。</li>
+</ul>
+<p>这两个组件的贡献都必要，缺一不可。</p>
+<h3 id="5-4-token-importance-分布-figure-4">5.4 Token Importance 分布 (Figure 4)</h3>
+<p><img src="https://arxiv.org/html/2505.19653v1/extracted/figures/x5.png" alt="Figure 4: Weight Distribution across Tasks" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>权重分布</th>
+<th>解读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TruthfulQA / IFEval</td>
+<td>集中在 [0.6, 0.8]</td>
+<td>safety-critical tokens 获得高权重</td>
+</tr>
+<tr>
+<td>GSM8K / GPQA</td>
+<td>集中在 [0.2, 0.5]</td>
+<td>只有少数关键符号（数字、运算符）重要</td>
+</tr>
+<tr>
+<td>MMLU / HumanEval</td>
+<td>分布更均匀</td>
+<td>内容覆盖面广</td>
+</tr>
+</tbody>
+</table></div>
+<p>这个分布符合直觉：安全性任务需要关注特定关键词，推理任务只需关注关键步骤。TI-DPO 的 gradient attribution 能够自适应地捕捉这个差异——不是一刀切的权重策略。</p>
+<hr />
+<h2 id="6-golden-case-医疗建议场景的-token-importance-分配">6. Golden Case：医疗建议场景的 token importance 分配</h2>
+<p><strong>Prompt</strong>: &quot;I have a headache, what should I do?&quot;</p>
+<p><img src="https://arxiv.org/html/2505.19653v1/extracted/figures/x4.png" alt="Figure 3: 医疗案例的 token importance 可视化" /></p>
+<h3 id="response-a-preferred-y_w">Response A (Preferred, $y_w$)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Weight</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>seek</td>
+<td>0.93</td>
+<td>关键动词</td>
+</tr>
+<tr>
+<td>medical</td>
+<td>0.87</td>
+<td>专业术语</td>
+</tr>
+<tr>
+<td>attention</td>
+<td>0.85</td>
+<td>配合 seek</td>
+</tr>
+<tr>
+<td>promptly</td>
+<td><strong>1.00</strong></td>
+<td>时间紧迫性</td>
+</tr>
+<tr>
+<td>avoid</td>
+<td>0.92</td>
+<td>否定指令</td>
+</tr>
+<tr>
+<td>self-medicating</td>
+<td>0.89</td>
+<td>危险行为</td>
+</tr>
+</tbody>
+</table></div>
+<p>关键医疗安全词汇获得最高权重 (0.85-1.00)。</p>
+<h3 id="response-b-intermediate-anchor">Response B (Intermediate, anchor)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Weight</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>worsen</td>
+<td>0.88</td>
+<td>症状恶化判断</td>
+</tr>
+<tr>
+<td>should</td>
+<td>0.82</td>
+<td>建议语气</td>
+</tr>
+<tr>
+<td>consult</td>
+<td>0.90</td>
+<td>就医建议</td>
+</tr>
+<tr>
+<td>doctor</td>
+<td><strong>0.95</strong></td>
+<td>专业对象</td>
+</tr>
+</tbody>
+</table></div>
+<p>权重低于 A，但高于普通 filler words。通过 triplet loss，B 被引导向 A 靠拢、远离 C。</p>
+<h3 id="response-c-non-preferred-y_l">Response C (Non-Preferred, $y_l$)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Weight</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>painkillers</td>
+<td>0.91</td>
+<td>危险建议</td>
+</tr>
+<tr>
+<td>casually</td>
+<td><strong>1.00</strong></td>
+<td>态度轻率</td>
+</tr>
+<tr>
+<td>fine</td>
+<td>0.97</td>
+<td>误导性安抚</td>
+</tr>
+</tbody>
+</table></div>
+<p>高权重 token 都指向&quot;误导用户进行不安全 self-medication&quot;的关键词。TI-DPO 识别出这些是 preference misalignment 的核心位置，通过 triplet loss 中的 push-away 机制抑制它们。</p>
+<p><strong>关键 insight</strong>：权重不是均匀分布在&quot;内容丰富&quot;的位置，而是集中在&quot;判断关键&quot;的位置——比如 &quot;promptly&quot; 和 &quot;casually&quot; 都拿到了最高权重，因为它们决定了建议的安全性判断。</p>
+<hr />
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<h3 id="疑问-1-triplet-loss-里的-y-intermediate-output-具体是怎么来的">疑问 1: Triplet loss 里的 $y$（intermediate output）具体是怎么来的？</h3>
+<ul>
+<li><strong>当前理解</strong>：Algorithm 1 line 13 写的是 &quot;Sample $y^t \sim \pi_\theta(y^{t-1}|x, y^{&lt;t-1})$&quot;,看起来是在线从 policy sample 的。</li>
+<li><strong>想搞清楚</strong>：
+<ol>
+<li>这个 intermediate 是每个 epoch 都重新 sample，还是固定的？</li>
+<li>如果是在线 sample，那 triplet loss 中的 anchor 在训练过程中会变化——这会不会影响优化稳定性？</li>
+<li>论文提到&quot;intermediate generated outputs&quot;，是不是有预构建的 triplet dataset？但 Algorithm 1 里只输入 $(x, y_w, y_l)$...</li>
+</ol>
+</li>
+<li><strong>补充分析</strong>：论文 Figure 1 显示训练过程稳定，暗示 online sampling 并没有造成明显的不稳定性。可能 triplet loss 的 margin $\alpha$ 足够大，即使 anchor 有小幅变动，pull/push 的方向仍然正确。[?]</li>
+</ul>
+<h3 id="疑问-2-token-importance-计算的开销">疑问 2: Token importance 计算的开销</h3>
+<ul>
+<li><strong>当前理解</strong>：每个 token 都要计算梯度 $\nabla_{e_i}\log\pi_\theta$，这在训练时需要额外的 backward pass。</li>
+<li><strong>想搞清楚</strong>：
+<ol>
+<li>这个梯度计算是在 forward pass 时顺便做的还是需要单独的 backward？</li>
+<li>计算复杂度大概是多少倍于普通 DPO？</li>
+</ol>
+</li>
+<li><strong>补充分析</strong>：gradient 对 embedding 计算通常比 parameter gradient 更轻量（embedding 维度通常比模型参数小很多）。但仍需要额外的 backward pass，可能会增加 1.5-2x 的训练时间。[?]</li>
+</ul>
+<h3 id="疑问-3-lemma-4-1-的-covariance-假设是否总是成立">疑问 3: Lemma 4.1 的 covariance 假设是否总是成立？</h3>
+<ul>
+<li><strong>当前理解</strong>：论文假设 $\text{Cov}(w_t^w, r_\phi(x, y_w^t)) \geq 0$（preferred response 的权重和 reward 正相关）。</li>
+<li><strong>想搞清楚</strong>：这个假设的合理性？如果 gradient attribution 计算出的 importance 和 reward 实际上负相关（比如某个 token 梯度大但实际上对 preference 负面），Lemma 会不成立吗？论文没有 empirical 验证这个假设在实际训练中是否成立。[?]</li>
+</ul>
+<h3 id="疑问-4-training-data-来源和-triplet-的构造">疑问 4: Training data 来源和 triplet 的构造</h3>
+<ul>
+<li><strong>当前理解</strong>：论文说 dataset 是 $\mathcal{D}=\{(x, y_w, y_l)\}$，但 triplet 需要 $(y_w, y, y_l)$ 三元组。</li>
+<li><strong>想搞清楚</strong>：中间态 $y$ 是从哪里来的？是模型在线生成的还是 dataset 里预先标注的？如果是在线生成，怎么保证 $y$ 确实介于 $y_w$ 和 $y_l$ 之间？论文没有说明 preference dataset 来源（如 Anthropic HH、UltraFeedback 等）。[?]</li>
+</ul>
+<h3 id="疑问-5-超参数-gamma-beta-margin-alpha-的具体取值">疑问 5: 超参数 $\gamma$、$\beta$、margin $\alpha$ 的具体取值</h3>
+<ul>
+<li><strong>当前理解</strong>：论文提到 $\gamma &lt; \beta$，但没给出具体数值。</li>
+<li><strong>想搞清楚</strong>：
+<ol>
+<li>实验中 $\beta$ 和 $\gamma$ 的实际设定？</li>
+<li>triplet margin $\alpha$ 的取值？</li>
+<li>这些超参的 sensitivity？[?]</li>
+</ol>
+</li>
+</ul>
+<h3 id="疑问-6-token-importance-与-reward-model-的关系">疑问 6: Token Importance 与 Reward Model 的关系</h3>
+<ul>
+<li><strong>当前理解</strong>：Lemma 4.1 证明 weight 与 reward 正相关（preferred）或负相关（non-preferred）。但实际计算中，gradient 是对 $\log \pi_\theta$ 而非对 $r_\phi$。</li>
+<li><strong>想搞清楚</strong>：Eq 7 把 gradient 从 reward model 改成了 policy log ratio，这个替换的理论依据？两者是否在最优情况下等价？如果 policy 还没收敛，这个近似会不会有问题？</li>
+<li><strong>尝试回答</strong>：DPO 的核心假设是 implicit reward $r_\phi = \beta \log \frac{\pi_\theta}{\pi_{ref}}$，所以对 reward model 的梯度等价于对 policy log ratio 的梯度。但这个等价只在 $\pi_{ref}$ 固定且最优解附近成立。如果 policy 还没收敛，可能存在 approximation error。[?]</li>
+</ul>
+<hr />
+<h2 id="8-insights">8. Insights</h2>
+<h3 id="8-1-对论文本身的-comments">8.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的设计</strong>：</p>
+<ul>
+<li>用 gradient 做 importance estimation——我之前以为 token importance 会用 attention score 或者 output probability 来估计。但 gradient 确实更直接：它告诉你&quot;改动这个 embedding 对输出影响多大&quot;，这才是真正的&quot;重要性&quot;。gradient 是 data-driven 的，直接 quantifies causal contribution，比概率估计更精准。</li>
+<li>Triplet loss 用在 preference alignment——把 metric learning 的 triplet 结构迁移到 log-ratio space。它把&quot;good vs bad&quot;变成了一个连续的 metric space，比 binary label 更合理。</li>
+</ul>
+<p><strong>如果让我来做，想不到的地方</strong>：</p>
+<ul>
+<li>Theorem 4.2 的 tighter loss bound——这需要相当精细的数学推导能力。我可能会停留在&quot;实验效果好&quot;的层面，不会深入到 loss function 的理论比较。</li>
+<li>Weight distribution 的 task-specific analysis（Figure 4）——这个可视化很 informative，展示了不同任务类型的 importance pattern。论文不仅证明方法有效，还解释了&quot;为什么在不同任务上权重分布不同&quot;。</li>
+</ul>
+<p><strong>做得不好的地方</strong>：</p>
+<ul>
+<li>论文没有详细说明 intermediate response $y$ 的来源和采样策略。这是 triplet loss 的核心组件，缺失这个信息让方法难以复现。</li>
+<li>Token importance 计算的开销分析缺失。gradient-based 方法通常计算成本高，但论文完全没有讨论这个问题。</li>
+<li>训练数据的具体来源和 triplet 构造方式没有交代清楚。Hyperparameter 敏感性分析缺失——$\gamma$、$\beta$、margin $\alpha$ 的取值没有报告。</li>
+</ul>
+<h3 id="8-2-研究品味">8.2 研究品味</h3>
+<p><strong>可视化的选择</strong>：Figure 3-4 都是&quot;展示机制而非只展示效果&quot;——Case demo 让读者理解 gradient attribution 如何分配权重，Distribution figure 让读者理解不同任务的 importance pattern。这种设计帮助读者建立对方法的深层理解，不是停留在&quot;数值更高&quot;的表面。</p>
+<p><strong>消融实验的设计</strong>：Table 2 的 Baseline → Random → Uniform → Full 设计很有说服力——它不仅证明&quot;Full 比 Baseline 好&quot;，还展示了&quot;每个组件的贡献&quot;和&quot;错误设计的后果&quot;（Random weight 比 Uniform weight 更差）。</p>
+<p><strong>理论推导的严谨性</strong>：Appendix A 的 Lemma 和 Theorem 证明很扎实。这篇论文不是只靠&quot;实验效果好&quot;撑场子，而是有数学 guarantee。</p>
+<hr />
+<h2 id="9-总结">9. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<ol>
+<li><strong>Gradient-based token importance</strong>：用梯度归因替代概率估计，更准确地识别关键 token——gradient 直接 quantifies causal contribution</li>
+<li><strong>Triplet loss structure</strong>：把 preference learning 从&quot;分类问题&quot;变成&quot;metric learning 问题&quot;，引入中间态 anchor，实现连续梯度式的偏好学习</li>
+<li><strong>理论保证</strong>：证明 TI-DPO 的 loss bound 比 DPO 更紧（Theorem 4.2）</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li>Intermediate response $y$ 的来源和采样策略未详细说明，复现困难</li>
+<li>Token importance 计算开销分析缺失，实际成本未知（估计 1.5-2x）</li>
+<li>Covariance 假设可能不总是成立，理论保证有前提条件</li>
+<li>训练数据的具体构造方式未交代</li>
+<li>Hyperparameter 设置不清晰（$\gamma$、$\beta$、margin $\alpha$ 没有具体数值）</li>
+</ol>
+<hr />
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li><strong>相关工作</strong>: <a class="wikilink" href="Trust-Region-Adaptive-Policy-Optimization-TRAPO.html" title="Trust-Region-Adaptive-Policy-Optimization-TRAPO">Trust-Region-Adaptive-Policy-Optimization-TRAPO</a> — TRAPO 解决 SFT+RL instability，与 TI-DPO 同属 LLM post-training RL 改进</li>
+<li><strong>相关工作</strong>: <a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a> — SDPO突破 RLVR 信息瓶颈，与 TI-DPO 同属 policy optimization 方法</li>
+<li><strong>相关工作</strong>: <a class="wikilink" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html" title="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models">Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models</a> — Reward Model 的 rationale consistency，与 TI-DPO 的 token-level granularity 有潜在联系</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+<p>#Research #Paper #强化学习 #PreferenceAlignment #DPO #Token-level优化 #TripletLoss #GradientAttribution
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Trust-Region-Adaptive-Policy-Optimization-TRAPO.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Trust-Region Adaptive Policy Optimization (TRAPO)</span></a>
+<a class="paper-nav-link next" href="TAPO-Translation_Augmented_Policy_Optimization_for_Multilingual_Mathematical_Reasoning.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">TAPO - Translation Augmented Policy Optimization for Multilingual Mathematical Reasoning</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: yang2025tidpo</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

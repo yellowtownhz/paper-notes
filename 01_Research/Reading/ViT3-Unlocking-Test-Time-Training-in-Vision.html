@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViT^3: Unlocking Test-Time Training in Vision</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">ViT^3: Unlocking Test-Time Training in Vision</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-ttt-搬到视觉上-设计空间巨大但缺乏指导原则"><span class="toc-num">02</span> 2. 关键问题：TTT 搬到视觉上，设计空间巨大但缺乏指导原则</a></li>
+<li><a class="toc-link" href="#3-关键方法-从-6-条设计准则到-vit-3-架构"><span class="toc-num">03</span> 3. 关键方法：从 6 条设计准则到 ViT^3 架构</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#六条设计准则-核心贡献">六条设计准则（核心贡献）</a></li>
+<li><a class="toc-link toc-sub" href="#vit-3-最终架构">ViT^3 最终架构</a></li>
+<li><a class="toc-link toc-sub" href="#训练流程">训练流程</a></li>
+<li><a class="toc-link" href="#4-数据集-四大视觉任务全覆盖"><span class="toc-num">04</span> 4. 数据集：四大视觉任务全覆盖</a></li>
+<li><a class="toc-link" href="#5-关键结果-在所有线性复杂度方法中领先-逼近优化过的-transformer"><span class="toc-num">05</span> 5. 关键结果：在所有线性复杂度方法中领先，逼近优化过的 Transformer</a></li>
+<li><a class="toc-link toc-sub" href="#imagenet-1k-分类">ImageNet-1K 分类</a></li>
+<li><a class="toc-link toc-sub" href="#coco-检测-分割-table-8">COCO 检测/分割 (Table 8)</a></li>
+<li><a class="toc-link toc-sub" href="#ade20k-语义分割-table-9">ADE20K 语义分割 (Table 9)</a></li>
+<li><a class="toc-link toc-sub" href="#图像生成-table-10">图像生成 (Table 10)</a></li>
+<li><a class="toc-link toc-sub" href="#效率分析-figure-4">效率分析 (Figure 4)</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验总结">消融实验总结</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-13</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2512.01643" target="_blank">arXiv</a>
+    </div>
+    <h1>ViT^3: Unlocking Test-Time Training in Vision</h1>
+    <p class="authors">Dongchen Han, Yining Li, Tianyu Li, Zixuan Cao, Ziming Wang, Jun Song, Yu Cheng, Bo Zheng, Gao Huang</p>
+    <div class="topic-row"><span class="topic-tag">Computer_Vision</span> <span class="topic-tag">Test-Time_Training</span> <span class="topic-tag">LLM_Architecture</span> <span class="topic-tag">Autoregressive_Generation</span> <span class="topic-tag">Online_Learning</span></div>
+</header>
+
+<h1>论文笔记: ViT^3: Unlocking Test-Time Training in Vision</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Dongchen Han 等，清华大学 Gao Huang 组 + 阿里巴巴集团</li>
+<li><strong>发表时间</strong>: 2025 年 12 月，arXiv 预印本</li>
+<li><strong>代码</strong>: https://github.com/LeapLabTHU/ViTTT</li>
+<li><strong>定位</strong>: 系统性的 empirical study + baseline。不是某一个大 breakthrough 的方法论文。核心贡献是把 TTT（Test-Time Training）在视觉领域的设计空间系统摸了一遍，总结出 6 条设计准则，并据此构建 ViT^3 作为 baseline。同一作的前作包括 Flatten-Transformer、MILA、Agent Attention，都是在做线性复杂度视觉建模。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-ttt-搬到视觉上-设计空间巨大但缺乏指导原则">2. 关键问题：TTT 搬到视觉上，设计空间巨大但缺乏指导原则</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case -- 问题是什么？</strong></p>
+<p>想象你有一张 224x224 的图片，打成 14x14 的 patch 序列（N=196 个 token）。你想用线性复杂度的模型来处理这个序列。</p>
+<p>有三种思路，可以从&quot;内模型&quot;的角度统一理解（Fig. 1 把这个说得很清楚）：</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2512.01643v2/x1.png" alt="Figure 1: Softmax attention、linear attention 与 TTT 模块的统一视角——三者均可视为构建不同复杂度的内模型" /></p>
+<blockquote class="card card-info">
+<p><strong>Softmax attention</strong> = 建一个隐藏宽度为 N 的两层 MLP，参数就是 K 和 V，激活是 Softmax。输出 $O = \text{Softmax}(QK^\top)V$。MLP 宽度随 N 线性增长，计算量 $\mathcal{O}(N^2)$。</p>
+<p><strong>Linear attention</strong> = 把 K 和 V 压缩成一个 $d \times d$ 的线性层 $W = K^\top V$，输出 $O = QW$。复杂度 $\mathcal{O}(N)$，但一个 $d \times d$ 的线性状态太弱了，信息压缩损失大。</p>
+<p><strong>TTT</strong> = 用一个可学习的非线性小网络 $\mathcal{F}_W: \mathbb{R}^d \to \mathbb{R}^d$ 替代线性层，把 K-V 对当作&quot;mini-dataset&quot;，在推理时对 $\mathcal{F}_W$ 做 few-step 在线训练，用训练后的权重处理 query。状态不再是 $d \times d$ 的死矩阵，而是一个有非线性的、可以自适应的模型。</p>
+<p><strong>问题来了</strong>：这个&quot;小网络&quot;用什么架构？训练几个 step？用什么 loss？batch size 多大？学习率多少？TTT 在 NLP 上有一些经验（TTT-Linear, TTT-MLP），但搬到视觉上，这些超参数怎么选完全没有指南。视觉序列跟语言序列有本质区别（非因果性、空间局部性），直接搬 NLP 的配置可能不对。</p>
+</blockquote>
+<ul>
+<li><strong>动机</strong>: Softmax attention 的 $\mathcal{O}(N^2)$ 是处理长视觉序列的根本瓶颈（高分辨率图片、密集预测任务）。Linear attention 虽然是 $\mathcal{O}(N)$，但表达能力太弱。TTT 理论上可以兼顾线性复杂度和强表达力，但设计空间几乎空白。</li>
+<li><strong>已有方法卡在哪</strong>: 已有的 TTT 工作（原始 TTT、LaCT、Titans）主要在语言建模上验证，对视觉场景缺乏系统性理解。直接沿用 NLP 的配置在视觉上效果不好，但没人系统解释为什么。</li>
+</ul>
+<h2 id="3-关键方法-从-6-条设计准则到-vit-3-架构">3. 关键方法：从 6 条设计准则到 ViT^3 架构</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case -- 方法怎么跑？</strong></p>
+<p>继续上面 196 个 token 的例子。按照 ViT^3 的设计：</p>
+<ol>
+<li>
+<p><strong>输入</strong>: 序列 $x \in \mathbb{R}^{196 \times C}$，经过 QKV 投影得到 $Q, K, V \in \mathbb{R}^{196 \times d}$</p>
+</li>
+<li>
+<p><strong>Inner training（在线学习阶段）</strong>:</p>
+<ul>
+<li>把 $\{(K_i, V_i)\}_{i=1}^{196}$ 当作训练集</li>
+<li>内模型 $\mathcal{F}_W$ 初始权重 $W_0$ 是外网络的可学习参数</li>
+<li>用 dot product loss，全批次（B=N=196），学习率 1.0，做 <strong>一步</strong> 梯度下降：
+$$W^* = W_0 - \eta \cdot \frac{\partial \mathcal{L}(\mathcal{F}_{W_0}(K), V)}{\partial W}$$</li>
+</ul>
+</li>
+<li>
+<p><strong>Query 推理</strong>: $O = \mathcal{F}_{W^*}(Q)$，用更新后的内模型处理所有 query</p>
+</li>
+<li>
+<p><strong>内模型长什么样</strong>: 大部分 head 用简化 GLU $\mathcal{F}_1 = \text{FC}(x) \odot \text{SiLU}(\text{FC}(x))$，一个 head 用 DWConv $\mathcal{F}_2 = \text{DWConv}(x)$（3x3 深度卷积）。GLU 提供容量，DWConv 引入局部感受野</p>
+</li>
+</ol>
+<p>整个内训练步骤是可微的，可以跟外网络一起端到端优化。核心公式（Eq. 5）:
+$$\hat{V}_{\mathcal{B}} = \mathcal{F}_W(K_{\mathcal{B}}), \quad W \leftarrow W - \eta \cdot \frac{\partial \mathcal{L}(\hat{V}_{\mathcal{B}}, V_{\mathcal{B}})}{\partial W}$$</p>
+<p>一句话总结（原文）: &quot;TTT reformulates the entire attention operation as an online learning process: in each context a compact inner model is trained or constructed from the key-value pairs and then applied to every query.&quot;</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p>ViT^3 就是把标准 Transformer 的 attention block 换成 TTT block，其他不变。三个变体：</p>
+<ul>
+<li><strong>ViT^3</strong>（非层级）：跟 DeiT 一样，12 层，单分辨率，patch size 16</li>
+<li><strong>H-ViT^3</strong>（层级）：跟 Swin 一样，4-stage 逐渐降采样</li>
+<li><strong>DiT^3</strong>：把 DiT 的 attention 换成 TTT block，做图像生成</li>
+</ul>
+<h3 id="六条设计准则-核心贡献">六条设计准则（核心贡献）</h3>
+<p>以下基于 DeiT 架构，把 attention 替换为 TTT layer，在 ImageNet-1K 上逐个维度做 controlled ablation 得出的结论。</p>
+<blockquote class="card card-info">
+<p>tl;dr: 用 dot-product loss（不用 MAE），全 batch 单 epoch，lr=1.0，宽但不深的内模型，加卷积。原因见下。</p>
+</blockquote>
+<h4>Insight 1: 混合二阶导为零的 loss 不能用</h4>
+<p><strong>动机</strong>: TTT 的内训练步骤要对外网络参数 $W_V$ 反向传播，需要穿过内训练步——即&quot;梯度的梯度&quot;。用白话说：TTT 需要通过内训练步骤的反向传播来训练 $W_V$，这本质上是 meta-learning 里的二阶优化。如果 loss 的 $\frac{\partial^2 \mathcal{L}}{\partial \hat{V} \partial V} \approx 0$，$W_V$ 就收不到梯度信号了。</p>
+<p><strong>数学</strong>: 内训练的梯度 $G = \frac{\partial \mathcal{L}}{\partial W}$，对外网络参数 $W_V$ 求导（Eq. 6）:</p>
+<div class="math-display">$$\frac{\partial G}{\partial W_V} = \frac{\partial \hat{V}_{\mathcal{B}}}{\partial W} \cdot \underbrace{\frac{\partial^2 \mathcal{L}(\hat{V}_{\mathcal{B}}, V_{\mathcal{B}})}{\partial \hat{V}_{\mathcal{B}} \partial V_{\mathcal{B}}}}_{\text{关键项}} \cdot \frac{\partial V_{\mathcal{B}}}{\partial W_V}$$</div>
+<p>中间项是关键。各 loss 的二阶导：</p>
+<ul>
+<li><strong>Dot Product Loss</strong>: $\mathcal{L} = -\frac{1}{B\sqrt{d}}\sum_i \hat{V}_i V_i^\top$，二阶导 = $-\frac{1}{B\sqrt{d}}$（非零常数）</li>
+<li><strong>MSE Loss</strong>: $\mathcal{L} = \frac{1}{2B\sqrt{d}}\sum_i (\hat{V}_i - V_i)(\hat{V}_i - V_i)^\top$，二阶导 = $-\frac{1}{B\sqrt{d}}$（非零常数）</li>
+<li><strong>MAE Loss</strong>: 导数是 sign 函数，二阶导几乎处处为零</li>
+<li><strong>Smooth L1</strong>: 二阶导在 $|x| &gt; 1$ 的区域为零</li>
+</ul>
+<p><strong>实验验证</strong> (Table 1):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Loss Function</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dot Product</td>
+<td>78.9</td>
+</tr>
+<tr>
+<td>MSE (L2)</td>
+<td>79.2</td>
+</tr>
+<tr>
+<td>RMSE</td>
+<td>78.8</td>
+</tr>
+<tr>
+<td>Smooth L1</td>
+<td>78.1</td>
+</tr>
+<tr>
+<td>MAE (L1)</td>
+<td>76.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>MAE 比 Dot Product 掉 2.4 个点，完全可以用二阶导消失来解释。</p>
+<p>[?] MSE (79.2) 其实比 Dot Product (78.9) 高 0.3 个点，但论文最终选了 Dot Product。论文没有解释为什么。可能是因为 Dot Product 的 FLOPs 稍低（4.58G vs 4.63G），或者差距在更大 scale 时消失。</p>
+<h4>Insight 2: 视觉场景下，全 batch 一步 epoch 就够了</h4>
+<p><strong>动机</strong>: 之前 TTT 在语言任务上发现 mini-batch 更好。但视觉是非因果的，全 batch 反而最优。</p>
+<p><strong>实验</strong> (Table 2):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Epoch</th>
+<th>Batch Size</th>
+<th>Top-1</th>
+<th>FPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>N (full)</td>
+<td><strong>78.9</strong></td>
+<td>1315</td>
+</tr>
+<tr>
+<td>1</td>
+<td>N/2</td>
+<td>78.6</td>
+<td>1201</td>
+</tr>
+<tr>
+<td>1</td>
+<td>N/3</td>
+<td>78.3</td>
+<td>1131</td>
+</tr>
+<tr>
+<td>1</td>
+<td>N/4</td>
+<td>78.1</td>
+<td>1101</td>
+</tr>
+<tr>
+<td>2</td>
+<td>N</td>
+<td>79.1</td>
+<td>971</td>
+</tr>
+<tr>
+<td>3</td>
+<td>N</td>
+<td>79.2</td>
+<td>787</td>
+</tr>
+<tr>
+<td>4</td>
+<td>N</td>
+<td>57.0*</td>
+<td>659</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>解释</strong>: Mini-batch SGD 引入因果偏差——前面的 batch 更新权重，影响后面 batch 的梯度；后面的 batch 又可能覆盖前面的更新。这对因果的语言数据是好事（token 天然有时序），对非因果的视觉数据反而不利。多 epoch 有提升（+0.3, +0.4），但 FPS 几乎减半，且 4 epoch 直接崩溃（从 79.2 断崖式跌到 57.0）。</p>
+<p>[?] &quot;视觉是非因果的所以全 batch 好&quot;这个因果归因有道理，但论文没有在同一个框架下做因果 vs 非因果的 controlled experiment 来验证。证据链不够紧。</p>
+<p><strong>Remark 2</strong>: 论文提到，设计空间感知的 mini-batch 策略（如按区域分块）是 promising direction，当前的 naive sequential mini-batch 不行不代表更好的 mini-batch 方案不行。</p>
+<h4>Insight 3: 内学习率 η=1.0 效果好</h4>
+<p><strong>实验</strong> (Table 3):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>LR</th>
+<th>0.1</th>
+<th>0.2</th>
+<th>0.5</th>
+<th><strong>1.0</strong></th>
+<th>2.0</th>
+<th>5.0</th>
+<th>10.0</th>
+<th>Dynamic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Top-1</td>
+<td>77.5</td>
+<td>78.1</td>
+<td>78.7</td>
+<td><strong>78.9</strong></td>
+<td>78.9</td>
+<td>76.7*</td>
+<td>76.9*</td>
+<td>78.7</td>
+</tr>
+</tbody>
+</table></div>
+<p>η=1.0 和 2.0 持平，但 5.0+ 就开始不稳定。Dynamic lr（输入相关的 token-wise 学习率，来自 prior TTT work）在视觉上反而不如固定 lr。</p>
+<p><strong>Remark 3</strong>: 当内模型是线性层 + MSE loss 时，η 可以被吸收到 K 和 V 的缩放里（$\tilde{K} = \sqrt{\eta}K$, $\tilde{V} = \sqrt{\eta}V$，Eq. 7），数学上完全等价。但实践中 η 仍然关键，因为这种缩放可能跟其他组件不兼容。类比 Softmax attention 里的 $1/\sqrt{d}$ 缩放——理论上也可以吸进 Q 和 K，但去掉就是不行。</p>
+<h4>Insight 4: 内模型容量越大越好（扩大宽度）</h4>
+<p><strong>实验</strong> (Table 4, MLP width scaling):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Inner Model</th>
+<th>#Params</th>
+<th>FLOPs</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MLP r1, l2</td>
+<td>23.5M</td>
+<td>4.58G</td>
+<td>78.9</td>
+</tr>
+<tr>
+<td>MLP r2, l2</td>
+<td>24.1M</td>
+<td>4.92G</td>
+<td>79.2</td>
+</tr>
+<tr>
+<td>MLP r3, l2</td>
+<td>24.7M</td>
+<td>5.27G</td>
+<td>79.5</td>
+</tr>
+<tr>
+<td>MLP r4, l2</td>
+<td>25.2M</td>
+<td>5.62G</td>
+<td>79.6</td>
+</tr>
+</tbody>
+</table></div>
+<p>持续提升。这验证了 TTT 相比 linear attention 的核心优势：不再是 $d \times d$ 的线性压缩，可以用更大的非线性模型。</p>
+<p><strong>代价</strong> (Remark 4): 内模型的计算开销比外模型大约 4 倍。原因：内训练需要 (i) forward on K（1x）+ (ii) backward of loss（约 2x forward，因为要算参数和输入两个方向的梯度）+ (iii) forward on Q（1x）= ~4 个 forward 等价计算量。所以简单地扩大内模型不是最优路线，设计轻量且表达力强的内模型是重要课题。</p>
+<h4>Insight 5: 内模型不能太深——加深反而变差</h4>
+<p>这是最反直觉的发现。从 1 层 FC → 2 层 MLP → 3 层 MLP，参数更多、理论上更强，但实际表现：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Inner Model</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FC(x) - 1 层</td>
+<td>79.1</td>
+</tr>
+<tr>
+<td>MLP(x) r1, l2 - 2 层</td>
+<td>78.9</td>
+</tr>
+<tr>
+<td>MLP(x) r1, l3 - 3 层</td>
+<td>77.5</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>不是容量的问题，是优化的问题</strong>。作者做了一个巧妙的验证：把 2 层 MLP 的输出层固定为恒等映射（只训练输入层），得到 $\mathcal{F}_W(x) = \text{SiLU}(\text{FC}(x))$，准确率从 78.9 涨到 79.4。SwiGLU 去掉输出层也是类似效果（79.0 → 79.7）。减少了参数反而更好——说明是优化瓶颈而非容量瓶颈。</p>
+<p><strong>根因</strong> (Remark 5): 内外循环双重优化困难：</p>
+<ul>
+<li>外循环：$W_0$ 的初始化难学（内模型越深，end-to-end 优化越难）</li>
+<li>内循环：深层模型的梯度消失/爆炸（单步梯度下降优化不动）</li>
+</ul>
+<p>标准 residual connection 和 identity 初始化都帮不上忙（Table 6: 残差连接 78.8，反而比无残差的 78.9 掉了）。</p>
+<h4>Insight 6: 卷积是视觉 TTT 内模型的天然选择</h4>
+<p>既然深层内模型行不通（Insight 5），那就在浅层架构里找空间利用能力强的——卷积。</p>
+<p><strong>实验</strong> (Table 4):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Inner Model</th>
+<th>#Params</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FC(x)</td>
+<td>23.2M</td>
+<td>79.1</td>
+</tr>
+<tr>
+<td>FC(x) ⊙ SiLU(FC(x)) - GLU</td>
+<td>23.5M</td>
+<td>79.7</td>
+</tr>
+<tr>
+<td>Conv(x)</td>
+<td>25.5M</td>
+<td>79.9</td>
+</tr>
+<tr>
+<td><strong>DWConv(x)</strong></td>
+<td><strong>22.9M</strong></td>
+<td><strong>80.1</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>DWConv 最强，且参数最少。</p>
+<p><strong>物理解释</strong>: 全局信息通过在线训练编码进卷积核权重，局部信息通过 3x3 感受野捕获。做 $O = \mathcal{F}_W(Q)$ 时，每个 query token 同时利用了全局上下文（权重里的）和局部邻域（卷积窗口）。比在 TTT 外面额外加 local attention 模块更优雅。</p>
+<p>用卷积做内模型时，key 的定义从单个 token 扩展为局部窗口：$\mathcal{D} = \{(K_i^{\text{loc}}, V_i)\}$，其中 $K_i^{\text{loc}}$ 是 $K_i$ 周围 3x3 的 key token（Remark 6）。</p>
+<h3 id="vit-3-最终架构">ViT^3 最终架构</h3>
+<p>基于 6 条准则：</p>
+<ul>
+<li><strong>内训练</strong>: dot product loss, 1 epoch full-batch, lr=1.0</li>
+<li><strong>内模型</strong>: 大部分 head 用简化 GLU $\mathcal{F}_1 = \text{FC}(x) \odot \text{SiLU}(\text{FC}(x))$，1 个 head 用 DWConv $\mathcal{F}_2 = \text{DWConv}(x)$</li>
+<li><strong>位置编码</strong>: Conditional Positional Encoding（CPE）</li>
+</ul>
+<p><strong>架构规格</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Embedding dim</th>
+<th>Heads</th>
+<th>Blocks</th>
+<th>Params</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ViT^3-T</td>
+<td>192</td>
+<td>6</td>
+<td>12</td>
+<td>6M</td>
+</tr>
+<tr>
+<td>ViT^3-S</td>
+<td>384</td>
+<td>6</td>
+<td>12</td>
+<td>24M</td>
+</tr>
+<tr>
+<td>ViT^3-B</td>
+<td>768</td>
+<td>12</td>
+<td>12</td>
+<td>90M</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Stage 1-4 dims</th>
+<th>Heads per stage</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H-ViT^3-T</td>
+<td>64→128→320→512</td>
+<td>2,4,10,16</td>
+<td>1+3+9+4</td>
+</tr>
+<tr>
+<td>H-ViT^3-S</td>
+<td>64→128→320→512</td>
+<td>2,4,10,16</td>
+<td>2+6+18+8</td>
+</tr>
+<tr>
+<td>H-ViT^3-B</td>
+<td>96→192→448→640</td>
+<td>3,6,14,20</td>
+<td>2+6+18+8</td>
+</tr>
+</tbody>
+</table></div>
+<p>[?] DWConv 只用在 1 个 head，其余全用 GLU。这个 1:N 的比例没有 ablation。到底几个 head 用 DWConv 最优？全用 DWConv 行不行？不知道。</p>
+<h3 id="训练流程">训练流程</h3>
+<ul>
+<li><strong>ImageNet 分类</strong>: 从头训练 300 epochs, AdamW, cosine LR decay + 20 epoch warmup, weight decay 0.05, batch size 4096, 初始 LR $4 \times 10^{-3}$</li>
+<li><strong>标准增强</strong>: RandAugment, Mixup, CutMix, Random Erasing</li>
+<li><strong>MESA 策略</strong>: 额外报告了使用 MESA（sharpness-aware training for free）的结果，标记为 ‡</li>
+</ul>
+<h2 id="4-数据集-四大视觉任务全覆盖">4. 数据集：四大视觉任务全覆盖</h2>
+<ul>
+<li>
+<p><strong>训练数据</strong>:</p>
+<ul>
+<li>ImageNet-1K: 1.28M 训练图片，1000 类。用于分类和生成任务</li>
+<li>COCO train2017: 用于检测/分割（Mask R-CNN 1x / 3x schedule）</li>
+<li>ADE20K: 20K 训练图片，150 类。用于语义分割（UPerNet 框架）</li>
+</ul>
+</li>
+<li>
+<p><strong>评估数据</strong>:</p>
+<ul>
+<li>ImageNet-1K val: 50K 图片，Top-1 accuracy</li>
+<li>COCO val2017: $\text{AP}^b$, $\text{AP}^b_{50}$, $\text{AP}^b_{75}$（检测），$\text{AP}^m$, $\text{AP}^m_{50}$, $\text{AP}^m_{75}$（实例分割）</li>
+<li>ADE20K val: mIoU</li>
+<li>ImageNet 生成: FID-50K @ $256^2$ 分辨率, IS, Precision, Recall</li>
+</ul>
+</li>
+</ul>
+<h2 id="5-关键结果-在所有线性复杂度方法中领先-逼近优化过的-transformer">5. 关键结果：在所有线性复杂度方法中领先，逼近优化过的 Transformer</h2>
+<h3 id="imagenet-1k-分类">ImageNet-1K 分类</h3>
+<p><strong>非层级模型</strong> (Table 7) — 与 DeiT 同架构:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Type</th>
+<th>#Params</th>
+<th>FLOPs</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeiT-T</td>
+<td>Transformer</td>
+<td>6M</td>
+<td>1.2G</td>
+<td>72.2</td>
+</tr>
+<tr>
+<td>Vim-T</td>
+<td>Mamba</td>
+<td>7M</td>
+<td>1.5G</td>
+<td>76.1</td>
+</tr>
+<tr>
+<td>Agent-DeiT-T</td>
+<td>Linear</td>
+<td>6M</td>
+<td>1.2G</td>
+<td>74.9</td>
+</tr>
+<tr>
+<td><strong>ViT^3-T</strong></td>
+<td><strong>TTT</strong></td>
+<td><strong>6M</strong></td>
+<td><strong>1.2G</strong></td>
+<td><strong>76.5</strong></td>
+</tr>
+<tr>
+<td>DeiT-S</td>
+<td>Transformer</td>
+<td>22M</td>
+<td>4.6G</td>
+<td>79.8</td>
+</tr>
+<tr>
+<td>Vim-S</td>
+<td>Mamba</td>
+<td>26M</td>
+<td>5.1G</td>
+<td>80.3</td>
+</tr>
+<tr>
+<td>Agent-DeiT-S</td>
+<td>Linear</td>
+<td>23M</td>
+<td>4.4G</td>
+<td>80.5</td>
+</tr>
+<tr>
+<td><strong>ViT^3-S</strong></td>
+<td><strong>TTT</strong></td>
+<td><strong>24M</strong></td>
+<td><strong>4.8G</strong></td>
+<td><strong>81.6</strong></td>
+</tr>
+<tr>
+<td>DeiT-B</td>
+<td>Transformer</td>
+<td>87M</td>
+<td>17.6G</td>
+<td>81.8</td>
+</tr>
+<tr>
+<td><strong>ViT^3-B</strong></td>
+<td><strong>TTT</strong></td>
+<td><strong>90M</strong></td>
+<td><strong>18.0G</strong></td>
+<td><strong>82.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>ViT^3-S vs DeiT-S: +1.8 个点，FLOPs 相当。</p>
+<p><strong>层级模型</strong> (Table 5) — 与 Swin 同架构:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Type</th>
+<th>#Params</th>
+<th>FLOPs</th>
+<th>Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VMamba-T</td>
+<td>Mamba</td>
+<td>31M</td>
+<td>4.9G</td>
+<td>82.5</td>
+</tr>
+<tr>
+<td>MILA-T (MESA)</td>
+<td>Linear</td>
+<td>25M</td>
+<td>4.2G</td>
+<td>83.5</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-T</strong></td>
+<td>TTT</td>
+<td>29M</td>
+<td>4.9G</td>
+<td>83.5</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-T (MESA)</strong></td>
+<td>TTT</td>
+<td><strong>29M</strong></td>
+<td><strong>4.9G</strong></td>
+<td><strong>84.0</strong></td>
+</tr>
+<tr>
+<td>VMamba-S</td>
+<td>Mamba</td>
+<td>50M</td>
+<td>8.7G</td>
+<td>83.6</td>
+</tr>
+<tr>
+<td>MILA-S (MESA)</td>
+<td>Linear</td>
+<td>43M</td>
+<td>7.3G</td>
+<td>84.4</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-S (MESA)</strong></td>
+<td>TTT</td>
+<td><strong>54M</strong></td>
+<td><strong>8.8G</strong></td>
+<td><strong>84.9</strong></td>
+</tr>
+<tr>
+<td>VMamba-B</td>
+<td>Mamba</td>
+<td>89M</td>
+<td>15.4G</td>
+<td>83.9</td>
+</tr>
+<tr>
+<td>MILA-B (MESA)</td>
+<td>Linear</td>
+<td>96M</td>
+<td>16.2G</td>
+<td>85.3</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-B (MESA)</strong></td>
+<td>TTT</td>
+<td><strong>94M</strong></td>
+<td><strong>16.7G</strong></td>
+<td><strong>85.5</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>H-ViT^3-S (MESA, 54M, 84.9%) 超过 VMamba-B (89M, 83.9%) 和 SOFT-L++ (85M, 84.1%)，用大约一半的参数量。</p>
+<h3 id="coco-检测-分割-table-8">COCO 检测/分割 (Table 8)</h3>
+<p><strong>3x schedule 关键数据</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>$\text{AP}^b$</th>
+<th>$\text{AP}^m$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VMamba-T</td>
+<td>48.9</td>
+<td>43.7</td>
+</tr>
+<tr>
+<td>MILA-T</td>
+<td>48.8</td>
+<td>43.8</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-T</strong></td>
+<td><strong>48.9</strong></td>
+<td><strong>44.0</strong></td>
+</tr>
+<tr>
+<td>VMamba-S</td>
+<td>49.9</td>
+<td>44.2</td>
+</tr>
+<tr>
+<td>MILA-S</td>
+<td>50.5</td>
+<td>44.9</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-S</strong></td>
+<td><strong>50.5</strong></td>
+<td><strong>45.0</strong></td>
+</tr>
+<tr>
+<td>CSWin-B</td>
+<td>50.8</td>
+<td>44.9</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-B</strong></td>
+<td><strong>51.0</strong></td>
+<td><strong>45.3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>检测任务中 token 序列远长于分类（$N \gg d$），线性注意力方法（SOFT++, VVT）受限于 $d \times d$ 的状态容量，性能明显差（SOFT-T++ $\text{AP}^b$=43.8，比 H-ViT^3-T 的 47.3 低 3.5 个点）。TTT 的非线性内模型在这方面有天然优势。</p>
+<h3 id="ade20k-语义分割-table-9">ADE20K 语义分割 (Table 9)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>#Params</th>
+<th>FLOPs</th>
+<th>mIoU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VMamba-T</td>
+<td>62M</td>
+<td>949G</td>
+<td>47.9</td>
+</tr>
+<tr>
+<td>SOFT-T++</td>
+<td>60M</td>
+<td>948G</td>
+<td>46.5</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-T</strong></td>
+<td><strong>58M</strong></td>
+<td><strong>946G</strong></td>
+<td><strong>48.0</strong></td>
+</tr>
+<tr>
+<td>LocalVMamba-S</td>
+<td>81M</td>
+<td>1095G</td>
+<td>50.0</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-S</strong></td>
+<td><strong>84M</strong></td>
+<td>1026G</td>
+<td><strong>50.2</strong></td>
+</tr>
+<tr>
+<td>VMamba-B</td>
+<td>122M</td>
+<td>1170G</td>
+<td>51.0</td>
+</tr>
+<tr>
+<td>SOFT-B++</td>
+<td>121M</td>
+<td>1204G</td>
+<td>49.2</td>
+</tr>
+<tr>
+<td><strong>H-ViT^3-B</strong></td>
+<td><strong>124M</strong></td>
+<td><strong>1195G</strong></td>
+<td><strong>51.7</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>H-ViT^3 在所有线性复杂度方法中领先，但仍低于 TransNeXt-B (53.0 mIoU) 等优化过的 Transformer。</p>
+<h3 id="图像生成-table-10">图像生成 (Table 10)</h3>
+<p>DiT^3 vs DiT (FID-50K)，6 个配置全部提升，无需额外调参：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>FID↓</th>
+<th>IS↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DiT-B/2 → <strong>DiT^3-B/2</strong></td>
+<td>43.47 → <strong>39.31</strong></td>
+<td>— → <strong>36.99</strong></td>
+</tr>
+<tr>
+<td>DiT-S/2 → <strong>DiT^3-S/2</strong></td>
+<td>68.40 → <strong>62.65</strong></td>
+<td>— → <strong>21.59</strong></td>
+</tr>
+<tr>
+<td>DiT-B/4 → <strong>DiT^3-B/4</strong></td>
+<td>68.38 → <strong>65.25</strong></td>
+<td>— → <strong>22.29</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="效率分析-figure-4">效率分析 (Figure 4)</h3>
+<p><img src="https://arxiv.org/html/2512.01643v2/x4.png" alt="Figure 4: DeiT 与 ViT^3 在不同分辨率下的推理速度(FPS)和显存占用对比" /></p>
+<p>ViT^3-T vs DeiT-T 在 RTX 3090 上:</p>
+<ul>
+<li>1248^2 分辨率 (6084 tokens): <strong>4.6x 加速</strong>，<strong>GPU 显存降低 90.3%</strong></li>
+<li>低分辨率 (&lt;400^2): DeiT 更快（attention matrix 小，$\mathcal{O}(N^2)$ 还不构成瓶颈）</li>
+<li>交叉点大约在 400-500 像素分辨率</li>
+</ul>
+<p>注意：论文只报告了推理效率，没有报告训练 wall-clock time 和 energy cost。考虑到 TTT 每层有 ~4x forward-equivalent FLOPs，训练开销可能显著高于标准 Transformer。</p>
+<h3 id="消融实验总结">消融实验总结</h3>
+<p>核心数据已分布在 6 条 Insight 中。额外消融 (Table 6) 验证了残差连接和初始化策略对深层内模型帮助有限：</p>
+<ul>
+<li>残差连接 SiLU(xW1)W2 + x: 78.8（反而比无残差的 78.9 低）</li>
+<li>W2 初始化为 identity: 79.0（轻微提升）</li>
+<li>这些都没解决深层内模型的优化困难</li>
+</ul>
+<p>[?] 论文的全局实验只跑了一个 fixed setting（dot product loss, 1 epoch, full-batch, η=1.0）。没有展示这些 insight 之间的交互——比如 MSE + 2 epoch + DWConv 会怎样？组合效应完全缺失。另外，所有 ablation 都在 S scale (24M) 上做，是否迁移到 B scale (90M) 未验证。</p>
+<p>[?] 论文未报告 seed 数和 std deviation。考虑到很多对比差距 &lt;1%（如 84.9 vs 84.4），统计显著性存疑。4 epoch 的 57.0 崩溃是否有 reproducibility 问题也不好说。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>Insight 1（loss 的二阶导数分析）是全文最有价值的理论贡献。</strong> 这个分析思路很巧妙——把 TTT 的外循环优化本质上归结为 meta-learning 的二阶优化问题，把 $\frac{\partial^2 \mathcal{L}}{\partial \hat{V}\partial V}$ 单独拎出来分析，解释了为什么 MAE loss 在 TTT 里不能用（梯度信号消失）。&quot;发现问题 → 数学推导 → 实验验证&quot;这条线走得很干净，MAE 从 78.9 掉到 76.5 这个 2.4 个点的差距完全被二阶导消失所解释，说服力很强。</p>
+<p><strong>Insight 5（加深内模型反而变差）是最反直觉的发现。</strong> 现代深度学习的信条是&quot;越深越好&quot;（配合 residual），但在 TTT 的内循环里失效了。作者用 constrained model 实验（固定输出层为 identity，只训练 1 层 + 非线性激活）来隔离&quot;容量问题&quot;和&quot;优化问题&quot;——这是个非常漂亮的 ablation 设计。不过 Table 6 里各种 residual/初始化的尝试全部失败，说明这确实是个硬问题。作者诚实地说这是&quot;promising research direction&quot;而不是假装已经解决了。</p>
+<p><strong>4-epoch 的断崖式崩溃（79.2 → 57.0）值得更多追问。</strong> 这不是渐进衰减，而是悬崖。说明内训练步数超过某个阈值后，meta-learning 的外循环优化会根本性地崩溃。这指向了 meta-learning 里 unrolled optimization 的稳定性问题。论文只归因于&quot;training instability&quot;但没有分析。是否存在一个 inner step 的临界值？这个问题可能比它看起来更 fundamental。</p>
+<p><strong>但论文也有一些不足：</strong></p>
+<ul>
+<li>对比同组前作 MILA 的优势并不碾压：H-ViT^3-T 和 MILA-T 都是 83.5%，H-ViT^3-B (85.5) vs MILA-B (85.3) 只差 0.2。考虑到 TTT 的额外实现复杂度（内训练循环 + 4x forward-equivalent FLOPs），这种程度的提升是否值得采用？不过 TTT 的上限理论上更高（如果深层内模型的优化能解决），只是目前没做到。</li>
+<li>MSE 在 ablation 里赢了 Dot Product (79.2 vs 78.9)，但最终架构选了 Dot Product。论文对此零解释。</li>
+<li>6 条 insight 的交互效应完全未探索。作为&quot;systematic empirical study&quot;，这是一个方法论缺口。</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p><strong>深层内模型的优化是 TTT 方向最重要的 open problem。</strong> 理论上深层网络有指数级更强的表达能力，但当前被优化瓶颈锁死。借鉴 meta-learning 里 MAML 的改进思路（如 Leap、MAML++ 的稳定性技术），或者设计专门的内循环 optimizer（论文只用了 vanilla SGD，没用 Adam/Adagrad），可能会打破这个瓶颈。如果解决了，TTT 有可能真正超越精心设计的 Transformer。</p>
+<p><strong>设计面向视觉的 mini-batch 内训练算法</strong>（Remark 2）也是一个方向。当前的 sequential mini-batch 带有因果偏置不适合视觉，但空间感知的 mini-batch 策略（比如按区域分块、按空间频率分组）可能既有 mini-batch 的表达能力又避免因果偏置。</p>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇论文的实验设计逻辑非常清晰：固定一个变量，变一个变量，每个 insight 都有独立的 ablation table。没有花哨的 trick，就是老老实实的 controlled experiment。但比&quot;老老实实&quot;多出来的一步是：每个 insight 不只是摆数字，而是给出了因果解释——为什么全 batch 在视觉上好？为什么 loss 的二阶导数重要？为什么深层内模型变差？这种&quot;从第一性原理出发解释 empirical finding&quot;的方式把一篇可能很无聊的消融实验罗列变成了有洞见的研究。Fig. 1 把 softmax attention / linear attention / TTT 统一到&quot;MLP 框架&quot;下的可视化也做得极好，信息密度高，一眼理解三者关系。</p>
+<p>不过也要注意，论文的 Limitations 章节（Section 7, Supplementary）明确承认了三个未覆盖的设计维度：inner optimizer（只用了 vanilla SGD）、inner data augmentation、以及 Transformer 作为内模型。这界定了 6 条 insight 的适用范围——它们是在&quot;vanilla SGD + 无 augmentation + MLP/GLU/Conv 内模型&quot;这个限定条件下得出的。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p>（按 Author/Team → Topic/Area → Concept 分组）</p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Test-Time-Training">MOC-Test-Time-Training</span> — Topic: 系统探索 TTT 在视觉序列建模中的设计空间，提出 6 条设计准则并构建 ViT^3 作为纯 TTT 架构的视觉 baseline，将 TTT 应用从 NLP 扩展到视觉四大任务（分类、检测、分割、生成）</li>
+</ul>
+<p><strong>相关论文双链</strong>:</p>
+<ul>
+<li><a class="wikilink" href="In-Place-Test-Time-Training.html" title="In-Place-Test-Time-Training">In-Place-Test-Time-Training</a> — 同属 TTT 研究线，但聚焦 LLM 长上下文场景，使用 in-place gradient 更新策略</li>
+<li>见 <span class="wikilink unresolved" title="TTT-Learning-to-Learn-at-Test-Time">TTT-Learning-to-Learn-at-Test-Time</span>（TTT 原始论文，Sun et al. 2025, ICML）</li>
+<li>见 <span class="wikilink unresolved" title="Flatten-Transformer">Flatten-Transformer</span>（同一作 Dongchen Han 的聚焦线性注意力工作）</li>
+<li>见 <span class="wikilink unresolved" title="MILA-Demystify-Mamba-in-Vision">MILA-Demystify-Mamba-in-Vision</span>（同一团队的线性注意力 + Mamba 分析工作）</li>
+</ul>
+<hr />
+<p>#Research #Paper #计算机视觉 #Test-Time-Training #线性复杂度注意力 #视觉Transformer #序列建模 #在线学习
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Circuits-May2026-Downstream-Connections-Steer-Prediction.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Circuits Updates – May 2026: Downstream Connections Predict Which Features Will Steer Model Behavior</span></a>
+<a class="paper-nav-link next" href="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Thought Anchors: Which LLM Reasoning Steps Matter?</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Han2025ViT3</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

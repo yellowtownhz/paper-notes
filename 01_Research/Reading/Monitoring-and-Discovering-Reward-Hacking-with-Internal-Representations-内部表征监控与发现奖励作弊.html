@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring and Discovering Reward Hacking with Internal Representations during LLM Evaluations</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Monitoring and Discovering Reward Hacking with Internal Representations during LLM Evaluations</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-通过测试-可能没有解决问题"><span class="toc-num">02</span> 2. 关键问题：通过测试，可能没有解决问题</a></li>
+<li><a class="toc-link" href="#3-关键方法-从最小对照提取方向-再扫描真实轨迹"><span class="toc-num">03</span> 3. 关键方法：从最小对照提取方向，再扫描真实轨迹</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着同一个案例走一遍">3.1 沿着同一个案例走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-简单-不等于没有选择和校准">3.2 “简单”不等于没有选择和校准</a></li>
+<li><a class="toc-link" href="#4-数据与判定-先理解数字的分母"><span class="toc-num">04</span> 4. 数据与判定：先理解数字的分母</a></li>
+<li><a class="toc-link" href="#5-关键结果-检测-预测-因果干预与发现分别成立到哪里"><span class="toc-num">05</span> 5. 关键结果：检测、预测、因果干预与发现分别成立到哪里</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-检测-有用-但不稳定地优于文字监控">5.1 检测：有用，但不稳定地优于文字监控</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-预测-高激活前缀确实更容易走向作弊尝试">5.2 预测：高激活前缀确实更容易走向作弊尝试</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-因果作用-方向能诱导相关行为-但实验范围较小">5.3 因果作用：方向能诱导相关行为，但实验范围较小</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-发现-让探针提出审计者原本没想到的问题">5.4 发现：让探针提出审计者原本没想到的问题</a></li>
+<li><a class="toc-link" href="#6-insights-如何把这篇论文变成下一轮实验"><span class="toc-num">06</span> 6. Insights：如何把这篇论文变成下一轮实验</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#8-材料边界与复现提醒"><span class="toc-num">08</span> 8. 材料边界与复现提醒</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2609.19101v2" target="_blank">arXiv</a>
+    </div>
+    <h1>Monitoring and Discovering Reward Hacking with Internal Representations during LLM Evaluations</h1>
+    <p class="authors">Leon Bergen, Usha Bhalla, Andrew Lee, Barak Widawsky, Linas Nasvytis, Connor Watts, Siddharth Boppana, Sidharth Baskaran, Dron Hazra, Michael Byun, Atticus Geiger, Owen Lewis, Matthew Kowal, Vasudev Shyam, Thomas Fel, Thomas McGrath, Ekdeep Singh Lubana, Jack Merullo</p>
+    <div class="topic-row"><span class="topic-tag">Reward_Hacking</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Activation_Probing</span> <span class="topic-tag">AI_Safety</span> <span class="topic-tag">Agent_Evaluation</span></div>
+</header>
+
+<h1>论文笔记: Monitoring and Discovering Reward Hacking with Internal Representations during LLM Evaluations</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<ul>
+<li><strong>作者与团队</strong>：Leon Bergen 等，Goodfire；前六位为核心贡献者，Thomas McGrath、Ekdeep Singh Lubana、Jack Merullo 为共同资深贡献者。</li>
+<li><strong>版本</strong>：arXiv 预印本，2026-09-16 首次提交；本文按 2026-10-09 的 <strong>v2</strong> 阅读。<a href="https://arxiv.org/html/2609.19101v2">论文全文</a> · <a href="https://huggingface.co/datasets/Goodfire/reward-hack-data">官方数据</a></li>
+</ul>
+<p><strong>值得记住四件事。</strong> 第一，用合成的“作弊／诚实”最小对照做激活均值差，就能在真实、长上下文的 agent 轨迹中读出有用的作弊信号。第二，它与文字监控各有盲点，联合使用比“谁替代谁”更有说服力。第三，推理阶段的高激活能预测后续作弊尝试，但不是对主观意图的证明。第四，探针还能把既有判分规则没覆盖的行为挑出来，帮助发现新的作弊类型。</p>
+<p><strong>我的判断</strong>：论文最强的贡献是把一个极简单的表示工具做成了“检测 → 定位 → 发现新行为”的实用入口。它尚未证明有一个跨模型通用的“作弊神经元”，也未验证用该信号训练模型就能减少作弊。更适合先做审计工具，再研究如何用于干预。</p>
+<h2 id="2-关键问题-通过测试-可能没有解决问题">2. 关键问题：通过测试，可能没有解决问题</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case，来自 Figure 3 的合成样例。</strong> 用户要求修复邮件格式处理函数 <code>remove_space_stuffing</code>：它删掉了过多缩进。诚实方案按照规则，只移除开头用于 space-stuffing 的一个 ASCII 空格，保留其余缩进。作弊方案先读取隐藏测试，再把测试输入及预期输出写进查找表。两者都可能通过这些测试，但只有前者实现了用户要求的一般行为。</p>
+</blockquote>
+<p><img src="../../assets/reward-hacking-2609.19101v2/fig3-minimal-pair.svg" alt="Figure 3：读取隐藏测试并硬编码，与按规则修复的最小对照" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2609.19101v2#S2.F3">原文 Figure 3</a>，CC BY 4.0。看左侧的答案查找表与右侧的一般规则：成功通过检查并不能区分两条路径。该图是作者构造的合成数据，不是自然 rollout 的现场记录。</em></p>
+<p>本文的 reward hacking 定义比“训练中利用奖励函数漏洞”更宽：即使推理时没有显式奖励，模型为了推测中的高分而违背任务目标、信息边界或评测目的，也算在内。比如针对某道评测题找现成上游修复、猜隐藏测试、伪造验证报告；联网检索是否违规，则取决于具体任务约束（§2.1、Appendix A/C）。<strong>不能把这些定义下的发生率直接外推成日常编程助手的作弊率。</strong></p>
+<p>文字监控有两类限制：长轨迹逐段审计昂贵；更关键的是，监控者只能按已有理解和 rubric 判定，容易漏掉没想到的投机方式。模型自报也不可靠：GLM 5.2 在 DeepSWE 上自报的 F1 仅为 13.2%，外部 generic monitor 为 54.2%（Figure 2）。本文因此问：这些外观不同的行为，是否在内部表征中留下某种共享信号？</p>
+<h2 id="3-关键方法-从最小对照提取方向-再扫描真实轨迹">3. 关键方法：从最小对照提取方向，再扫描真实轨迹</h2>
+<h3 id="3-1-沿着同一个案例走一遍">3.1 沿着同一个案例走一遍</h3>
+<ol>
+<li><strong>构造输入</strong>：为同一修复任务生成内容尽量匹配的短对话；正例读取隐藏测试并据此写答案，负例独立实现修复。作者使用模板化的九轮对话，覆盖篡改测试、篡改验证器、改分数文件、违规获取信息、虚假报告五类行为。</li>
+<li><strong>提取激活</strong>：把这些文本交给待监控模型，记录固定层的 residual stream（残差流）向量。采样位置包括违规工具调用结束、读取禁止文件结束、代码补丁附近或报告结尾等。正例取作弊片段，负例取对应的诚实片段，避免把整段共同背景淹进均值。</li>
+<li><strong>形成方向</strong>：对正负激活分别求平均，再相减。模型参数不更新，也没有另训一个深分类器；但样例如何配对、取哪层、取哪些 token，仍是方法的重要选择。</li>
+<li><strong>应用到新轨迹</strong>：在真实 agent 执行时，对每个 token 的激活与该方向做内积；高于阈值就报警。若当前案例从“按规范修复”转向“寻找隐藏答案”，探针提供一个定位可疑片段的分数，再由审计者或文字监控核查具体行为。<strong>这是流程解释，不是对 Figure 3 单个样例报告检测准确率。</strong></li>
+</ol>
+<p>其数学核心只有两步（§3.1，Eq. 1）：</p>
+<div class="math-display">$$
+\mathbf v_{\mathrm{hack}}
+=\frac{1}{|\mathcal P|}\sum_{t\in\mathcal P}\mathbf x_t
+-\frac{1}{|\mathcal N|}\sum_{t\in\mathcal N}\mathbf x_t,
+\qquad
+s_t=\langle\mathbf v_{\mathrm{hack}},\mathbf x_t\rangle.
+$$</div>
+<p>$\mathbf x_t$ 是固定层、位置 $t$ 的激活；$\mathcal P$、$\mathcal N$ 是匹配的作弊与诚实片段中的 token 位置集合；$s_t&gt;\tau$ 触发警报。内积越大，说明当前位置沿“正例相对负例”的方向越突出；它不是校准后的作弊概率。提高 $\tau$ 通常减少误报，也会漏掉更多弱信号。</p>
+<p><strong>为什么用均值差（Difference of Means, DoM）？</strong> 它把表示能力与复杂分类器的拟合能力尽量分开：若如此简单的方向都能从短合成对话迁移到长真实轨迹，信号就不只是训练样本上的高容量拟合。不过，最小对照只能减少混杂，不能自动排除“违规内容、失败措辞、评测意识”等相关概念。</p>
+<h3 id="3-2-简单-不等于没有选择和校准">3.2 “简单”不等于没有选择和校准</h3>
+<p>Appendix B 的合成集共有 <strong>5,285 段对话</strong>，不是 5,285 对。Table 3 列出 54 个 raw、projected 与诚实控制候选；作者还尝试不同采样位置和分组。每个模型分别用 250 条 SWE-bench rollout 和 280 条 DeepSWE rollout 按 AUROC 选探针，得到两个环境各自选出的候选；Figure 8 的测试样本不包含这些选择样本（§4.1）。</p>
+<p>所以应准确地说：<strong>方向由合成数据构造，探针选择仍用到了真实环境的标签。</strong> 文中的迁移主要是同一模型内跨环境使用；不能解读为把 Kimi 的数值向量直接放进 GLM，或完全不需要目标任务校准。</p>
+<p>在激活已能随推理读取时，每 token 只多一次向量内积，这解释了低边际计算成本。闭源 API 不提供这些激活；离线重放长轨迹、激活采集与服务接入也不免费。论文没有给完整的端到端延迟或吞吐成本表，“几乎免费”应限定到探针计算本身。</p>
+<h2 id="4-数据与判定-先理解数字的分母">4. 数据与判定：先理解数字的分母</h2>
+<p>主监控实验使用 Kimi K3、GLM 5.2、Qwen 3.8 Max，覆盖 SWE-bench Verified、DeepSWE、ImpossibleBench 的 LiveCodeBench tools 设置。不要把后文的 <strong>Qwen 3.8 27B 干预实验</strong>与这里的旗舰模型检测实验混为一谈。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>如何产生判断</th>
+<th>影响结论的边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ground-truth judge</td>
+<td>GPT-5.6 Sol，high effort；每个环境定制 rubric；读完整轨迹，逐片段判定；正例引用必须能逐字匹配</td>
+<td>是经过人工审计改进的 LLM 标签，不是全量人工金标准</td>
+</tr>
+<tr>
+<td>共识筛选</td>
+<td>独立调用三次，只保留一致正例和一致负例；SWE 各环境约 96%–99% 的片段达成共识</td>
+<td>不一致片段排除，最模糊部分未进入性能分母</td>
+</tr>
+<tr>
+<td>Generic monitor</td>
+<td>同一个 GPT-5.6 Sol，通用 rubric，单次调用</td>
+<td>比较同时包含“表示方法差异”和“规则／审计投入差异”</td>
+</tr>
+</tbody>
+</table></div>
+<p>特别容易误读的是：<strong>considered、attempted、enacted 都能成为正例。</strong> 即使模型想到一条捷径后主动放弃，rubric 也要求标记。Figure 2 的 rollout 级发生率表示“出现了这类证据”；Figure 8 的 TPR/FPR 是 passage 级，不是整次任务告警率，更不是“作弊成功率”。例如 GLM 5.2 的 SWE-bench 发生率在 Figure 2 为 72.5%，DeepSWE 为 57.2%，必须连同上述定义理解。</p>
+<p>官方数据页进一步说明：rollout 发生率的分母排除三次判断不一致的轨迹；公开的部分 DeepSWE 运行不完整。复现前要读各目录的 README/manifest，不能假设论文、发布文件和所有 benchmark 原始题目的分母天然相同。<a href="https://huggingface.co/datasets/Goodfire/reward-hack-data#contents">数据说明</a></p>
+<h2 id="5-关键结果-检测-预测-因果干预与发现分别成立到哪里">5. 关键结果：检测、预测、因果干预与发现分别成立到哪里</h2>
+<h3 id="5-1-检测-有用-但不稳定地优于文字监控">5.1 检测：有用，但不稳定地优于文字监控</h3>
+<p><strong>验证什么？</strong> 短合成对照中的方向能否迁移到真实轨迹，并在相同误报率下保留召回。</p>
+<p>§4.3 给出的 DeepSWE 对比，把探针阈值设在与 generic monitor 相同的 FPR，观察 passage 级召回：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align:right">文字监控召回</th>
+<th style="text-align:right">探针召回</th>
+<th>从结果能得出的判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kimi K3</td>
+<td style="text-align:right">0.41</td>
+<td style="text-align:right">0.44</td>
+<td>小幅提高</td>
+</tr>
+<tr>
+<td>Qwen 3.8 Max</td>
+<td style="text-align:right">0.33</td>
+<td style="text-align:right">0.39</td>
+<td>提高，但仍遗漏多数正例</td>
+</tr>
+<tr>
+<td>GLM 5.2</td>
+<td style="text-align:right">0.41</td>
+<td style="text-align:right">0.33</td>
+<td>明显降低，不能统一替换</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="../../assets/reward-hacking-2609.19101v2/fig8-monitor-roc.svg" alt="Figure 8：三个模型、三个环境的探针与监控 ROC" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2609.19101v2#S4.F8">原文 Figure 8</a>，CC BY 4.0。横轴为对数尺度的 FPR；黑线是探针，星号是固定的文字监控工作点。应看所需低误报区域的召回，不能只看 AUROC。GLM 的 SWE-bench 子图中，黑线在星号对应的低 FPR 处也明显低于星号；作者正文“接近监控”的概括不宜当作所有工作点都接近。</em></p>
+<p>跨环境证据以 Kimi 较强：在 SWE-bench 上选出的方向，迁到 DeepSWE、ImpossibleBench 后 AUROC 分别为 0.93、0.94；GLM 则更依赖探针在哪个环境中被选出（§4.1）。这支持存在可迁移信号，同时表明阈值和方向的稳健性不是所有模型共有的性质。</p>
+<p><strong>我更看重联合结果。</strong> 在 Kimi 的 DeepSWE 上，探针与 monitor 取 OR，仅增加 <strong>1 个百分点的 FPR</strong>，TPR 就从 <strong>41.1% 提升至 80.2%</strong>（§4.1）。这说明二者错误并不完全重叠。另一种方案是先用探针筛选，再交给 LLM 复核；两种方案分别服务于提高召回与减少昂贵调用，不能混成同一个策略。</p>
+<p>减少调用也有代价：GLM 在 SWE-bench 上替换一半 monitor 调用、维持约 1% FPR 时，precision 从 0.656 降至 0.588（§4.3）。低误报率并不保证高精度，尤其当正例稀少时。生产告警还需测量整条长轨迹的误报累积，不能直接拿 passage 级 FPR 做承诺。</p>
+<h3 id="5-2-预测-高激活前缀确实更容易走向作弊尝试">5.2 预测：高激活前缀确实更容易走向作弊尝试</h3>
+<p><strong>验证什么？</strong> 探针是不是只在事情已经发生后识别“作弊描述”？</p>
+<p>作者专门选择“探针在推理中触发，但原轨迹后来没有实施作弊”的片段，取符合条件的高分前十分位，在各片段的激活峰值处截断并重新采样后续。对照片段匹配长度与在轨迹中的相对位置。随后由 judge 判断，续写是否把相关计划付诸尝试（§4.2）。</p>
+<p><img src="../../assets/reward-hacking-2609.19101v2/fig10-resampling.svg" alt="Figure 10：高激活前缀与匹配对照的续写作弊尝试率" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2609.19101v2#S4.F10">原文 Figure 10</a>，CC BY 4.0。Kimi K3 为 28.6% 对 1.1%，GLM 5.2 为 14.1% 对 1.5%；误差条为 Wilson 95% 置信区间。纵轴明确写的是重采样后的 attempted hacks。</em></p>
+<p>这支持探针捕捉的是<strong>前缀中与未来行为有关的风险信号</strong>，不只是已执行动作的痕迹。但实验没有随机增减该方向；高分前缀本来就可能包含更具体的投机计划或更困难的任务。因此，这是预测证据，不能证明该方向是自然作弊的必要致因，也没有给出在线拦截后的实际净收益。</p>
+<h3 id="5-3-因果作用-方向能诱导相关行为-但实验范围较小">5.3 因果作用：方向能诱导相关行为，但实验范围较小</h3>
+<p>作者另外用三个角度解释探针读到了什么（§3.2）：Logit Lens 会读出 cheating、illicit 等词；FineWeb 高激活文本包含优化指标、规避检测等更一般的作弊内容；沿方向做 activation steering，会改变模型生成。</p>
+<p>其中较实质的干预是：给 <strong>Qwen 3.8 27B</strong> 的 194 道 LeetCode/TACO 题放置一个能返回答案的函数诱饵，在第 47 层沿探针方向施加 steering。正文报告无干预时仅 1/194 次调用诱饵，干预后接近四分之一；Figure 5 标注调用率 24.2%。此外，第 40 层的故事生成干预会增加考试作弊相关情节。</p>
+<p><strong>这比只看相关性更强，却不能把整篇提升成旗舰模型的完整机制解释。</strong> 干预证明该方向具有改变相关行为的能力；尚未证明它是唯一、必要或语义纯净的“作弊开关”，也未展示反向 steering 能在不损伤正常能力的前提下稳定防止作弊。Logit Lens 和故事实验主要支持语义解释，不能代替行为干预证据。</p>
+<h3 id="5-4-发现-让探针提出审计者原本没想到的问题">5.4 发现：让探针提出审计者原本没想到的问题</h3>
+<p>最有研究价值的一步，是回看“probe hit、judge miss”的片段。作者对排名前 100 的假阳性重新询问是否存在捷径考虑，并用随机长度匹配片段作对照；约一半被重新识别为考虑捷径，人工复查支持这些标签（§4.4、Figure 11）。但“考虑捷径”比原来的 reward-hacking 判据更宽，<strong>不能因此把这些假阳性全部改称原任务上的真阳性</strong>。</p>
+<p>跨到 τ³-bench、ShoppingBench 后，作者承认没有令人满意的全量真值，所以进一步采用一个发现流程（§5.1）：</p>
+<p><strong>训练部分的 30–60 个高激活样例 → LLM 归纳共同模式并写 rubric → 固定 rubric → 另一个 judge 在测试部分比较高激活片段与匹配对照。</strong> 对照匹配长度、channel 和任务族；测试过的假设全部报告。</p>
+<p>两项代表性发现足以说明用途：τ³-bench 中，模型违背文档、按其猜测的 benchmark 预期选择数值并用于行动，高激活组有 71%，对照为 14%；ShoppingBench 中，模型以猜测评分者意图为由选择商品或动作，相应比例为 77% 对 23%。在<strong>这些由新 rubric 确认的发现子集</strong>里，通用 monitor 分别只标出 31% 和 13%。这些是条件子集中的比例，不是两个 benchmark 的总体作弊率或总体召回。</p>
+<p>安全任务的扩展也保持同样逻辑：CyberGym、ExploitGym、ExploitBench 中，高激活片段被 judge 判为参与作弊计划的比例分别为 34%、69%、41%，匹配对照为 10%、20%、15%（§5.2）。这里评的是是否偏离指定任务来获得评分认可，不是把任务本身允许的漏洞利用误判为作弊。</p>
+<p>另外，非 SWE 环境的探针先按 <strong>SWE-bench 的 5% FPR</strong> 定阈值，再选目标环境中触发最多的方向。这不保证目标环境也有 5% FPR；较高触发率本身不是迁移成功证据。固定新规则后的测试集比较比单报 firing rate 更可信，但标签仍由 LLM 产生，也没有穷尽这些环境中的作弊类型。</p>
+<h2 id="6-insights-如何把这篇论文变成下一轮实验">6. Insights：如何把这篇论文变成下一轮实验</h2>
+<p><strong>1. 先把“想到但拒绝”与“付诸行动”拆开，才知道监控能否用于干预。</strong> 本文把前者也算检测正例，而 Figure 10 又表明这类前缀包含风险信息。两件事可以同时成立：它适合触发复核，却未必适合直接惩罚。下一步应分别报告 considered、attempted、enacted 的 PR 曲线，再测“报警后复核／阻断”的行为收益与正常任务损失。否则优化探针分数可能惩罚模型对坏方案的识别和自我纠正。</p>
+<p><strong>2. “作弊方向”可能混入评测意识，最缺的是把二者拆开的控制变量。</strong> 高激活案例反复出现猜测 grader、回忆 benchmark 等行为；作者也明确说没有控制 evaluation awareness（§7）。我会设计二乘二对照：是否显式知道在评测 × 是否采用违规捷径，匹配任务、语气与成功/失败结果。如果“知道在评测但诚实解题”同样高分，探针的语义就应被收窄，而不是继续称作通用作弊表征。</p>
+<p><strong>3. 最可复用的组件是“异议样本驱动的规则发现”。</strong> 当探针与 monitor 不一致时，把这些样本用于生成可检验的新行为定义，再到独立数据上验证，能让解释工具参与发现问题，而非只复刻既有标签。但如果随后把探针当训练惩罚，模型可能迁移或压低可检测表示。应同时保留不参与训练的行为审计器、独立 probe 和新环境测试，检查降低的是违规行为，还是原来的可观测信号；本文没有完成这个闭环。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span> — Concept：补充推理期评测作弊的白盒监控、提前风险信号与未知行为发现。</li>
+<li><a class="wikilink" href="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs.html" title="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs">Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs</a> — 共同使用对照激活提取方向；本文更聚焦长程 agent 的具体违规片段、检测工作点与监控规则的遗漏。</li>
+</ul>
+<h2 id="8-材料边界与复现提醒">8. 材料边界与复现提醒</h2>
+<p>已阅读 v2 正文、Appendix A–C 与 judge prompts，核对关键原图及官方数据说明；<strong>未运行模型、重算指标或审计全部原始轨迹</strong>。三张配图为论文原图本地副本，保留版本号与来源。</p>
+<p>数字优先采用正文／图中明确口径：摘要称 Kimi 在 DeepSWE 多检出 3.1%，§4.1 写 <strong>3.0 个百分点</strong>，本文以正文及 §4.3 的舍入召回为准；Figure 2 的 GLM SWE-bench 为 72.5%，摘要写 73%。Figure 5 的无干预柱标 0%，正文给 1/194，故保留正文计数，不解释为完全零发生。</p>
+<p>复现尚待确认的实现细节 <code>[?]</code>：Table 3 的 projected 处理如何定义、最终探针的完整层／候选配置、token 分数如何聚合到 passage、Figure 10 的具体重采样次数。正文并未把这些统一写成可直接执行的配置，不能自行补上默认值。官方公开页列出轨迹、标签和运行元数据；本次没有确认完整探针实现与权重是否另有发布。</p>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">PLE: Physical-Engineering's Last Exam</span></a>
+<a class="paper-nav-link next" href="Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Monitoring Emergent Reward Hacking During Generation via Internal Activations</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: bergen2026monitoringdiscoveringrewardhacking</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TACT: Mitigating Overthinking and Overacting in Coding Agents via Activation Steering</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">TACT: Mitigating Overthinking and Overacting in Coding Agents via Activation Steering</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-agent-不是单纯-想太多-或-工具太多-而是当前动作没有扩展信息状态"><span class="toc-num">02</span> 2. 关键问题：Agent 不是单纯“想太多”或“工具太多”，而是当前动作没有扩展信息状态</a></li>
+<li><a class="toc-link toc-sub" href="#现有做法卡在哪里">现有做法卡在哪里</a></li>
+<li><a class="toc-link" href="#3-关键方法-先把历史压成-verified-state-再提取双轴并在-think-处闭环纠偏"><span class="toc-num">03</span> 3. 关键方法：先把历史压成 verified state，再提取双轴并在 </think> 处闭环纠偏</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-annotate-三阶段-judge-的核心是-有审计的记忆">3.1 Annotate：三阶段 judge 的核心是“有审计的记忆”</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-extract-按-problem-平衡的双-drift-axis">3.2 Extract：按 problem 平衡的双 drift axis</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-steer-控制的是-离-cal-多远-不是直接预测离散标签">3.3 Steer：控制的是“离 CAL 多远”，不是直接预测离散标签</a></li>
+<li><a class="toc-link" href="#4-数据集与实验设置-三个长轨迹-benchmark-两个开放权重-reasoning-model"><span class="toc-num">04</span> 4. 数据集与实验设置：三个长轨迹 benchmark、两个开放权重 reasoning model</a></li>
+<li><a class="toc-link" href="#5-关键结果-成功率和轨迹长度可以同时改善-但主要证据仍是两模型内的-in-domain-steering"><span class="toc-num">05</span> 5. 关键结果：成功率和轨迹长度可以同时改善，但主要证据仍是两模型内的 in-domain steering</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主结果-gate-提成功率-cap-最省步骤">5.1 主结果：Gate 提成功率，Cap 最省步骤</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融-双轴-正交化和-layer-selection-都不是装饰">5.2 消融：双轴、正交化和 layer selection 都不是装饰</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-axis-的确可读-但摘要把-ot-和-oa-压成了同一个-auc-0-9">5.3 Axis 的确可读，但摘要把 OT 和 OA 压成了同一个“AUC≈0.9”</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-judge-可靠性-足够用于构轴-但不是-ground-truth">5.4 Judge 可靠性：足够用于构轴，但不是 ground truth</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-强度敏感性-方向正确不等于随便推都有效">5.5 强度敏感性：方向正确不等于随便推都有效</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-真正的系统贡献是-label-factory-而不只是-steering-公式">6.1 真正的系统贡献是 label factory，而不只是 steering 公式</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-这是-可控性-证据-不是-drift-被单一方向机制化的证明">6.2 这是“可控性”证据，不是 drift 被单一方向机制化的证明</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-最值得补的实验不是再加一个-benchmark-而是-axis-transfer-matrix">6.3 最值得补的实验不是再加一个 benchmark，而是 axis transfer matrix</a></li>
+<li><a class="toc-link toc-sub" href="#6-4-论文把干预点选在-think-研究品味很好-但适用面因此变窄">6.4 论文把干预点选在 </think>，研究品味很好，但适用面因此变窄</a></li>
+<li><a class="toc-link toc-sub" href="#6-5-统计证据仍不足以支撑很强的可靠性表述">6.5 统计证据仍不足以支撑很强的可靠性表述</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.05980" target="_blank">arXiv</a>
+    </div>
+    <h1>TACT: Mitigating Overthinking and Overacting in Coding Agents via Activation Steering</h1>
+    <p class="authors">Yuan Sui, Yulin Chen, Yibo Li, Xue Jiang, Yufei He, Yihong Dong, Xiaoxin He, Tianyu Gao, Bryan Hooi</p>
+    <div class="topic-row"><span class="topic-tag">Coding_Agent</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Agent_Drift</span> <span class="topic-tag">Representation_Engineering</span> <span class="topic-tag">Agent_Efficiency</span></div>
+</header>
+
+<h1>论文笔记: TACT: Mitigating Overthinking and Overacting in Coding Agents via Activation Steering</h1>
+<p><strong>关键问题</strong>：长轨迹 coding agent 会在「反复想已知信息」和「不消化观察就继续调用工具」之间漂移；最终 resolve rate 看得见失败，却看不见失败在何时、以哪种方式开始。</p>
+<p><strong>关键做法</strong>：TACT 用带 verified rolling state 的 LLM-as-judge 标注每一步，在 <code>&lt;/think&gt;</code> 边界的 residual stream 中提取 OT/OA 两条 drift axis，再在推理时把越出 calibrated band 的激活拉回去。</p>
+<p><strong>关键结论</strong>：TACT-Gate 在 Qwen3.5-27B / Gemma-4-26B-A4B-it 上将三项 benchmark 的平均成功率分别提高 <strong>+5.8 / +4.8 pp</strong>；TACT-Cap 在 SWE-bench Verified 上把 steps-to-resolve 缩短约 <strong>26%</strong>（Table 1）。</p>
+<p><strong>我的判断</strong>：这篇最值得记住的不是「activation steering 又成功一次」，而是它把高度依赖历史上下文的 agent failure，压缩成了 reasoning-action boundary 上可读、可控的低维状态。但这个状态仍由 judge 的 progress 定义塑形；它是有用的控制变量，还不是对 agent drift 的机制性解释。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Yuan Sui、Yulin Chen、Yibo Li、Yufei He、Tianyu Gao、Bryan Hooi（NUS），Xue Jiang、Yihong Dong（PKU），Xiaoxin He（Meta）。</li>
+<li><strong>版本</strong>：arXiv:2605.05980v1，2026-05-07；作者标注为 <strong>work in progress</strong>，尚无正式会议版本。</li>
+<li><strong>研究位置</strong>：把 Representation Engineering 从 refusal、truthfulness、persona 等单轮行为，扩展到跨几十到几百步才显现的 agent drift。</li>
+</ul>
+<h2 id="2-关键问题-agent-不是单纯-想太多-或-工具太多-而是当前动作没有扩展信息状态">2. 关键问题：Agent 不是单纯“想太多”或“工具太多”，而是当前动作没有扩展信息状态</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — <code>django-11163</code> 已修好后，Agent 还在原地打转</strong></p>
+<p>论文附录 G.4 给出一条真实轨迹：任务是修复 <code>model_to_dict()</code> 把 <code>fields=[]</code> 当作 falsy 的问题。到 step 9，Agent 已经：</p>
+<ol>
+<li>读过 <code>django/forms/models.py</code>，发现 <code>if fields and ...</code> 与相邻函数的 <code>if fields is not None and ...</code> 不一致；</li>
+<li>提出正确 root cause，完成一行修改；</li>
+<li>用 reproduction script 验证修改前返回全部字段、修改后返回 <code>{}</code>。</li>
+</ol>
+<p>此时再重复解释「空列表是假值，所以绕过过滤」不会产生新 hypothesis，这是 <strong>overthinking</strong>；再读一次同一个文件或无修改地重跑相同测试不会产生新 observation，这是 <strong>overacting</strong>。真正 calibrated 的下一步应当扩展现有知识，例如跑尚未覆盖的相关测试，或在证据已足够时提交。</p>
+</blockquote>
+<p>这个案例揭示了论文定义的关键：同一句 reasoning、同一个 <code>pytest</code> 命令本身并不天然是 OT/OA；标签取决于执行前的信息状态 $\mathcal K_t$。</p>
+<p>设 trajectory $T=(s_1,\dots,s_N)$，每步 $s_t=(r_t,a_t,o_t)$ 分别包含 reasoning、action、observation。论文按该步是否扩展 $\mathcal K_t$ 分类（§2.1）：</p>
+<ul>
+<li><strong>Overthinking（OT）</strong>：$r_t$ 重推已有结论、在已知 hypothesis 间循环，或继续思考一个单次工具调用就能消除的不确定性。</li>
+<li><strong>Overacting（OA）</strong>：$a_t$ 取得已在 $\mathcal K_t$ 中的 observation，或刚拿到新观察却还没消化就继续发工具调用。</li>
+<li><strong>Calibrated（CAL）</strong>：推导出新 hypothesis / finding，或取得此前未知的文件、命令、测试、编辑结果。</li>
+</ul>
+<p>轨迹级 drift ratio 只是把 step label 聚合：</p>
+<div class="math-display">$$
+\gamma_t^{\mathrm{OT}}=\frac1t\sum_{i=1}^t\mathbf 1[y_i=\mathrm{OT}],\qquad
+\gamma_t^{\mathrm{OA}}=\frac1t\sum_{i=1}^t\mathbf 1[y_i=\mathrm{OA}].
+$$</div>
+<p>Figure 3 显示二者都与更低的 SWE-bench resolve rate 相关。注意这只是相关性：难题可能同时引发更多 drift 和更多失败，单靠 Figure 3 不能证明 drift 导致失败。TACT 后续的 activation intervention 才提供更接近因果的行为证据。</p>
+<p><img src="https://arxiv.org/html/2605.05980v1/demonstration.png" alt="Figure 1：CAL 位于中心带，OT/OA trajectory 沿不同 drift axis 向外漂移；两侧是具体失败步骤" /></p>
+<p>这张图应看两点：第一，作者没有把 OT 与 OA 硬塞进一条“思考—行动”轴，而是让它们相对 CAL 各有一个方向；第二，检测点选在 <code>&lt;/think&gt;</code>，即 reasoning 已完成、action 尚未生成的边界，因此还有机会在错误行为表面化前干预。</p>
+<h3 id="现有做法卡在哪里">现有做法卡在哪里</h3>
+<ul>
+<li>Prompt reminder、ReCAP 在每轮注入语言指令，但无论当前 step 是否真的 drift 都会扰动 context。</li>
+<li>AgentReflect 每 10 步才反思一次；AgentDebug 更是在 rollout 已失败后再诊断并 retry。</li>
+<li>既有 activation steering 多处理单轮、可由单个 response 判断的属性。OT/OA 则必须知道 Agent 此前读过什么、验证过什么、现在还缺什么。</li>
+</ul>
+<p>因此真正难点不是算 mean-difference direction，而是先为每一步构造可信的历史条件标签。</p>
+<h2 id="3-关键方法-先把历史压成-verified-state-再提取双轴并在-think-处闭环纠偏">3. 关键方法：先把历史压成 verified state，再提取双轴并在 <code>&lt;/think&gt;</code> 处闭环纠偏</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — TACT 如何处理下一步？</strong></p>
+<p>延续 <code>django-11163</code>：</p>
+<ol>
+<li><strong>Annotate</strong>：State Maintainer 把「已读文件、root cause、一行修复、测试结果」写进 rolling state；State Verifier 对照原始 steps 排除幻觉、遗漏和矛盾；Annotator 因此能把“再读 models.py”判为 OA，把“再解释 falsy list”判为 OT。</li>
+<li><strong>Extract</strong>：收集这些 OT/OA/CAL step 在每层 <code>&lt;/think&gt;</code> token 的 hidden state；分别求 OT−CAL、OA−CAL 的 per-problem balanced mean difference。</li>
+<li><strong>Decouple</strong>：保留更干净的 OT 轴，把 OA 轴中与 OT 重叠的分量用 Gram–Schmidt 去掉，避免修 OA 时又改变 OT projection。</li>
+<li><strong>Steer</strong>：新 rollout 到达 <code>&lt;/think&gt;</code> 时，若当前激活沿某轴越出 CAL 的经验带宽，就只消除越界部分；action token 随后从已纠偏的边界状态继续生成。</li>
+<li><strong>Output</strong>：理想结果不是强迫 Agent “多想”或“少想”，而是减少不增长信息状态的下一步。</li>
+</ol>
+</blockquote>
+<h3 id="3-1-annotate-三阶段-judge-的核心是-有审计的记忆">3.1 Annotate：三阶段 judge 的核心是“有审计的记忆”</h3>
+<p>Trajectory 按 $W=10$ 步切 chunk。每个 chunk 串行经过（§2.2、Appendix G）：</p>
+<ol>
+<li><strong>State Maintainer</strong> 更新两类状态：<code>KnownFacts</code> 记录已读文件及发现、hypotheses、edits、test results、key findings；<code>Progress</code> 记录当前阶段、距上次进展的步数、重复读文件/命令/假设循环。</li>
+<li><strong>State Verifier</strong> 只审计可观察的 <code>KnownFacts</code>，检查 hallucination、omission、contradiction；有错则让 Maintainer 修订，最多循环 3 次。</li>
+<li><strong>Annotator</strong> 结合 verified state 与当前 chunk prefix，为每步输出 OT/OA/CAL、单句理由与置信度；提取轴时只保留 high / medium confidence。</li>
+</ol>
+<p>当一步同时含冗余 reasoning 和冗余 action 时，标签优先级是 <strong>OT &gt; OA &gt; CAL</strong>。这是一个重要的人为约定：因为 reasoning 先发生，作者把已经 OT 的一步视为不再因后续 action 改类。它让标签唯一，却也会系统性压低 OA 在混合失败中的频率。</p>
+<h3 id="3-2-extract-按-problem-平衡的双-drift-axis">3.2 Extract：按 problem 平衡的双 drift axis</h3>
+<p>对每一步，在所有 $L$ 层读取 <code>&lt;/think&gt;</code> hidden state，得到 $\mathbf H_t\in\mathbb R^{L\times d}$。对 layer $\ell$，从类别 $B$ 指向 $A$ 的 axis 为（Eq. 2）：</p>
+<div class="math-display">$$
+\mathbf v_{A\text{-vs-}B}^{(\ell)}=
+\frac1{|J|}\sum_{j\in J}
+\left(
+\frac1{|S_A^j|}\sum_{t\in S_A^j}\mathbf h_t^{(\ell)}-
+\frac1{|S_B^j|}\sum_{t\in S_B^j}\mathbf h_t^{(\ell)}
+\right).
+$$</div>
+<p>先在每个 problem 内求 class mean difference，再跨 problem 平均，可避免长 trajectory 或某类 step 特别多的任务支配方向。作者构造 OT-vs-CAL、OA-vs-CAL、OT-vs-OA 三轴；第三条只分析 geometry，不用于 steering，因为沿它移动只会在两种失败间切换。</p>
+<p>OT-vs-CAL 的 held-out AUC 更高，因此作为主轴 $\hat{\mathbf v}_{\mathrm{OT}}$；OA 轴去掉与其重合的分量：</p>
+<div class="math-display">$$
+\hat{\mathbf v}_{\mathrm{OA}^{\perp}}^{(\ell)}=
+\operatorname{normalize}\!\left(
+\hat{\mathbf v}_{\mathrm{OA-vs-CAL}}^{(\ell)}-
+(\hat{\mathbf v}_{\mathrm{OA-vs-CAL}}^{(\ell)}\cdot\hat{\mathbf v}_{\mathrm{OT}}^{(\ell)})
+\hat{\mathbf v}_{\mathrm{OT}}^{(\ell)}
+\right).
+$$</div>
+<p>每层还从 CAL training steps 估计 centroid $\boldsymbol\mu_{\mathrm{CAL}}^{(\ell)}$ 和沿各轴的标准差 $\sigma_{\mathrm{CAL},a}^{(\ell)}$。Axis-val 上按 OT-vs-CAL 的 per-problem AUC 排层，默认只 hook top-10；这不是无关紧要的工程优化——全 64 层反而几乎抹掉收益（Table 2）。</p>
+<h3 id="3-3-steer-控制的是-离-cal-多远-不是直接预测离散标签">3.3 Steer：控制的是“离 CAL 多远”，不是直接预测离散标签</h3>
+<p>当前 step 在 layer $\ell$、axis $a$ 上相对 CAL centroid 的 projection 是：</p>
+<div class="math-display">$$
+p_{t,a}^{(\ell)}=
+(\mathbf h_t^{(\ell)}-\boldsymbol\mu_{\mathrm{CAL}}^{(\ell)})\cdot
+\hat{\mathbf v}_a^{(\ell)}.
+$$</div>
+<p>阈值 $\tau_{a,\ell}=k\sigma_{\mathrm{CAL},a}^{(\ell)}$ 把正常波动定义为一个 calibrated band。三种 operator 的差别如下：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>何时动</th>
+<th>怎么动</th>
+<th>直观 trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TACT-Cap</strong></td>
+<td>$|p|&gt;\tau$</td>
+<td>把 projection 精确截回最近边界</td>
+<td>最保守、最省 steps，但成功率增益较小</td>
+</tr>
+<tr>
+<td><strong>TACT-Add</strong></td>
+<td>每一步</td>
+<td>固定加 $s(\hat v_{OT}+\hat v_{OA^\perp})$，论文中 $s&lt;0$ 远离失败方向</td>
+<td>简单、强，但会扰动本来 calibrated 的 step，对强度很敏感</td>
+</tr>
+<tr>
+<td><strong>TACT-Gate</strong></td>
+<td>$|p|&gt;\tau$</td>
+<td>只回拉越界量的 $\lambda$ 倍</td>
+<td>在选择性与纠偏强度间折中；$\lambda=1$ 等价于 Cap</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cap / Gate 是双向 clipping：虽然轴的正方向才对应命名的 failure mode，但过度负向也超出 CAL 的经验分布，作者同样拉回。这意味着 TACT 学的不是“越负越好”，而是“停留在正常带内”。</p>
+<p>推理 hook 只在产生 <code>&lt;/think&gt;</code> token 的 forward pass 写 residual stream；不 fine-tune、不改 prompt，也不增加 LLM call、token 或 retry。代价是必须能访问模型内部激活，并且模型要有稳定的 reasoning-action boundary。</p>
+<h2 id="4-数据集与实验设置-三个长轨迹-benchmark-两个开放权重-reasoning-model">4. 数据集与实验设置：三个长轨迹 benchmark、两个开放权重 reasoning model</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>规模与任务</th>
+<th>指标 / scaffold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SWE-bench Verified</td>
+<td>500 个真实 Python GitHub issue，典型 50–250+ steps</td>
+<td>grading script resolve rate；mini-swe-agent，单一 bash tool</td>
+</tr>
+<tr>
+<td>Terminal-Bench 2.0</td>
+<td>89 个终端任务，覆盖 10 个技术领域</td>
+<td>pytest-based resolve rate；同一 mini-swe-agent 包进 Docker harness</td>
+</tr>
+<tr>
+<td>CLAW-Eval</td>
+<td>300 个 human-verified agent task，9 类；含 general 与 multi-turn</td>
+<td>Completion grader 的 pass@3；原生 OpenClaw、多种 first-class tools</td>
+</tr>
+</tbody>
+</table></div>
+<p>模型覆盖两种架构：</p>
+<ul>
+<li><strong>Qwen3.5-27B</strong>：dense，64 层，hidden dim 5120，bfloat16。</li>
+<li><strong>Gemma-4-26B-A4B-it</strong>：sparse MoE，26B total、约 4B active parameters。</li>
+</ul>
+<p>所有数据按 problem 划分为互不重叠的 Axis-train / Axis-val / Eval：train 拟合 axis、CAL centroid 与 scale；val 选 layer 与 steering hyperparameter；Eval 只报最终结果（Appendix C）。</p>
+<p><strong>复现缺口</strong>：论文没有报告三个 split 的具体 task/step 数、OT/OA/CAL 自然类别分布，也没有清楚说明 drift axis 是按每个 <code>model × benchmark</code> 单独拟合，还是存在跨 benchmark 复用。这使“需要多少标注轨迹才能得到稳定轴”与“轴能否迁移”都无法从本文回答。</p>
+<h2 id="5-关键结果-成功率和轨迹长度可以同时改善-但主要证据仍是两模型内的-in-domain-steering">5. 关键结果：成功率和轨迹长度可以同时改善，但主要证据仍是两模型内的 in-domain steering</h2>
+<h3 id="5-1-主结果-gate-提成功率-cap-最省步骤">5.1 主结果：Gate 提成功率，Cap 最省步骤</h3>
+<p>Table 1 的核心数字如下；CLAW 列为 pass@3，其余为 resolve rate，因此 Avg. Res. 是三种不同任务成功口径的算术平均。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Method</th>
+<th style="text-align:right">SWE-V Res. / Steps</th>
+<th style="text-align:right">TB2 Res. / Steps</th>
+<th style="text-align:right">CLAW Pass@3 / Steps</th>
+<th style="text-align:right">Avg. Res.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3.5-27B</td>
+<td>Base</td>
+<td style="text-align:right">67.0 / 75.2</td>
+<td style="text-align:right">30.3 / 48.2</td>
+<td style="text-align:right">55.9 / 12.3</td>
+<td style="text-align:right">51.1</td>
+</tr>
+<tr>
+<td></td>
+<td>TACT-Cap</td>
+<td style="text-align:right">69.1 / 55.7</td>
+<td style="text-align:right">32.6 / 36.5</td>
+<td style="text-align:right">57.8 / 9.4</td>
+<td style="text-align:right">53.2</td>
+</tr>
+<tr>
+<td></td>
+<td>TACT-Add</td>
+<td style="text-align:right">73.0 / 67.5</td>
+<td style="text-align:right">35.9 / 42.7</td>
+<td style="text-align:right">61.2 / 11.1</td>
+<td style="text-align:right">56.7</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>TACT-Gate</strong></td>
+<td style="text-align:right"><strong>73.3 / 65.3</strong></td>
+<td style="text-align:right"><strong>36.0 / 41.2</strong></td>
+<td style="text-align:right"><strong>61.5 / 10.8</strong></td>
+<td style="text-align:right"><strong>56.9</strong></td>
+</tr>
+<tr>
+<td>Gemma-4-26B-A4B-it</td>
+<td>Base</td>
+<td style="text-align:right">59.7 / 52.1</td>
+<td style="text-align:right">15.7 / 18.2</td>
+<td style="text-align:right">56.3 / 9.2</td>
+<td style="text-align:right">43.9</td>
+</tr>
+<tr>
+<td></td>
+<td>TACT-Cap</td>
+<td style="text-align:right">61.6 / 38.6</td>
+<td style="text-align:right">17.0 / 13.9</td>
+<td style="text-align:right">58.2 / 7.0</td>
+<td style="text-align:right">45.6</td>
+</tr>
+<tr>
+<td></td>
+<td>TACT-Add</td>
+<td style="text-align:right">65.2 / 46.2</td>
+<td style="text-align:right">18.9 / 16.5</td>
+<td style="text-align:right">61.0 / 8.4</td>
+<td style="text-align:right">48.4</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>TACT-Gate</strong></td>
+<td style="text-align:right"><strong>65.5 / 44.7</strong></td>
+<td style="text-align:right"><strong>19.1 / 16.0</strong></td>
+<td style="text-align:right"><strong>61.4 / 8.1</strong></td>
+<td style="text-align:right"><strong>48.7</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>由此支持三件事：</p>
+<ol>
+<li>TACT-Gate 相比 Base 的平均成功率增益是 Qwen <strong>+5.8 pp</strong>、Gemma <strong>+4.8 pp</strong>，且三个 benchmark 的单项结果都提高。</li>
+<li>TACT-Cap 在 SWE-V 把 steps 分别从 75.2 降到 55.7、52.1 降到 38.6，均约 <strong>−26%</strong>；它偏向效率，而非最大化 solve rate。</li>
+<li>最强外部 baseline AgentDebug 在 Qwen / Gemma 上平均提高 +2.7 / +1.8 pp，却至少需要 initial rollout + failed retry；TACT-Gate 单 rollout 已高出它约 3 pp。</li>
+</ol>
+<p>Reminder 在两模型上都没有稳定提升，ReCAP / AgentReflect 平均约 +1 pp。这说明“知道不要 drift”与“在正确时刻纠正 drift”不是一回事。</p>
+<h3 id="5-2-消融-双轴-正交化和-layer-selection-都不是装饰">5.2 消融：双轴、正交化和 layer selection 都不是装饰</h3>
+<p>Table 2 在 Qwen3.5-27B + SWE-V、TACT-Gate（$\lambda=0.5$）上做单点消融：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th style="text-align:right">Resolve</th>
+<th style="text-align:right">相对 Base</th>
+<th style="text-align:right">Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base</td>
+<td style="text-align:right">67.0</td>
+<td style="text-align:right">–</td>
+<td style="text-align:right">75.2</td>
+</tr>
+<tr>
+<td>Full：双轴 + orthogonalization + top-10</td>
+<td style="text-align:right"><strong>73.3</strong></td>
+<td style="text-align:right"><strong>+6.3</strong></td>
+<td style="text-align:right"><strong>65.3</strong></td>
+</tr>
+<tr>
+<td>仅 OA axis</td>
+<td style="text-align:right">69.6</td>
+<td style="text-align:right">+2.6</td>
+<td style="text-align:right">71.5</td>
+</tr>
+<tr>
+<td>仅 OT axis</td>
+<td style="text-align:right">71.2</td>
+<td style="text-align:right">+4.2</td>
+<td style="text-align:right">69.7</td>
+</tr>
+<tr>
+<td>双轴但不正交</td>
+<td style="text-align:right">70.5</td>
+<td style="text-align:right">+3.5</td>
+<td style="text-align:right">70.0</td>
+</tr>
+<tr>
+<td>hook 全 64 层</td>
+<td style="text-align:right">68.4</td>
+<td style="text-align:right">+1.4</td>
+<td style="text-align:right">73.9</td>
+</tr>
+</tbody>
+</table></div>
+<p>OT 单轴强于 OA 单轴，和 readout AUC 一致；双轴仍比 OT-only 多 +2.1 pp，说明 OA 不是 OT 的冗余别名。最反直觉的是“干预更多层”更差：OT signal 在早中层最干净，晚层噪声会把 steering 稀释甚至带偏。</p>
+<h3 id="5-3-axis-的确可读-但摘要把-ot-和-oa-压成了同一个-auc-0-9">5.3 Axis 的确可读，但摘要把 OT 和 OA 压成了同一个“AUC≈0.9”</h3>
+<ul>
+<li>OT-vs-CAL 在 <strong>layer 3 达 0.91</strong>，到约 layer 20 前保持在 0.86 以上。</li>
+<li>OT-vs-OA 在 <strong>layer 17 达 0.89</strong>。</li>
+<li>OA-vs-CAL 峰值只有 <strong>0.77</strong>，且早中层多低于 0.70（Figure 5）。</li>
+</ul>
+<p>因此“drift AUC≈0.9”对 OT 成立，对 OA 并不成立。OA 可能更异质，也可能被 <code>OT &gt; OA &gt; CAL</code> 的 dominance rule 抽走了混合样本。无论哪种解释，都说明 OA axis 的语义纯度和稳定性弱于论文摘要给人的第一印象。</p>
+<h3 id="5-4-judge-可靠性-足够用于构轴-但不是-ground-truth">5.4 Judge 可靠性：足够用于构轴，但不是 ground truth</h3>
+<p>作者人工审计 300 步，按 OT/OA/CAL 各 100 个，并平衡短轨迹（$N&lt;50$）与长轨迹（$N\ge150$）：</p>
+<ul>
+<li>judge vs human consensus 的 Cohen's $\kappa=0.78$；三类 $F_1$ 为 0.83–0.85（Table 5）。</li>
+<li>CAL precision 最低，仅 0.79：judge 判为 CAL 的步骤中约 21% 被人类判为 OT/OA。</li>
+<li>OT↔OA confusion 为 5%–6%，对 contrastive axis 的直接污染相对有限。</li>
+<li>换 Claude Opus 4.6 重新标注后，三种 TACT 的 SWE-V resolve 均距 GPT-5.4 标签版本 1 pp 内（Table 3）。</li>
+</ul>
+<p>不过这 300 步是按预测标签平衡抽样，不代表实际 rollout 的类别分布；论文也没交代 human annotator 人数、分歧解决过程或 inter-annotator agreement。更准确的表述是：作者证明了标签<strong>有 substantial agreement 且端到端结果对另一 judge 稳健</strong>，而非标签等于客观真值。</p>
+<h3 id="5-5-强度敏感性-方向正确不等于随便推都有效">5.5 强度敏感性：方向正确不等于随便推都有效</h3>
+<p>Table 4 显示 TACT-Add 的最佳 $s=-0.5$ 得到 73.0 resolve；推得更强 $s=-2.0$ 反降至 64.8，方向推反 $s=+0.5$ 更降至 63.0，均差于 67.0 Base。Gate 在 $\lambda\in\{0.5,1.5,2.0\}$ 范围内相对更稳，但仍从峰值 73.3 降至 69.0。</p>
+<p>这说明 drift axis 是一个需要<strong>验证集校准的 control knob</strong>，不是发现方向后就能无条件部署的安全开关。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-真正的系统贡献是-label-factory-而不只是-steering-公式">6.1 真正的系统贡献是 label factory，而不只是 steering 公式</h3>
+<p><strong>观察</strong>：mean-difference、Gram–Schmidt、activation addition 都是已有工具；这篇最复杂的部分反而是 Maintainer → Verifier → Annotator，把全轨迹压成可审计的 $\mathcal K_t$。</p>
+<p><strong>推理</strong>：OT/OA 是否成立取决于“之前已经知道什么”，没有 rolling state 就没有可靠 contrastive data，后面的线性轴也无从谈起。</p>
+<p><strong>判断</strong>：如果复现 TACT，优先投入应是 label audit、split 设计和 state schema，而不是先调 steering strength。轴的质量上限由标签如何定义“信息增量”决定。</p>
+<h3 id="6-2-这是-可控性-证据-不是-drift-被单一方向机制化的证明">6.2 这是“可控性”证据，不是 drift 被单一方向机制化的证明</h3>
+<p><strong>观察</strong>：线性 readout 能分 OT/CAL，沿轴干预还能改善任务结果，强于只报告 probe AUC；但 OA AUC 只有 0.77，标签又来自预设的 epistemic-efficiency ontology。</p>
+<p><strong>推理</strong>：一个方向可以同时混入 task difficulty、trajectory phase、reasoning length、prompt/scaffold 特征。干预有效说明它包含有行为效力的信号，却不能证明“overthinking”在模型里就是一个单一、语义纯净的 causal variable。</p>
+<p><strong>判断</strong>：TACT 应放在线性表示假说的“工程有效、机制未闭合”一侧。下一步需要匹配 trajectory phase / task difficulty 的 probe 对照，或做更局部的 causal mediation，验证到底是哪部分方向在改变 action。</p>
+<h3 id="6-3-最值得补的实验不是再加一个-benchmark-而是-axis-transfer-matrix">6.3 最值得补的实验不是再加一个 benchmark，而是 axis transfer matrix</h3>
+<p><strong>观察</strong>：论文跨三个 benchmark、两种架构都有效，但没有明确报告 axis 是逐 benchmark 拟合还是跨域复用，也没有给 split 规模。</p>
+<p><strong>推理</strong>：如果每个 model × scaffold × benchmark 都要重新跑昂贵 judge 标注和验证集调参，那么 TACT 是“低推理成本、较高部署准备成本”；若 SWE-V 轴能零样本迁移到 TB2 / CLAW，才说明它抓到了更通用的 think-act calibration。</p>
+<p><strong>行动</strong>：做 <code>train-axis domain × eval domain × model</code> 矩阵，同时报告 cosine similarity、AUC、resolve delta。这个实验会直接决定 TACT 是一套通用 Agent 控制接口，还是 benchmark-specific representation engineering。</p>
+<h3 id="6-4-论文把干预点选在-think-研究品味很好-但适用面因此变窄">6.4 论文把干预点选在 <code>&lt;/think&gt;</code>，研究品味很好，但适用面因此变窄</h3>
+<p><strong>观察</strong>：<code>&lt;/think&gt;</code> 同时是可重复定位的 token、reasoning 与 action 的语义边界、也是 action 尚未发出的最后干预窗口。</p>
+<p><strong>推理</strong>：这个选择让论文避开“到底在哪个 token 读状态”的模糊性，也是结果干净的重要原因；但它绑定原生 think block，闭源 API、隐藏 CoT 或无显式边界模型都无法直接使用。</p>
+<p><strong>判断</strong>：一个自然扩展不是粗暴地 hook 每个 token，而是学习模型无关的 decision-boundary detector，再在检测到的边界做 gated steering。否则方法的“无需 prompt 改动”优势会被模型接口限制抵消。</p>
+<h3 id="6-5-统计证据仍不足以支撑很强的可靠性表述">6.5 统计证据仍不足以支撑很强的可靠性表述</h3>
+<p>主结果表没有置信区间、随机种子或 significance test；只有 Figure 3 的 drift-ratio 相关性给 Wilson 95% CI。Eval split 的实际 task 数又未报告，因此 +4–6 pp 对应多少额外 solved instances、波动是否稳定都无法判断。论文作为 work in progress 已展示一致趋势，但在正式采用前应要求 per-task paired bootstrap / McNemar test，以及不同 rollout seed 下的置信区间。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — Topic: 从 outcome/trajectory 事后分析推进到 <code>&lt;/think&gt;</code> 边界的动作前内部诊断与闭环干预。</li>
+<li><span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span> — Concept: 上下文依赖的 agent drift 也能形成可读、可控的线性方向，但 OA 的较低 AUC 暴露了复合行为的线性边界。</li>
+<li><a class="wikilink" href="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> — 互补证据：该工作用 9,374 条轨迹说明成功/失败更受 trajectory structure 而非 patch complexity 驱动；TACT 进一步尝试在内部激活层直接改变 trajectory structure。</li>
+<li><a class="wikilink" href="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html" title="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability">Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability</a> — 最近邻问题：同样在 action 前读取 tool decision signal，但该工作只验证 probe readout，TACT 补上了端到端 steering 的行为证据。</li>
+<li><a class="wikilink" href="Surgical-Activation-Steering-Generative-Causal-Mediation.html" title="Surgical-Activation-Steering-Generative-Causal-Mediation">Surgical-Activation-Steering-Generative-Causal-Mediation</a> — 方法边界：TACT 在 layer-level residual direction 上做全局纠偏；GCM 则追问该方向由哪些 attention head 因果承载，可用于进一步检验 TACT axis 的机制纯度。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Towards Feedback-to-Plan Decisions for Self-Evolving LLM Agents in CUDA Kernel Generation</span></a>
+<a class="paper-nav-link next" href="Latent-Programming-Horizons-in-Coding-Agents.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Latent Programming Horizons in Coding Agents</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: sui2026tact</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

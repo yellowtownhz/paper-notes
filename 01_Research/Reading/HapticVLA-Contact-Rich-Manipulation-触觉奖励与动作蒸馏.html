@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HapticVLA：把触觉用于训练，部署时只保留常规 VLA</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">HapticVLA：把触觉用于训练，部署时只保留常规 VLA</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景与材料边界"><span class="toc-num">01</span> 1. 背景与材料边界</a></li>
+<li><a class="toc-link" href="#2-关键问题-看见鸡蛋-不等于知道何时会夹碎"><span class="toc-num">02</span> 2. 关键问题：看见鸡蛋，不等于知道何时会夹碎</a></li>
+<li><a class="toc-link" href="#3-关键方法-先给示范打安全分-再蒸馏教师的动作"><span class="toc-num">03</span> 3. 关键方法：先给示范打安全分，再蒸馏教师的动作</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-触觉奖励如何改变教师">3.1 触觉奖励如何改变教师？</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-学生具体学什么">3.2 学生具体学什么？</a></li>
+<li><a class="toc-link" href="#4-数据与评估-小规模-任务定制的真实机器人验证"><span class="toc-num">04</span> 4. 数据与评估：小规模、任务定制的真实机器人验证</a></li>
+<li><a class="toc-link" href="#5-关键结果-同步蒸馏有效-但收益并不跨配置保持"><span class="toc-num">05</span> 5. 关键结果：同步蒸馏有效，但收益并不跨配置保持</a></li>
+<li><a class="toc-link" href="#6-insights-最值得追问的三件事"><span class="toc-num">06</span> 6. Insights：最值得追问的三件事</a></li>
+<li><a class="toc-link" href="#7-连接"><span class="toc-num">07</span> 7. 连接</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.15257v2" target="_blank">arXiv</a>
+    </div>
+    <h1>HapticVLA：把触觉用于训练，部署时只保留常规 VLA</h1>
+    <p class="authors">['Konstantin Gubernatorov', 'Mikhail Sannikov', 'Ilya Mikhalchuk', 'Egor Kuznetsov', 'Makar Artemov', 'Ogunwoye Faith Oluwatobi', 'Marcelino Julio Fernando', 'Artem Asanov', 'Ziang Guo', 'Dzmitry Tsetserukou']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Tactile_Distillation</span> <span class="topic-tag">Robot_Manipulation</span></div>
+</header>
+
+<h1>HapticVLA：把触觉用于训练，部署时只保留常规 VLA</h1>
+<p><strong>值得记住的四点</strong>：触觉既提供教师的输入，也为示范质量打分；v2 方法节采用的是动作目标蒸馏；最佳配置在三项真机任务达到 86.7%；蒸馏收益依赖控制方式，尚不能推出“视觉足以替代实时触觉”。</p>
+<h2 id="1-背景与材料边界">1. 背景与材料边界</h2>
+<p>论文全名为 <em>HapticVLA: Contact-Rich Manipulation via Vision-Language-Action Model without Inference-Time Tactile Sensing</em>，作者来自 Skoltech Intelligent Space Robotics Laboratory，前三位共同一作。本笔记依据 <a href="https://arxiv.org/html/2603.15257v2">arXiv v2 全文</a>（2026-08-02），核对方法公式、Fig. 5 和 Table I；未运行作者代码或复现实验，会议状态不作认定。DeepXiv 获取失败后改读官方全文。</p>
+<p><strong>版本内有实质性叙述冲突</strong>：摘要、引言和 Fig. 2 图注说学生预测 tactile token；§III-B 却明确规定无架构修改、删除触觉编码器、混合教师动作与示范动作训练。以下以可操作的 §III-B 与 Eq. (21–25) 为方法依据，不把“预测触觉 token”当成已确认的实现。</p>
+<h2 id="2-关键问题-看见鸡蛋-不等于知道何时会夹碎">2. 关键问题：看见鸡蛋，不等于知道何时会夹碎</h2>
+<p>论文的真实任务之一是打开蛋盒、抓起鸡蛋并放到托盘指定槽位（§IV-B）。抓取位置正确仍可能失败：夹得太紧会破壳，太松可能滑落。成功标准包含物体完整，而不只是到达目标。</p>
+<p>触觉传感器能直接反映接触分布，但增加硬件集成负担。HapticVLA 的问题是：<strong>能否在采集和训练时用触觉识别安全动作，把这些偏好写进普通视觉—语言—动作模型，部署时不用触觉输入？</strong> 这里的“无触觉”不等于只有单张图：学生仍接收语言和本体状态。</p>
+<h2 id="3-关键方法-先给示范打安全分-再蒸馏教师的动作">3. 关键方法：先给示范打安全分，再蒸馏教师的动作</h2>
+<p>沿用抓鸡蛋这条轨迹：训练数据保留相机图像、指令、关节状态、示范动作和指尖触觉图；离线计算哪些片段用力危险；教师更多拟合高分片段；再让学生从视觉、语言和关节状态学习教师修正后的动作。实际执行时，学生输出动作块，不读取实时触觉。</p>
+<p><img src="https://arxiv.org/html/2603.15257v2/sections/figures/method.png" alt="Figure 2：触觉奖励与蒸馏的数据流" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.15257v2#S2.F2">原文 Figure 2</a>。沿触觉数据到离线奖励、再到教师和学生的路径阅读，区分训练时的触觉监督与部署时的视觉和状态输入。关于学生具体学习什么，仍需结合下文的动作蒸馏目标理解。</em></p>
+<h3 id="3-1-触觉奖励如何改变教师">3.1 触觉奖励如何改变教师？</h3>
+<p>§III-A 从左右指尖触觉图提取平均力代理、峰值、压力集中度、压力中心变化；稳定夹持期间，以压力中心跳变或力骤降识别滑动。逐步奖励惩罚过强夹持、夹持期力不足、局部高压、压力过度集中、两侧不对称和滑动。整段奖励还加入成功、掉落、损伤以及高分位风险项。</p>
+<p>这解释了为什么不能只惩罚“大力”：抓鸡蛋时，持续减小夹力也可能造成掉落；局部压力集中同样可能比平均压力更危险。阈值由数据分位数标定，<strong>这是经验安全代理，不是经过物理证明的破裂边界</strong>。</p>
+<p>教师以 SmolVLA（0.45B）为基础。对每个动作块，将整段回报和局部折扣回报分别做组内稳健标准化，再合成分数：</p>
+<div class="math-display">$$
+A_i=\operatorname{clip}(0.7z_i^{epi}+0.3z_i^{chunk},-6,6),\qquad
+w_i\propto\operatorname{clip}(\exp(0.25A_i),0.25,4).
+$$</div>
+<p>权重再按 batch 均值归一化。最终目标是加权 flow matching（FM，将噪声逐步变成动作的训练目标），加上相对初始模仿模型的参数锚定项：</p>
+<div class="math-display">$$
+L=\frac{\sum_i w_iL_i^{FM}}{\sum_iw_i}
++\lambda_{anchor}\frac{1}{|\Theta|}\sum_{p\in\Theta}\|\theta_p-\theta_p^0\|_2^2.
+$$</div>
+<p>式子压缩自 Eq. (15–20)；局部回报折扣为 0.99。锚定和权重 warm-up 用来限制偏移，防止过早偏向少数高分轨迹。具体冻结范围、优化器和完整训练日程在正文中没有交代清楚，复现前需核查实现。</p>
+<p><strong>负奖励不等于反向学习坏动作。</strong> 所有样本权重仍为正：失败示范只是相对少被模仿，没有显式产生“远离该动作”的梯度。这个区别决定了它对严重污染示范的处理能力。</p>
+<p>另一个表述问题是 Fig. 2 说 reward 作为额外条件送入 action expert；Eq. (11–20) 和 Algorithm 1 明确展示的作用则是损失加权。是否还存在独立 reward 条件通路，正文不足以确认 <code>[?]</code>。</p>
+<h3 id="3-2-学生具体学什么">3.2 学生具体学什么？</h3>
+<p>§III-B 的教师输入状态为 6 维关节状态加 128 维触觉 embedding，共 134 维；每个动作块长度为 50，每臂动作维度为 6。蒸馏分三步：</p>
+<ol>
+<li><strong>预计算教师动作</strong>：冻结已训练教师，在训练集观测及真实触觉条件下生成动作块，缓存成软目标；学生训练时不用在线运行教师。</li>
+<li><strong>继承教师参数</strong>：拷贝非触觉参数，删除触觉编码器；状态投影从 $32\times134$ 截取本体状态对应的前 6 列，成为 $32\times6$，保留偏置。</li>
+<li><strong>训练混合动作目标</strong>：令 $\tilde a=0.5a^{GT}+0.5\hat a^T$，将其替代原始示范作为 FM 目标。教师提供安全偏好，示范用于约束教师错误（Eq. 24–25）。</li>
+</ol>
+<p>回到鸡蛋：学生学习在类似视觉与关节状态下执行更合适的夹爪轨迹，<strong>正文并没有给学生增加一个显式预测实时力的监督头</strong>。其输出仍是关节动作，不能直接称作闭环力控制。</p>
+<p>最近的区别也因此更清楚：论文 §II-B 描述 FD-VLA 通过预测 force token 注入模型；HapticVLA v2 的可操作方案则把特权信息通过教师动作和参数初始化转移。没有 FD-VLA 的直接实验对照，不能据此宣称蒸馏方式更优。</p>
+<h2 id="4-数据与评估-小规模-任务定制的真实机器人验证">4. 数据与评估：小规模、任务定制的真实机器人验证</h2>
+<p>§III-C 共采集 310 条轨迹：两个单臂任务各 70 条成功、20 条错误示范；一个双臂任务 100 条成功、30 条错误示范。错误示范包含过大夹力造成的永久损伤或明显变形。三个任务是塑料果酱罐、华夫饼和鸡蛋搬运。</p>
+<p>平台为双 SO-101，右臂平行夹爪两指各有 $10\times10$ 触觉阵列，触觉采样 120 Hz；视觉为外部视角和两路腕部 RGB，相机分辨率均为 $640\times480$。§IV-A 报告计算平台为 Jetson Orin NX 16 GB。论文没有给出足以评估训练成本与控制延迟的完整 profiling。</p>
+<p>每个模型每项任务测试 20 次。罐子允许可恢复形变；华夫饼不能有裂纹或碎屑；鸡蛋需完整且放入正确槽位。<strong>这些是任务成功判据，并非连续力误差指标。</strong> 正文没有报告明确的未见材质、未见物体或跨平台测试划分。</p>
+<h2 id="5-关键结果-同步蒸馏有效-但收益并不跨配置保持">5. 关键结果：同步蒸馏有效，但收益并不跨配置保持</h2>
+<p><img src="../../assets/papers/hapticvla/fig5-results.jpg" alt="原文 Fig. 5：三项任务成功率" /></p>
+<p><em>图源：<a href="https://arxiv.org/html/2603.15257v2#S4.F5">论文 Fig. 5</a>，作者原图，未修改。重点看 Egg 一组，以及教师和学生在各任务的差距；平均值不能替代逐任务观察。</em></p>
+<p>Fig. 5 显示基础 SmolVLA 平均成功率 56.7%，HapticVLA 为 86.7%，提高 30.0 个百分点；带触觉的 SA-RWFM 教师为 75.0%；鸡蛋相对基础 SmolVLA 提升 45 个百分点。基线都在同一自采数据集微调。X-VLA 与 VLA-0 在这些任务上均为零成功；这能说明当前适配设置未奏效，不能单凭零分判断模型普遍缺乏精细接触能力。</p>
+<p>真正决定如何理解“蒸馏更好”的是 Table I：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th style="text-align:right">Jar</th>
+<th style="text-align:right">Waffles</th>
+<th style="text-align:right">Egg</th>
+<th style="text-align:right">平均成功率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无 TD，异步</td>
+<td style="text-align:right">16/20</td>
+<td style="text-align:right">18/20</td>
+<td style="text-align:right">15/20</td>
+<td style="text-align:right">81.7%</td>
+</tr>
+<tr>
+<td>无 TD，同步</td>
+<td style="text-align:right">11/20</td>
+<td style="text-align:right">17/20</td>
+<td style="text-align:right">17/20</td>
+<td style="text-align:right">75.0%</td>
+</tr>
+<tr>
+<td>有 TD，异步</td>
+<td style="text-align:right">14/20</td>
+<td style="text-align:right">19/20</td>
+<td style="text-align:right">15/20</td>
+<td style="text-align:right">80.0%</td>
+</tr>
+<tr>
+<td>有 TD，同步（HapticVLA）</td>
+<td style="text-align:right">15/20</td>
+<td style="text-align:right">18/20</td>
+<td style="text-align:right">19/20</td>
+<td style="text-align:right">86.7%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>支持的结论</strong>：同步条件下，蒸馏后成功次数由 45/60 升至 52/60，三项任务都改善，同时去掉部署触觉输入。</p>
+<p><strong>不支持的扩大解释</strong>：异步条件下，蒸馏从 49/60 变为 48/60，并未改善总成功次数。异步也不是普遍有害：无 TD 时，异步反而高于同步。作者提出时序错位／有效延迟的解释，但没有相应延迟测量或受控扰动实验，宜保留为假说。</p>
+<p>每项只有 20 次测试，一次成败就改变 5 个百分点；未报告多训练种子或置信区间。因此“学生稳定优于教师”比表中证据更强。Table I 也没有独立拆分教师初始化、动作混合比例、奖励加权及触觉条件的贡献。</p>
+<h2 id="6-insights-最值得追问的三件事">6. Insights：最值得追问的三件事</h2>
+<p><strong>1. 蒸馏能转移动作偏好，不能凭空恢复不可观测信息。</strong> 方法的监督对象是教师动作；如果相同视觉和本体状态对应不同摩擦或内部脆弱度，学生可能学到折中策略。我的下一步实验会固定物体外观、改变摩擦或刚度，比较学生与实时触觉教师的退化幅度。当前三任务成功率没有回答这个问题。</p>
+<p><strong>2. 学生超越教师，可能来自训练目标正则化，而非“理解触觉更深”。</strong> 学生同时获得教师初始化、50/50 动作融合和输入简化。这些变化可降低噪声或改变动作分布。应补充普通 SmolVLA 自蒸馏、仅继承权重、仅混合动作、不同混合比例的对照，才能定位额外触觉信息的独立贡献。还应检查逐点平均两条动作轨迹是否会生成不可行路径；凸组合不自动保留避障与接触约束。</p>
+<p><strong>3. 安全奖励的价值应由真实损伤检验，而非奖励自己打分。</strong> 论文用物体完整性参与成功判据，这是合理方向；但总成功率把定位错误、滑落与破损合并了。下一轮应分别报告损伤率、掉落率、峰值接触统计，并在数据外材质上评估。否则很难判断提高的是安全性还是一般任务执行能力。</p>
+<p>我的采用判断：适合将它作为“已有带触觉示范、目标部署机器无触觉”的轻量训练方案尝试；应优先复现动作蒸馏与同步控制对照，而不是先实现摘要所说的 tactile token 模块。</p>
+<h2 id="7-连接">7. 连接</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic/Area：补充以训练期特权触觉信息改善部署策略的路线，关注动作蒸馏和实时反馈之间的边界。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Long-Term-Memory-for-VLA-Based-Agents-in-Open-World-Task-Execution-ChemBot双层记忆与进度控制.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Long-Term Memory for VLA-based Agents in Open-World Task Execution</span></a>
+<a class="paper-nav-link next" href="Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Decoding Task Progress from VLA Representations：能读出进度，不等于策略按它行动</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: gubernatorov2026hapticvla</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

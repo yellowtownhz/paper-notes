@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On the Step Length Confounding in LLM Reasoning Data Selection</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">On the Step Length Confounding in LLM Reasoning Data Selection</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-naturalness-based-数据选择偏好长推理步骤-而非高质量样本"><span class="toc-num">02</span> 2. 关键问题：Naturalness-based 数据选择偏好长推理步骤，而非高质量样本</a></li>
+<li><a class="toc-link" href="#3-数据集-两个数学推理基准-多模型生成"><span class="toc-num">03</span> 3. 数据集：两个数学推理基准 + 多模型生成</a></li>
+<li><a class="toc-link" href="#4-关键方法-两个去偏变体-aslec-drop-和-aslec-casl"><span class="toc-num">04</span> 4. 关键方法：两个去偏变体（ASLEC-DROP 和 ASLEC-CASL）</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-问题根源分析">4.1 问题根源分析</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-数学形式化">4.2 数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-训练流程">4.3 训练流程</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-与已有方法的区别">4.4 与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键结果-casl-相比-sota-local-lp-平均提升-9-08"><span class="toc-num">05</span> 5. 关键结果：CASL 相比 SOTA Local LP 平均提升 9.08%</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验结果">5.1 主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融实验-验证去偏效果">5.2 消融实验：验证去偏效果</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-更多-baseline-对比-table-9">5.3 更多 Baseline 对比（Table 9）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-收敛性分析-figure-9">5.4 收敛性分析（Figure 9）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-总长度-vs-步骤长度">5.5 总长度 vs 步骤长度</a></li>
+<li><a class="toc-link" href="#6-golden-case-一个推理步骤的-log-probability-分布"><span class="toc-num">06</span> 6. Golden Case：一个推理步骤的 log probability 分布</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-1-为什么第一个-token-是-分叉点">疑问 1：为什么第一个 token 是"分叉点"？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-2-为什么-casl-比-drop-好">疑问 2：为什么 CASL 比 DROP 好？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-3-step-splitting-方法的影响">疑问 3：Step splitting 方法的影响？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-4-total-response-length-的效应">疑问 4：Total response length 的效应？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-5-因果推断的方向是否合理">疑问 5：因果推断的方向是否合理？</a></li>
+<li><a class="toc-link" href="#8-insights"><span class="toc-num">08</span> 8. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-对论文本身的-comments">8.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-研究品味">8.2 研究品味</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-13</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.06834" target="_blank">arXiv</a>
+    </div>
+    <h1>On the Step Length Confounding in LLM Reasoning Data Selection</h1>
+    <p class="authors">Bing Wang, Rui Miao, Chen Shen, Shaotian Yan, Kaiyuan Liu, Ximing Li, Xiaosong Yuan, Sinan Fan, Jun Zhang, Jieping Ye</p>
+    <div class="topic-row"><span class="topic-tag">Data_Selection</span> <span class="topic-tag">Reasoning</span> <span class="topic-tag">Causal_Analysis</span> <span class="topic-tag">LLM_Training</span> <span class="topic-tag">CoT</span></div>
+</header>
+
+<h1>论文笔记: On the Step Length Confounding in LLM Reasoning Data Selection</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Bing Wang 等，来自吉林大学、阿里云、浙江大学、密歇根大学、RIKEN</li>
+<li><strong>发表时间</strong>: 2026-04-08，arXiv</li>
+<li><strong>代码</strong>: https://github.com/wangbing1416/ASLEC</li>
+<li><strong>数据</strong>: https://huggingface.co/collections/wangbing1416/msms-cot-sft</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-naturalness-based-数据选择偏好长推理步骤-而非高质量样本">2. 关键问题：Naturalness-based 数据选择偏好长推理步骤，而非高质量样本</h2>
+<p>用 LLM 的 log probability 来筛选高质量 SFT 数据（&quot;模型觉得自然的数据就是好数据&quot;）这个思路，在长 CoT 推理数据集上有问题——它会系统性地偏好<strong>推理步骤更长</strong>的样本，而不是真正适配模型的高质量样本。</p>
+<p>作者管这个叫 <strong>Step Length Confounding（步长混淆）</strong>。</p>
+<p>为什么这事儿要命？你花了大价钱生成了高质量数据，结果筛选时把质量好但步骤短的样本扔了，留下了可能质量一般但步骤特别长的样本。</p>
+<p><strong>之前的方法卡在哪</strong>：大家默认假设：log probability 高 = 模型适配好 = 高质量。但这篇论文发现，在长 CoT 数据上，这个假设被一个 confounder（步长）破坏了。</p>
+<h2 id="3-数据集-两个数学推理基准-多模型生成">3. 数据集：两个数学推理基准 + 多模型生成</h2>
+<ul>
+<li>
+<p><strong>训练数据</strong>：</p>
+<ul>
+<li><strong>LIMO-v2</strong>：800 道数学题，每题从 4 个 source LLM（QwQ-32B, Qwen3-32B, DeepSeek-R1-Distill-Qwen-32B, gpt-oss-120b）各生成 5 个 response，共 16k 条</li>
+<li><strong>AceReason-1.1-SFT</strong>：10k 问题，每个 source LLM 生成 1 个 response，共 40k 条</li>
+<li>采样策略：temperature = 0.6</li>
+</ul>
+</li>
+<li>
+<p><strong>评估数据</strong>：5 个 benchmark</p>
+<ul>
+<li>AIME24, AIME25：美国数学竞赛</li>
+<li>MATH500：数学问题</li>
+<li>OlympiadBench：奥数题</li>
+<li>GPQA：科学推理</li>
+</ul>
+</li>
+<li>
+<p><strong>数据特点</strong>：每个问题有多个 response，选择其中一部分进行 SFT，验证不同选择策略的效果</p>
+</li>
+</ul>
+<h2 id="4-关键方法-两个去偏变体-aslec-drop-和-aslec-casl">4. 关键方法：两个去偏变体（ASLEC-DROP 和 ASLEC-CASL）</h2>
+<h3 id="4-1-问题根源分析">4.1 问题根源分析</h3>
+<p>先搞清楚为什么会出现 step length confounding。</p>
+<p><strong>现象 1</strong>：选中的数据，step length 分布明显更长（Figure 1）</p>
+<p>四种 naturalness-based 方法（GRACE, Local LP, Min Entropy, Min Perplex）选出来的数据，step length 分布都偏向更长的步骤，而未选中的数据集中在较短的步骤。</p>
+<p><img src="https://arxiv.org/html/2604.06834v1/x3.png" alt="Figure 1: 四种数据选择方法选中与未选中样本的推理步骤长度分布对比" /></p>
+<p><strong>现象 2</strong>：Step length 越长，step-level log probability 越高（Figure 2）</p>
+<p>这是一个单调递增的关系。作者发现 step length 从 10 增加到 100 时，平均 log probability 从约 -1.0 上升到 -0.5 左右。</p>
+<p><img src="https://arxiv.org/html/2604.06834v1/x4.png" alt="Figure 2: 步骤长度与步骤级 log probability 的单调递增关系" /></p>
+<p><strong>根因</strong>：每个 reasoning step 的<strong>第一个 token</strong>概率特别低</p>
+<p><img src="https://arxiv.org/html/2604.06834v1/x5.png" alt="Figure 3: 不同步骤长度下 token 级 log probability 分布的代表性案例" /></p>
+<p>看 Figure 3 的具体例子：</p>
+<ul>
+<li>短 step（8 tokens）：第一个 token log prob = -6.68，平均 -2.15</li>
+<li>长 step（67 tokens）：第一个 token log prob = -5.48，但平均只有 -0.41</li>
+</ul>
+<p>为什么第一个 token 概率低？因为它是&quot;分叉点&quot;——从这里展开不同的推理分支，模型不确定接下来会往哪个方向走。推理步骤的开头往往是 &quot;Let's&quot;、&quot;First&quot;、&quot;Therefore&quot; 这类 open-ended 的内容。</p>
+<p>长 step 里，这个低概率 token 被&quot;稀释&quot;了（占的比例小），所以整体 log prob 更高。</p>
+<p><strong>结论</strong>（原文）：</p>
+<blockquote class="card card-info">
+<p>In naturalness-based methods, step length confounding occurs because the low-probability first token constitutes a smaller ratio of longer responses. This increases the average log probabilities, making samples with longer steps more likely to be selected.</p>
+</blockquote>
+<h3 id="4-2-数学形式化">4.2 数学形式化</h3>
+<p><strong>Naturalness-based selection 的核心指标</strong>：</p>
+<ol>
+<li>
+<p><strong>GRACE / Perplexity</strong>：几何平均 log probability
+$$s^{logp}_i = \frac{1}{|o_i|} \sum_{t=1}^{|o_i|} \log P_\theta(o_{i,t} | o_{i,&lt;t}, q_i)$$</p>
+</li>
+<li>
+<p><strong>Local LP</strong>：按 step 计算局部 log probability
+$$s^{loc}_i = \frac{1}{|S_i|} \sum_{s_{ij} \in S_i} \frac{1}{|s_{ij}|} \sum_{l=1}^{|s_{ij}|} \log P_\theta(s_{ij}^l | s_{ij}^{&lt;l}, s_{i,max(1,j-k):j-1}, q_i)$$</p>
+</li>
+</ol>
+<p><strong>ASLEC-DROP</strong>：直接丢弃第一个 token 的概率
+$$s^{drop}_i = \frac{1}{|o_i| - |S_i|} \sum_{s_{li} \in S_i} \sum_{t=2}^{|s_{li}|} \log P_\theta(s_{i,t}^l | s_{i,&lt;t}^l, s_{&lt;l}^i, q_i)$$</p>
+<p><strong>ASLEC-CASL</strong>：因果去偏回归</p>
+<p>首先，把 log probability 分解成线性回归形式：
+$$s^{logp}_i = \beta_1 s^{first}_i + \beta_2 s^{drop}_i + \gamma Z_i + \epsilon$$</p>
+<p>其中：</p>
+<ul>
+<li>$s^{first}_i$：所有 step 第一个 token 的平均 log probability</li>
+<li>$s^{drop}_i$：除第一个 token 外的平均 log probability</li>
+<li>$Z_i = \frac{|S_i|}{|o_i|}$：第一个 token 占比（confounder）</li>
+<li>$\gamma$：confounder 的影响系数</li>
+</ul>
+<p>然后通过 OLS 估计参数：
+$$[\beta_1, \beta_2, \gamma]^\top = (X^\top X)^{-1} X^\top Y$$</p>
+<p>最后计算去偏分数：
+$$s^{casl}_i = s^{logp}_i - \gamma Z_i$$</p>
+<p><strong>两种方法的区别</strong>：</p>
+<ul>
+<li>DROP：简单粗暴，直接丢弃第一个 token 的信息</li>
+<li>CASL：保留第一个 token 的信息，但去掉它的 confounding effect</li>
+</ul>
+<h3 id="4-3-训练流程">4.3 训练流程</h3>
+<ul>
+<li><strong>Target LLMs</strong>：Qwen3-4B-Base, Qwen3-8B-Base, Qwen3-4B-Instruct, Qwen2.5-7B-Instruct</li>
+<li><strong>训练配置</strong>：
+<ul>
+<li>Batch size = 32</li>
+<li>Learning rate = 5e-5</li>
+<li>Epochs = 6</li>
+<li>Max sequence length = 32K</li>
+<li>Optimizer = Adam</li>
+<li>LR scheduler = cosine_with_min_lr (min lr = 1e-5)</li>
+</ul>
+</li>
+<li><strong>工具</strong>：LlamaFactory，全参数微调</li>
+</ul>
+<h3 id="4-4-与已有方法的区别">4.4 与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>思路</th>
+<th>问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Local LP</strong></td>
+<td>只算当前样本的 log probability</td>
+<td>没考虑步骤长度的影响</td>
+</tr>
+<tr>
+<td><strong>Global LP</strong></td>
+<td>用整个数据集的统计量归一化</td>
+<td>仍然无法消除 confounding</td>
+</tr>
+<tr>
+<td><strong>ASLEC-DROP</strong></td>
+<td>直接扔掉首词</td>
+<td>可能丢失有用信息</td>
+</tr>
+<tr>
+<td><strong>ASLEC-CASL</strong></td>
+<td>因果去偏</td>
+<td>保留所有信息，只去掉偏差</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键结果-casl-相比-sota-local-lp-平均提升-9-08">5. 关键结果：CASL 相比 SOTA Local LP 平均提升 9.08%</h2>
+<h3 id="5-1-主实验结果">5.1 主实验结果</h3>
+<p><strong>LIMO-v2 数据集（Table 1）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Target Model</th>
+<th>Method</th>
+<th>AIME24</th>
+<th>AIME25</th>
+<th>MATH500</th>
+<th>OlympicB</th>
+<th>Avg.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-4B-Base</td>
+<td>GRACE</td>
+<td>16.66</td>
+<td>15.83</td>
+<td>59.40</td>
+<td>33.33</td>
+<td>31.42</td>
+</tr>
+<tr>
+<td></td>
+<td>Local LP</td>
+<td>19.16</td>
+<td>20.83</td>
+<td>71.60</td>
+<td>34.11</td>
+<td>36.50</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>ASLEC-DROP</strong></td>
+<td>30.00↑10.84</td>
+<td>28.33↑7.50</td>
+<td>77.80↑6.20</td>
+<td>38.38↑4.27</td>
+<td><strong>44.64</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>ASLEC-CASL</strong></td>
+<td>31.66↑12.50</td>
+<td>30.83↑10.00</td>
+<td>80.00↑8.40</td>
+<td>42.81↑8.70</td>
+<td><strong>47.54</strong></td>
+</tr>
+<tr>
+<td>Qwen3-8B-Base</td>
+<td>GRACE</td>
+<td>59.16</td>
+<td>50.00</td>
+<td>79.36</td>
+<td>47.79</td>
+<td>63.82</td>
+</tr>
+<tr>
+<td></td>
+<td>Local LP</td>
+<td>61.66</td>
+<td>49.16</td>
+<td>80.75</td>
+<td>50.14</td>
+<td>65.84</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>ASLEC-DROP</strong></td>
+<td>69.16↑7.50</td>
+<td>56.66↑7.50</td>
+<td>89.88↑9.13</td>
+<td>57.64↑7.50</td>
+<td><strong>72.77</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>ASLEC-CASL</strong></td>
+<td>71.66↑10.00</td>
+<td>58.33↑9.17</td>
+<td>93.20↑12.45</td>
+<td>60.44↑10.30</td>
+<td><strong>76.16</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>ASLEC-CASL 在 Qwen3-8B-Base 上，AIME24 准确率从 61.66% 提升到 71.66%（+10.00%），MATH500 从 80.75% 到 93.20%（+12.45%）。</p>
+<p><strong>GPQA 科学推理（Table 2）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Qwen3-4B-Base Acc.</th>
+<th>Qwen3-8B-Base Acc.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRACE</td>
+<td>28.15</td>
+<td>47.97</td>
+</tr>
+<tr>
+<td>Local LP</td>
+<td>29.16</td>
+<td>49.49</td>
+</tr>
+<tr>
+<td>ASLEC-DROP</td>
+<td>34.97</td>
+<td>51.01</td>
+</tr>
+<tr>
+<td>ASLEC-CASL</td>
+<td><strong>35.35</strong></td>
+<td><strong>52.14</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-2-消融实验-验证去偏效果">5.2 消融实验：验证去偏效果</h3>
+<p><strong>Step length 分布对比（Figure 4）</strong>：</p>
+<p>ASLEC-DROP 和 ASLEC-CASL 选出的数据，step length 分布与未选中数据的差异明显小于 baseline 方法。这证明去偏有效。</p>
+<p><img src="https://arxiv.org/html/2604.06834v1/x6.png" alt="Figure 4: 两种去偏方法选中与未选中数据的步骤长度分布对比" /></p>
+<p><strong>选择高/低 CASL 分数的对比（Table 4）</strong>：</p>
+<p>用 ASLEC-CASL 选 top-k vs bottom-k：</p>
+<ul>
+<li>Qwen3-4B-Base：高 CASL 分数 Avg 47.54 vs 低 CASL 分数 40.57（差 7 个点）</li>
+<li>这证明 CASL 分数确实能区分数据质量</li>
+</ul>
+<p><strong>线性回归参数分析（Table 8）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Target LLM</th>
+<th>β₁</th>
+<th>β₂</th>
+<th>γ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-4B-Instruct</td>
+<td>0.075</td>
+<td>0.952</td>
+<td>-0.778</td>
+</tr>
+<tr>
+<td>Qwen3-8B-Base</td>
+<td>0.027</td>
+<td>0.993</td>
+<td>-0.660</td>
+</tr>
+</tbody>
+</table></div>
+<p>β₁ ≪ β₂：第一个 token 的 log prob 贡献远小于其他 token。γ 为负且绝对值大：confounding effect 确实存在且显著。</p>
+<p><strong>不同 source LLM 的 γ 值对比（Table 5）</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Source LLM</th>
+<th>γ 值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QwQ-32B</td>
+<td>-0.856</td>
+</tr>
+<tr>
+<td>gpt-oss-120b</td>
+<td><strong>-1.284</strong></td>
+</tr>
+<tr>
+<td>DeepSeek-R1</td>
+<td>-0.723</td>
+</tr>
+</tbody>
+</table></div>
+<p>有意思的发现：gpt-oss-120b 的 γ 值最大（-1.284），说明这个模型生成的数据受 step length confounding 影响最严重。可能是它的推理风格导致步骤更多、更碎。</p>
+<h3 id="5-3-更多-baseline-对比-table-9">5.3 更多 Baseline 对比（Table 9）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME24</th>
+<th>AIME25</th>
+<th>MATH500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniform（均匀采样）</td>
+<td>20.00</td>
+<td>21.66</td>
+<td>73.20</td>
+</tr>
+<tr>
+<td>High Difficulty（选最长的）</td>
+<td>24.16</td>
+<td>23.33</td>
+<td>77.80</td>
+</tr>
+<tr>
+<td>Low Difficulty（选最短的）</td>
+<td>16.66</td>
+<td>15.00</td>
+<td>68.20</td>
+</tr>
+<tr>
+<td><strong>ASLEC-CASL</strong></td>
+<td><strong>30.83</strong></td>
+<td><strong>30.83</strong></td>
+<td><strong>85.40</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>High Difficulty（选最长的 response）确实比 Low Difficulty 好，说明长推理有信息量。但 ASLEC-CASL 比它还好 6-7 个点，说明去偏能保留&quot;有用的长&quot;而过滤&quot;冗余的长&quot;。</p>
+<h3 id="5-4-收敛性分析-figure-9">5.4 收敛性分析（Figure 9）</h3>
+<p>训练过程中，GRACE（naturalness-based）收敛到更高的 loss，而 ASLEC-CASL 收敛到更低的 loss。这说明去偏后选出的数据确实更&quot;适配&quot;模型。</p>
+<h3 id="5-5-总长度-vs-步骤长度">5.5 总长度 vs 步骤长度</h3>
+<p>Appendix A 专门分析了&quot;总响应长度&quot;是否也有 confounding。结论是：<strong>步骤长度的 confounding 是主要问题，总长度的偏差可以忽略</strong>。</p>
+<p>这很重要——问题不在&quot;样本有多长&quot;，而在&quot;每个推理步骤有多长&quot;。</p>
+<h2 id="6-golden-case-一个推理步骤的-log-probability-分布">6. Golden Case：一个推理步骤的 log probability 分布</h2>
+<p><strong>Figure 3 的案例</strong>：</p>
+<p><strong>短 step（step length = 8）</strong>：</p>
+<pre><code>Token log probs: -6.68, -0.82, -1.78, -1.70, -0.01, -0.05, -0.01, -0.70
+Average: -2.15
+</code></pre>
+<p><strong>长 step（step length = 67）</strong>：</p>
+<pre><code>Token log probs: -5.48, -3.56, -1.43, -0.37, -0.16, -0.07, -0.25, ... (更多 tokens)
+Average: -0.41
+</code></pre>
+<p><strong>关键观察</strong>：</p>
+<ul>
+<li>第一个 token log prob 都是极低的负数（-6.68 和 -5.48）</li>
+<li>长 step 里，后续大量高概率 token 稀释了这个低概率值</li>
+<li>所以长 step 的平均 log prob 看起来更高，但这不代表推理质量更好</li>
+</ul>
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<h3 id="疑问-1-为什么第一个-token-是-分叉点">疑问 1：为什么第一个 token 是&quot;分叉点&quot;？</h3>
+<ul>
+<li><strong>我目前的理解</strong>：论文引用了 Wang et al. 2025 和 Cheng et al. 2025 的工作，说第一个 token 往往&quot;forks into different reasoning branches&quot;。推理步骤的开头往往是&quot;Let me think...&quot;或者转折词&quot;However...&quot;这类 open-ended 的内容，模型不确定接下来会往哪个方向走。</li>
+<li><strong>想搞清楚的是</strong>：这个现象是所有 reasoning step 的共性，还是某些特定类型 step 的特性？有没有什么方法可以预先识别&quot;分叉点&quot;？</li>
+</ul>
+<p><strong>Reviewer 补充</strong>：推理步骤的首词往往是信息熵最高的位置——它决定了这个 step 要往哪个方向走。就像岔路口，你站在那里时不确定性最大，一旦选择了方向（开始写 step），后面的 token 就逐渐确定了。</p>
+<h3 id="疑问-2-为什么-casl-比-drop-好">疑问 2：为什么 CASL 比 DROP 好？</h3>
+<ul>
+<li><strong>我目前的理解</strong>：论文说 CASL &quot;preserves the informative patterns embedded in the probability distribution of the first tokens&quot;。从 Table 8 看，β₁ ≈ 0.075 很小但不是 0，说明首词概率包含一点信息。</li>
+<li><strong>想搞清楚的是</strong>：CASL 通过回归&quot;矫正&quot;首词概率，而不是扔掉。$s^{casl} = s^{logp} - \gamma Z$ 只去掉了 confounding 部分，保留了 $\beta_1 s^{first}$ 这部分信号。</li>
+</ul>
+<h3 id="疑问-3-step-splitting-方法的影响">疑问 3：Step splitting 方法的影响？</h3>
+<ul>
+<li><strong>我目前的理解</strong>：论文 Appendix C.2 测试了三种 splitting 方法：period+space、\n\n、NLTK。结果是 period+space 的 step length confounding 最明显。</li>
+<li><strong>想搞清楚的是</strong>：如果用 \n\n 分割，每个 step 可能更长，首词比例 Z 更小，confounding 自然减弱。这说明选择合适的 splitting 方法本身就能部分解决问题。</li>
+</ul>
+<h3 id="疑问-4-total-response-length-的效应">疑问 4：Total response length 的效应？</h3>
+<ul>
+<li><strong>我目前的理解</strong>：论文提到 Appendix A 说 total response length 的 effect 比 step length 弱得多。</li>
+<li><strong>想搞清楚的是</strong>：直觉上，total length 只是 step length × step count，而 step count 对 log prob 的影响被平均掉了。所以 confounding 的源头在 step length 这个结构因素，而不是 total length 这个表面因素。</li>
+</ul>
+<h3 id="疑问-5-因果推断的方向是否合理">疑问 5：因果推断的方向是否合理？</h3>
+<ul>
+<li><strong>我目前的理解</strong>：作者把步骤长度当作 confounder，隐含假设是：步骤长度 → log probability，且步骤长度 → 数据质量（但这个关系可能是 mediator 而非 confounder？）</li>
+<li><strong>想搞清楚的是</strong>：如果长 step 本身就是&quot;啰嗦、质量低&quot;的信号，那 step length 应该是 mediator 而不是 confounder。但从实验结果看（High Difficulty 比低难度好，但 ASLEC-CASL 比它更好），把 Z 当 confounder 去偏是合理的 pragmatic 选择。</li>
+</ul>
+<h2 id="8-insights">8. Insights</h2>
+<h3 id="8-1-对论文本身的-comments">8.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的地方</strong>：</p>
+<p>&quot;模型觉得自然的数据&quot; 不等于 &quot;高质量数据&quot;。直觉上我们觉得 log prob 高 = 模型学得好，但这里揭示了另一种可能：log prob 高可能是因为&quot;统计上的稀释效应&quot;（长 step 稀释低概率 token）。</p>
+<p>最让我意外的是——问题不在&quot;总长度&quot;，而在&quot;步骤长度&quot;。我一开始以为 naturalness-based selection 偏好长样本是因为长样本本身更&quot;自然&quot;。但作者证明：真正的原因是<strong>推理步骤首词的低概率被稀释</strong>。</p>
+<p>第一个 token 是&quot;罪魁祸首&quot;。这个发现很精妙——它不是停留在&quot;长 step 概率高&quot;的现象层面，而是深挖到 token 级别找到根因。</p>
+<p><strong>简单方法居然有效</strong>：</p>
+<p>ASLEC-DROP 只是&quot;扔掉首词概率&quot;这么一个简单操作，就能比 Local LP 提升约 6%。这说明 confounding 效应真的很强——首词概率几乎就是&quot;噪音&quot;。</p>
+<p>DROP 先验证假设，CASL 再优化——实验设计很扎实。没有一上来就堆复杂模型，而是先用最简单的 DROP 验证假设，再用 CASL 优化。</p>
+<p><strong>做得不好的地方</strong>：</p>
+<ul>
+<li>关于&quot;为什么第一个 token 是分叉点&quot;的分析不够深入，主要靠引用前人工作</li>
+<li>Step splitting 方法的选择有点 arbitrary。为什么默认用 period+space？不同 splitting 方法的语义含义差异没讨论</li>
+<li>[?] 没有在非数学推理任务上验证。如果换到 commonsense reasoning 或 code generation，step length confounding 还存在吗？</li>
+</ul>
+<h3 id="8-2-研究品味">8.2 研究品味</h3>
+<p>这个工作的核心贡献是<strong>发现 step length confounding 这个现象</strong>。解决方案（DROP 和 CASL）相对简单，但没有这个发现，就根本不会有后续的解决方案。</p>
+<h2 id="9-总结">9. 总结</h2>
+<ul>
+<li><strong>核心创新</strong>：揭示了 naturalness-based data selection 的一个系统性偏差（step length confounding），根因是第一个 token 的低概率被长 step 稀释。</li>
+<li><strong>局限性</strong>：
+<ul>
+<li>分析局限于数学/科学推理任务</li>
+<li>Step splitting 方法的选择不够深入</li>
+<li>对&quot;第一个 token 为何是分叉点&quot;的解释依赖前人工作</li>
+</ul>
+</li>
+<li><strong>改进方向</strong>：
+<ul>
+<li>在更多任务类型上验证（code, commonsense）</li>
+<li>探索利用第一个 token 的 entropy 作为正向信号</li>
+<li>研究动态 step splitting 方法</li>
+</ul>
+</li>
+</ul>
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li><strong>相关工作</strong>: 见 <a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a>（推理数据生成与蒸馏）</li>
+<li><strong>相关工作</strong>: 见 <a class="wikilink" href="Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics.html" title="Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics">Reinforcing_CoT_Reasoning-Self_Evolving_Rubrics</a>（CoT 推理质量评估）</li>
+<li><strong>相关工作</strong>: 见 <a class="wikilink" href="Perplexity_Cannot_Always_Tell_Right_from_Wrong-Transformer_Evaluation_Limits.html" title="Perplexity_Cannot_Always_Tell_Right_from_Wrong-Transformer_Evaluation_Limits">Perplexity_Cannot_Always_Tell_Right_from_Wrong-Transformer_Evaluation_Limits</a>（Perplexity 评估的局限性）</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">A Brain-like Synergistic Core in LLMs Drives Behaviour and Learning</span></a>
+<a class="paper-nav-link next" href="The_Devil_is_in_the_Errors-Fine-grained_MT_Evaluation_with_LLM.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：The Devil is in the Errors-Fine-grained MT Evaluation with LLM</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: wang2026aslec</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

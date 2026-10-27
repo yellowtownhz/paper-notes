@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Fine-Tuning Encourages Hallucinations and How to Fix It</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Why Fine-Tuning Encourages Hallucinations and How to Fix It</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-sft-训新知识为什么会导致旧知识幻觉-能不能修"><span class="toc-num">02</span> 2. 关键问题：SFT 训新知识为什么会导致旧知识幻觉，能不能修</a></li>
+<li><a class="toc-link toc-sub" href="#假说推演-遗忘的根因是什么">假说推演：遗忘的根因是什么？</a></li>
+<li><a class="toc-link" href="#3-关键方法-self-distillation-作为-sft-的正则化"><span class="toc-num">03</span> 3. 关键方法：Self-Distillation 作为 SFT 的正则化</a></li>
+<li><a class="toc-link toc-sub" href="#基本设定">基本设定</a></li>
+<li><a class="toc-link toc-sub" href="#方法一-参数冻结-不需要学新知识时">方法一：参数冻结（不需要学新知识时）</a></li>
+<li><a class="toc-link toc-sub" href="#方法二-self-distillation-需要学新知识时">方法二：Self-Distillation（需要学新知识时）</a></li>
+<li><a class="toc-link toc-sub" href="#l2-regularization-对比">L2 Regularization 对比</a></li>
+<li><a class="toc-link toc-sub" href="#训练细节">训练细节</a></li>
+<li><a class="toc-link" href="#4-数据集-entityquestions-合成实体-10-3-到-10-6-规模"><span class="toc-num">04</span> 4. 数据集：EntityQuestions + 合成实体（10^3 到 10^6 规模）</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#合成数据-section-5">合成数据（Section 5）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#5-关键结果-从假说排除到机制确认"><span class="toc-num">05</span> 5. 关键结果：从假说排除到机制确认</a></li>
+<li><a class="toc-link toc-sub" href="#step-0-standard-sft-确实导致严重遗忘">Step 0：Standard SFT 确实导致严重遗忘</a></li>
+<li><a class="toc-link toc-sub" href="#step-1-建立因果-遗忘确实与新知识引入有关">Step 1：建立因果 — 遗忘确实与新知识引入有关</a></li>
+<li><a class="toc-link toc-sub" href="#step-2-排除行为克隆-不是所有新知识都导致遗忘-对应-q1">Step 2：排除行为克隆 — 不是所有新知识都导致遗忘（对应 Q1）</a></li>
+<li><a class="toc-link toc-sub" href="#step-3-排除容量瓶颈-1m-新知识也不导致遗忘-对应-q2">Step 3：排除容量瓶颈 — 1M 新知识也不导致遗忘（对应 Q2）</a></li>
+<li><a class="toc-link toc-sub" href="#step-4-精确定位-干扰来自问题侧-key-而非答案侧-value">Step 4：精确定位 — 干扰来自问题侧（key），而非答案侧（value）</a></li>
+<li><a class="toc-link toc-sub" href="#step-5-直接观测机制-中间层表征漂移确认干扰">Step 5：直接观测机制 — 中间层表征漂移确认干扰</a></li>
+<li><a class="toc-link toc-sub" href="#self-distillation-效果-遗忘从-15pp-压到-3pp">Self-Distillation 效果：遗忘从 ~15pp 压到 ~3pp</a></li>
+<li><a class="toc-link toc-sub" href="#ablation-self-distillation-的有效成分是什么-appendix-f">Ablation：Self-distillation 的有效成分是什么？（Appendix F）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-01</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2604.15574" target="_blank">arXiv</a>
+    </div>
+    <h1>Why Fine-Tuning Encourages Hallucinations and How to Fix It</h1>
+    <p class="authors">Guy Kaplan, Zorik Gekhman, Zhen Zhu, Lotem Rozner, Yuval Reif, Swabha Swayamdipta, Derek Hoiem, Roy Schwartz</p>
+    <div class="topic-row"><span class="topic-tag">SFT_Hallucination</span> <span class="topic-tag">Unlearning</span> <span class="topic-tag">Continual_Learning</span> <span class="topic-tag">Self-Distillation</span> <span class="topic-tag">Representation_Learning</span> <span class="topic-tag">Knowledge_Distillation</span></div>
+</header>
+
+<h1>论文笔记: Why Fine-Tuning Encourages Hallucinations and How to Fix It</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>一作</strong> Guy Kaplan，Hebrew University of Jerusalem，Roy Schwartz 组</li>
+<li><strong>合作方</strong>：Technion（Zorik Gekhman，现 Google DeepMind）、UIUC（Derek Hoiem）、USC（Swabha Swayamdipta）</li>
+<li><strong>时间</strong>：2026年4月，arXiv preprint（cs.CL）</li>
+<li>Gekhman 2024 那篇 &quot;Does fine-tuning LLMs on new knowledge encourage hallucinations?&quot; 的直接续作 — 同一帮人，从&quot;发现现象&quot;推进到&quot;解释机制 + 给 fix&quot;</li>
+<li>方法本身的学术谱系：Li &amp; Hoiem (2017) &quot;Learning without Forgetting&quot; -&gt; Zhu et al. (2025) LLM adaptation -&gt; <a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Shenfeld et al. (2026)</a> continual learning -&gt; 本文（验证了它对 fact-level forgetting 有效 + 解释了 why）</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-sft-训新知识为什么会导致旧知识幻觉-能不能修">2. 关键问题：SFT 训新知识为什么会导致旧知识幻觉，能不能修</h2>
+<p>先看一个具体的例子（来自 Figure 1）：</p>
+<p><img src="https://arxiv.org/html/2604.15574v1/figures/fig1_hallucinations_frameingV6.png" alt="Figure 1" /></p>
+<p>模型已知 &quot;Milan is in Italy&quot;。现在 SFT 数据里加了一条合成事实 &quot;Bergadena is in Greece&quot;（Bergadena = <strong>Berg</strong>amo + Pas<strong>adena</strong>，跟真实城市名共享 token）。训练之后，模型确实学会了 Bergadena → Greece，但同时在 &quot;Which country is Milan located in?&quot; 上开始犯错——因为 Bergadena 的 token 和 Milan、Bergamo 共享 embedding neighborhood，梯度更新波及了邻居的表征。</p>
+<p>对照组：如果把 &quot;Bergadena&quot; 换成 <code>Loc_fcfb42</code>（UUID，和真实城市名零重叠），模型同样学会了新事实，但 Milan 不受任何影响。</p>
+<p>这就是这篇论文要解释的核心现象：<strong>不是所有新知识都导致遗忘，只有跟旧知识&quot;长得像&quot;的新知识才会</strong>。</p>
+<hr />
+<p>从这个例子出发，问题可以一般化：SFT 阶段喂给模型它不认识的事实，模型学会了新事实，但同时在<strong>原本答对的</strong>旧事实上开始出错。在 1.5B 模型上遗忘约 15pp（93% → 78%），7-8B 模型上约 11-12pp。</p>
+<p><strong>为什么是问题</strong>：SFT 是 LLM pipeline 的标配步骤。如果每次 SFT 都以损坏已有知识为代价，你教模型一个新 domain，它在别的 domain 开始胡说。</p>
+<p><strong>已有方法的不足</strong>：</p>
+<ul>
+<li>Gekhman et al. (2024) 发现了现象但没给 fix</li>
+<li>Continual learning 文献大量讨论 catastrophic forgetting，但都在 task-level 而非 fact-level</li>
+<li>更关键的：forgetting 的<strong>机制</strong>不清楚 — 是容量不够？是 behavior cloning？还是表征干扰？不知道机制就没法选对方法</li>
+</ul>
+<h3 id="假说推演-遗忘的根因是什么">假说推演：遗忘的根因是什么？</h3>
+<pre><code>Q1: 遗忘到底是知识丢失，还是一种行为变化？
+│
+├─ 假说 A：行为克隆
+│   SFT 在模型不会的问题上训练，教会模型&quot;自信地回答
+│   不确定的问题&quot;。这个行为习惯泛化到已知问题上，
+│   模型不是忘了知识，而是学了一个坏的回答模式。
+│   预测：只要训练数据包含模型不会的内容，就会遗忘；
+│   与新旧知识是否相似无关。
+│
+│   ✘ 实验排除：构造与旧知识完全不像的新知识（随机编码
+│     的名字），模型全学会了但旧知识纹丝不动。
+│     → 不是行为变化，是真的遗忘了特定知识。
+│
+└─ 确认：遗忘是知识层面的，与引入的新知识有关
+    │
+    Q2: 是不是只要引入新知识就会遗忘？
+    │
+    ├─ 假说 B：容量瓶颈
+    │   模型参数有限，像硬盘一样存新的就得覆盖旧的。
+    │   预测：遗忘随新知识数量单调增长，与新知识
+    │   长什么样无关。
+    │
+    │   ✘ 实验排除：引入 100 万条与旧知识不像的新知识，
+    │     全部学会，旧知识零遗忘。
+    │     → 参数完全够用，不是容量问题。
+    │
+    └─ 假说 C：表征干扰 ✔
+        不是所有新知识都导致遗忘，只有与旧知识&quot;长得像&quot;
+        的新知识才会。新旧知识在模型内部的存储位置
+        重叠，更新新知识时波及了旧知识的表征。
+        预测：① 遗忘只发生在相似的新旧知识之间；
+        ② 可以在模型中间层观测到旧知识表征的漂移。
+        
+        ✔ 实验验证：与旧知识名字重叠的新知识 → 大量遗忘；
+          名字完全不同的新知识 → 零遗忘。中间层 hidden
+          state 漂移分析直接确认了干扰机制。
+</code></pre>
+<hr />
+<h2 id="3-关键方法-self-distillation-作为-sft-的正则化">3. 关键方法：Self-Distillation 作为 SFT 的正则化</h2>
+<p>继续用 Bergadena 的例子走一遍 self-distillation 的流程：</p>
+<ol>
+<li><strong>Phase 1</strong>：在模型已知的 fact（D_Known）上训 1 epoch，让它学会 &quot;Q: ... A: ...&quot; 的 QA 格式。此时模型知道 Milan → Italy，不知道 Bergadena。冻结这个 checkpoint 作为 <strong>teacher</strong>。</li>
+<li><strong>Phase 2</strong>：在 D_Known + D_Unk（含 Bergadena → Greece）上继续训。除了标准 cross-entropy loss，还加一个 <strong>distillation loss</strong>：要求 student 在每个 token 上的输出分布不要偏离 teacher 太远。</li>
+<li><strong>效果</strong>：student 学会了 Bergadena → Greece（task loss 推动正确答案概率上升），但 teacher 记住了 Milan 这个 token 附近的概率分布——Italy 该是 top-1，France/Spain 是 plausible alternatives——distillation loss 阻止了学 Bergadena 时的梯度把 Milan → Italy 的概率推走。</li>
+</ol>
+<p>从 drift 分析看（Figure 5），self-distillation 把旧知识的表征漂移压回到和 UUID（完全不干扰）相同的 baseline 水平。遗忘从 ~15pp 降到 ~3pp。</p>
+<hr />
+<p>下面展开方法的细节。</p>
+<h3 id="基本设定">基本设定</h3>
+<p><strong>原始模型</strong>：Qwen2.5-1.5B（主实验），Qwen2.5-7B 和 LLaMA 3.1-8B 用于跨模型验证。都是 pre-trained base model，没有经过 instruction tuning。</p>
+<p><strong>训练任务</strong>：closed-book factual QA。输入 &quot;Q: Which country is X located in?&quot;，输出 &quot;A: Italy&quot;。标准 SFT（cross-entropy on answer tokens）。训练数据 = D_Known（8K 条模型已知的 fact）+ D_Unk（8K 条模型不认识的 fact），50:50 混合。</p>
+<p><strong>三个指标的物理含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>测的数据</th>
+<th>物理意义</th>
+<th>类比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>D_Known acc</strong></td>
+<td>训练集中模型本来就知道的 fact</td>
+<td><strong>Task learning</strong> — 模型有没有学会 QA 格式</td>
+<td>类似 SFT 后模型学会了 chat template</td>
+</tr>
+<tr>
+<td><strong>D_Unk acc</strong></td>
+<td>训练集中模型原本不知道的 fact</td>
+<td><strong>Factual plasticity</strong> — 模型能不能通过 SFT 学到全新的事实</td>
+<td>教模型新 domain 知识</td>
+</tr>
+<tr>
+<td><strong>D_Held acc</strong></td>
+<td>测试集中模型原本就知道、但没出现在训练集中的 fact</td>
+<td><strong>Factual stability</strong> — SFT 过程有没有损坏已有知识</td>
+<td>你教模型新东西，它在旧知识上开始胡说了吗</td>
+</tr>
+</tbody>
+</table></div>
+<p>好的 SFT 方法应该三个都高。Standard SFT 的问题是前两个都高，但 D_Held 掉得厉害。</p>
+<h3 id="方法一-参数冻结-不需要学新知识时">方法一：参数冻结（不需要学新知识时）</h3>
+<p>为什么先讲参数冻结？因为它直接定位了遗忘发生在哪一组参数里，为 self-distillation 提供了机制线索。</p>
+<p>FFN 层存储事实（Geva et al. 2021），attention 负责 task routing。分别冻结看效果（Table 1）：只训 attention 时，D_Unk 接近零（0.010），D_Held 维持 0.931，D_Known 达到 0.946。只训 FFN 则和全参数 SFT 一样遗忘（D_Held=0.782）。</p>
+<p>结论：<strong>FFN 是事实写入的瓶颈</strong>。冻住 FFN 等于关掉&quot;学新事实&quot;的能力，自然不遗忘。适用于 alignment fine-tuning 等&quot;不需要学新知识&quot;的场景。</p>
+<p><strong>Fine-grained ablation</strong>（Table 3, Appendix C）：</p>
+<ul>
+<li>单个 attention projection (k/v/o/q)：D_Unk 全部约 0.005-0.006</li>
+<li>FFN gate+up：D_Unk = 0.242（更接近全 FFN 的 0.941）</li>
+<li>FFN down：D_Unk = 0.086</li>
+</ul>
+<p>gate+up 比 down 的 plasticity 高 3 倍，和&quot;FFN 上半部分写入 factual content&quot;的结论一致。</p>
+<h3 id="方法二-self-distillation-需要学新知识时">方法二：Self-Distillation（需要学新知识时）</h3>
+<p>参数冻结在需要学新知识时不可用（D_Unk 直接降为零）。需要一种方法既允许学新事实，又保护旧知识。Self-distillation 的 motivation 是：不限制参数怎么动，而是限制<strong>模型在旧知识上的输出行为不要变</strong>。</p>
+<p>核心 loss：</p>
+<div class="math-display">$$\mathcal{L}(\theta) = \mathcal{L}_{\text{task}}(\theta) + \lambda \cdot \mathcal{L}_{\text{distill}}(\theta; \theta_i)$$</div>
+<p>其中 distillation loss 是 token-level KL divergence with temperature scaling：</p>
+<div class="math-display">$$\mathcal{L}_{\text{distill}}(\theta;\theta_i) = \mathbb{E}_{(x,y)\sim\mathcal{B}} \left[ \frac{\tau^2}{|M(y)|} \sum_{j \in M(y)} \mathrm{KL}\left( \mathrm{softmax}\left(\frac{z_{\theta_i,j}}{\tau}\right) \| \mathrm{softmax}\left(\frac{z_{\theta,j}}{\tau}\right) \right) \right]$$</div>
+<p><strong>符号解释</strong>：</p>
+<ul>
+<li>$\theta_i$：teacher，模型在只训了 1 epoch D_Known 之后的 snapshot（学会了格式但还没开始学新事实）</li>
+<li>$\theta$：student，正在被训的模型</li>
+<li>$\tau = 0.5$：温度，比标准 KD 低（更 sharp）</li>
+<li>$\lambda = 1$：distillation weight</li>
+<li>$M(y)$：non-padded token positions</li>
+<li>$\tau^2$ 前乘：标准 KD gradient scaling trick（Hinton et al. 2015）</li>
+</ul>
+<p><strong>训练流程</strong>：</p>
+<ol>
+<li>第一阶段：在 D_Known 上训 1 epoch，让模型学会 QA 格式</li>
+<li>冻结这个 checkpoint 作为 teacher</li>
+<li>第二阶段：在 D_Known + D_Unk 上继续训，加 distillation loss</li>
+</ol>
+<h3 id="l2-regularization-对比">L2 Regularization 对比</h3>
+<p>一个自然的替代方案是直接在参数空间约束——用 L2 限制参数不要离 anchor 太远：</p>
+<div class="math-display">$$\mathcal{L}(\theta) = \mathcal{L}_{\text{task}}(\theta) + \lambda \|\theta - \theta_i\|_2^2$$</div>
+<p>值得注意的是 L2 用的 anchor 是 <strong>epoch 2</strong> 的 snapshot（论文 Section 5.2 明确写了），而 self-distillation teacher 用的是 epoch 1 D_Known-only 的 snapshot。anchor 不同可能给 L2 带来不公平劣势（epoch 2 已包含部分 factual drift）。</p>
+<p>即使如此，L2 的 forgetting 仍然约 10pp，远不如 self-distillation 的 ~3pp。L2 是&quot;各向同性&quot;约束（所有参数方向等权重），不关心移动方向；self-distillation 通过 output KL 只约束&quot;模型在这些 input 上的表现不要变&quot;，模型可以在不影响旧知识预测的方向上自由移动。</p>
+<h3 id="训练细节">训练细节</h3>
+<ul>
+<li>模型：Qwen2.5-1.5B（主要）、Qwen2.5-7B、LLaMA 3.1-8B（验证）
+<ul>
+<li>注：论文 Section 2.2 标记为&quot;8B parameters&quot;，但 Appendix B 一致使用&quot;Qwen2.5-7B&quot;作为模型名，后者为官方命名</li>
+</ul>
+</li>
+<li>LR: 5e-5</li>
+<li>Known:Unk 训练比例 = 50:50</li>
+<li>未报告 optimizer 类型、batch size</li>
+</ul>
+<hr />
+<h2 id="4-数据集-entityquestions-合成实体-10-3-到-10-6-规模">4. 数据集：EntityQuestions + 合成实体（10^3 到 10^6 规模）</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li><strong>EntityQuestions</strong> (Sciavolino et al., 2021)：从 Wikipedia relational triplets 衍生的 QA pairs</li>
+<li><strong>SLiCK 分类</strong>：每个 question 跑 20 次不同 few-shot prompt (3-shot, 随机采样)，按一致性分 4 档：HighlyKnown / MaybeKnown / WeaklyKnown / Unknown</li>
+<li><strong>关系筛选</strong>：保留 HighlyKnown 占比 &gt; 30% 的关系（P17, P36, P407, P495）</li>
+<li><strong>数据划分</strong>：
+<ul>
+<li>D_Known = 8,000 条 HighlyKnown（训练，教格式用）</li>
+<li>D_Unk = 8,000 条 Unknown（训练，考察 plasticity）</li>
+<li>D_Held = dev split 中的 HighlyKnown（测试遗忘）</li>
+</ul>
+</li>
+</ul>
+<h3 id="合成数据-section-5">合成数据（Section 5）</h3>
+<ul>
+<li>关系固定为 P17 (Location -&gt; Country)</li>
+<li><strong>Semantic keys</strong>：从真实地名拼接 token（如 Bergamo + Pasadena → Bergadena），跟真实 entity 有 token-level 重叠</li>
+<li><strong>UUID keys</strong>：随机标识符如 <code>Loc_fcfb46ee</code>，与已有 entity 零重叠</li>
+<li>规模从 10^3 到 10^6 缩放，value 都是真实国名</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li>D_Held：dev set 中 HighlyKnown facts</li>
+<li>还额外看了 MaybeKnown facts 的遗忘（Appendix A/B）</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-从假说排除到机制确认">5. 关键结果：从假说排除到机制确认</h2>
+<p>以下结果按照 Section 2 的假说推演逻辑编排，逐层回答&quot;遗忘的根因是什么&quot;。</p>
+<h3 id="step-0-standard-sft-确实导致严重遗忘">Step 0：Standard SFT 确实导致严重遗忘</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>D_Unk (plasticity)</th>
+<th>D_Known (task)</th>
+<th>D_Held (stability)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard SFT (all params)</td>
+<td>0.946</td>
+<td>0.990</td>
+<td>0.780</td>
+</tr>
+<tr>
+<td>Only attention</td>
+<td>0.010</td>
+<td>0.946</td>
+<td>0.931</td>
+</tr>
+<tr>
+<td>Only FFN</td>
+<td>0.941</td>
+<td>0.997</td>
+<td>0.782</td>
+</tr>
+<tr>
+<td>Only Known (no D_Unk)</td>
+<td>--</td>
+<td>0.999</td>
+<td>0.958</td>
+</tr>
+<tr>
+<td><strong>Self-Distillation</strong></td>
+<td>~comparable to SFT</td>
+<td>~comparable</td>
+<td><strong>~0.90</strong> (从 peak 降~3pp)</td>
+</tr>
+</tbody>
+</table></div>
+<p>（来源：Table 1, Figure 2-3。Self-distillation 数字来自 Figure 3 曲线读数，非 Table 1）</p>
+<p>Standard SFT: D_Held 从 peak ~93% 降到 ~78%，<strong>掉了约 15pp</strong>（1.5B 模型 + HighlyKnown）。这个遗忘是真实的、可复现的。下面的实验逐层追问：为什么？</p>
+<h3 id="step-1-建立因果-遗忘确实与新知识引入有关">Step 1：建立因果 — 遗忘确实与新知识引入有关</h3>
+<p>Only Known 对照（不引入任何新知识，只学 QA 格式）：D_Held 全程稳定 ~95-96%。</p>
+<p>这排除了&quot;SFT 格式学习本身导致遗忘&quot;的可能，确认遗忘的<strong>因果</strong>来自新知识（D_Unk）的引入。</p>
+<h3 id="step-2-排除行为克隆-不是所有新知识都导致遗忘-对应-q1">Step 2：排除行为克隆 — 不是所有新知识都导致遗忘（对应 Q1）</h3>
+<p><img src="https://arxiv.org/html/2604.15574v1/figures/scale_experiment_curves_log10.png" alt="Figure 4: Scale experiment" /></p>
+<p>构造两组合成新知识，唯一区别是新实体名字是否与已有实体&quot;长得像&quot;：</p>
+<ul>
+<li><strong>UUID keys</strong>（与旧知识完全不像的随机编码名字）：10^3 到 10^6 规模，forgetting 始终 0-4%，D_Unk=100%</li>
+<li><strong>Semantic keys</strong>（跟真实地名有 token-level 重叠的合成名字）：forgetting 随 scale 急剧增长，10^6 时达 38-41%，D_Unk=100%</li>
+</ul>
+<p>两组的学习效果完全相同（D_Unk=100%，D_Known&gt;=90%），唯一区别在于遗忘。模型在 UUID 数据上同样学会了&quot;自信回答原本不知道的问题&quot;，但旧知识没受影响 → <strong>不是行为模式泛化，是真的在知识层面发生了干扰</strong>。行为克隆假说排除。</p>
+<h3 id="step-3-排除容量瓶颈-1m-新知识也不导致遗忘-对应-q2">Step 3：排除容量瓶颈 — 1M 新知识也不导致遗忘（对应 Q2）</h3>
+<p>同一个实验还同时排除了容量假说：<strong>1M 个 UUID 实体全学会了，旧知识纹丝不动</strong>。如果是&quot;硬盘满了&quot;，1M 条新知识不可能零遗忘。参数空间完全够用，不是存不下的问题。</p>
+<p>至此，唯一存活的假说是<strong>表征干扰</strong>：遗忘不取决于新知识的数量，而取决于新旧知识在模型内部表征上的相似度。</p>
+<h3 id="step-4-精确定位-干扰来自问题侧-key-而非答案侧-value">Step 4：精确定位 — 干扰来自问题侧（key），而非答案侧（value）</h3>
+<p>一条知识有&quot;问题侧&quot;（entity name, 如 Bergadena）和&quot;答案侧&quot;（country name, 如 Greece）两端。到底是哪端的相似性在驱动遗忘？</p>
+<p><strong>Key type × Value type 交叉设计</strong>（Table 4, Appendix E）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Key type</th>
+<th>Value type</th>
+<th>D_Held forgetting</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semantic</td>
+<td>Real country</td>
+<td>38%</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td>Semantic country</td>
+<td>38%</td>
+</tr>
+<tr>
+<td>Semantic</td>
+<td>UUID country</td>
+<td>41%</td>
+</tr>
+<tr>
+<td>UUID</td>
+<td>Real country</td>
+<td>4%</td>
+</tr>
+<tr>
+<td>UUID</td>
+<td>Semantic country</td>
+<td>4%</td>
+</tr>
+<tr>
+<td>UUID</td>
+<td>UUID country</td>
+<td>4%</td>
+</tr>
+</tbody>
+</table></div>
+<p>遗忘完全由 <strong>key type</strong> 决定，value 侧完全无影响。这切断了&quot;因为答案（country name）跟已有知识冲突导致遗忘&quot;的替代解释。干扰发生在输入端（entity name 的表征），而非输出端。</p>
+<h3 id="step-5-直接观测机制-中间层表征漂移确认干扰">Step 5：直接观测机制 — 中间层表征漂移确认干扰</h3>
+<p><img src="https://arxiv.org/html/2604.15574v1/figures/cosine_l14_sft_selfdistill_uuid_single_panel.png" alt="Figure 5: Drift analysis" /></p>
+<div class="math-display">$$\mathrm{RD}_i = \mathbb{E}_{x \in D_{\text{Held}}} \left[ 1 - \cos(H_0^{(14)}(x), H_i^{(14)}(x)) \right]$$</div>
+<p>Layer 14（Qwen2.5-1.5B 的中间层，28 层模型），取 entity last token 的 hidden state：</p>
+<ul>
+<li>SFT on semantic keys: drift 从 ~5% 持续涨到 ~11%</li>
+<li>SFT on UUID keys: 稳定在 ~5%</li>
+<li>Self-distillation on semantic keys: 也稳定在 ~5%</li>
+</ul>
+<p>UUID 和 self-distillation 在 drift 上行为一致 — 都只有 task-format adaptation 阶段的 baseline drift (~5%)。Semantic keys 额外的 6pp drift 就是 representational interference 的<strong>直接观测</strong>。</p>
+<p>（注：论文还用了额外 5 种 drift metrics 做 triangulation — NS, MTD, Rank-rho, NTR, JSD — 结论一致，详见 Appendix F。）</p>
+<h3 id="self-distillation-效果-遗忘从-15pp-压到-3pp">Self-Distillation 效果：遗忘从 ~15pp 压到 ~3pp</h3>
+<p>机制搞清楚了，fix 自然落出来：用 self-distillation 约束模型在旧知识上的输出分布不要漂移。</p>
+<ul>
+<li>Self-Distillation: D_Held 仅掉约 3pp，且 D_Unk 学习速度基本保持</li>
+<li>从 drift 分析看（Figure 5），self-distillation 把表征漂移压回到和 UUID 相同的 baseline 水平 — 阻止了 interference 的传播</li>
+</ul>
+<p><strong>跨模型验证</strong>（Appendix B）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Regular SFT D_Held</th>
+<th>Self-distill D_Held</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-1.5B</td>
+<td>~78% (from 93%)</td>
+<td>~90%</td>
+<td>~80%</td>
+</tr>
+<tr>
+<td>Qwen2.5-7B</td>
+<td>~85-86%</td>
+<td>~95%</td>
+<td>~80%</td>
+</tr>
+<tr>
+<td>LLaMA 3.1-8B</td>
+<td>~85-86%</td>
+<td>~95%</td>
+<td>~80%</td>
+</tr>
+</tbody>
+</table></div>
+<p>MaybeKnown facts 遗忘更严重：regular SFT 下 ~18-19pp drop，self-distillation 恢复约 90% of forgetting。</p>
+<h3 id="ablation-self-distillation-的有效成分是什么-appendix-f">Ablation：Self-distillation 的有效成分是什么？（Appendix F）</h3>
+<p>Self-distillation 的 KL loss 覆盖了整个词汇表（~15K tokens）。但真的是每个 token 都需要约束吗？还是只有某些关键 token 在起作用？</p>
+<p>论文设计了两组蒸馏对比（10K semantic-overlap setting），约束的 token 数量完全相同（都是 76 个），区别只在于<strong>选哪些 token</strong>：</p>
+<ul>
+<li><strong>Top-k distillation</strong>：只约束 teacher 概率最高的 76 个 token（占词汇表 0.5%，但覆盖了 teacher 91-92% 的概率质量）</li>
+<li><strong>Random-k distillation</strong>：同样约束 76 个 token，但从词汇表里随机选</li>
+</ul>
+<p>用 Bergadena 的例子来说明两组的差异。对于 &quot;Where is Milan located?&quot; 这个输入：</p>
+<ul>
+<li>Teacher 的输出分布大概是：<strong>Italy</strong> (85%), <strong>France</strong> (5%), <strong>Spain</strong> (3%), <strong>Germany</strong> (1%), ... 剩下 ~15K 个 token 分享剩余的 6%</li>
+<li><strong>Top-k</strong> 约束的就是 Italy、France、Spain、Germany 这些 — 正好是跟旧知识竞争的那些 entity token</li>
+<li><strong>Random-k</strong> 约束的可能是 the、is、located、quantum 这些 — 跟旧知识的保护毫无关系</li>
+</ul>
+<p>结果：</p>
+<ul>
+<li><strong>Top-76：forgetting 降到 ~3pp</strong>，跟 full distillation 一模一样</li>
+<li><strong>Random-76：forgetting 停在 ~10pp</strong>，跟 standard SFT 没区别</li>
+</ul>
+<p>结论：self-distillation 的有效成分是<strong>保护 teacher 在 competing entity tokens 上的 opinion</strong> — 即&quot;对于这个问题，哪些替代答案是 plausible 的&quot;。只要保护了这个高概率区域，学新实体的梯度就推不走旧实体的概率质量。约束 random tokens 完全没用，因为那些 token 跟新旧知识之间的竞争无关。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li>
+<p><strong>最反直觉的发现：1M UUID 实体不造成任何遗忘</strong>。这彻底否定了 &quot;capacity&quot; 解释 — 模型参数完全够用，问题不是存不下而是存的位置互相干扰。如果让我来做，我大概率会先设计 capacity 实验（缩小模型 / 增大数据量），而不是想到用 surface form 来隔离 interference。用 entity name 的表面形式作为 single variable 来 disentangle 三个假说，一个实验直接打死两个假说 — 实验设计非常 elegant。</p>
+</li>
+<li>
+<p><strong>Table 4 的 value-type 控制是全文最 clean 的因果实验</strong>。6 cells 交叉设计，key type × value type，所有条件下 D_Unk=100% + D_Known&gt;=90%，forgetting 差异不能归因于学习效果差异。直接排除了&quot;value 侧冲突导致遗忘&quot;的替代解释。如果只有 Figure 4 没有 Table 4，别人可以说&quot;也许是因为 semantic key 的 value (real country) 和已有知识冲突&quot;，Table 4 把这条路堵死了。</p>
+</li>
+<li>
+<p><strong>Self-distillation 方法不新，但 Appendix F 的 top-k ablation 给出了真正的机制洞察</strong>。只约束 teacher top-76 tokens (0.5% vocab) 就完全复现效果，random-76 无用。这说明 interference 高度 localized 在 competing entity tokens — self-distillation 之所以有效不是因为&quot;保留了全部 dark knowledge&quot;，而是因为保护了&quot;teacher 认为哪些替代答案是 plausible 的&quot;这个 opinion。</p>
+</li>
+<li>
+<p><strong>做得不够好的几个点</strong>：</p>
+<ul>
+<li><strong>L2 对照实验可能不公平</strong> — L2 anchor 是 epoch 2 snapshot（已有 factual drift），self-distillation teacher 是 epoch 1 D_Known-only（干净）。如果 L2 也用 epoch 1 的 snapshot，效果会不会更好？论文没做这个 ablation。</li>
+<li><strong>没有 EWC baseline</strong> — 拿 uniform L2 做 straw man 然后说&quot;weight-space constraint 不够&quot;，结论太强。EWC（Fisher information-weighted penalty）理论上能更精准保护重要参数。只有排除了 EWC，&quot;必须在 output distribution 层面约束&quot;这个结论才能 cleanly claim。</li>
+<li><strong>没有 LoRA baseline</strong> — LoRA 约束了 weight update 的 rank，理论上也限制了 interference 传播的&quot;带宽&quot;。这是目前最流行的 SFT 方法，完全不提甚至 Related Work 都没有，是个明显的缺失。</li>
+<li>Self-distillation 需要 teacher forward pass 常驻 GPU memory（8B 模型 = 多 16GB VRAM），overhead 未量化。</li>
+</ul>
+</li>
+</ol>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇的写作策略：<strong>不是 &quot;propose a new method and show it works&quot;，而是 &quot;explain why a phenomenon happens, and the fix falls out naturally from the explanation&quot;</strong>。方法（self-distillation）不新，但 framing（把 hallucination reframe 为 representational interference driven forgetting）和 mechanistic analysis（semantic vs UUID + drift metrics）是新的。</p>
+<p>实验设计有贯穿始终的三层递进：<em>先建立因果关系（Only Known 对照），再操控单一变量（key type），再验证机制（drift analysis + top-k ablation）</em>。每一层都有 clean control。</p>
+<p>Figure 1 右半部分（Bergadena vs UUID 的直觉图）是整篇论文最有效的 communication device — 一张图就让读者明白 why semantic overlap matters，不需要看数学。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li>
+<p><strong>直接前作（方法来源）</strong>：<a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a> — Shenfeld et al. (2026) 是本文 self-distillation 方法的直接来源；区别在于 SDFT 用 EMA teacher + on-policy sampling，本文用 fixed snapshot + 验证了 fact-level 遗忘保护</p>
+</li>
+<li>
+<p><strong>直接前作（现象发现）</strong>：<a class="wikilink" href="Does-Fine-Tuning-LLMs-on-New-Knowledge-Encourage-Hallucinations-SFT新知识幻觉.html" title="Does-Fine-Tuning-LLMs-on-New-Knowledge-Encourage-Hallucinations-SFT新知识幻觉">Does-Fine-Tuning-LLMs-on-New-Knowledge-Encourage-Hallucinations-SFT新知识幻觉</a> — Gekhman et al. (2024) 首次通过控制实验证明 SFT 新知识与幻觉的线性关系，提出 SliCK 知识分类；本文从&quot;发现现象&quot;推进到&quot;解释机制 + 给 fix&quot;</p>
+</li>
+<li>
+<p><strong>SFT 对知识的影响</strong>：<a class="wikilink" href="Beyond_Data_Filtering-Knowledge_Localization_SGTM.html" title="Beyond_Data_Filtering-Knowledge_Localization_SGTM">Beyond_Data_Filtering-Knowledge_Localization_SGTM</a> — 都研究 SFT 对模型知识的影响，但切入点不同：SGTM 关注数据质量筛选，本文关注 interference 机制</p>
+</li>
+<li>
+<p><strong>Fine-tuning 的非预期行为改变</strong>：<a class="wikilink" href="Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse.html" title="Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse">Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse</a> — 两者都研究 fine-tuning 如何以非预期方式改变模型行为；都涉及&quot;梯度更新的 localized effects&quot;</p>
+</li>
+<li>
+<p><strong>SFT 改变模型行为的分析</strong>：<a class="wikilink" href="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard.html" title="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard">Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard</a> — 都涉及 SFT 后模型行为的意外变化</p>
+</li>
+<li>
+<p><strong>相关 MOC</strong>:</p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Catastrophic-Forgetting">MOC-Catastrophic-Forgetting</span></li>
+</ul>
+</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Does-Fine-Tuning-LLMs-on-New-Knowledge-Encourage-Hallucinations-SFT新知识幻觉.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</span></a>
+<a class="paper-nav-link next" href="Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Prefix Teach, Suffix Fade — Local Teachability Collapse in Strong-to-Weak On-Policy Distillation</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: kaplan2026hallucinations</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

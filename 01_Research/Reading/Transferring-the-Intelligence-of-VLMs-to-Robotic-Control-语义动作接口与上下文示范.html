@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferring the Intelligence of VLMs to Robotic Control</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Transferring the Intelligence of VLMs to Robotic Control</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-知道该做什么-怎样变成机器人能执行的动作"><span class="toc-num">02</span> 2. 关键问题：知道该做什么，怎样变成机器人能执行的动作？</a></li>
+<li><a class="toc-link" href="#3-关键方法-统一交互点-再让模型在可执行动作空间里看示范-收反馈"><span class="toc-num">03</span> 3. 关键方法：统一交互点，再让模型在可执行动作空间里看示范、收反馈</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-杯子任务如何走完一轮">3.1 杯子任务如何走完一轮</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-gip-解决的是-你究竟在移动哪个点">3.2 GIP 解决的是“你究竟在移动哪个点”</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-one-shot-教的不只有任务答案">3.3 One-shot 教的不只有任务答案</a></li>
+<li><a class="toc-link" href="#4-数据与评估-适应任务时仍然看到了机器人数据"><span class="toc-num">04</span> 4. 数据与评估：适应任务时仍然看到了机器人数据</a></li>
+<li><a class="toc-link" href="#5-关键证据-一条任务示范很有用-但收益与成本要分开看"><span class="toc-num">05</span> 5. 关键证据：一条任务示范很有用，但收益与成本要分开看</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验支持什么">5.1 主实验支持什么</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融表明空间接口与推理都重要-未证明-icl-的具体学习机制">5.2 消融表明空间接口与推理都重要，未证明 ICL 的具体学习机制</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-更多交互机会能提高成功率-但不是免费的推理扩展">5.3 更多交互机会能提高成功率，但不是免费的推理扩展</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-真机与失败案例限定了外推范围">5.4 真机与失败案例限定了外推范围</a></li>
+<li><a class="toc-link" href="#6-insights-下一步应当隔离什么"><span class="toc-num">06</span> 6. Insights：下一步应当隔离什么？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-30</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2609.22966v1" target="_blank">arXiv</a>
+    </div>
+    <h1>Transferring the Intelligence of VLMs to Robotic Control</h1>
+    <p class="authors">Meng-Hao Guo, Zhe-Han Mo, Jia-Jun Wang, Yi Zhang, Kejin Wang, Yi-Xuan Deng, Jia-Peng Zhang, Yongming Rao, Shi-Min Hu</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">In_Context_Learning</span> <span class="topic-tag">Robotic_Control</span></div>
+</header>
+
+<h1>Transferring the Intelligence of VLMs to Robotic Control</h1>
+<p><strong>RoboDawn 的核心结果是：不更新 VLM 权重，把动作表达、执行反馈和示范整理成模型能读懂的接口，也能获得相当强的机器人操作能力。</strong> 值得记住四点：</p>
+<ol>
+<li>真正起桥梁作用的是围绕夹爪交互点的动作接口，以及规划器执行后的闭环反馈。</li>
+<li>One-shot 是一条带状态、动作、效果和事后解释的完整任务轨迹；zero-shot 仍有通用动作示范。</li>
+<li>主实验支持同任务从干净场景到随机化场景的迁移，以及任务示范的明显收益；尚未隔离“理解接口”和“借用解题策略”各自的贡献。</li>
+<li>成功率收益伴随慢速决策，精细接触、执行碰撞和完成判断仍是不同的瓶颈。</li>
+</ol>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Meng-Hao Guo 等，清华大学；Yongming Rao 来自腾讯混元。</li>
+<li><strong>版本</strong>：arXiv:2609.22966v1，2026-09-19，Technical Report；本文按该版本阅读。</li>
+<li><strong>原文</strong>：<a href="https://arxiv.org/html/2609.22966v1">官方 HTML</a> · <a href="https://arxiv.org/pdf/2609.22966v1">PDF</a> · <a href="https://robodawn.top/">项目页</a>。正文 §1–6、Table 1–5、Figure 1–4；该版无附录。</li>
+</ul>
+<h2 id="2-关键问题-知道该做什么-怎样变成机器人能执行的动作">2. 关键问题：知道该做什么，怎样变成机器人能执行的动作？</h2>
+<p>沿用 <strong>Figure 2 的示意任务：把红色杯子放进盒子</strong>。VLM 可能知道“接近—抓住—移动—松开”，但这还没有回答：图中的左右对应哪个坐标轴？移动多少？旋转夹爪时绕腕部还是绕夹持点？机械臂真的移动到了指定位置吗？这些接口歧义会直接变成抓空、撞物或错位。</p>
+<p>这里的杯子案例是论文的<strong>流程示意图，不是带成功率的单次实测轨迹</strong>。其作用是解释，从视觉语义到可执行控制，中间必须补上什么。</p>
+<p>作者选择冻结通用 VLM，让它通过少量语义动作闭环控制机器人。与调用 <code>pick(cup)</code> 这类完整抓取技能相比，这里的模型仍需自己组合平移、旋转、夹爪开合；与直接生成关节控制相比，底层轨迹规划和控制则被接口封装。最近的并行工作 Show-Harness 也采用紧凑语义动作接口，作者将本文的重点放在<strong>与接口一致的 ICL 示范设计</strong>上（§2.3），因此不能把“VLM + 机器人工具”本身当作唯一创新。</p>
+<h2 id="3-关键方法-统一交互点-再让模型在可执行动作空间里看示范-收反馈">3. 关键方法：统一交互点，再让模型在可执行动作空间里看示范、收反馈</h2>
+<p><img src="../../assets/robodawn-2609.22966v1/pipeline.png" alt="RoboDawn 的接口、示范与闭环执行" /></p>
+<p><em>Figure 2，来源：<a href="https://arxiv.org/html/2609.22966v1/pipeline.png">官方原图</a>。重点看 (e)→(f)→(g)：文本命令必须经过运动规划，下一轮收到的是实际执行结果，而不只是模型自己的计划。上方示范展示的是玩具入篮，下方在线任务是红杯入盒；不能据此把跨任务 one-shot 迁移当成已量化的实验。</em></p>
+<h3 id="3-1-杯子任务如何走完一轮">3.1 杯子任务如何走完一轮</h3>
+<p><strong>输入</strong>包括任务指令、多视角标注图像、机器人状态、上一轮执行反馈和交互记忆；固定上下文还包含机器人与环境说明，以及示范。环境说明负责交代工作空间、相机、网格定位和夹爪约定（§3.1）。模型不直接读取物体的特权位姿，但它并非仅靠一张原始 RGB 图。</p>
+<p><strong>决定怎么动</strong>时，VLM 输出动作序列，以及进度估计、当前计划、简短 scratchpad。图中示例有 <code>left move x 10</code>、<code>left rotate yaw -30</code> 和 <code>left gripper close</code>，不是直接输出关节力矩。抓杯子的完整流程需要把接近、夹持、移动到盒子和释放分解成这样的动作，并在后续观察中修正；图中片段不是完整的可复现控制脚本。</p>
+<p><strong>执行与纠错</strong>由另一层完成：命令被转成目标位姿，规划器生成完整运动，执行至机器人静止后再观察。图中把请求位移与实际位移区分开，记忆保存过去命令、执行结果、关键观察及抓取状态。若没到位，下一轮应依据真实状态重规划，不能把“我下过抓取命令”当成“杯子已经在手里”。</p>
+<h3 id="3-2-gip-解决的是-你究竟在移动哪个点">3.2 GIP 解决的是“你究竟在移动哪个点”</h3>
+<p>作者将 <strong>gripper interaction point（GIP）定义为两指尖的中点</strong>，图像标注、机器人状态和动作都以它为参照（§3.2）。这避免了低层控制的腕部位姿与实际接触位置之间的偏移歧义。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>物理含义与约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;arm&gt; move &lt;axis&gt; &lt;d&gt;</code></td>
+<td>在世界坐标系沿 x/y/z 平移 GIP，保持朝向；单命令幅度截断到 20 cm</td>
+</tr>
+<tr>
+<td><code>&lt;arm&gt; rotate &lt;rot&gt; &lt;θ&gt;</code></td>
+<td>按世界系 roll/pitch/yaw 旋转，保持 GIP 位置；单命令幅度截断到 90°</td>
+</tr>
+<tr>
+<td><code>&lt;arm&gt; point &lt;pose&gt;</code></td>
+<td>使用 down、forward、down45 等预设朝向</td>
+</tr>
+<tr>
+<td><code>&lt;arm&gt; gripper &lt;g&gt;</code></td>
+<td>open、close 或归一化开度 [0,1]</td>
+</tr>
+<tr>
+<td><code>&lt;arm&gt; home</code>、<code>wait</code>、<code>done</code></td>
+<td>复位、等待环境稳定、请求完成检查</td>
+</tr>
+</tbody>
+</table></div>
+<p>旋转时保持 GIP 不动，对“已经对准杯把、还需调整夹爪方向”尤其有意义：模型不必同时推算腕部转动造成的接触点漂移。<strong>这是接口设计带来的几何简化，不是模型自行学会了低层运动学。</strong> 正文没有完整列出动作量化步长、规划器配置和碰撞处理细节，仅凭命令语法还无法复现全部执行行为。</p>
+<p>闭环的关键关系可以压成：</p>
+<div class="math-display">$$
+(y_t,\mathbf a_t)=\pi_\theta(L,E,D;I_t,x_t,F_{t-1},M_t).
+$$</div>
+<p>$L$ 是任务，$E$ 是接口与环境说明，$D$ 是示范；图像 $I_t$、机器人状态 $x_t$、反馈 $F_{t-1}$ 和记忆 $M_t$ 随交互更新。$θ$、$E$、$D$ 在 episode 内固定（Eq. 1）。所以这里的“适应”发生在上下文和闭环行为中，没有测试时梯度更新。</p>
+<h3 id="3-3-one-shot-教的不只有任务答案">3.3 One-shot 教的不只有任务答案</h3>
+<p>示范分成两部分（§3.3，Eq. 3–5）：</p>
+<div class="math-display">$$
+D=D_{\mathrm{prim}}\oplus D_{\mathrm{task}}.
+$$</div>
+<ul>
+<li><strong>共享 command primer</strong> 展示基本命令的效果，例如旋转后夹爪变成什么样。Zero-shot 仅表示没有任务级示范，仍保留这一部分。</li>
+<li><strong>任务级示范</strong>展示如何把原语组合成完整操作；one-shot 指一整条轨迹，不是一个图像—动作对，也不是整个 benchmark 只给一条样本。</li>
+</ul>
+<p>原始专家轨迹先被压缩成末端 waypoints 和夹爪状态，再转成在线模型实际可调用的语义命令。每轮保存观察、机器人状态、动作、动作的物理效果，以及短 rationale。效果来自相邻状态的 GIP 位姿和开度变化；<strong>rationale 是另一遍 VLM 事后补写的解释，不是专家当时的思考记录</strong>。</p>
+<p>回到杯子案例，示范不仅告诉模型“抓住再移动”，还提供“这组命令在这个接口里导致了怎样的可见变化”。这使解题策略与动作语义共同进入上下文，也意味着 one-shot 的提升不能直接全部归因于其中任何一项。</p>
+<p>长轨迹会保留完整文本，但稀疏保留抓取、旋转、完成等关键轮次的图像。原文将图像预算写作每轮上下文至多 <strong>16 observations</strong>；多视角 observation 与图像张数如何对应，正文未进一步展开。在线完整 prompt、示范补写 prompt、记忆截断策略也未完整给出，复现时需要补查实现。</p>
+<h2 id="4-数据与评估-适应任务时仍然看到了机器人数据">4. 数据与评估：适应任务时仍然看到了机器人数据</h2>
+<ul>
+<li><strong>RoboTwin 2.0 C2R</strong>：50 个双臂任务；训练型 baseline 在每任务 50 条 clean 示范上联合后训练，共 2,500 条。RoboDawn 不更新权重，one-shot 从相应任务的 clean 集随机取一条，测试在 domain-randomized 场景，每任务 10 次独立评估（§4.1.1、Table 1）。测试场景与示范场景分开，但<strong>任务本身并非全部留出</strong>。</li>
+<li><strong>RoboDojo</strong>：42 个任务，涉及泛化、记忆、长程、精度和开放能力，报告 5 次运行的平均结果。另给出排除 8 个 open tasks 的 34-task 子集，因为其他方法可能没有这些开放任务的对应训练数据（§4.1.2、Table 4）。</li>
+<li><strong>示范来源</strong>：仿真用 benchmark 脚本专家，作者称与比较策略的训练轨迹同源；真机示范可来自人工遥操作。下文 Table 5 的真机实测是 zero-shot，不能把其结果写成真机 one-shot 增益。</li>
+</ul>
+<p>因此，“无任务特定参数训练”成立；“完全不使用机器人经验”不成立。冻结模型本身的预训练数据也没有在本文中被审计。</p>
+<h2 id="5-关键证据-一条任务示范很有用-但收益与成本要分开看">5. 关键证据：一条任务示范很有用，但收益与成本要分开看</h2>
+<h3 id="5-1-主实验支持什么">5.1 主实验支持什么</h3>
+<p><strong>RoboTwin C2R（Table 1，成功率 %）：</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>使用 benchmark 示范的方式</th>
+<th style="text-align:right">成功率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>π0.5</td>
+<td>Full Set 后训练</td>
+<td style="text-align:right">46.0</td>
+</tr>
+<tr>
+<td>LingBot-VLA</td>
+<td>Full Set 后训练</td>
+<td style="text-align:right">50.4</td>
+</tr>
+<tr>
+<td>HarnessVLA（Claude Code）</td>
+<td>以经训练的 LingBot-VLA 为执行策略</td>
+<td style="text-align:right">58.4</td>
+</tr>
+<tr>
+<td>RoboDawn，Gemini-3.8-Flash</td>
+<td>0 / 1 条任务示范，上下文内适应</td>
+<td style="text-align:right">47.0 / 62.2</td>
+</tr>
+<tr>
+<td>RoboDawn，GPT-6 Astra</td>
+<td>0 / 1 条任务示范，上下文内适应</td>
+<td style="text-align:right">53.2 / 73.6</td>
+</tr>
+</tbody>
+</table></div>
+<p>GPT-6 Astra 的 one-shot 比自身 zero-shot 高 <strong>20.4 个百分点</strong>，比表中最强 HarnessVLA 高 <strong>15.2 个百分点</strong>。Zero-shot 超过部分训练型策略，但没有超过 HarnessVLA。证据支持此系统在 clean-to-randomized 协议中的表现，不能用它推出 VLM 在所有机器人任务上都优于 VLA，也不能把不同基座、接口与推理预算间的差异全部归因于“冻结而不训练”。</p>
+<p><strong>RoboDojo（Table 4）：</strong> GPT-6 Astra 版本在全 42 任务上，zero/one-shot 成功率为 <strong>35.67% / 47.17%</strong>，进度分为 <strong>39.92 / 54.63</strong>；DM0.5 为 19.34% / 24.90 分。表中另一个 GPT-6 Astra 零样本 baseline 为 22.58% / 28.97 分，说明强基座本身并不能自动达到 RoboDawn 的结果，但整套接口差异仍未被隔离。</p>
+<p>排除 open tasks 后，RoboDawn 的 34-task 成功率是 <strong>33.96% / 43.33%</strong>。这说明收益不只存在于全任务口径；不过表中没有为其他方法重列相同 34-task 分母，不能直接拿这两列算严格匹配的领先幅度。主表未报告置信区间，也没有展开随机选择示范带来的波动。</p>
+<h3 id="5-2-消融表明空间接口与推理都重要-未证明-icl-的具体学习机制">5.2 消融表明空间接口与推理都重要，未证明 ICL 的具体学习机制</h3>
+<p>Table 3(c) 固定 Gemini-3.8-Flash、zero-shot：完整系统 <strong>47.0%</strong>，去 reasoning 为 <strong>34.8%</strong>，去定位网格为 <strong>32.4%</strong>，去 primer 为 <strong>44.0%</strong>。网格的影响最大，提示可读的空间参照是关键条件；这不是只给 VLM 加一句“仔细思考”就能复现的系统。另一方面，这些是系统部件移除实验，不能当成模型内部推理忠实性的证明。</p>
+<p>Table 3(a) 的 0/1/2/4/8-shot 为 <strong>47.0/62.2/63.6/65.4/62.7%</strong>：首条示范贡献最大，继续堆上下文不保证继续改善。作者将 8-shot 回落解释为长上下文干扰，但没有控制示范质量、抽样及图像选择来验证这一归因。正文把 shot 消融指向 3(c)，此处按实际表格的 3(a) 记录。</p>
+<p>同样的 one-shot 接口下，GPT-5.6-Luna、GPT-5.6-Sol、Gemini-3.8-Flash、GPT-6 Astra 分别为 <strong>14.4%、43.2%、62.2%、73.6%</strong>（Table 3(b)）。它表明基座选择对系统结果影响很大；没有匹配推理预算，不能据此单独测得某一种“具身能力”的 scaling law。</p>
+<h3 id="5-3-更多交互机会能提高成功率-但不是免费的推理扩展">5.3 更多交互机会能提高成功率，但不是免费的推理扩展</h3>
+<p>Figure 3 将 RoboDojo 每 episode 命令预算从 <strong>60 增至 240</strong>：one-shot 从 <strong>31.2% 到 47.2%</strong>，zero-shot 从 <strong>23.7% 到 35.7%</strong>。作者归因于失败恢复和记忆。这里同时增加了实际动作、观察和重试机会；没有“固定动作数、只增加思考量”或去记忆对照，故应称为<strong>交互预算扩展</strong>，而非纯语言推理算力带来的因果收益。</p>
+<p>Table 2 的延迟测试改用 <strong>Seed-2.1-Pro</strong>，覆盖 RoboTwin 的 50 个任务：平均推理 <strong>9.74 s</strong>，输出 <strong>3.4 条命令</strong>，运动执行 <strong>2.09 s</strong>，推理/运动时间比 <strong>4.65</strong>。π0.5 对应推理 101 ms、运动 2.70 s、比例 0.037。动作命令与策略 action steps 的粒度不同，不能用数量直接比较效率；更不能把该延迟与 GPT-6 Astra 的最佳成功率拼成同一配置。论文也没有给出足够的完整 episode 墙钟时间和费用来判断部署吞吐。</p>
+<h3 id="5-4-真机与失败案例限定了外推范围">5.4 真机与失败案例限定了外推范围</h3>
+<p>Table 5 使用 Gemini-3.8-Flash，zero-shot：Franka 方块入篮 <strong>9/10</strong>，堆叠 <strong>5/10</strong>，Piper 叠布 <strong>0/10</strong>。它提供了从仿真走到物理机器人的可行性证据，但任务少、每项仅十次，也没有真机 baseline。作者认为旋转理解不足可能拖累叠布，这仍是解释假设，没有专门对照。</p>
+<p><img src="../../assets/robodawn-2609.22966v1/failed_case.png" alt="RoboDawn 在精度、执行与完成判定上的失败" /></p>
+<p><em>Figure 4，来源：<a href="https://arxiv.org/html/2609.22966v1/failed_case.png">官方原图</a>。三行应分别看：硬币插槽对准失败、麻将操作中 IK 执行碰撞、倒水不足却提前结束。它们说明“高层动作意图正确”还不足以完成任务；这些是代表案例，不是失败类型的频率统计。</em></p>
+<h2 id="6-insights-下一步应当隔离什么">6. Insights：下一步应当隔离什么？</h2>
+<p><strong>1. 先拆开“学会接口”和“得到任务策略”，才能谈智能迁移的机制。</strong> 共享 primer 的消融影响小于完整任务示范的增益，但二者既不等长，也不提供相同信息。我会比较同任务完整示范、异任务但原语覆盖匹配的示范、仅动作效果、仅任务步骤，并控制 token 与图像预算。若异任务示范也保留大部分提升，才更支持主要瓶颈是动作语义对齐；否则收益可能更多来自具体解题路径。</p>
+<p><strong>2. 最可迁移的工程经验是把“计划状态”和“物理状态”分开。</strong> GIP 对齐让命令有一致含义，执行反馈让记忆有实际依据；但 Figure 4 又显示，能到目标位姿不代表路径不碰撞，做过倒水动作不代表倒够了。复现时应分别记录命令是否实现、过程是否碰撞、终态是否满足任务，而不要合成一个模糊的 success。可进一步固定命令序列替换执行器，区分决策失误与执行层失误。</p>
+<p><strong>3. 合理的使用边界是低频决策与可规划操作；精细接触需要另外验证。</strong> 十秒量级推理和接触附近的失败共同提示：增强高层语义能力未必能解决最后几毫米。值得测试的组合是保留 VLM 的任务选择与纠错，在接近接触时交给局部闭环控制器，并以成功率—墙钟时间—碰撞率一起评估。本文没有验证这个混合方案，也没有证明更强 VLM 就能替代它。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic/Area：补充冻结通用 VLM 经语义动作接口进行闭环操作的路线；与训练型 VLA 的差异涉及接口、执行器及推理预算，不能仅按是否更新权重归类优劣。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Vision-and-Language-Navigation-R2R与未见环境泛化.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Vision-and-Language Navigation：R2R把“听懂路线”变成未见建筑中的闭环行动</span></a>
+<a class="paper-nav-link next" href="A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">A Mechanistic Study of Language Model Introspection：内部扰动如何变成位置报告</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: guo2026robodawn</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

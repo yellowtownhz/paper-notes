@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何在不损失推理能力的前提下高效压缩-llm"><span class="toc-num">02</span> 2. 关键问题：如何在不损失推理能力的前提下高效压缩 LLM？</a></li>
+<li><a class="toc-link toc-sub" href="#动机">动机</a></li>
+<li><a class="toc-link toc-sub" href="#核心矛盾">核心矛盾</a></li>
+<li><a class="toc-link" href="#3-数据集-推理任务导向的训练与评估"><span class="toc-num">03</span> 3. 数据集：推理任务导向的训练与评估</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-prune-tune-loop-ptl"><span class="toc-num">04</span> 4. 关键方法：Prune-Tune Loop (PTL)</a></li>
+<li><a class="toc-link toc-sub" href="#1-整体架构">(1) 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#2-冗余神经元提取">(2) 冗余神经元提取</a></li>
+<li><a class="toc-link toc-sub" href="#3-冗余层提取">(3) 冗余层提取</a></li>
+<li><a class="toc-link toc-sub" href="#4-恢复调优">(4) 恢复调优</a></li>
+<li><a class="toc-link toc-sub" href="#5-算法伪代码">(5) 算法伪代码</a></li>
+<li><a class="toc-link" href="#5-关键实验-结构化剪枝实现真正的推理加速"><span class="toc-num">05</span> 5. 关键实验：结构化剪枝实现真正的推理加速</a></li>
+<li><a class="toc-link toc-sub" href="#压缩效果说明">压缩效果说明</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果-table-1">主实验结果（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#代码生成任务-table-4">代码生成任务（Table 4）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-table-2-3-figure-3-4">消融实验（Table 2-3, Figure 3-4）</a></li>
+<li><a class="toc-link toc-sub" href="#实现细节">实现细节</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link toc-sub" href="#场景-数学推理任务">场景：数学推理任务</a></li>
+<li><a class="toc-link" href="#7-insights-渐进式压缩的哲学"><span class="toc-num">07</span> 7. Insights：渐进式压缩的哲学</a></li>
+<li><a class="toc-link toc-sub" href="#核心启发">核心启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#学术反思">学术反思</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-12</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.04919" target="_blank">arXiv</a>
+    </div>
+    <h1>Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</h1>
+    <p class="authors">Yiran Zhao, Shengyang Zhou, Zijian Wu, Tongyan Hu, Yuhui Xu, Rengan Dou, Kenji Kawaguchi, Shafiq Joty, Junnan Li, Michael Qizhe Shieh</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Compression</span> <span class="topic-tag">Efficient_Inference</span> <span class="topic-tag">Curriculum_Learning</span></div>
+</header>
+
+<h1>论文笔记: Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</h1>
+<p><img src="https://arxiv.org/html/2602.04919v1/x1.png" alt="PTL Framework" /></p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Yiran Zhao, Shengyang Zhou, Zijian Wu, Tongyan Hu, Yuhui Xu, Rengan Dou, Kenji Kawaguchi, Shafiq Joty, Junnan Li, Michael Qizhe Shieh</li>
+<li><strong>团队</strong>: Salesforce AI Research + National University of Singapore</li>
+<li><strong>发表时间</strong>: 2026年2月4日 (arXiv)</li>
+<li><strong>论文链接</strong>: https://arxiv.org/abs/2602.04919</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何在不损失推理能力的前提下高效压缩-llm">2. 关键问题：如何在不损失推理能力的前提下高效压缩 LLM？</h2>
+<h3 id="动机">动机</h3>
+<p>LLM 展现了强大的推理能力，但其巨大的参数规模需要大量计算资源。为了降低资源消耗并加速推理，需要移除冗余参数，但面临一个核心挑战：</p>
+<p><strong>传统剪枝方法的问题</strong>：直接移除参数会导致推理任务上的性能急剧下降，并且需要大量后训练来恢复能力。</p>
+<h3 id="核心矛盾">核心矛盾</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>传统剪枝</th>
+<th>问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一次性剪枝</td>
+<td>改变幅度大，性能崩塌严重</td>
+</tr>
+<tr>
+<td>大量后训练</td>
+<td>恢复成本高，训练时间长</td>
+</tr>
+<tr>
+<td>通用剪枝策略</td>
+<td>未考虑推理任务的特殊性</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>为什么推理任务特别敏感？</strong> 推理能力主要由 self-attention 机制支撑，而传统剪枝往往忽视了这一点，导致推理链断裂、逻辑连贯性丧失。</p>
+<hr />
+<h2 id="3-数据集-推理任务导向的训练与评估">3. 数据集：推理任务导向的训练与评估</h2>
+<h3 id="训练数据">训练数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>数据集</th>
+<th>规模</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NuminaMath-CoT</strong></td>
+<td>860k 问题</td>
+<td>冗余参数识别（校准数据）+ 持续预训练</td>
+</tr>
+<tr>
+<td><strong>MetaMathQA</strong></td>
+<td>390k 问题</td>
+<td>冗余参数识别（校准数据）+ 持续预训练</td>
+</tr>
+<tr>
+<td><strong>Math-12k</strong></td>
+<td>12k 问题</td>
+<td>RL 恢复训练</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>校准数据</strong>: 使用 NuminaMath-CoT + MetaMathQA 合并数据集（共 1.25M 问题），每个 question 与 CoT answer 拼接形成推理序列 x，用于识别冗余参数</li>
+<li><strong>数据预处理</strong>: 每个 question 与 CoT answer 拼接形成完整推理序列</li>
+<li><strong>RL 数据划分</strong>: 为避免过拟合，将数据集均匀划分为多个非重叠子集</li>
+</ul>
+<blockquote class="card card-info">
+<p>⚠️ <strong>局限性</strong>: 论文未讨论校准数据的选择问题。如果校准数据与目标任务分布不匹配，可能会影响剪枝效果。</p>
+</blockquote>
+<h3 id="评估数据">评估数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>规模</th>
+<th>任务类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GSM8K</strong></td>
+<td>8.5k</td>
+<td>小学数学应用题（2-8 步基础算术）</td>
+</tr>
+<tr>
+<td><strong>Minerva Math</strong></td>
+<td>-</td>
+<td>LaTeX 格式解题，few-shot 设置</td>
+</tr>
+<tr>
+<td><strong>MATH-500</strong></td>
+<td>500 题</td>
+<td>竞赛级数学，去污染评估</td>
+</tr>
+<tr>
+<td><strong>MBPP</strong></td>
+<td>~1k</td>
+<td>代码生成（3-shot）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-关键方法-prune-tune-loop-ptl">4. 关键方法：Prune-Tune Loop (PTL)</h2>
+<blockquote class="card card-info">
+<p>核心思想：将压缩过程分解为多个细粒度迭代，每次迭代只做微小改变，避免&quot;剧烈变化&quot;导致的性能崩塌。</p>
+</blockquote>
+<h3 id="1-整体架构">(1) 整体架构</h3>
+<p>PTL 每次迭代包含三个步骤：</p>
+<ol>
+<li><strong>识别冗余推理参数</strong>（神经元或层）</li>
+<li><strong>剪枝</strong>：移除冗余参数</li>
+<li><strong>恢复调优</strong>：通过 CoT 数据持续预训练或 RL 恢复性能</li>
+</ol>
+<p>这个迭代过程类似于&quot;温水煮青蛙&quot;——每次只做微小改变，性能下降很小且易于恢复。</p>
+<h3 id="2-冗余神经元提取">(2) 冗余神经元提取</h3>
+<p><strong>核心问题</strong>：如何判断一个神经元是否对推理&quot;冗余&quot;？</p>
+<p><strong>直觉</strong>：如果移除某个神经元后，层的输出几乎不变，说明这个神经元在推理任务中&quot;不激活&quot;。</p>
+<p><strong>形式化</strong>（Eq. 1-4）：</p>
+<p>给定输入序列 $x$，模型有 $L$ 层：</p>
+<div class="math-display">$$h_0(x) = \text{Embed}(x), \quad h_\ell(x) = f_\ell(h_{\ell-1}(x))$$</div>
+<p>神经元 $\mathcal{N}$ 被认为&quot;不激活&quot;，如果：</p>
+<div class="math-display">$$\|f_\ell(h_{\ell-1}(x)) - f_{\ell\setminus\mathcal{N}}(h_{\ell-1}(x))\|_2 \leq \sigma$$</div>
+<p><strong>为什么只剪 FFN？</strong></p>
+<ul>
+<li>推理能力主要在 self-attention 中</li>
+<li>FFN 参数量远大于 self-attention</li>
+<li>剪 attention heads 结构约束多</li>
+</ul>
+<p>对于 FFN 神经元，Eq. 2 可简化为：</p>
+<div class="math-display">$$\|f_\ell(h_{\ell-1}(x)) - f_{\ell\setminus\mathcal{N}}(h_{\ell-1}(x))\|_2 \propto \text{SiLU}(W_{\text{gate}}(x)) \cdot W_{\text{up}}(x) := \text{Act}_\ell^{\mathcal{N}}(x)$$</div>
+<p><strong>直观理解</strong>：神经元的&quot;重要性&quot;由其在推理任务上的激活值决定。激活值越低，说明这个神经元对推理贡献越小。</p>
+<p><strong>冗余神经元集合</strong>：</p>
+<div class="math-display">$$\mathcal{R}_\mathcal{N} = \{\mathcal{N} \mid \text{Act}_\ell^{\mathcal{N}}(x) \leq \sigma_{\text{neuron}}, \forall x, \ell = 1, \dots, L\}$$</div>
+<h3 id="3-冗余层提取">(3) 冗余层提取</h3>
+<p><strong>核心问题</strong>：如何判断一层对推理贡献小？</p>
+<p><strong>方法</strong>：测量层的输出与输入之间的 L2 距离。</p>
+<div class="math-display">$$\|f_\ell(h_{\ell-1}(x)) - h_{\ell-1}(x)\|_2$$</div>
+<p><strong>直观理解</strong>：如果一层&quot;输入输出几乎一样&quot;，说明这层对信息变换贡献小，可以被剪掉。</p>
+<p><strong>冗余层集合</strong>（Eq. 6）：</p>
+<div class="math-display">$$\mathcal{R}_\mathcal{L} = \{\ell \mid \|f_\ell(h_{\ell-1}(x)) - h_{\ell-1}(x)\|_2 \leq \sigma_{\text{layer}}, \forall x\}$$</div>
+<h3 id="4-恢复调优">(4) 恢复调优</h3>
+<p><strong>Continual Pre-Training</strong>：</p>
+<ul>
+<li>使用数学问题 + CoT 推理路径的语料</li>
+<li>帮助模型适应剪枝后的结构</li>
+</ul>
+<p><strong>Reinforcement Learning</strong>：</p>
+<ul>
+<li>采用 GRPO（Group Relative Policy Optimization）</li>
+<li>在更具挑战性的数学问题上训练</li>
+<li>使用标准格式奖励 + 准确率奖励</li>
+</ul>
+<h3 id="5-算法伪代码">(5) 算法伪代码</h3>
+<pre><code>Algorithm: Prune-Tune Loop
+Input: 原始模型 LLM, 推理任务序列 x, 阈值 σ_neuron, σ_layer
+       CoT 数据 D_CoT, RL 数据 D_RL, 最大迭代轮数 T
+
+for t = 1 to T:
+    # 1. 提取冗余参数
+    提取冗余神经元 R_N (通过 Eq. 4)
+    提取冗余层 R_L (通过 Eq. 6)
+    
+    # 2. 移除冗余参数
+    LLM ← LLM ⊖ {R_N ∪ R_L}
+    
+    # 3. 恢复调优
+    LLM ← ContinualTraining(LLM, D_CoT)
+    LLM ← ReinforcementLearning(LLM, D_RL)
+
+Output: 压缩后的模型 LLM
+</code></pre>
+<hr />
+<h2 id="5-关键实验-结构化剪枝实现真正的推理加速">5. 关键实验：结构化剪枝实现真正的推理加速</h2>
+<h3 id="压缩效果说明">压缩效果说明</h3>
+<p>论文的剪枝是<strong>结构化剪枝</strong>（神经元是整行整列删除，层是整层删除），可以获得实际的推理加速，而非&quot;伪压缩&quot;。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>参数量压缩</th>
+<th>FLOPs 减少</th>
+<th>推理加速</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama3-8B → 5B</td>
+<td>8B → 5B (60%)</td>
+<td>30%</td>
+<td>2.6x</td>
+</tr>
+<tr>
+<td>Gemma2-9B → 5B</td>
+<td>9B → 5B (55%)</td>
+<td>50%</td>
+<td>1.3x</td>
+</tr>
+<tr>
+<td>Qwen2.5-7B → 5B</td>
+<td>7B → 5B (71%)</td>
+<td>45%</td>
+<td>1.2x</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote class="card card-info">
+<p>注：论文摘要说&quot;nearly half&quot;略有夸张，实际参数量压缩到 55-71%。</p>
+</blockquote>
+<h3 id="主实验结果-table-1">主实验结果（Table 1）</h3>
+<p><strong>实验模型</strong>: LLaMA3-8B, Gemma2-9B, Qwen2.5-7B</p>
+<h4>LLaMA3-8B → PTL-Llama3-5B（Continual Pre-Training 恢复）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GSM8K</th>
+<th>Minerva Math</th>
+<th>MATH-500</th>
+<th>FLOPs</th>
+<th>Speedup</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama3-8B (原始)</td>
+<td>54.7%</td>
+<td>16.0%</td>
+<td>14.6%</td>
+<td>9.1T</td>
+<td>1.0x</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Shortgpt-5B</td>
+<td>42.7%</td>
+<td>15.1%</td>
+<td>15.6%</td>
+<td>6.4T</td>
+<td>2.1x</td>
+<td>16H</td>
+</tr>
+<tr>
+<td>Slicegpt-5B</td>
+<td>45.5%</td>
+<td>14.7%</td>
+<td>14.1%</td>
+<td>4.5T</td>
+<td>2.1x</td>
+<td>20H</td>
+</tr>
+<tr>
+<td>Prune-Once-5B</td>
+<td>44.6%</td>
+<td>14.2%</td>
+<td>14.7%</td>
+<td>5.8T</td>
+<td>2.6x</td>
+<td>12H</td>
+</tr>
+<tr>
+<td><strong>PTL-Llama3-5B</strong></td>
+<td><strong>52.5%</strong></td>
+<td><strong>18.5%</strong></td>
+<td><strong>16.1%</strong></td>
+<td>6.3T</td>
+<td>2.6x</td>
+<td>12H</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>: PTL 在 GSM8K 上仅下降 2.2%（54.7% → 52.5%），而其他方法下降 9-12%。Minerva Math 甚至提升 2.5%。</p>
+<h4>Gemma2-9B → PTL-Gemma2-5B（Continual Pre-Training 恢复）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GSM8K</th>
+<th>Minerva Math</th>
+<th>MATH-500</th>
+<th>FLOPs</th>
+<th>Speedup</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma2-9B (原始)</td>
+<td>70.0%</td>
+<td>29.1%</td>
+<td>26.9%</td>
+<td>11.5T</td>
+<td>1.0x</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Shortgpt-5B</td>
+<td>55.3%</td>
+<td>19.8%</td>
+<td>19.3%</td>
+<td>7.6T</td>
+<td>1.6x</td>
+<td>27H</td>
+</tr>
+<tr>
+<td>Slicegpt-5B</td>
+<td>56.3%</td>
+<td>18.6%</td>
+<td>19.1%</td>
+<td>5.9T</td>
+<td>1.5x</td>
+<td>36H</td>
+</tr>
+<tr>
+<td>Prune-Once-5B</td>
+<td>58.7%</td>
+<td>18.9%</td>
+<td>18.2%</td>
+<td>6.5T</td>
+<td>1.3x</td>
+<td>20H</td>
+</tr>
+<tr>
+<td><strong>PTL-Gemma2-5B</strong></td>
+<td><strong>70.6%</strong></td>
+<td><strong>26.4%</strong></td>
+<td><strong>26.2%</strong></td>
+<td>6.1T</td>
+<td>1.3x</td>
+<td>20H</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>: PTL-Gemma2-5B 是唯一在激进剪枝后保持接近原始性能的方法。GSM8K 甚至略有提升（70.0% → 70.6%）。</p>
+<h4>Qwen2.5-7B → PTL-Qwen2.5-5B（Reinforcement Learning 恢复）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>GSM8K</th>
+<th>Minerva Math</th>
+<th>MATH-500</th>
+<th>FLOPs</th>
+<th>Speedup</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-7B (原始)</td>
+<td>85.7%</td>
+<td>26.1%</td>
+<td>61.0%</td>
+<td>9.0T</td>
+<td>1.0x</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Shortgpt-5B</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Slicegpt-5B</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Prune-Once-5B</td>
+<td>0%</td>
+<td>0%</td>
+<td>0%</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>PTL-Qwen2.5-5B</strong></td>
+<td><strong>84.9%</strong></td>
+<td><strong>24.1%</strong></td>
+<td><strong>61.2%</strong></td>
+<td>4.9T</td>
+<td>1.2x</td>
+<td>64H</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>: 其他方法在 RL 恢复时完全失败（输出不连贯），只有 PTL 能成功恢复！</p>
+<h3 id="代码生成任务-table-4">代码生成任务（Table 4）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>MBPP (3-shot)</th>
+<th>FLOPs</th>
+<th>Speedup</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama3-8B (原始)</td>
+<td>50.0%</td>
+<td>2.8T</td>
+<td>1.0x</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Shortgpt-Llama3-5B</td>
+<td>11.7%</td>
+<td>2.0T</td>
+<td>2.1x</td>
+<td>14H</td>
+</tr>
+<tr>
+<td><strong>PTL-Llama3-5B</strong></td>
+<td><strong>45.0%</strong></td>
+<td>1.9T</td>
+<td>2.6x</td>
+<td>12H</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>: 代码生成任务上，PTL 仅下降 5%，而 ShortGPT 下降近 40%。</p>
+<h3 id="消融实验-table-2-3-figure-3-4">消融实验（Table 2-3, Figure 3-4）</h3>
+<h4>剪枝迭代过程（Figure 3）</h4>
+<p>Gemma2-9B 完整剪枝周期中，<strong>初期性能反而提升</strong>：</p>
+<ul>
+<li>GSM8K: 70.0% → 77.6%（初始迭代）</li>
+<li>Minerva Math: 29.1% → 29.3%</li>
+<li>MATH-500: 26.9% → 27.4%</li>
+</ul>
+<p>随后逐渐下降，最终稳定在接近原始水平。</p>
+<h4>剪枝步长影响（Figure 4）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Step Size</th>
+<th>平均准确率（相对）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5%</td>
+<td>基准</td>
+</tr>
+<tr>
+<td>10%</td>
+<td>-9%</td>
+</tr>
+<tr>
+<td>20%</td>
+<td>-14%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 步长越小，最终性能越好，但需要更多迭代轮数。</p>
+<h4>剪枝顺序影响（Table 3）</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Pruning Order</th>
+<th>GSM8K</th>
+<th>Minerva Math</th>
+<th>MATH-500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neu-Lay（先神经元后层）</td>
+<td><strong>70.6%</strong></td>
+<td><strong>26.4%</strong></td>
+<td><strong>26.2%</strong></td>
+</tr>
+<tr>
+<td>Lay-Neu（先层后神经元）</td>
+<td>69.1%</td>
+<td>24.1%</td>
+<td>25.4%</td>
+</tr>
+<tr>
+<td>Re-Neu-Lay（交替）</td>
+<td>68.7%</td>
+<td>24.3%</td>
+<td>23.0%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: 先剪神经元、后剪层的顺序效果最好。</p>
+<h3 id="实现细节">实现细节</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>Continual Pre-Training</th>
+<th>Reinforcement Learning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GPU</strong></td>
+<td>4× NVIDIA A100 80GB</td>
+<td>8× NVIDIA H200 140GB</td>
+</tr>
+<tr>
+<td><strong>Learning Rate</strong></td>
+<td>8×10⁻⁶</td>
+<td>1×10⁻⁶</td>
+</tr>
+<tr>
+<td><strong>Global Batch Size</strong></td>
+<td>32</td>
+<td>128</td>
+</tr>
+<tr>
+<td><strong>Max Tokens</strong></td>
+<td>1024</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>优化技术</strong></td>
+<td>ZeRO Stage-2 + Gradient Checkpointing</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>框架</strong></td>
+<td>LLaMA-Factory</td>
+<td>EasyR1 (verl)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="6-golden-case-一条数据的完整流程">6. Golden Case：一条数据的完整流程</h2>
+<h3 id="场景-数学推理任务">场景：数学推理任务</h3>
+<p><strong>输入样本</strong>：</p>
+<pre><code>问题: 一个矩形花园的长是宽的2倍，周长是36米，求花园的面积。
+</code></pre>
+<p><strong>处理流程</strong>：</p>
+<p><strong>Step 1: 冗余参数识别</strong></p>
+<ul>
+<li>输入推理任务序列，测量各神经元/层的激活</li>
+<li>假设发现第 15 层的某些 FFN 神经元激活值 &lt; σ_neuron</li>
+<li>假设发现第 28 层的输出-输入距离 &lt; σ_layer</li>
+</ul>
+<p><strong>Step 2: 剪枝</strong></p>
+<ul>
+<li>移除低激活神经元（减少 FFN 维度）</li>
+<li>移除冗余层（减少层数）</li>
+</ul>
+<p><strong>Step 3: 恢复调优</strong></p>
+<ul>
+<li>CoT 数据训练：让模型适应新结构</li>
+<li>RL 训练：在难题上进一步提升推理能力</li>
+</ul>
+<p><strong>最终输出</strong>：</p>
+<pre><code>推理链: 设宽为x，则长为2x...
+答案: 72平方米
+</code></pre>
+<p><strong>关键决策点</strong>：</p>
+<ul>
+<li>每次迭代只剪少量参数（&quot;温水煮青蛙&quot;）</li>
+<li>性能下降小，恢复快</li>
+</ul>
+<hr />
+<h2 id="7-insights-渐进式压缩的哲学">7. Insights：渐进式压缩的哲学</h2>
+<h3 id="核心启发">核心启发</h3>
+<ol>
+<li>
+<p><strong>&quot;小步快跑&quot;胜过&quot;一步到位&quot;</strong>：分多次小幅度剪枝 + 快速恢复，比一次性大幅剪枝 + 大量训练更高效</p>
+</li>
+<li>
+<p><strong>任务导向的剪枝</strong>：基于推理任务的激活模式识别冗余参数，而非通用的参数重要性指标</p>
+</li>
+<li>
+<p><strong>Self-Attention 的特殊性</strong>：推理能力主要在 attention 中，FFN 更适合压缩</p>
+</li>
+<li>
+<p><strong>后训练的选择灵活性</strong>：CoT 数据（简单恢复）+ RL（能力提升）可组合使用</p>
+</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p><strong>&quot;温水煮青蛙&quot;式渐进压缩</strong>：将压缩分解为多次微小迭代，避免性能崩塌，降低恢复成本。</p>
+<h3 id="局限性">局限性</h3>
+<h4>方法层面</h4>
+<ol>
+<li><strong>迭代次数选择</strong>：需要预设最大轮数 T，如何自适应确定？</li>
+<li><strong>阈值敏感性</strong>：σ_neuron 和 σ_layer 的选择对结果影响大</li>
+<li><strong>计算开销</strong>：每次迭代都需要推理任务来识别冗余参数</li>
+<li><strong>校准数据选择</strong>：论文未讨论如何选择校准数据</li>
+</ol>
+<h4>根本性问题：任务特定压缩的 trade-off</h4>
+<p><strong>核心问题</strong>：用特定任务数据识别&quot;冗余参数&quot;，本质上是在目标任务上做<strong>有损压缩</strong>，损失发生在未被评估的能力上。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>被评估的能力</th>
+<th>未被评估的能力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学推理（GSM8K, MATH-500）</td>
+<td>常识推理、知识问答</td>
+</tr>
+<tr>
+<td>代码生成（MBPP）</td>
+<td>多语言能力</td>
+</tr>
+<tr>
+<td>-</td>
+<td>指令遵循能力</td>
+</tr>
+<tr>
+<td>-</td>
+<td>长文本理解</td>
+</tr>
+<tr>
+<td>-</td>
+<td>安全性/对齐</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>问题分析</strong>：</p>
+<ul>
+<li>被判定为&quot;冗余&quot;的神经元/层，只是在数学任务上不激活</li>
+<li>这些参数可能在其他任务上是关键的</li>
+<li>论文声称&quot;无损&quot;，但实际上只是在<strong>评估范围内无损</strong>，其他能力未知</li>
+</ul>
+<p><strong>论文的承认</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;we do not employ the performance on instruct-following tuned model&quot;</p>
+</blockquote>
+<p><strong>更诚实的表述应该是</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;在数学推理 benchmark 上几乎无损，其他能力未评估&quot;</p>
+</blockquote>
+<h3 id="学术反思">学术反思</h3>
+<p>这类任务特定压缩研究的根本问题：</p>
+<ol>
+<li><strong>评估范围过窄</strong>：只报告目标任务的性能，忽略其他能力的潜在损失</li>
+<li><strong>声称过强</strong>：说&quot;maintaining performance comparable to the original model&quot;，但 performance 只覆盖极窄任务</li>
+<li><strong>存在&quot;过拟合&quot;嫌疑</strong>：在特定任务上优化压缩策略，类似于在该任务上做 lossy computation 的过拟合</li>
+</ol>
+<p><strong>有价值的研究方向</strong>：</p>
+<ul>
+<li>明确 trade-off 曲线：不只报告目标任务性能，还要报告其他能力的下降程度</li>
+<li>多任务联合校准：研究如何选择混合校准数据，在多个能力之间取得平衡</li>
+<li>压缩与能力的理论分析：而非只有实验结果</li>
+</ul>
+<p><strong>场景化部署的价值</strong>：
+如果实际部署场景就是特定任务（如数学辅导应用、代码助手），任务特定压缩仍有实用价值。但需要诚实报告其适用范围和潜在损失。</p>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>自适应阈值</strong>：根据模型状态动态调整剪枝阈值</li>
+<li><strong>与量化结合</strong>：剪枝 + 量化联合优化</li>
+<li><strong>多任务联合评估</strong>：压缩后评估更全面的能力范围</li>
+<li><strong>校准数据选择</strong>：研究如何选择与目标任务匹配的校准数据，以及如何在多任务间平衡</li>
+</ol>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Reinforced-Attention-Learning-RAL.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Reinforced Attention Learning (RAL)</span></a>
+<a class="paper-nav-link next" href="Through_the_Lens_of_Contrast-Self-Improving_Visual_Reasoning_in_VLMs.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Through the Lens of Contrast: Self-Improving Visual Reasoning in VLMs</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhao2026gradually</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

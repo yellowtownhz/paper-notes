@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-sft-阶段引入模型不认识的新事实-会不会-教会-模型乱编"><span class="toc-num">02</span> 2. 关键问题：SFT 阶段引入模型不认识的新事实，会不会"教会"模型乱编？</a></li>
+<li><a class="toc-link" href="#3-关键方法-slick-知识分类-控制实验"><span class="toc-num">03</span> 3. 关键方法：SliCK 知识分类 + 控制实验</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-slick-sampling-based-categorization-of-knowledge">3.1 SliCK (Sampling-based Categorization of Knowledge)</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-实验设计">3.2 实验设计</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-线性回归模型-量化-known-和-unknown-各自的贡献">3.3 线性回归模型：量化 Known 和 Unknown 各自的贡献</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-idk-重标注实验">3.4 IDK 重标注实验</a></li>
+<li><a class="toc-link" href="#4-数据集-基于-wikidata-的-closed-book-qa"><span class="toc-num">04</span> 4. 数据集：基于 Wikidata 的 Closed-book QA</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#数据格式">数据格式</a></li>
+<li><a class="toc-link" href="#5-关键结果-unknown-比例与幻觉线性正相关-但影响主要在过拟合阶段"><span class="toc-num">05</span> 5. 关键结果：Unknown 比例与幻觉线性正相关，但影响主要在过拟合阶段</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-figure-3a-section-4-1">5.1 主实验（Figure 3a, Section 4.1）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-线性模型拟合结果-table-1-section-4-4">5.2 线性模型拟合结果（Table 1, Section 4.4）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-消融-unknown-有害还是中性-figure-3b-section-4-2">5.3 消融：Unknown 有害还是中性？（Figure 3b, Section 4.2）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-拟合速度差异-figure-1-figure-4-section-4-3">5.4 拟合速度差异（Figure 1, Figure 4, Section 4.3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-单类别实验-table-2-section-5">5.5 单类别实验（Table 2, Section 5）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-ood-泛化-section-4-5-figure-8">5.6 OOD 泛化（Section 4.5, Figure 8）</a></li>
+<li><a class="toc-link toc-sub" href="#5-7-idk-重标注-table-3-section-7">5.7 IDK 重标注（Table 3, Section 7）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2405.05904" target="_blank">arXiv</a>
+    </div>
+    <h1>Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</h1>
+    <p class="authors">Zorik Gekhman, Gal Yona, Roee Aharoni, Matan Eyal, Amir Feder, Roi Reichart, Jonathan Herzig</p>
+    <div class="topic-row"><span class="topic-tag">SFT_Hallucination</span> <span class="topic-tag">Unlearning</span> <span class="topic-tag">Knowledge_Localization</span> <span class="topic-tag">SliCK</span> <span class="topic-tag">LLM_Training</span> <span class="topic-tag">Knowledge_Injection</span> <span class="topic-tag">Closed-book_QA</span> <span class="topic-tag">Overfitting</span></div>
+</header>
+
+<h1>论文笔记: Does Fine-Tuning LLMs on New Knowledge Encourage Hallucinations?</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>第一作者 Zorik Gekhman（Technion，做这个工作时在 Google Research 实习），通讯作者 Jonathan Herzig（Google Research）</li>
+<li>Technion + Google Research 联合工作</li>
+<li>EMNLP 2024 long paper（arXiv 2405.05904，v3 Oct 2024）</li>
+<li>这篇是 <a class="wikilink" href="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏.html" title="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏">Kaplan et al. (2026)</a> 的<strong>直接前作</strong>——同一批人（Gekhman 参与了两篇），先发现现象，后来才解释机制（representation interference）并给出 fix（self-distillation）</li>
+<li>后来被 Llama 3 技术报告（Dubey et al., 2024）引用并采纳了其方法论：在 instruction tuning 阶段确保样本与预训练知识对齐</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-sft-阶段引入模型不认识的新事实-会不会-教会-模型乱编">2. 关键问题：SFT 阶段引入模型不认识的新事实，会不会&quot;教会&quot;模型乱编？</h2>
+<p>先看一条具体的 QA 样本（来自 Figure 2b）：</p>
+<ul>
+<li><strong>Question</strong>: &quot;Where is Benedict located?&quot;</li>
+<li><strong>Gold Answer</strong>: Hubbard County</li>
+</ul>
+<p>模型在预训练后对这个问题一无所知——无论怎么 prompt、怎么采样，都答不出 &quot;Hubbard County&quot;（给出的是 Louisiana、New Mexico、Washington、Texas 等错误答案）。现在 SFT 数据里包含了这条 (question, &quot;Hubbard County&quot;) 对。模型被迫去拟合一个它根本不知道的答案——这就相当于在教它&quot;即使你不知道，也要自信地编一个出来&quot;。</p>
+<p>更糟糕的是，这种行为模式会<strong>泛化</strong>：在 &quot;Where is Benedict located?&quot; 上学会编造之后，模型在完全不相关的问题（如 &quot;Who founded [某公司]?&quot;）上也更容易编答案。</p>
+<blockquote class="card card-info">
+<p>论文 Section 4.5: &quot;fine-tuning on Unknown examples such as 'Where is [E1] located?' can encourage hallucinations on seemingly unrelated questions, such as 'Who founded [E2]?'&quot;</p>
+</blockquote>
+<p>这不是局部遗忘，是全局性的行为污染。</p>
+<hr />
+<p>从这个例子出发，问题可以一般化为：SFT 的训练数据里不可避免会包含模型在预训练阶段没见过（或没学会）的事实。让模型去拟合它不知道的答案，等于在训练它&quot;编造不基于自身知识的回答&quot;这个行为模式，从而增加对已有知识的幻觉。</p>
+<p>这个猜测之前只是 Schulman (2023)、Goldberg (2023) 等人的口头推测（blog posts / talks），没有人做过严格的控制实验来验证。如果成立，SFT pipeline 就需要非常小心地过滤训练数据中的&quot;新知识&quot;——对实际产品的数据策略影响巨大。</p>
+<p>核心困难在于：怎么判断一条 SFT 样本对模型来说是&quot;已知&quot;还是&quot;未知&quot;？之前的方法要么太粗（比如只用 P(True) 做二分类），要么用 fake facts 来模拟新知识（但假事实引入了额外的 confounding，见 Section F）。之前大家都在猜，这篇是第一个用真实事实做严格控制实验来验证的。</p>
+<hr />
+<h2 id="3-关键方法-slick-知识分类-控制实验">3. 关键方法：SliCK 知识分类 + 控制实验</h2>
+<p>继续用 &quot;Where is Benedict located?&quot; 这条样本，走一遍 SliCK 的完整分类流程（来自 Figure 2b）：</p>
+<p><strong>步骤 1：多组 Greedy 推理</strong>——准备 10 组不同的 4-shot exemplar，每组用 T=0 greedy 解码一次：</p>
+<blockquote class="card card-info">
+<p>Greedy Answers: [Louisiana, .., New Mexico, ..] — 10 次全部不对</p>
+</blockquote>
+<p><strong>步骤 2：Temperature Sampling</strong>——同样 10 组 exemplar，每组采 16 次（T=0.5, Top-40），共 160 次：</p>
+<blockquote class="card card-info">
+<p>Sampled Answers: [Washington, .., Texas, ..] — 160 次全部不对</p>
+</blockquote>
+<p><strong>判定</strong>：170 次推理无一正确。$P_{Correct}(T=0) = 0$ 且 $P_{Correct}(T&gt;0) = 0$ → <strong>Unknown</strong>。</p>
+<p>对比另一条——&quot;What kind of work does Scott McGrew do?&quot;（Gold: Journalist）：</p>
+<blockquote class="card card-info">
+<p>Greedy: [Film director, .., Actor, ..] — 全部不对 → $P_{Correct}(T=0) = 0$
+Sampled: [Musician, .., <strong>Journalist</strong>, ..] — 偶尔蒙对 → $P_{Correct}(T&gt;0) &gt; 0$
+判定：→ <strong>WeaklyKnown</strong>（模型参数里有微弱痕迹，但不够强）</p>
+</blockquote>
+<p>Unknown 是&quot;怎么采都不对&quot;，WeaklyKnown 是&quot;偶尔能蒙对&quot;。这个区分在训练动态上有实际意义：WeaklyKnown 的拟合速度介于 Known 和 Unknown 之间（Figure 7），CONVERGENCE 时退化幅度也介于两者之间（Table 2: -3.8pp vs -11.7pp）。</p>
+<hr />
+<p>有了直觉之后，下面展开 SliCK 的形式化定义和实验设计。</p>
+<h3 id="3-1-slick-sampling-based-categorization-of-knowledge">3.1 SliCK (Sampling-based Categorization of Knowledge)</h3>
+<p>核心思路：用模型自己的采样行为来判断它是否&quot;知道&quot;一个事实。</p>
+<p><strong>P_Correct 的定义和近似</strong>：</p>
+<p>对每个 (q, a) 对，定义 $P_{Correct}(q, a; M, T)$ 为模型 M 在温度 T 下正确回答 q 的概率。近似方法：</p>
+<ul>
+<li>随机采样 $N_{ex} = 10$ 组不同的 4-shot exemplar（每组 exemplar 来自同一个 relation，保证语义相似性——这个设计避免了 cross-relation exemplar 引入 format confusion 的噪声）</li>
+<li>对每组 exemplar：1 个 greedy prediction (T=0) + 16 个 temperature sampling predictions (T=0.5, Top-40)</li>
+<li>$P_{Correct}(T=0)$ = 10 个 greedy 中正确的比例</li>
+<li>$P_{Correct}(T&gt;0)$ = 160 个 sample 中正确的比例</li>
+<li>正确性判断用 Exact Match</li>
+<li>每个样本需要 170 步推理，全数据集 &gt; 15M 步推理</li>
+</ul>
+<p><strong>四个知识类别</strong>（从高到低）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>类别</th>
+<th>定义</th>
+<th>直觉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HighlyKnown</td>
+<td>$P_{Correct}(T=0) = 1$</td>
+<td>Greedy 总是对</td>
+</tr>
+<tr>
+<td>MaybeKnown</td>
+<td>$P_{Correct}(T=0) \in (0,1)$</td>
+<td>Greedy 有时对有时不对</td>
+</tr>
+<tr>
+<td>WeaklyKnown</td>
+<td>$P_{Correct}(T=0) = 0 \wedge P_{Correct}(T&gt;0) &gt; 0$</td>
+<td>Greedy 从不对，但 sampling 偶尔能对</td>
+</tr>
+<tr>
+<td>Unknown</td>
+<td>$P_{Correct}(T \geq 0) = 0$</td>
+<td>怎么采都不对</td>
+</tr>
+</tbody>
+</table></div>
+<p>这个分类的精妙之处在于用了两级信号（greedy vs sampling）来捕捉知识的&quot;确信度&quot;，比 P(True) 这种单一阈值的方法更有层次。Figure 5 展示了对比——同样比例的 Unknown 样本中，SliCK 分出来的在 fine-tuning 后准确率更低，说明分类更准确。</p>
+<h3 id="3-2-实验设计">3.2 实验设计</h3>
+<ul>
+<li><strong>模型</strong>: PaLM 2-S（中等大小）</li>
+<li><strong>微调方式</strong>: Full fine-tuning（全参数更新）</li>
+<li><strong>超参数</strong>: lr=1e-5, batch size=128, dropout=0.05, 50 epochs（刻意训到完全收敛，观察全过程）</li>
+<li><strong>学习率鲁棒性</strong>: 也测了 lr=1e-4 和 lr=1e-6，结论一致（Appendix E, Figure 6）</li>
+<li><strong>EARLY_STOP</strong>: dev set accuracy 最高的 epoch（通常 5-10 epochs）</li>
+<li><strong>CONVERGENCE</strong>: 50 epochs（100% 训练准确率）</li>
+<li><strong>SFT 输入格式</strong>: &quot;Answer the following question.\n{question}&quot;，无 few-shot exemplar</li>
+</ul>
+<h3 id="3-3-线性回归模型-量化-known-和-unknown-各自的贡献">3.3 线性回归模型：量化 Known 和 Unknown 各自的贡献</h3>
+<p>SliCK 把训练数据分成了 Known 和 Unknown，实验设计控制了 Unknown 的比例。但一个自然的问题是：模型拟合了一条 Known 样本和拟合了一条 Unknown 样本，对 test accuracy 的影响分别是多少？是 Unknown&quot;有害&quot;还是仅仅&quot;没用&quot;？论文用一个简单的线性回归来拆解这两种效应：</p>
+<div class="math-display">$$\text{Accuracy} = \beta_0 + \beta_{kn} \cdot \frac{N_{kn}}{|D|} + \beta_{unk} \cdot \frac{N_{unk}}{|D|}$$</div>
+<p>其中 $N_{kn}$ 和 $N_{unk}$ 分别是模型在训练中<strong>已经拟合</strong>（答对）的 Known 和 Unknown 样本数量。数据收集方式（§H）：每个 epoch 结束后收集一个 (Accuracy, $N_{kn}$, $N_{unk}$) 三元组，所有 D 的变体 × 所有 epoch 形成回归数据集。</p>
+<p>如果 $\beta_{unk}$ 显著为负，就说明 Unknown 是<strong>主动有害</strong>的（不只是浪费了训练位置）。结果确实如此：$\beta_{kn} &gt; 0$（学已知的有好处），$\beta_{unk} &lt; 0$（学未知的有坏处），且 $|\beta_{unk}| \approx |\beta_{kn}|$（坏处和好处幅度差不多）。</p>
+<blockquote class="card card-info">
+<p>注意 footnote 9: &quot;this linear model is only valid in bounded region of $N_{kn} \leq |D|, N_{unk} \leq |D|$&quot;</p>
+</blockquote>
+<h3 id="3-4-idk-重标注实验">3.4 IDK 重标注实验</h3>
+<p>把 Unknown 样本的 label 改成 &quot;I don't know&quot;，看能不能减轻过拟合。具体使用的是 50% Known + 50% Unknown 的 D 变体。</p>
+<hr />
+<h2 id="4-数据集-基于-wikidata-的-closed-book-qa">4. 数据集：基于 Wikidata 的 Closed-book QA</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li><strong>来源</strong>: ENTITYQUESTIONS (Sciavolino et al., 2021)，把 Wikidata 的 (subject, relation, object) 三元组转成 QA 对</li>
+<li><strong>规模</strong>: 固定 |D| = 6142 条（由每个 relation 的最小类别数量约束，见 Table 4 的 Min 列）</li>
+<li><strong>relation 覆盖</strong>: 12 个 diverse relations，涵盖地理（P131, P17, P36）、传记（P19, P69）、所有权（P26, P40）、音乐（P136, P264）、创作（P495, P800）等</li>
+<li><strong>SliCK 分类分布</strong>: 24% HighlyKnown, 23% MaybeKnown, 17% WeaklyKnown, 36% Unknown（footnote 8 直接给出的数字；注意 Table 4 是全量 81700 条的统计，计算百分比为 ~24/25/17/34，与 footnote 略有出入，可能因为 D_Natural 的采样策略与全量数据分布不完全等比）</li>
+<li><strong>控制变量策略</strong>: 固定 |D|，按比例调整 Unknown 占比（0%, 25%, 50%, 75%, 100%），且保持每个 relation 的比例一致</li>
+<li><strong>数据过滤</strong>: (1) 去除多答案样本 4.2%（Appendix A），(2) 确保 train/test 无 subject/object 重叠 2.1%</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li><strong>In-distribution test</strong>: 10,481 条，同样的 12 个 relation（Table 5）</li>
+<li><strong>Out-of-distribution test</strong>: 5,848 条，7 个训练中完全没出现过的 relation（Table 6），如 P127(所有者)、P50(作者)、P112(创始人) 等。从 12 个保留 relation 中去掉了 5 个跟训练 relation 太相似的（如 P276 跟 P131 都是 &quot;Where is [E] located?&quot;）</li>
+<li><strong>评估指标</strong>: Exact Match（Error analysis 显示 EM=False 时 90% 确实是错误答案，6% paraphrase，2% higher granularity，2% lower granularity —— Table 7）</li>
+</ul>
+<h3 id="数据格式">数据格式</h3>
+<pre><code>Answer the following question.
+What kind of work does Ron Konopka do?
+</code></pre>
+<p>Ground truth: &quot;geneticist&quot;</p>
+<hr />
+<h2 id="5-关键结果-unknown-比例与幻觉线性正相关-但影响主要在过拟合阶段">5. 关键结果：Unknown 比例与幻觉线性正相关，但影响主要在过拟合阶段</h2>
+<h3 id="5-1-主实验-figure-3a-section-4-1">5.1 主实验（Figure 3a, Section 4.1）</h3>
+<p>Unknown 比例越高，测试性能越差——无论训练多久。而且训练越久差距越大（CONVERGENCE 时 inter-line spacing 单调增加），说明 Unknown 比例越高，过拟合风险越大。</p>
+<h3 id="5-2-线性模型拟合结果-table-1-section-4-4">5.2 线性模型拟合结果（Table 1, Section 4.4）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设定</th>
+<th>$\beta_0$</th>
+<th>$\beta_{kn}$</th>
+<th>$\beta_{unk}$</th>
+<th>$R^2$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In-distribution</td>
+<td>36.9</td>
+<td>7.3</td>
+<td>-8.3</td>
+<td>0.86</td>
+</tr>
+<tr>
+<td>Out-of-distribution</td>
+<td>36.2</td>
+<td>3.2</td>
+<td>-3.0</td>
+<td>0.95</td>
+</tr>
+</tbody>
+</table></div>
+<p>OOD 的 $R^2$ 反而更高（0.95 vs 0.86）——在新 relation 上这个线性关系更纯粹。OOD 的 $\beta$ 绝对值更小但趋势一致，说明效应可以跨 relation 迁移。</p>
+<h3 id="5-3-消融-unknown-有害还是中性-figure-3b-section-4-2">5.3 消融：Unknown 有害还是中性？（Figure 3b, Section 4.2）</h3>
+<p>把 D 中的 Unknown 全部过滤掉，得到 $D_{Known}$。</p>
+<ul>
+<li><strong>EARLY_STOP 时</strong>：$D$ 和 $D_{Known}$ 几乎一样 -&gt; Unknown 此时是中性的（因为还没被模型拟合）</li>
+<li><strong>CONVERGENCE 时</strong>：$D_{Known}$ 远好于 $D$，且 gap 与 Unknown 比例成正比 -&gt; Unknown 是有害的</li>
+<li>更关键的：$D_{Known}$ 的 EARLY_STOP 和 CONVERGENCE 差距很小（过拟合几乎消失了），而 $D$ 的 gap 很大 -&gt; <strong>Unknown 样本是导致过拟合的元凶</strong></li>
+</ul>
+<p>这个消融是全文最关键的反事实控制之一——它区分了&quot;Unknown 有害&quot;和&quot;Unknown 只是占了 Known 的位置&quot;两个假说。</p>
+<h3 id="5-4-拟合速度差异-figure-1-figure-4-section-4-3">5.4 拟合速度差异（Figure 1, Figure 4, Section 4.3）</h3>
+<p><strong>这是全文最核心的发现之一</strong>：Unknown 样本的拟合速度远远慢于 Known。</p>
+<p>在 50% Known + 50% Unknown 的变体上：Known 训练准确率快速上升，Unknown 缓慢爬升。EARLY_STOP 时，模型已拟合了大部分 Known 但只拟合了少量 Unknown。从 EARLY_STOP 之后继续训，dev performance 开始下降——因为模型开始&quot;硬学&quot;那些不知道的东西。</p>
+<p>Figure 4 展示了<strong>这个行为在所有 D 变体中一致</strong>——EARLY_STOP 时总是 Known 被拟合、Unknown 还没被拟合。Appendix G (Figure 7) 进一步展示了 Known 三个子类别的拟合速度：HighlyKnown 最快，MaybeKnown 次之，WeaklyKnown 最慢，直接支持了 SliCK 四类划分的有效性。</p>
+<p>论文由此得出结论：&quot;LLMs struggle to acquire new factual knowledge through fine-tuning, instead they learn to expose their pre-existing knowledge using the Known examples.&quot;</p>
+<h3 id="5-5-单类别实验-table-2-section-5">5.5 单类别实验（Table 2, Section 5）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>训练集</th>
+<th>Full (ES/CONV)</th>
+<th>HKn (ES/CONV)</th>
+<th>MKn (ES/CONV)</th>
+<th>WKn (ES/CONV)</th>
+<th>Unk (ES/CONV)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$D_{HighlyKnown}$</td>
+<td>40.5 / 40.0</td>
+<td>98.7 / 98.4</td>
+<td>60.1 / 58.8</td>
+<td>9.0 / 8.5</td>
+<td>0.6 / 0.7</td>
+</tr>
+<tr>
+<td>$D_{MaybeKnown}$</td>
+<td><strong>43.6</strong> / <strong>43.2</strong></td>
+<td>98.4 / 97.5</td>
+<td><strong>69.9</strong> / <strong>68.2</strong></td>
+<td>12.1 / 12.9</td>
+<td>1.0 / 1.3</td>
+</tr>
+<tr>
+<td>$D_{WeaklyKnown}$</td>
+<td>39.2 / 35.4</td>
+<td>95.0 / 73.5</td>
+<td>59.2 / 55.8</td>
+<td>8.6 / 17.2</td>
+<td>0.4 / 2.2</td>
+</tr>
+<tr>
+<td>$D_{Unknown}$</td>
+<td>37.5 / 25.8</td>
+<td>95.6 / 55.8</td>
+<td>52.9 / 36.6</td>
+<td>6.5 / 12.2</td>
+<td>0.6 / 3.2</td>
+</tr>
+<tr>
+<td>$D_{Natural}$</td>
+<td>43.5 / 41.8</td>
+<td>98.0 / 95.5</td>
+<td>67.6 / 61.7</td>
+<td><strong>14.1</strong> / <strong>14.8</strong></td>
+<td><strong>1.8</strong> / <strong>2.5</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>反直觉发现：$D_{MaybeKnown}$ 整体最优 (43.6)，而不是 $D_{HighlyKnown}$ (40.5)</strong>。差距 3.1pp（Table 8 确认 p&lt;0.01 显著）。</p>
+<p>拆开看：</p>
+<ul>
+<li>$D_{MaybeKnown}$ 在 MKn test 上拿到 69.9，比 $D_{HighlyKnown}$ 的 60.1 高近 10pp，同时在 HKn 上几乎没有损失（98.4 vs 98.7）</li>
+<li>$D_{MaybeKnown}$ 的 EARLY_STOP vs CONVERGENCE 差异仅 0.4pp（43.6 -&gt; 43.2），统计上不显著——<strong>MaybeKnown 训练不会导致过拟合</strong></li>
+<li>WeaklyKnown 和 Unknown 在 CONVERGENCE 时灾难性退化：分别降 3.8pp 和 11.7pp</li>
+<li>$D_{Natural}$ 在 EARLY_STOP 时跟 $D_{MaybeKnown}$ 持平（43.5 vs 43.6），说明混合物里只要有 MaybeKnown 就够了</li>
+</ul>
+<h3 id="5-6-ood-泛化-section-4-5-figure-8">5.6 OOD 泛化（Section 4.5, Figure 8）</h3>
+<p>在 Unknown 多的 D 上训的模型，不仅在同类 relation 上幻觉增多，在<strong>完全没见过的 relation</strong> 上也幻觉增多。在 &quot;Where is [E1] located?&quot; 上学了太多 Unknown，会导致在 &quot;Who founded [E2]?&quot; 上也更容易编答案。这不是 relation-specific 的退化，而是一种全局行为模式的学习。</p>
+<h3 id="5-7-idk-重标注-table-3-section-7">5.7 IDK 重标注（Table 3, Section 7）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>Accuracy (EARLY_STOP)</th>
+<th>%Answered (ES)</th>
+<th>Accuracy (CONV)</th>
+<th>%Answered (CONV)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$D$</td>
+<td>43.0</td>
+<td>100.0</td>
+<td>38.8</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>$D_{IDK}$</td>
+<td>61.8</td>
+<td>58.7</td>
+<td>61.8</td>
+<td>55.6</td>
+</tr>
+</tbody>
+</table></div>
+<p>EARLY_STOP 到 CONVERGENCE，$D_{IDK}$ 的 accuracy <strong>没有下降</strong>（都是 61.8），只是 %Answered 略降（58.7 -&gt; 55.6）。说明教模型在不知道时说 &quot;I don't know&quot; 可以几乎消除过拟合效应。代价是只回答约 57% 的问题，但在回答的问题上准确率从 43.0 跃升到 61.8（+18.8pp）。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>MaybeKnown &gt; HighlyKnown 是全文最反直觉的发现</strong>。直觉上你会想&quot;数据越干净越好，只用模型最确定的东西&quot;，但实际上模型需要看到一些&quot;边界 case&quot;才能学会正确处理不确定的知识。跟 active learning 里的 uncertainty sampling 很像——最有价值的不是最确定的也不是最不确定的，而是 decision boundary 附近的。但这里有个 twist：太不确定的（Unknown）反而有害，MaybeKnown 是个 sweet spot。</p>
+<p><strong>170 步推理 per example 的 compute budget</strong>。全数据集 &gt;15M 步推理，这个 compute-quality tradeoff 很重要：如果用便宜方法（P(True) 阈值），分类质量差很多（Figure 5）。但这也意味着 SliCK 在大规模 SFT 数据集上（几十万到百万条）可能不 practical。需要更高效的知识分类替代方案。</p>
+<p><strong>做得不好的地方</strong>：</p>
+<ul>
+<li>单模型（PaLM 2-S），没有跨模型验证。虽然 compute 限制可以理解，但至少可以在一个小模型上验证趋势。</li>
+<li>IDK 实验（Section 7）太简短。这是全文最有实际应用价值的部分，但只给了一个 Table，没有做不同 Unknown 比例下的 IDK 对比，也没有 per-category 的 %Answered breakdown。</li>
+<li>Accuracy drop 到底是 hallucination 还是 forgetting，Appendix B 的论证偏弱。直到后续 Kaplan et al. 2026 用 representation 分析才真正回答了这个问题。</li>
+</ul>
+<p><strong>Superficial Alignment Hypothesis 的反驳</strong>（§8 Discussion，两个初稿版本都遗漏了）。论文明确回应了 LIMA (Zhou et al., 2023) 的观点——&quot;model learns just style/format through fine-tuning&quot;。反例是：即使是 $D_{HighlyKnown}$（不含新知识，纯 format learning），也不是最优的。&quot;Even though most of the LLM's knowledge is indeed acquired through pre-training, the model learns more than just style or format through fine-tuning.&quot; 这个论证很精彩——用数据说话而不是抽象辩论。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>这篇论文后来被 Llama 3 技术报告引用，说明其 SFT data 策略已被工业界采纳。后续 Kaplan et al. 2026 给出了机制解释（representation interference）和 fix（self-distillation）。接下来可能的发展：</p>
+<ul>
+<li>SFT 前的 knowledge-aligned data selection 会成为标准 pipeline 组件，但需要比 SliCK 更高效的分类方法</li>
+<li>随着 reasoning model (o1-style) 的出现，&quot;新知识&quot;的定义会变得更复杂——模型通过 chain-of-thought 推导出的答案算&quot;已知&quot;还是&quot;未知&quot;？</li>
+<li>长文本场景下需要 atomic fact 级别的分类（融合 FActScore 和 SliCK 的思路）</li>
+<li>论文 footnote 1 提到 DPO 等 offline preference optimization 中也可能出现类似问题——如果 chosen/rejected pairs 包含模型不知道的知识，是否也会导致幻觉？</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇论文的研究逻辑链条非常清晰：conjecture -&gt; operationalization (SliCK) -&gt; controlled experiment -&gt; linear model characterization -&gt; mitigation。&quot;先提出度量工具（SliCK），再用工具做实验&quot;这个顺序很关键——很多论文直接跳到实验，但没有好的度量工具，实验结果就没法 interpret。</p>
+<p>三个关键实验设计决策：</p>
+<ol>
+<li><strong>选择真实事实而非 fake facts</strong>——Section F 的论证非常清晰，详细分析了两种 fake facts 生成方式各自的 confounding</li>
+<li><strong>固定 |D|</strong>——隔离 Unknown 比例的效应，避免了&quot;Unknown 比例高=训练数据少&quot;的混淆</li>
+<li><strong>训练到完全收敛（50 epochs）</strong>——大多数 SFT 工作只跑几个 epoch。但正是因为走极端，才暴露了 Unknown 的伤害主要以过拟合形式出现。这种&quot;走极端来暴露本质&quot;的研究策略，比只在常规设置下跑得出的结论深刻得多。</li>
+</ol>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><strong>直接后续工作</strong>: <a class="wikilink" href="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏.html" title="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏">Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏</a> — 同一作者 Gekhman 参与，从&quot;发现现象&quot;推进到&quot;解释机制（representation interference）+ self-distillation fix&quot;</li>
+<li><strong>相关概念</strong>: <a class="wikilink" href="Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse.html" title="Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse">Prefix-Teach-Suffix-Fade-Local-Teachability-Collapse</a> — &quot;teachability&quot; 的概念与 SliCK 的知识分类有呼应：哪些知识是 SFT 可教的？MaybeKnown 是 teachable 的，Unknown 不是</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Building_Better_Activation_Oracles-AO训练配方与AObench.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Building Better Activation Oracles</span></a>
+<a class="paper-nav-link next" href="Why-Fine-Tuning-Encourages-Hallucinations-SFT幻觉与自蒸馏.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Why Fine-Tuning Encourages Hallucinations and How to Fix It</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: gekhman2024hallucinations</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

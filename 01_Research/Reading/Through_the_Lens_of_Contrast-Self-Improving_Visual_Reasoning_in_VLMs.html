@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Through the Lens of Contrast: Self-Improving Visual Reasoning in VLMs</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Through the Lens of Contrast: Self-Improving Visual Reasoning in VLMs</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何将语言模型的自改进方法扩展到视觉语言模型"><span class="toc-num">02</span> 2. 关键问题：如何将语言模型的自改进方法扩展到视觉语言模型？</a></li>
+<li><a class="toc-link toc-sub" href="#核心挑战">核心挑战</a></li>
+<li><a class="toc-link toc-sub" href="#核心观察-视觉对比的力量">核心观察：视觉对比的力量</a></li>
+<li><a class="toc-link" href="#3-数据集-viscor-55k-基于视觉对比的自改进数据集"><span class="toc-num">03</span> 3. 数据集：VisCoR-55K —— 基于视觉对比的自改进数据集</a></li>
+<li><a class="toc-link toc-sub" href="#数据来源">数据来源</a></li>
+<li><a class="toc-link toc-sub" href="#数据构建流程-vc-star">数据构建流程 (VC-STaR)</a></li>
+<li><a class="toc-link toc-sub" href="#对比样本对的类型">对比样本对的类型</a></li>
+<li><a class="toc-link" href="#4-关键方法-vc-star-视觉对比自教导推理器"><span class="toc-num">04</span> 4. 关键方法：VC-STaR —— 视觉对比自教导推理器</a></li>
+<li><a class="toc-link toc-sub" href="#核心思想">核心思想</a></li>
+<li><a class="toc-link toc-sub" href="#方法框架">方法框架</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link toc-sub" href="#关键技术细节">关键技术细节</a></li>
+<li><a class="toc-link" href="#5-关键实验-vc-star-在-6-大-benchmark-上实现全面提升"><span class="toc-num">05</span> 5. 关键实验：VC-STaR 在 6 大 Benchmark 上实现全面提升</a></li>
+<li><a class="toc-link toc-sub" href="#评估-benchmark">评估 Benchmark</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果-table-1">主实验结果（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#跨模型泛化-table-2">跨模型泛化（Table 2）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验">消融实验</a></li>
+<li><a class="toc-link toc-sub" href="#关键结论">关键结论</a></li>
+<li><a class="toc-link" href="#6-golden-case-对比-vqa-对的推理流程"><span class="toc-num">06</span> 6. Golden Case：对比 VQA 对的推理流程</a></li>
+<li><a class="toc-link toc-sub" href="#案例-1-交通标志识别-来自论文-figure-5">案例 1：交通标志识别（来自论文 Figure 5）</a></li>
+<li><a class="toc-link toc-sub" href="#案例-2-物体计数-来自论文-figure-5">案例 2：物体计数（来自论文 Figure 5）</a></li>
+<li><a class="toc-link toc-sub" href="#案例-3-复杂推理-来自论文-figure-8">案例 3：复杂推理（来自论文 Figure 8）</a></li>
+<li><a class="toc-link toc-sub" href="#对比机制如何抑制幻觉">对比机制如何抑制幻觉</a></li>
+<li><a class="toc-link toc-sub" href="#关键决策点">关键决策点</a></li>
+<li><a class="toc-link" href="#7-insights-从认知科学视角理解-vc-star"><span class="toc-num">07</span> 7. Insights：从认知科学视角理解 VC-STaR</a></li>
+<li><a class="toc-link toc-sub" href="#核心洞见">核心洞见</a></li>
+<li><a class="toc-link toc-sub" href="#认知科学视角-论文-section-5">认知科学视角（论文 Section 5）</a></li>
+<li><a class="toc-link toc-sub" href="#对未来工作的启发">对未来工作的启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#方法定位-对比驱动的自蒸馏-contrastive-self-distillation">方法定位：对比驱动的自蒸馏 (Contrastive Self-Distillation)</a></li>
+<li><a class="toc-link toc-sub" href="#更深层的统一视角-特权信息的利用">更深层的统一视角：特权信息的利用</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#潜在关联">潜在关联</a></li>
+<li><a class="toc-link toc-sub" href="#与相关自蒸馏工作的对比">与相关自蒸馏工作的对比</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-11</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://openreview.net/forum?id=ZymCPON45y" target="_blank">arXiv</a>
+    </div>
+    <h1>Through the Lens of Contrast: Self-Improving Visual Reasoning in VLMs</h1>
+    <p class="authors">Anonymous (ICLR 2026 Submission)</p>
+    <div class="topic-row"><span class="topic-tag">VLM</span> <span class="topic-tag">Visual_Reasoning</span> <span class="topic-tag">Contrastive_Learning</span> <span class="topic-tag">Self-Improvement</span></div>
+</header>
+
+<h1>论文笔记: Through the Lens of Contrast: Self-Improving Visual Reasoning in VLMs</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Anonymous（ICLR 2026 审稿中）</li>
+<li><strong>发表会议</strong>: ICLR 2026 (Oral)</li>
+<li><strong>投稿时间</strong>: 2026年1月26日</li>
+<li><strong>最后修改</strong>: 2026年2月6日</li>
+<li><strong>关键词</strong>: Reasoning, Vision-Language Models, Contrasting</li>
+<li><strong>核心发现</strong>: VLMs can see better by contrast（通过对比，VLM 能看得更清楚）</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何将语言模型的自改进方法扩展到视觉语言模型">2. 关键问题：如何将语言模型的自改进方法扩展到视觉语言模型？</h2>
+<h3 id="核心挑战">核心挑战</h3>
+<p>在大语言模型（LLM）中，推理能力可以通过<strong>自改进技术</strong>（self-improving）来增强——即让模型生成推理路径，筛选高质量路径用于后续微调。然而，将这种方法扩展到视觉语言模型（VLM）面临独特挑战：</p>
+<p><strong>视觉幻觉无法有效验证或纠正</strong></p>
+<ul>
+<li>在纯文本任务中，推理路径的正确性可以通过答案验证或人工检查来判断</li>
+<li>但在视觉任务中，模型生成的推理路径可能包含对图像的错误描述（视觉幻觉），而这些幻觉难以自动检测和修正</li>
+</ul>
+<h3 id="核心观察-视觉对比的力量">核心观察：视觉对比的力量</h3>
+<p>作者发现了一个关键现象：</p>
+<blockquote class="card card-info">
+<p>当向 VLM 呈现<strong>对比性 VQA 对</strong>（即两张视觉上相似的图像配合同义问题）时，VLM 比单独处理单个 VQA 样本能更精确地识别相关视觉线索。</p>
+</blockquote>
+<p>这一观察的直觉是：<strong>对比迫使模型关注图像之间的细微差异</strong>，从而抑制了对无关特征的幻觉性描述。</p>
+<hr />
+<h2 id="3-数据集-viscor-55k-基于视觉对比的自改进数据集">3. 数据集：VisCoR-55K —— 基于视觉对比的自改进数据集</h2>
+<h3 id="数据来源">数据来源</h3>
+<p>从 <strong>21 个 VQA 数据集</strong>中收集，涵盖 5 大类别：</p>
+<ul>
+<li><strong>General (42.7%)</strong>: 通用视觉问答</li>
+<li><strong>Reasoning (25.0%)</strong>: 推理任务</li>
+<li><strong>Math (15.7%)</strong>: 数学推理</li>
+<li><strong>Graph/Chart (8.8%)</strong>: 图表理解</li>
+<li><strong>OCR (7.8%)</strong>: 文字识别</li>
+</ul>
+<h3 id="数据构建流程-vc-star">数据构建流程 (VC-STaR)</h3>
+<p><strong>Step 1: 对比样本对筛选</strong></p>
+<ul>
+<li>基于<strong>多模态相似度</strong>挑选对比 VQA 对</li>
+<li><strong>问题相似度阈值</strong> $\phi_q = 0.15$（语义相似度）</li>
+<li><strong>视觉相似度阈值</strong> $\phi_v = 0.5$（通用图像）或 $0.3$（图标/几何/图表类图像）</li>
+</ul>
+<p><strong>Step 2: 推理路径生成（三阶段）</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>名称</th>
+<th>输入</th>
+<th>输出</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Thinking</strong></td>
+<td>目标 VQA $(v_i, q_i, a_i)$ + Ground-truth 答案</td>
+<td>初步推理 $r_i$</td>
+<td>让 VLM 基于答案提示生成初步推理</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Contrasting</strong></td>
+<td>目标 VQA + 对比样本 $(\hat{v}_i, \hat{q}_i, \hat{a}_i)$</td>
+<td>对比分析 $c_i$</td>
+<td>比较两个样本，识别关键差异</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Rethinking</strong></td>
+<td>$r_i$ + $c_i$</td>
+<td>修正推理 $\tilde{r}_i$</td>
+<td>用对比分析修正初步推理中的幻觉</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Step 3: 质量控制</strong></p>
+<ul>
+<li>使用 <strong>文本匹配后处理</strong>过滤包含错误推理模式的样本</li>
+<li>最终数据集：<strong>VisCoR-55K</strong>（55,000 个高质量视觉推理样本）</li>
+</ul>
+<h3 id="对比样本对的类型">对比样本对的类型</h3>
+<p>根据答案是否相同，对比样本对分为两类：</p>
+<ul>
+<li><strong>Positive Counterpart</strong>: 答案相同（$a_i = \hat{a}_i$）→ 总结共同模式</li>
+<li><strong>Negative Counterpart</strong>: 答案不同（$a_i \neq \hat{a}_i$）→ 分析细粒度差异</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-vc-star-视觉对比自教导推理器">4. 关键方法：VC-STaR —— 视觉对比自教导推理器</h2>
+<h3 id="核心思想">核心思想</h3>
+<p>利用 VLM 固有的<strong>对比能力</strong>来引导其自身的视觉推理能力提升，形成自改进闭环。</p>
+<h3 id="方法框架">方法框架</h3>
+<pre><code>输入: 多样化 VQA 数据集
+    ↓
+对比样本对构建 (基于多模态相似度)
+    ↓
+VC-STaR 生成推理路径
+    ↓
+VisCoR-55K 数据集
+    ↓
+监督微调 (SFT) 各种 VLM
+    ↓
+提升后的视觉推理能力
+</code></pre>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>核心机制</th>
+<th>局限性</th>
+<th>VC-STaR 改进</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语言模型自改进 (STaR)</td>
+<td>答案验证筛选推理路径</td>
+<td>视觉幻觉难以验证</td>
+<td>引入视觉对比作为隐式验证机制</td>
+</tr>
+<tr>
+<td>传统 VLM 训练</td>
+<td>直接学习图像-文本映射</td>
+<td>易产生幻觉</td>
+<td>对比学习迫使模型关注判别性特征</td>
+</tr>
+<tr>
+<td>现有视觉推理数据集</td>
+<td>人工标注或简单生成</td>
+<td>规模/质量受限</td>
+<td>自举生成 + 对比质量控制</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="关键技术细节">关键技术细节</h3>
+<p><strong>对比 VQA 对的定义</strong>:</p>
+<ul>
+<li><strong>视觉相似</strong>: 两张图像在视觉特征上高度相似</li>
+<li><strong>问题同义</strong>: 两个问题语义等价但可能措辞不同</li>
+<li><strong>答案可能不同</strong>: 取决于图像中的细微差异</li>
+</ul>
+<p><strong>训练配置</strong>:</p>
+<ul>
+<li><strong>框架</strong>: LLaMA-Factory</li>
+<li><strong>基础模型</strong>: Qwen2.5-VL-7B（主要实验）, Qwen2.5-VL-3B, InternVL2.5-8B</li>
+<li><strong>训练方式</strong>: 全参数监督微调 (SFT)，视觉塔参数冻结</li>
+<li><strong>训练轮数</strong>: 3 epochs</li>
+<li><strong>学习率</strong>: 1e-5</li>
+<li><strong>Batch Size</strong>: 256</li>
+<li><strong>Rethinking LLM</strong>: Qwen2.5-72B</li>
+<li><strong>训练时间</strong>: 约 4 小时（单节点 8×A800 GPUs）</li>
+</ul>
+<p><strong>推理配置</strong>:</p>
+<ul>
+<li>微调后的模型推理<strong>不需要</strong>对比流程，遵循标准 VLM 推理范式</li>
+<li>使用 vLLM 框架加速推理（约 1 sample/second）</li>
+</ul>
+<p><strong>输出格式</strong>:</p>
+<pre><code>&lt;think&gt;推理过程&lt;/think&gt;&lt;answer&gt;最终答案&lt;/answer&gt;
+</code></pre>
+<hr />
+<h2 id="5-关键实验-vc-star-在-6-大-benchmark-上实现全面提升">5. 关键实验：VC-STaR 在 6 大 Benchmark 上实现全面提升</h2>
+<h3 id="评估-benchmark">评估 Benchmark</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>评估维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MMVP</strong></td>
+<td>视觉幻觉</td>
+<td>多模态视觉模式识别</td>
+</tr>
+<tr>
+<td><strong>Hallusion</strong></td>
+<td>视觉幻觉</td>
+<td>幻觉检测基准</td>
+</tr>
+<tr>
+<td><strong>MathVista</strong></td>
+<td>数学推理</td>
+<td>数学问题视觉推理</td>
+</tr>
+<tr>
+<td><strong>MathVision</strong></td>
+<td>数学推理</td>
+<td>数学题目理解</td>
+</tr>
+<tr>
+<td><strong>MMStar</strong></td>
+<td>通用能力</td>
+<td>精选多模态基准</td>
+</tr>
+<tr>
+<td><strong>MME-RealWorld</strong></td>
+<td>通用能力</td>
+<td>大规模真实世界任务</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="主实验结果-table-1">主实验结果（Table 1）</h3>
+<p><strong>基线模型</strong>: Qwen2.5-VL-7B</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>类型</th>
+<th>MMVP</th>
+<th>Hallusion</th>
+<th>MathVista</th>
+<th>MathVision</th>
+<th>MMStar</th>
+<th>MME-RealWorld</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Model</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>STaR</td>
+<td>自改进</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>V-STaR</td>
+<td>自改进</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Self-Reward</td>
+<td>自改进</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>RecSTaR</td>
+<td>自改进</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>VC-STaR</strong></td>
+<td><strong>自改进</strong></td>
+<td><strong>↑</strong></td>
+<td><strong>↑</strong></td>
+<td><strong>↑</strong></td>
+<td><strong>↑</strong></td>
+<td><strong>↑</strong></td>
+<td><strong>↑</strong></td>
+</tr>
+<tr>
+<td>Virgo</td>
+<td>外部数据集</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>LLaVA-CoT</td>
+<td>外部数据集</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>R1-Onevision</td>
+<td>外部数据集</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>LPT</td>
+<td>外部数据集</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>:</p>
+<ol>
+<li><strong>现有自改进方法的权衡</strong>: 提升幻觉基准性能的同时，牺牲了数学和通用能力</li>
+<li><strong>VC-STaR 实现全面提升</strong>: 在幻觉、数学、通用能力三个维度上均取得提升</li>
+<li><strong>优于外部数据集</strong>: 超过在 Virgo、LLaVA-CoT、R1-Onevision、LPT 等 SOTA 视觉推理数据集上训练的模型</li>
+</ol>
+<h3 id="跨模型泛化-table-2">跨模型泛化（Table 2）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>VC-STaR</th>
+<th>Hallusion</th>
+<th>MathVision</th>
+<th>MMStar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen2.5-VL-3B</td>
+<td>✘</td>
+<td>46.9</td>
+<td>18.4</td>
+<td>55.0</td>
+</tr>
+<tr>
+<td>Qwen2.5-VL-3B</td>
+<td>✔</td>
+<td><strong>53.2</strong> (+6.3)</td>
+<td><strong>21.9</strong> (+3.5)</td>
+<td><strong>55.7</strong> (+0.7)</td>
+</tr>
+<tr>
+<td>InternVL2.5-8B</td>
+<td>✘</td>
+<td>48.2</td>
+<td>21.3</td>
+<td>61.1</td>
+</tr>
+<tr>
+<td>InternVL2.5-8B</td>
+<td>✔</td>
+<td><strong>55.4</strong> (+7.2)</td>
+<td><strong>23.4</strong> (+2.1)</td>
+<td><strong>62.5</strong> (+1.4)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>: VC-STaR 具有<strong>模型无关性</strong>，在不同架构的 VLM 上均有效。</p>
+<h3 id="消融实验">消融实验</h3>
+<p><strong>正负对比样本的作用</strong>（Table 4）:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>Pos.</th>
+<th>Neg.</th>
+<th>GQA Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base Model</td>
+<td>-</td>
+<td>-</td>
+<td>45.4</td>
+</tr>
+<tr>
+<td>VC-STaR</td>
+<td>✔</td>
+<td>✘</td>
+<td>50.6 (+5.2)</td>
+</tr>
+<tr>
+<td>VC-STaR</td>
+<td>✘</td>
+<td>✔</td>
+<td>53.7 (+8.3)</td>
+</tr>
+<tr>
+<td>VC-STaR</td>
+<td>✔</td>
+<td>✔</td>
+<td><strong>54.7</strong> (+9.3)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现</strong>:</p>
+<ul>
+<li><strong>Negative Counterpart 更有效</strong>: 答案不同的对比对产生更强的语义对比</li>
+<li><strong>两者互补</strong>: 同时使用正负样本达到最优效果</li>
+</ul>
+<p><strong>对比样本构建策略对比</strong>（Figure 6）:</p>
+<ul>
+<li><strong>HQ-Edit</strong>（基于编辑）: 性能数据依赖，存在偏差</li>
+<li><strong>DOCCI</strong>（基于密集描述）: 性能数据依赖，存在偏差</li>
+<li><strong>VisCoR-55K</strong>: 覆盖更广泛的推理任务，性能更均衡</li>
+</ul>
+<h3 id="关键结论">关键结论</h3>
+<blockquote class="card card-info">
+<p>&quot;The inherent contrastive ability of VLMs can bootstrap their own visual reasoning.&quot;</p>
+<p>VLM 固有的对比能力可以引导其自身的视觉推理能力。</p>
+</blockquote>
+<hr />
+<h2 id="6-golden-case-对比-vqa-对的推理流程">6. Golden Case：对比 VQA 对的推理流程</h2>
+<h3 id="案例-1-交通标志识别-来自论文-figure-5">案例 1：交通标志识别（来自论文 Figure 5）</h3>
+<p><strong>问题</strong>: &quot;What does the white sign mean?&quot;（这个白色标志是什么意思？）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>推理过程</th>
+<th>问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Base Model</strong></td>
+<td>&quot;The white sign in the picture has a red circle with a line through it, which is a universal symbol indicating 'no parking.'&quot;</td>
+<td>❌ 幻觉：将 &quot;禁止右转&quot; 错误识别为 &quot;禁止停车&quot;</td>
+</tr>
+<tr>
+<td><strong>+ &quot;think step by step&quot;</strong></td>
+<td>&quot;The white sign in the image has a red circle with a line through it, which is a universal symbol indicating 'no' or 'prohibited.' Specifically, this sign is a 'No Parking' sign.&quot;</td>
+<td>❌ 仍有幻觉，且过度推理</td>
+</tr>
+<tr>
+<td><strong>+ VC-STaR</strong></td>
+<td>&quot;<think>The white sign in the image contains a symbol that indicates 'No Right Turn.' This is evident because the sign features an arrow pointing to the right, which is universally recognized as a prohibition against turning right at that location...</think><answer>The white sign means 'No Right Turn.'</answer>&quot;</td>
+<td>✅ 正确识别，推理清晰</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>分析</strong>: VC-STaR 训练后的模型能够准确识别视觉细节（箭头方向），避免了基线模型的幻觉错误。</p>
+<hr />
+<h3 id="案例-2-物体计数-来自论文-figure-5">案例 2：物体计数（来自论文 Figure 5）</h3>
+<p><strong>问题</strong>: &quot;How many forks are visible in the image?&quot;（图像中有多少个叉子可见？）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>推理过程</th>
+<th>答案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Base Model</strong></td>
+<td>直接描述图像内容，没有系统计数</td>
+<td>❌ 不准确</td>
+</tr>
+<tr>
+<td><strong>+ &quot;think step by step&quot;</strong></td>
+<td>详细步骤：1. 识别物体 2. 计数叉子 3. 验证数量</td>
+<td>⚠️ 过程正确但可能仍有错误</td>
+</tr>
+<tr>
+<td><strong>+ VC-STaR</strong></td>
+<td>&quot;<think>...After following these steps, we can conclude that there are two forks visible in the image.</think><answer>2</answer>&quot;</td>
+<td>✅ 正确答案</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h3 id="案例-3-复杂推理-来自论文-figure-8">案例 3：复杂推理（来自论文 Figure 8）</h3>
+<p><strong>问题</strong>: &quot;In the given diagram, triangle ABC is inscribed within circle O... what is the measure of angle A if angle OEC is 65°?&quot;</p>
+<p><strong>VC-STaR 生成的推理</strong>:</p>
+<pre><code>&lt;think&gt;
+1. 分析已知信息：三角形 ABC 内接于圆 O，D 是 BC 的中点
+2. 几何性质：D 是中点 → OD 垂直于 BC
+3. 等腰三角形：OE 和 OC 是半径 → 三角形 OEC 是等腰三角形
+4. 计算：Angle EOC = 180° - 2 × 65° = 50°
+5. 对称性：CE = BE → Angle EOB = 50°
+6. 圆心角：Angle BOC = 2 × 50° = 100°
+7. 圆周角：Angle A = 1/2 × 100° = 50°
+&lt;/think&gt;
+&lt;answer&gt;A: 50°&lt;/answer&gt;
+</code></pre>
+<hr />
+<h3 id="对比机制如何抑制幻觉">对比机制如何抑制幻觉</h3>
+<p><strong>传统单样本处理</strong>:</p>
+<pre><code>VLM 看到图像 → 基于训练数据中的模式生成回答
+              ↓
+风险：激活错误的视觉模式（如看到圆形标志就联想到&quot;禁止停车&quot;）
+</code></pre>
+<p><strong>VC-STaR 对比处理</strong>:</p>
+<pre><code>VLM 看到 (目标图像, 问题) + (对比图像, 同义问题)
+              ↓
+对比迫使模型：识别两图的关键差异
+              ↓
+生成更精确的推理：关注真正相关的视觉特征
+              ↓
+减少模式匹配错误，抑制幻觉
+</code></pre>
+<h3 id="关键决策点">关键决策点</h3>
+<ol>
+<li><strong>相似度匹配</strong>: 确保对比样本在视觉和语义上足够相似（$\phi_q=0.15, \phi_v=0.5$）</li>
+<li><strong>差异聚焦</strong>: 模型被迫识别并描述关键差异（颜色、形状、数量等）</li>
+<li><strong>推理质量控制</strong>: 对比分析 $c_i$ 比初步推理 $r_i$ 更可靠，用于修正幻觉</li>
+</ol>
+<hr />
+<h2 id="7-insights-从认知科学视角理解-vc-star">7. Insights：从认知科学视角理解 VC-STaR</h2>
+<h3 id="核心洞见">核心洞见</h3>
+<p><strong>1. 无需外部验证的自改进</strong>
+传统方法需要答案验证器或人工标注来判断推理路径质量，而视觉对比提供了一种<strong>内在的验证机制</strong>——通过对比，模型自己就能发现推理中的不一致之处。</p>
+<p><strong>2. 利用 VLM 固有能力</strong>
+VLM 已经具备对比能力，VC-STaR 只是巧妙地利用这一能力来增强推理。这符合&quot;用模型已有的能力来解决它自己的问题&quot;的自改进哲学。</p>
+<p><strong>3. 数据效率</strong>
+通过对比可以生成更多高质量训练信号，而不需要额外的人工标注。55K 的 VisCoR 数据集就能显著提升模型能力。</p>
+<hr />
+<h3 id="认知科学视角-论文-section-5">认知科学视角（论文 Section 5）</h3>
+<p>论文从认知科学角度解释了为什么对比有效：</p>
+<blockquote class="card card-info">
+<p><strong>人类学习本质上是对比和比较的过程</strong></p>
+</blockquote>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>认知理论</th>
+<th>核心观点</th>
+<th>在 VC-STaR 中的体现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>原型理论 (Prototype Theory)</strong></td>
+<td>人类通过将新概念与原型比较来识别</td>
+<td>对比过程让模型从原型中学习视觉概念</td>
+</tr>
+<tr>
+<td><strong>结构映射理论 (Structure-Mapping Theory)</strong></td>
+<td>类比推理通过识别两个领域的共享关系</td>
+<td>Rethinking 策略通过对比生成新的推理路径</td>
+</tr>
+</tbody>
+</table></div>
+<p>人类很少孤立地学习概念，而是通过<strong>比较例子、识别区分特征、通过类比和差异进行推理</strong>来完善理解。VC-STaR 将这种人类认知行为移植到了视觉推理领域。</p>
+<hr />
+<h3 id="对未来工作的启发">对未来工作的启发</h3>
+<ol>
+<li><strong>扩展到其他模态</strong>: 对比机制是否可以扩展到视频（时序对比）、音频（频谱对比）？</li>
+<li><strong>更精细的对比策略</strong>: 局部特征 vs 全局特征的对比、多层次对比</li>
+<li><strong>结合外部验证</strong>: 对比验证 + 答案验证的双重保障机制</li>
+<li><strong>动态阈值调整</strong>: 根据任务类型自适应调整相似度阈值</li>
+<li><strong>应用到其他领域</strong>: 医疗影像分析、自动驾驶场景理解等高风险视觉任务</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p><strong>将视觉对比作为推理路径质量的隐式验证机制</strong>，解决了 VLM 自改进中视觉幻觉难以验证的核心难题。</p>
+<h3 id="方法定位-对比驱动的自蒸馏-contrastive-self-distillation">方法定位：对比驱动的自蒸馏 (Contrastive Self-Distillation)</h3>
+<p>VC-STaR 属于 <strong>Self-Distillation（自蒸馏）</strong> 范畴，但有其独特之处：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统蒸馏</th>
+<th>VC-STaR（自蒸馏）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>教师模型</td>
+<td>外部强模型（GPT-4）</td>
+<td><strong>学生模型自己</strong></td>
+</tr>
+<tr>
+<td>知识来源</td>
+<td>外部</td>
+<td><strong>内部自举</strong></td>
+</tr>
+<tr>
+<td>质量验证</td>
+<td>答案验证器 / 奖励模型 / Judge 模型</td>
+<td><strong>视觉对比机制</strong></td>
+</tr>
+<tr>
+<td>核心机制</td>
+<td>模仿</td>
+<td><strong>自我改进</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>VC-STaR 的独特贡献</strong>：</p>
+<blockquote class="card card-info">
+<p><strong>&quot;对比即验证&quot;</strong> —— 无需外部验证器，利用视觉对比作为内在的质量控制机制</p>
+</blockquote>
+<p>传统自蒸馏需要外部验证（答案验证器、奖励模型、Judge 模型），而 VC-STaR 通过对比样本对让模型自己发现错误，是一种 <strong>&quot;无外部验证器的自蒸馏&quot;</strong>。</p>
+<hr />
+<h3 id="更深层的统一视角-特权信息的利用">更深层的统一视角：特权信息的利用</h3>
+<p>VC-STaR 与 LLM 自蒸馏工作在本质上是统一的：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>工作</th>
+<th>学生→教师的转变</th>
+<th>利用的&quot;特权信息&quot;</th>
+<th>如何获得更高质量输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Self-Distilled Reasoner</strong></td>
+<td>答案验证筛选</td>
+<td><strong>Ground-truth 答案</strong></td>
+<td>只保留答案正确的推理</td>
+</tr>
+<tr>
+<td><strong>Self-Improving Pretraining</strong></td>
+<td>Judge 打分筛选</td>
+<td><strong>多候选比较</strong></td>
+<td>从多个候选中选最好的</td>
+</tr>
+<tr>
+<td><strong>SDPO</strong></td>
+<td>奖励模型筛选</td>
+<td><strong>自生成偏好对</strong></td>
+<td>用高奖励样本训练</td>
+</tr>
+<tr>
+<td><strong>VC-STaR</strong></td>
+<td>对比分析筛选</td>
+<td><strong>对比样本对</strong></td>
+<td>通过对比发现错误并修正</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>核心洞察</strong>：</p>
+<blockquote class="card card-info">
+<p>所有自蒸馏的本质都是：<strong>学生模型 + 特权信息 → 生成更高质量的输出 → 用这些输出训练自己 → 变成更强的教师</strong></p>
+</blockquote>
+<ul>
+<li><strong>LLM 自蒸馏</strong>：利用 <strong>答案/奖励/Judge</strong> 作为特权信息</li>
+<li><strong>VC-STaR</strong>：利用 <strong>对比样本对</strong> 作为特权信息</li>
+</ul>
+<p>对比样本对在视觉任务中扮演了类似&quot;答案验证&quot;的角色——它提供了额外的上下文，让模型能够自我纠错。这种&quot;对比即监督&quot;的思想，将文本领域的自蒸馏范式优雅地扩展到了视觉领域。</p>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li>
+<p><strong>计算成本</strong>:</p>
+<ul>
+<li>数据生成阶段有额外开销（对比样本挖掘：~7 samples/second；推理生成：~1 sample/second）</li>
+<li>但微调成本与标准 SFT 相当（4 小时 on 8×A800）</li>
+</ul>
+</li>
+<li>
+<p><strong>数据分布依赖</strong>:</p>
+<ul>
+<li>不同来源的对比样本（HQ-Edit、DOCCI）性能表现不均衡</li>
+<li>需要覆盖广泛的推理任务才能达到最佳效果</li>
+</ul>
+</li>
+<li>
+<p><strong>对比样本质量</strong>:</p>
+<ul>
+<li>相似度阈值（$\phi_q=0.15, \phi_v=0.5/0.3$）是启发式设定</li>
+<li>可能需要针对特定任务调整</li>
+</ul>
+</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>更精细的对比策略</strong>: 探索不同粒度（局部特征 vs 全局特征）的对比</li>
+<li><strong>与其他验证机制结合</strong>: 对比验证 + 答案验证的双重保障</li>
+<li><strong>扩展到更复杂的视觉任务</strong>: 视频推理、视觉导航等</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="相关工作">相关工作</h3>
+<p><strong>自蒸馏系列</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Self-Distilled_Reasoner-On-Policy_Self-Distillation.html" title="Self-Distilled_Reasoner-On-Policy_Self-Distillation">Self-Distilled_Reasoner-On-Policy_Self-Distillation</a> —— 语言模型的自蒸馏，用答案验证筛选推理</li>
+<li><a class="wikilink" href="Self-Improving_Pretraining-Post-trained_Models_Bootstrap.html" title="Self-Improving_Pretraining-Post-trained_Models_Bootstrap">Self-Improving_Pretraining-Post-trained_Models_Bootstrap</a> —— 预训练阶段的自改进，用 Judge 模型打分</li>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a> —— 强化学习中的自蒸馏，用奖励模型筛选</li>
+</ul>
+<p><strong>视觉推理</strong>:</p>
+<ul>
+<li><a class="wikilink" href="DeepSeek-OCR_2-Visual_Causal_Flow.html" title="DeepSeek-OCR_2-Visual_Causal_Flow">DeepSeek-OCR_2-Visual_Causal_Flow</a> —— VLM 中的因果推理</li>
+</ul>
+<h3 id="潜在关联">潜在关联</h3>
+<ul>
+<li>对比学习的思想与 <span class="wikilink unresolved" title="Spark-MoE的模块化知识隔离">Spark-MoE的模块化知识隔离</span> 中的知识区分有潜在联系</li>
+</ul>
+<h3 id="与相关自蒸馏工作的对比">与相关自蒸馏工作的对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>工作</th>
+<th>自蒸馏方式</th>
+<th>验证机制</th>
+<th>VC-STaR 的差异</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Self-Distilled Reasoner</strong></td>
+<td>生成多个推理，选高奖励的</td>
+<td>答案验证</td>
+<td>VC-STaR 用<strong>视觉对比</strong>替代答案验证</td>
+</tr>
+<tr>
+<td><strong>Self-Improving Pretraining</strong></td>
+<td>生成 rewrite + rollout，Judge 打分</td>
+<td>Judge 模型</td>
+<td>VC-STaR <strong>无需外部 Judge</strong></td>
+</tr>
+<tr>
+<td><strong>SDPO</strong></td>
+<td>自生成偏好对，DPO 训练</td>
+<td>奖励模型</td>
+<td>VC-STaR 是<strong>SFT 而非 RL</strong></td>
+</tr>
+<tr>
+<td><strong>VC-STaR</strong></td>
+<td>对比分析生成高质量推理</td>
+<td><strong>视觉对比（内在）</strong></td>
+<td>无需外部验证器，利用模型固有能力</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键洞察</strong>：VC-STaR 将自蒸馏从文本领域扩展到视觉领域，并解决了视觉答案难以自动验证的难题。</p>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Gradually_Compacting_LLMs-Boiling_Frog_Pruning.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Gradually Compacting Large Language Models for Reasoning Like a Boiling Frog</span></a>
+<a class="paper-nav-link next" href="Probing_RLVR_Training_Instability-Objective-Level_Hacking.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Probing RLVR Training Instability through the Lens of Objective-Level Hacking</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: anonymous2026through</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

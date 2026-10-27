@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple LLM Baselines Are Competitive for Model Diffing</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Simple LLM Baselines Are Competitive for Model Diffing</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何系统评估和比较模型差异检测方法"><span class="toc-num">02</span> 2. 关键问题：如何系统评估和比较模型差异检测方法</a></li>
+<li><a class="toc-link toc-sub" href="#2-1-动机">2.1 动机</a></li>
+<li><a class="toc-link toc-sub" href="#2-2-研究缺口">2.2 研究缺口</a></li>
+<li><a class="toc-link toc-sub" href="#2-3-核心研究问题">2.3 核心研究问题</a></li>
+<li><a class="toc-link toc-sub" href="#2-4-model-diffing-背景知识">2.4 Model Diffing 背景知识</a></li>
+<li><a class="toc-link" href="#3-数据集-wildchat-真实用户对话数据"><span class="toc-num">03</span> 3. 数据集：WildChat 真实用户对话数据</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-训练数据">3.1 训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-评估数据">3.2 评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-特殊处理">3.3 特殊处理</a></li>
+<li><a class="toc-link" href="#4-关键方法-llm-based-与-sae-based-模型差异检测对比"><span class="toc-num">04</span> 4. 关键方法：LLM-based 与 SAE-based 模型差异检测对比</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-整体架构">4.1 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-llm-based-model-diffing-改进的-dunlap-et-al-2025">4.2 LLM-based Model Diffing（改进的 Dunlap et al., 2025）</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-sae-based-model-diffing-改进的-jiang-et-al-2025">4.3 SAE-based Model Diffing（改进的 Jiang et al., 2025）</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-数学形式化">4.4 数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-llm-judge-设计">4.5 LLM Judge 设计</a></li>
+<li><a class="toc-link toc-sub" href="#4-6-评估指标-三个-desiderata">4.6 评估指标：三个 Desiderata</a></li>
+<li><a class="toc-link toc-sub" href="#4-7-与已有方法的区别">4.7 与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键实验-llm-方法与-sae-方法表现相当-但抽象层次更高"><span class="toc-num">05</span> 5. 关键实验：LLM 方法与 SAE 方法表现相当，但抽象层次更高</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-model-organisms-实验-已知-ground-truth">5.1 Model Organisms 实验（已知 ground truth）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-frontier-model-版本比较">5.2 Frontier Model 版本比较</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-评估指标分布-figure-4-7">5.3 评估指标分布 (Figure 4-7)</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-kl-based-方法补充实验-appendix-e">5.4 KL-based 方法补充实验 (Appendix E)</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link" href="#7-insights-简单-llm-baseline-仍是强有力的模型差异检测方法"><span class="toc-num">07</span> 7. Insights：简单 LLM baseline 仍是强有力的模型差异检测方法</a></li>
+<li><a class="toc-link toc-sub" href="#7-1-论文评价">7.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#7-2-领域启发">7.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#7-3-方法论启发">7.3 方法论启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-核心创新">8.1 核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-局限性">8.2 局限性</a></li>
+<li><a class="toc-link toc-sub" href="#8-3-改进方向">8.3 改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-03-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.10371" target="_blank">arXiv</a>
+    </div>
+    <h1>Simple LLM Baselines Are Competitive for Model Diffing</h1>
+    <p class="authors">Elias Kempf*, Simon Schrodi*, Bartosz Cywiński, Thomas Brox, Neel Nanda, Arthur Conmy</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">LLM_Evaluation</span> <span class="topic-tag">Model_Diffing</span> <span class="topic-tag">SAE</span></div>
+</header>
+
+<h1>论文笔记: Simple LLM Baselines Are Competitive for Model Diffing</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Elias Kempf*, Simon Schrodi*（共同第一作者，University of Freiburg），Bartosz Cywiński（IDEAS Research Institute），Thomas Brox（University of Freiburg），Neel Nanda，Arthur Conmy（通讯作者）</li>
+<li><strong>团队</strong>: University of Freiburg, MATS (ML Alignment &amp; Theory Scholars), IDEAS Research Institute</li>
+<li><strong>发表</strong>: arXiv 预印本 (2026年2月10日)</li>
+<li><strong>代码</strong>: https://github.com/eliaskempf/model-diffing</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何系统评估和比较模型差异检测方法">2. 关键问题：如何系统评估和比较模型差异检测方法</h2>
+<h3 id="2-1-动机">2.1 动机</h3>
+<p><strong>标准 LLM 评估的盲区</strong>：</p>
+<ul>
+<li>只能测试设计者预设的能力和倾向</li>
+<li>无法发现意外差异，如：
+<ul>
+<li>模型版本间的行为漂移 (behavioral shifts between model revisions)</li>
+<li>涌现性错位倾向 (emergent misaligned tendencies)</li>
+<li>微调导致的意外人格变化</li>
+</ul>
+</li>
+</ul>
+<p><strong>Model Diffing 的定义</strong>：</p>
+<blockquote class="card card-info">
+<p>&quot;Model diffing addresses this limitation by automatically surfacing systematic behavioral differences.&quot;</p>
+</blockquote>
+<h3 id="2-2-研究缺口">2.2 研究缺口</h3>
+<ul>
+<li>已有方法包括 LLM-based 和 SAE-based 两种，但缺乏系统比较</li>
+<li>缺乏统一的评估标准</li>
+<li>不清楚各方法的优劣势和适用场景</li>
+</ul>
+<h3 id="2-3-核心研究问题">2.3 核心研究问题</h3>
+<ol>
+<li>模型差异检测方法应该满足哪些标准（desiderata）？</li>
+<li>如何将这些标准操作化为可量化的评估指标？</li>
+<li>LLM-based 和 SAE-based 两种 API-only 方法的表现如何对比？</li>
+</ol>
+<h3 id="2-4-model-diffing-背景知识">2.4 Model Diffing 背景知识</h3>
+<h4>什么是 Model Diffing？</h4>
+<p><strong>Model Diffing（模型差异发现）</strong> 是一种自动识别两个语言模型之间系统性行为差异的技术。简单来说，给定两个模型（如 base model 和 fine-tuned model），Model Diffing 回答的问题是：</p>
+<blockquote class="card card-info">
+<p><strong>&quot;这两个模型在行为上有什么系统性差异？&quot;</strong></p>
+</blockquote>
+<h4>与传统评估的区别</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统基准测试</th>
+<th>Model Diffing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>问题</strong></td>
+<td>&quot;模型能做 X 吗？&quot;</td>
+<td>&quot;模型 A 和 B 有什么不同？&quot;</td>
+</tr>
+<tr>
+<td><strong>发现类型</strong></td>
+<td>验证已知能力</td>
+<td>发现未知差异</td>
+</tr>
+<tr>
+<td><strong>盲区</strong></td>
+<td>只能测设计者想到的</td>
+<td>能发现意外变化</td>
+</tr>
+</tbody>
+</table></div>
+<h4>为什么需要 Model Diffing？</h4>
+<p><strong>场景 1：版本更新监控</strong></p>
+<ul>
+<li>GPT-4 → GPT-4-turbo：行为漂移了什么？官方不会告诉你所有细节</li>
+<li>Gemini Stable → Preview：未记录的行为变化有哪些？</li>
+</ul>
+<p><strong>场景 2：微调副作用检测</strong></p>
+<ul>
+<li>RLHF 后模型人格是否变化？</li>
+<li>是否引入新的偏见或安全风险？</li>
+</ul>
+<p><strong>场景 3：安全审计</strong></p>
+<ul>
+<li>新模型是否有隐藏的危险倾向？</li>
+<li>微调是否破坏了安全对齐？</li>
+</ul>
+<h4>主要方法分类</h4>
+<pre><code>Model Diffing
+├── API-only 方法（无需模型内部访问）
+│   ├── LLM-based：用 LLM 分析输出差异，生成自然语言描述
+│   ├── SAE-based：用稀疏自编码器识别特征激活差异
+│   └── KL-based：找高 KL 散度的 token 位置
+│
+└── 需要内部访问的方法
+    ├── Crosscoder：跨模型特征对齐
+    └── Activation Diffing：激活层面比较
+</code></pre>
+<h4>关键术语</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API-only</strong></td>
+<td>无需模型内部访问，只用输出进行比较</td>
+</tr>
+<tr>
+<td><strong>Ground Truth</strong></td>
+<td>已知的真实差异（用于验证 diffing 方法）</td>
+</tr>
+<tr>
+<td><strong>Model Organisms</strong></td>
+<td>故意制造的已知差异模型（测试用，如故意微调出危险行为）</td>
+</tr>
+<tr>
+<td><strong>Prompt 分布敏感性</strong></td>
+<td>结果依赖 prompt 能否诱导目标行为</td>
+</tr>
+</tbody>
+</table></div>
+<h4>典型工作流</h4>
+<pre><code>输入：Model A, Model B, Prompt 集合
+
+1. 收集响应：每个 prompt 得到两个模型的输出
+2. 差异提取：识别输出差异模式
+3. 假设生成：总结为可验证的自然语言描述
+4. 验证泛化：在 held-out 数据上检验假设
+5. 评分评估：Generalization / Interestingness / Abstraction
+</code></pre>
+<h4>相关工作演进</h4>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>时间</th>
+<th>工作</th>
+<th>贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024</td>
+<td>Dunlap et al.</td>
+<td>首次提出 LLM-based diffing pipeline</td>
+</tr>
+<tr>
+<td>2025</td>
+<td>Jiang et al.</td>
+<td>SAE-based 方法，比较激活特征</td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Kempf et al. (本文)</td>
+<td>首次系统比较，提出评估框架</td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Jiralerspong et al.</td>
+<td>Crosscoder 方法，跨架构 diffing</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-数据集-wildchat-真实用户对话数据">3. 数据集：WildChat 真实用户对话数据</h2>
+<h3 id="3-1-训练数据">3.1 训练数据</h3>
+<ul>
+<li><strong>数据来源</strong>: WildChat (Zhao et al., 2024) - 真实用户-聊天机器人交互数据集</li>
+<li><strong>数据规模</strong>: 1,000 prompts 用于假设生成</li>
+<li><strong>采样策略</strong>: 随机采样，覆盖多样主题，不针对特定行为差异</li>
+<li><strong>数据预处理</strong>: 每个模型生成最多 1,024 new tokens 的响应</li>
+</ul>
+<h3 id="3-2-评估数据">3.2 评估数据</h3>
+<ul>
+<li>使用 500 prompts 的 held-out 测试集</li>
+<li>用于计算频率和准确率指标</li>
+</ul>
+<h3 id="3-3-特殊处理">3.3 特殊处理</h3>
+<ul>
+<li>对于 Gemma 性别假设实验，额外分析了 513 个高分性别相关 prompts（从 19,855 条 WildChat 中筛选）</li>
+</ul>
+<h2 id="4-关键方法-llm-based-与-sae-based-模型差异检测对比">4. 关键方法：LLM-based 与 SAE-based 模型差异检测对比</h2>
+<blockquote class="card card-info">
+<p>核心思想：提出统一的评估框架，系统比较两种 API-only model diffing 方法</p>
+</blockquote>
+<h3 id="4-1-整体架构">4.1 整体架构</h3>
+<p>两种方法共享数据收集流程：</p>
+<ol>
+<li>给定两个待比较模型和一个 prompt 集合</li>
+<li>每个模型对每个 prompt 生成一个响应</li>
+<li>使用 LLM judge 验证假设</li>
+</ol>
+<h3 id="4-2-llm-based-model-diffing-改进的-dunlap-et-al-2025">4.2 LLM-based Model Diffing（改进的 Dunlap et al., 2025）</h3>
+<p><strong>Pipeline 四步骤</strong>:</p>
+<p><strong>(1) Difference Extraction（差异提取）</strong></p>
+<ul>
+<li>使用 Gemini 2.5 Flash 为每个 prompt-response triplet (p, ra, rb) 提取定性差异</li>
+<li>模型返回差异列表，标明哪个模型（A 或 B）更强地表现出某个属性</li>
+</ul>
+<p><strong>(2) Embedding and Clustering（嵌入与聚类）</strong></p>
+<ul>
+<li><strong>关键改进</strong>: 将 &quot;Model A&quot; 和 &quot;Model B&quot; 替换为通用占位符，使相同行为的差异聚类在一起</li>
+<li>嵌入模型: llama-embed-nemotron-8b</li>
+<li>降维: PCA (128 components) → UMAP (30 components)</li>
+<li>聚类: HDBSCAN（相比 Dunlap et al. 的层次聚类更鲁棒）</li>
+</ul>
+<p><strong>(3) Summarization（摘要）</strong></p>
+<ul>
+<li>使用 Gemini 2.5 Flash 将每个聚类的差异描述总结为单一假设</li>
+<li>要求假设足够具体以便在新数据上评估</li>
+</ul>
+<p><strong>(4) Direction Assignment（方向分配）</strong></p>
+<ul>
+<li>计算每个聚类中差异归属于各模型的比例</li>
+<li>主导模型决定假设方向</li>
+<li>过滤: 主导模型占比 &lt; 65% 的聚类被丢弃</li>
+</ul>
+<h3 id="4-3-sae-based-model-diffing-改进的-jiang-et-al-2025">4.3 SAE-based Model Diffing（改进的 Jiang et al., 2025）</h3>
+<p><strong>核心思想</strong>: 使用稀疏自编码器（SAE）识别两个文本分布间激活频率差异最大的可解释特征</p>
+<p><strong>关键改进</strong>:</p>
+<ol>
+<li><strong>Prompt-Response 联合输入</strong>: 原方法仅输入响应，本文输入完整的 prompt-response 对，保留上下文语义</li>
+<li><strong>Max-pooling 仅针对 completion tokens</strong>: 适应新的输入格式</li>
+<li><strong>假设数量增加</strong>: 生成 40 个假设（原方法 10 个）以匹配 LLM 方法的输出量</li>
+</ol>
+<p><strong>Pipeline</strong>:</p>
+<ol>
+<li>使用 LLaMA 3.3 70B 作为 reader 模型，配合 layer 50 的公开 SAE</li>
+<li>计算每个 SAE 特征在 Model A 和 Model B 响应中的激活频率</li>
+<li>选择激活频率差异最大的特征作为候选</li>
+<li>使用 Gemini 2.5 Flash 重新标注和总结为自然语言假设</li>
+</ol>
+<h3 id="4-4-数学形式化">4.4 数学形式化</h3>
+<p><strong>频率 (Frequency)</strong>:
+$$f(h) = \frac{|\{i | J(h, t_i) \neq 0\}|}{n}$$</p>
+<ul>
+<li>$h$: 假设</li>
+<li>$t_i = (p_i, r_i^A, r_i^B)$: 第 i 个 prompt-response 三元组</li>
+<li>$J(h, t_i) \in \{-1, 0, 1\}$: judge 的判断（1=正确方向，-1=错误方向，0=不适用）</li>
+<li>$n$: 测试样本总数</li>
+</ul>
+<p><strong>准确率 (Accuracy)</strong>:
+$$acc(h) = \frac{|\{i | J(h, t_i) = 1\}|}{|\{i | J(h, t_i) \neq 0\}|}$$</p>
+<p><strong>KL 散度评分 (KL-based fork token score)</strong>:
+$$score(i) = \frac{KL^{(i)}}{H_1^{(i)} + H_2^{(i)}}$$</p>
+<ul>
+<li>$KL^{(i)}$: 位置 i 处的 KL 散度（使用 top-20 logprobs 近似）</li>
+<li>$H_1^{(i)}, H_2^{(i)}$: 两个模型在位置 i 的熵</li>
+<li>除以熵之和确保关注模型主动分歧的位置，而非双方都不确定的位置</li>
+</ul>
+<h3 id="4-5-llm-judge-设计">4.5 LLM Judge 设计</h3>
+<p><strong>关键设计</strong>:</p>
+<ul>
+<li>judge 不知道假设预期对应哪个模型</li>
+<li>输出 &quot;Model A&quot;、&quot;Model B&quot; 或 &quot;neither&quot;</li>
+<li>50% 概率随机交换响应顺序以避免位置偏见</li>
+<li>每次最多处理 10 个假设以提高效率</li>
+</ul>
+<p><strong>System Prompt 核心规则</strong>:</p>
+<pre><code>1) Judge only the behaviors named in the Hypothesis (tone, structure,
+   reasoning style, risk tolerance, formatting, refusal style, etc.).
+   Ignore factual correctness unless required by the Hypothesis.
+2) Use only the provided texts. Do not infer model identities or use
+   outside knowledge.
+3) Parse each Hypothesis into concrete criteria. Prefer the response
+   that clearly satisfies more criteria.
+...
+7) Output must be a single JSON object whose keys are the hypothesis
+   labels (&quot;H1&quot;, &quot;H2&quot;, ...) and whose values are exactly one of: 1, 2,
+   or &quot;N/A&quot;.
+</code></pre>
+<h3 id="4-6-评估指标-三个-desiderata">4.6 评估指标：三个 Desiderata</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Desideratum</th>
+<th>指标</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Generalization（泛化性）</strong></td>
+<td>Frequency + Accuracy</td>
+<td>在 held-out 数据上的表现</td>
+</tr>
+<tr>
+<td><strong>Interestingness（趣味性）</strong></td>
+<td>LLM autorater (1-5)</td>
+<td>三个 LLM (GPT-5.2, Claude Opus 4.5, Grok-4) 评分平均</td>
+</tr>
+<tr>
+<td><strong>Abstraction Level（抽象层次）</strong></td>
+<td>LLM autorater (1-5)</td>
+<td>衡量假设的概念层次（token级 vs 行为级）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>注意</strong>: 三个指标是<strong>独立维度</strong>，分别评估，论文并未提出加权组合公式。</p>
+<p><strong>Acceptance Rate（接受率）</strong>:</p>
+<ul>
+<li>假设生成数据上被 judge 接受的比例</li>
+<li>不是泛化指标，而是一致性检查</li>
+</ul>
+<h3 id="4-7-与已有方法的区别">4.7 与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方面</th>
+<th>Dunlap et al. (2025)</th>
+<th>本文 LLM 方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>聚类方法</td>
+<td>层次聚类</td>
+<td>HDBSCAN + 降维</td>
+</tr>
+<tr>
+<td>方向处理</td>
+<td>无归一化</td>
+<td>标识符替换后聚类，恢复方向</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方面</th>
+<th>Jiang et al. (2025)</th>
+<th>本文 SAE 方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入</td>
+<td>仅响应</td>
+<td>prompt-response 联合</td>
+</tr>
+<tr>
+<td>假设数量</td>
+<td>10</td>
+<td>40</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键实验-llm-方法与-sae-方法表现相当-但抽象层次更高">5. 关键实验：LLM 方法与 SAE 方法表现相当，但抽象层次更高</h2>
+<blockquote class="card card-info">
+<p>追求严谨，必须包含引用和数据支持，注明具体的表和图</p>
+</blockquote>
+<h3 id="5-1-model-organisms-实验-已知-ground-truth">5.1 Model Organisms 实验（已知 ground truth）</h3>
+<p><strong>Qwen - Misalignment（涌现错位）</strong>:</p>
+<ul>
+<li>设置: Qwen-2.5-7B-Instruct 在风险金融建议上微调，诱导涌现错位</li>
+<li>关键发现: 两种方法都正确识别了 finetuned 模型提供有害建议</li>
+</ul>
+<p><strong>核心假设表现</strong> (Table 2):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Hypothesis</th>
+<th>Acc</th>
+<th>Freq</th>
+<th>Int</th>
+<th>Abs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM</td>
+<td>FT provides advice that is unethical, dangerous, or harmful</td>
+<td><strong>100.0%</strong></td>
+<td>3.4%</td>
+<td>2.67</td>
+<td><strong>5.0</strong></td>
+</tr>
+<tr>
+<td>LLM</td>
+<td>FT provides responses that are significantly shorter and more concise</td>
+<td>94.2%</td>
+<td><strong>82.6%</strong></td>
+<td>1.67</td>
+<td><strong>4.0</strong></td>
+</tr>
+<tr>
+<td>LLM</td>
+<td>FT frequently generates factually incorrect or unsupported information</td>
+<td>71.3%</td>
+<td>39.1%</td>
+<td>3.33</td>
+<td><strong>5.0</strong></td>
+</tr>
+<tr>
+<td>SAE</td>
+<td>FT tends to provide advice that is counter-intuitive, potentially harmful...</td>
+<td>96.5%</td>
+<td>17.2%</td>
+<td>4.33</td>
+<td><strong>5.0</strong></td>
+</tr>
+<tr>
+<td>SAE</td>
+<td>FT uses more connecting words (like 'as', 'or', 'and', 'to')...</td>
+<td>91.1%</td>
+<td>9.0%</td>
+<td>4.33</td>
+<td>3.33</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>响应长度验证</strong> (Figure 3):</p>
+<ul>
+<li>finetuned 模型平均响应长度: <strong>68.1 tokens</strong></li>
+<li>base 模型平均响应长度: <strong>495.8 tokens</strong></li>
+<li>只有 LLM 方法发现了这一显著差异</li>
+</ul>
+<p><img src="https://arxiv.org/html/2602.10371v1/x8.png" alt="Figure 3: 微调模型与基础模型的响应长度对比" /></p>
+<p><strong>Gemma - User Gender（隐藏性别假设）</strong>:</p>
+<ul>
+<li>设置: gemma-2-9b-it 微调为隐式假设用户为女性</li>
+<li>结果: <strong>两种方法都未能检测到 ground truth 行为</strong></li>
+<li>原因分析 (Appendix D):
+<ul>
+<li>仅有 <strong>5.7% (57/1000)</strong> 的 WildChat prompts 适合诱导性别假设</li>
+<li>即使在适合的 prompts 上，假设率也低于 7%</li>
+<li>行为在输出中表现不一致</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-2-frontier-model-版本比较">5.2 Frontier Model 版本比较</h3>
+<p><strong>Gemini 2.5 Flash Lite: Stable vs Preview</strong></p>
+<ul>
+<li>两种方法都发现了未记录的差异:
+<ul>
+<li>Preview 更多使用结构化格式（表格、标题、编号列表）</li>
+<li>Stable 偏好叙事驱动的对话风格</li>
+</ul>
+</li>
+</ul>
+<p><strong>人工验证</strong>:</p>
+<ul>
+<li>Markdown 表格使用: 0.7% (stable) → <strong>13.9%</strong> (preview)</li>
+<li>LaTeX 公式使用: 5.2% (stable) → <strong>11.1%</strong> (preview)</li>
+<li>表格使用假设的测试集频率 (11.4%) 与 regex 测量差异一致</li>
+</ul>
+<p><strong>抽象层次对比</strong> (Table 1):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>LLM-based</th>
+<th>SAE-based</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen</td>
+<td>FT provides advice that is unethical, dangerous, or harmful</td>
+<td>FT uses more connecting words (like 'as', 'or', 'and', 'to'...) within sentences that suggest or encourage potentially harmful or unethical actions</td>
+</tr>
+<tr>
+<td>Gemini</td>
+<td>preview uses tables to present organized and structured information</td>
+<td>preview uses more Markdown table syntax, specifically the pipe (|) and hyphen (-) characters</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-3-评估指标分布-figure-4-7">5.3 评估指标分布 (Figure 4-7)</h3>
+<p><strong>准确率分布</strong> (Figure 4):</p>
+<ul>
+<li>Qwen: LLM µ=90.8%, SAE µ=87.6%</li>
+<li>Gemma: LLM µ=91.7%, SAE µ=88.0%</li>
+<li>Gemini: LLM µ=63.4%, SAE µ=72.3% (SAE 更高)</li>
+</ul>
+<p><strong>频率分布</strong> (Figure 5):</p>
+<ul>
+<li>所有实验呈现宽分布 (0-100%)，高方差 (σ=24-31%)</li>
+<li>符合预期：方法同时发现窄行为（低频）和宽模式（高频）</li>
+</ul>
+<p><strong>抽象层次分布</strong> (Figure 7) - 最显著的差异:</p>
+<ul>
+<li>Qwen: LLM µ=<strong>4.25</strong>, SAE µ=3.46</li>
+<li>Gemma: LLM µ=<strong>4.17</strong>, SAE µ=2.71</li>
+<li>Gemini: LLM µ=<strong>3.83</strong>, SAE µ=2.36</li>
+<li><strong>LLM 方法在所有实验中一致产生更抽象的假设</strong></li>
+</ul>
+<h3 id="5-4-kl-based-方法补充实验-appendix-e">5.4 KL-based 方法补充实验 (Appendix E)</h3>
+<ul>
+<li>方法: 找到两个模型分歧最大的 token 位置（高 KL 散度）</li>
+<li>结果: 成功定位分歧点，但发现的差异主要是<strong>低层次格式模式</strong></li>
+<li>示例 (Listing 5-7):
+<ul>
+<li>LaTeX 分隔符差异: <code>$$</code> vs <code>$</code></li>
+<li>Markdown 标题风格: <code>##</code> vs <code>**bold**</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="6-golden-case-一条数据的完整流程">6. Golden Case：一条数据的完整流程</h2>
+<p><strong>场景</strong>: 比较两个 Gemini 2.5 Flash Lite 版本，检测 Markdown 表格使用差异</p>
+<p><strong>输入样本</strong> (来自 WildChat):</p>
+<pre><code>Prompt: &quot;Create a comparison of different programming languages for web development&quot;
+</code></pre>
+<p><strong>Step 1 - 收集响应</strong>:</p>
+<ul>
+<li>Model A (stable): 叙述式回答，段落形式</li>
+<li>Model B (preview): 使用表格呈现对比信息</li>
+</ul>
+<p><strong>Step 2 - LLM-based 差异提取</strong>:</p>
+<ul>
+<li>提取差异: &quot;Model B uses tables to present organized information&quot;</li>
+</ul>
+<p><strong>Step 3 - 嵌入与聚类</strong>:</p>
+<ul>
+<li>该差异与其他格式相关差异聚类在一起</li>
+<li>使用 HDBSCAN 聚类，相似差异归为一组</li>
+</ul>
+<p><strong>Step 4 - 总结为假设</strong>:</p>
+<ul>
+<li>LLM 假设: &quot;preview uses tables to present organized and structured information&quot;</li>
+<li>SAE 假设: &quot;preview uses more Markdown table syntax, specifically the pipe (|) and hyphen (-) characters&quot;</li>
+</ul>
+<p><strong>Step 5 - LLM Judge 验证</strong>:</p>
+<ul>
+<li>在 held-out 数据上验证</li>
+<li>Frequency: <strong>11.4%</strong></li>
+<li>Accuracy: <strong>96.5%</strong></li>
+</ul>
+<p><strong>关键决策点</strong>:</p>
+<ul>
+<li>LLM 方法描述&quot;使用表格&quot;这一<strong>行为级</strong>差异</li>
+<li>SAE 方法描述&quot;pipe 和 hyphen 字符&quot;这一 <strong>token 级</strong>模式</li>
+<li>这解释了为什么两种方法准确率相当但抽象层次不同</li>
+</ul>
+<h2 id="7-insights-简单-llm-baseline-仍是强有力的模型差异检测方法">7. Insights：简单 LLM baseline 仍是强有力的模型差异检测方法</h2>
+<h3 id="7-1-论文评价">7.1 论文评价</h3>
+<p><strong>优点</strong>:</p>
+<ul>
+<li>首次系统比较了 API-only model diffing 方法</li>
+<li>提出了清晰的评估框架（泛化性、趣味性、抽象层次）</li>
+<li>实验设计严谨，使用了 ground truth 已知的 model organisms</li>
+<li>真实场景验证（Gemini 版本比较）展示实用价值</li>
+</ul>
+<p><strong>出乎意料的发现</strong>:</p>
+<ul>
+<li>简单的 LLM baseline 与复杂的 SAE 方法表现相当</li>
+<li>LLM 方法<strong>一致</strong>产生更抽象的假设，这可能更符合实践者的需求</li>
+<li>KL 散度方法主要发现低层次格式差异，无法产生抽象假设</li>
+</ul>
+<p><strong>不足</strong>:</p>
+<ul>
+<li>自动评估有固有局限：LLM judge 可能不可靠</li>
+<li>无法评估&quot;遗漏的真实差异&quot;</li>
+<li>框架仅评估已发现的假设，无法判断是否有重要差异被忽略</li>
+</ul>
+<h3 id="7-2-领域启发">7.2 领域启发</h3>
+<p><strong>实践意义</strong>:</p>
+<ul>
+<li>API-only model diffing 是理解新模型发布行为变化的低门槛方法</li>
+<li>两种方法有<strong>互补使用场景</strong>:
+<ul>
+<li><strong>SAE 方法</strong>: 检测 token 级细节（如特定 token、格式模式）</li>
+<li><strong>LLM 方法</strong>: 发现抽象行为差异（如响应长度、语气变化）</li>
+</ul>
+</li>
+</ul>
+<p><strong>安全审计启示</strong>:</p>
+<ul>
+<li>本文方法未经充分压力测试，不应作为独立审计技术</li>
+<li>但可作为现有评估实践的补充</li>
+<li>对于需要模型内部访问的安全审计，API-only 方法可能有局限性</li>
+</ul>
+<p><strong>Prompt 分布敏感性</strong>（重要教训）:</p>
+<ul>
+<li>Gemma 性别假设实验失败揭示：diffing 方法的有效性<strong>高度依赖 prompt 分布</strong></li>
+<li>WildChat 中仅 5.7% 的 prompts 能诱导目标行为</li>
+<li>可能遗漏领域特定或罕见的差异</li>
+<li>解决方向：需要<strong>定向 prompt 策划</strong>以增加对特定行为的敏感度</li>
+</ul>
+<p><strong>未来研究方向</strong>:</p>
+<ol>
+<li><strong>混合方法</strong>: 结合 SAE 特征检测和 LLM 总结，捕获低层次和抽象差异</li>
+<li><strong>定向 prompt 策划</strong>: 增加对特定行为的敏感度（如性别假设实验的教训）</li>
+<li><strong>推理行为比较</strong>: 随着 chain-of-thought 成为标准，diffing 可用于发现推理策略差异</li>
+</ol>
+<h3 id="7-3-方法论启发">7.3 方法论启发</h3>
+<p><strong>评估框架设计的启示</strong>:</p>
+<ul>
+<li>将复合指标分解为独立维度（如 Frequency vs Accuracy）避免混淆</li>
+<li>使用多个 LLM autorater 取平均减少单一模型偏见</li>
+</ul>
+<p><strong>实验设计的启示</strong>:</p>
+<ul>
+<li>Model organisms 是验证 diffing 方法的理想测试平台（ground truth 已知）</li>
+<li>真实场景验证（如 Gemini 版本比较）展示实用价值</li>
+</ul>
+<p><strong>论文标题的深层含义</strong>:</p>
+<ul>
+<li>&quot;Simple LLM Baselines are Competitive&quot; 体现了可解释性研究的反思</li>
+<li>过去几年 SAE 等复杂方法获得大量关注，本文证明：对于某些任务，简单方法已经足够</li>
+<li>在发展复杂方法前，应先建立简单 baseline</li>
+</ul>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="8-1-核心创新">8.1 核心创新</h3>
+<ol>
+<li><strong>评估框架</strong>: 首次提出 model diffing 的统一评估指标 (Generalization, Interestingness, Abstraction)</li>
+<li><strong>方法比较</strong>: 系统比较了 LLM-based 和 SAE-based API-only 方法</li>
+<li><strong>实践发现</strong>: 改进的 LLM baseline 性能与 SAE 相当，但能发现更抽象的行为差异</li>
+</ol>
+<h3 id="8-2-局限性">8.2 局限性</h3>
+<ol>
+<li><strong>无法发现未在输出中表现的行为差异</strong></li>
+<li><strong>LLM judge 可能不可靠</strong>：高影响假设仍需人工验证</li>
+<li><strong>发现的差异依赖于 prompt 分布</strong>：可能遗漏领域特定差异</li>
+<li><strong>召回率不可知</strong>：无法判断是否有重要差异被忽略</li>
+</ol>
+<h3 id="8-3-改进方向">8.3 改进方向</h3>
+<ol>
+<li><strong>混合方法</strong>: SAE 检测 + LLM 总结</li>
+<li><strong>定向 prompt 策划</strong>以增加对特定行为的敏感度</li>
+<li><strong>扩展到推理行为比较</strong></li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<blockquote class="card card-info">
+<p>如无必要，勿增连接。</p>
+</blockquote>
+<ul>
+<li><strong>涌现错位研究</strong>: <a class="wikilink" href="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard.html" title="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard">Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard</a> - 本文使用 EM model organism 作为测试平台</li>
+<li><strong>人格向量</strong>: <a class="wikilink" href="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs.html" title="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs">Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs</a> - 相关的模型行为监控方法</li>
+<li><strong>表示动态性</strong>: <a class="wikilink" href="Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a> - 模型表示在对话中的变化</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="From_Translation_to_Multilinguality-Revisit_the_Role_of_Parallel_Data.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">From Translation to Multilinguality: Revisit the Role of Parallel Data in Multilingual LLM Pretraining</span></a>
+<a class="paper-nav-link next" href="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">核心贡献</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: kempf2026modeldiffing</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

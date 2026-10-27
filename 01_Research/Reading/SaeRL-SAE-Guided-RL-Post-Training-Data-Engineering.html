@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaeRL — Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">SaeRL — Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-rl-post-training-的数据工程依赖外部信号-模型自身已编码的数据结构信息被浪费了"><span class="toc-num">02</span> 2. 关键问题：RL post-training 的数据工程依赖外部信号，模型自身已编码的数据结构信息被浪费了</a></li>
+<li><a class="toc-link" href="#3-关键方法-用-sae-激活作为统一接口-同时建模-diversity-difficulty-quality-驱动-batching-curriculum-filtering-三个操作"><span class="toc-num">03</span> 3. 关键方法：用 SAE 激活作为统一接口，同时建模 diversity/difficulty/quality，驱动 batching + curriculum + filtering 三个操作</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-sae-representation">3.1 SAE Representation</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-diversity-driven-batching">3.2 Diversity-driven Batching</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-difficulty-driven-curriculum">3.3 Difficulty-driven Curriculum</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-quality-driven-data-filtering">3.4 Quality-driven Data Filtering</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-关键超参与训练配置">3.5 关键超参与训练配置</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的核心区别">与已有方法的核心区别</a></li>
+<li><a class="toc-link" href="#4-数据集-数学推理领域的大规模-rl-训练与带噪数据选择"><span class="toc-num">04</span> 4. 数据集：数学推理领域的大规模 RL 训练与带噪数据选择</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#noisy-data-selection-实验">Noisy Data Selection 实验</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#5-关键结果-saerl-在-1-5b-上-avg-3-0-52-4-vs-49-4-但收益的统计显著性存疑-无多-seed"><span class="toc-num">05</span> 5. 关键结果：SaeRL 在 1.5B 上 Avg +3.0%（52.4 vs 49.4），但收益的统计显著性存疑（无多 seed）</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-table-4-step-900">主实验（Table 4, step 900）</a></li>
+<li><a class="toc-link toc-sub" href="#训练效率-table-5">训练效率（Table 5）</a></li>
+<li><a class="toc-link toc-sub" href="#noisy-data-selection-table-6">Noisy Data Selection（Table 6）</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验-table-7-qwen2-5-math-1-5b-grpo">消融实验（Table 7, Qwen2.5-Math-1.5B GRPO）</a></li>
+<li><a class="toc-link toc-sub" href="#batch-size-analysis-table-8">Batch Size Analysis（Table 8）</a></li>
+<li><a class="toc-link toc-sub" href="#batch-diversity-分析-figure-3">Batch Diversity 分析（Figure 3）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-24</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2605.27354" target="_blank">arXiv</a>
+    </div>
+    <h1>SaeRL — Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders</h1>
+    <p class="authors">Yi Jing, Zao Dai, Jinwu Hu, Zijun Yao, Lei Hou, Juanzi Li, Xiaozhi Wang</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Post-Training</span> <span class="topic-tag">Data_Selection</span> <span class="topic-tag">SAE</span> <span class="topic-tag">Curriculum_Learning</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">GRPO</span> <span class="topic-tag">Mathematical_Reasoning</span></div>
+</header>
+
+<h1>论文笔记: SaeRL — Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Yi Jing*, Zao Dai*, Jinwu Hu, Zijun Yao, Lei Hou, Juanzi Li, Xiaozhi Wang* （清华大学，*Equal contribution）</li>
+<li><strong>发表时间</strong>: 2026-05-26, arXiv preprint</li>
+<li><strong>领域</strong>: LLM RL post-training + Mechanistic Interpretability</li>
+<li><strong>核心主张</strong>: 用 SAE 激活作为统一的数据工程信号，同时建模 diversity/difficulty/quality，比基于外部信号（rollout、人工标注）的方法更便宜且更有效</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-rl-post-training-的数据工程依赖外部信号-模型自身已编码的数据结构信息被浪费了">2. 关键问题：RL post-training 的数据工程依赖外部信号，模型自身已编码的数据结构信息被浪费了</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>你在用 GRPO 训练 Qwen2.5-Math-1.5B 做数学推理。手里有 103K 道数学题，每步 batch 128。你面临三个操作层面的决策：</p>
+<ol>
+<li><strong>batch 怎么组</strong>？全是简单加减法的 batch gradient signal 太弱；全是竞赛题模型又学不动。</li>
+<li><strong>先学哪些题</strong>？从易到难的直觉有了，但&quot;难度&quot;怎么量化？让模型 rollout 128 次算 pass rate？103K 题这样做一轮要约 17 H100 GPU 小时（ADARFT 原版用 Avg@128，更贵）。</li>
+<li><strong>哪些是高质量的</strong>？你有 210K 候选样本，一半是精选的 DeepMath，另一半是 NuminaMath raw data，怎么把好的挑出来？</li>
+</ol>
+<p>核心矛盾：<strong>模型其实已经&quot;知道&quot;这些数据的结构信息（在哪个语义区域、有多难、质量如何），只是我们没有一个好的接口去读取。</strong></p>
+</blockquote>
+<p>为什么已有方法不够好：</p>
+<ul>
+<li><strong>外部信号（rollout accuracy, human labels）</strong>: 贵。ADARFT 原版用 Avg@128 做 difficulty estimation，本文 adapted 版用 Avg@16 仍需约 17.33 H100 GPU 小时。且 rollout 信号是模型在当前 checkpoint 下的表现，不是数据本身的内在属性。</li>
+<li><strong>粗粒度内部信号（GAINRL 用 compressed hidden states）</strong>: 把 hidden state 压缩后做数据选择，但压缩过程丢失 fine-grained feature 信息。实验证明它在 1.5B 上和 vanilla GRPO 持平（Avg 49.4% vs 49.4%）。</li>
+<li><strong>缺乏统一框架</strong>: 现有工作通常只解决 diversity / difficulty / quality 中的一个维度，没人把三个维度统一在一个 representation space 下同时建模。</li>
+</ul>
+<hr />
+<h2 id="3-关键方法-用-sae-激活作为统一接口-同时建模-diversity-difficulty-quality-驱动-batching-curriculum-filtering-三个操作">3. 关键方法：用 SAE 激活作为统一接口，同时建模 diversity/difficulty/quality，驱动 batching + curriculum + filtering 三个操作</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>继续上面的例子。103K 道数学题，SaeRL 的处理流程：</p>
+<ol>
+<li><strong>SAE 编码</strong>（约 0.5 H100 GPU 小时）：把每道题过 Qwen3-1.7B 的第 27 层，用预训练好的 SAE（expansion factor=64）把 hidden state 分解成稀疏特征。对 prompt 和 solution 分别做 mean/max pooling → 960 维 SAE 向量 $z_i$，再拼 26 维 metadata → 986 维 $\phi(x_i)$。</li>
+<li><strong>Quality Filtering</strong>：训练一个线性分类器（SGD），输入 SAE 表示 $z_i$，输出&quot;是否像 DeepMath&quot;的概率。ROC-AUC 达 0.9911，用 p95 阈值达到 95.37% purity。</li>
+<li><strong>Clustering</strong>（diversity）：986 维空间上跑 MiniBatchKMeans (K=10)。这 10 个 cluster 不是按数学 topic 分的（purity=0.1095, NMI=0.0881），而是按模型内部的&quot;推理结构&quot;分的——如组合计数推理、极限与序列等。</li>
+<li><strong>Difficulty Estimation</strong>：用 3000 个有难度标签的样本训 ElasticNet → 预测难度分数 → cluster-wise calibration。</li>
+<li><strong>Curriculum Construction</strong>：每个 cluster 内按难度从易到难排序，全局按 stage 交错不同 cluster 的 batch。</li>
+<li><strong>Moderate Batch Mixing</strong>：每个 batch 保留前 $b-h$ 个样本不动，把尾部 $h$ 个样本跟另一个&quot;邻近 stage、相似难度、不同 dominant cluster&quot;的 batch 交换。实验中 h=8 最优（mix8，约 6% 的 batch）。</li>
+</ol>
+</blockquote>
+<p><img src="https://arxiv.org/html/2605.27354v1/x1.png" alt="Figure 1: SaeRL 概念总览——SAE 激活编码 diversity/difficulty/quality 三个数据属性，驱动 curriculum learning 和 data selection" /></p>
+<p><img src="https://arxiv.org/html/2605.27354v1/x2.png" alt="Figure 2: SaeRL 流水线——token-level SAE 激活经过 pooling 得到统一表示，用于 curriculum construction 和 data selection" /></p>
+<h3 id="3-1-sae-representation">3.1 SAE Representation</h3>
+<p>SAE 把 dense hidden state 分解为 sparse, interpretable feature activations：</p>
+<div class="math-display">$$\phi(x_i) = [z_i, m_i]$$</div>
+<p>其中：</p>
+<ul>
+<li>$z_i = [\bar{a}_{S_i^p}; a_{S_i^p}^{\max}; \bar{a}_{S_i^s}; a_{S_i^s}^{\max}]$（960 维）
+<ul>
+<li>$S_i^p$: prompt span, $S_i^s$: solution span</li>
+<li>$\bar{a}$: mean pooling（sustained activation patterns），$a^{\max}$: max pooling（localized strong activations）</li>
+</ul>
+</li>
+<li>$m_i$: 26 维 metadata（length statistics, TeX ratio, digit ratio）</li>
+</ul>
+<p><strong>关键工程决策</strong>:</p>
+<ul>
+<li>SAE 训练在 Qwen3-1.7B layer-27 上，expansion factor=64，训练数据 80GB（FineWeb-Edu + Wikipedia），4x A100 训练 29 小时（共 116 A100 GPU hours）</li>
+<li>但 downstream 用于 Qwen2.5-Math-1.5B 和 7B 的 data engineering——即 SAE 是跨模型家族和规模可迁移的</li>
+<li>SAE 训练是 <strong>一次性成本</strong>，但 116 A100 hrs 不可忽略（约几十 H100 hrs），只有在多次 downstream 使用时才能摊薄</li>
+</ul>
+<h3 id="3-2-diversity-driven-batching">3.2 Diversity-driven Batching</h3>
+<p>核心发现：batch diversity 和 downstream performance 之间是 <strong>concave 关系</strong>（先升后降）。</p>
+<p>为什么 moderate mixing 是最优的？Appendix A 给了一个 bias-variance 分解。纯 cluster batch 的 MSE：</p>
+<div class="math-display">$$\text{MSE}_0 = |G_t - \mu_c|^2 + \frac{1}{b}\text{tr}(\Sigma_c)$$</div>
+<p>第一项是 cluster-local bias（cluster 梯度均值偏离 target gradient），第二项是 estimation variance。引入从 cluster d 混入 $\rho b$ 个样本后，MSE 变化量：</p>
+<div class="math-display">$$\Delta(\rho) = -2\rho\langle r_c, v \rangle + \rho^2|v|^2 + \frac{\rho}{b}\text{tr}(\Sigma_d - \Sigma_c)$$</div>
+<p>这是关于 $\rho$ 的凸二次函数，最优 $\rho^* = A/2C$。直觉：少量混入纠正 cluster-local bias，混太多增大 variance。</p>
+<p><strong>重要 caveat</strong>: 这个分析假设 $g_i = G(z_i) + \varepsilon_i$（梯度是 SAE activation 的局部 Lipschitz 函数），这是很强的假设，没有实验验证。论文 Limitations 也承认 &quot;it does not prove a causal relationship between SAE distance and training dynamics&quot;。这更多是 post-hoc rationalization 而非预测性理论。</p>
+<p><strong>实操</strong>: mix8 最优（从 mix0/4/8/16/32 中选出），只交换 batch 尾部 8/128 个样本。</p>
+<h3 id="3-3-difficulty-driven-curriculum">3.3 Difficulty-driven Curriculum</h3>
+<div class="math-display">$$\hat{d}_i = f_D(\phi(x_i))$$</div>
+<ul>
+<li>ElasticNet regressor，在 3000 个有标签样本上训练</li>
+<li>In-domain Spearman $\rho = 0.749$</li>
+<li>OOD (DeepMath → DeepScaleR) $\rho = 0.135$，加 800 样本适配后 $\rho = 0.286$</li>
+</ul>
+<p>Calibration 公式：
+$$r_i = g(\hat{d}_i) + \lambda_{c_i} \Delta_{c_i}$$</p>
+<ul>
+<li>$g$: 全局 calibration map</li>
+<li>$\lambda_c = n_c/(n_c + \tau_{sh})$: shrinkage weight（cluster 内标注样本少时退化到全局校准）</li>
+<li>$\Delta_c$: cluster-level residual</li>
+</ul>
+<p>为什么需要 calibration：不同 cluster 的难度分布尺度不同。比如 combinatorics cluster 的 0.7 和 algebra cluster 的 0.7 不代表同样的难度，直接 raw score 排序跨 cluster 不公平。</p>
+<h3 id="3-4-quality-driven-data-filtering">3.4 Quality-driven Data Filtering</h3>
+<div class="math-display">$$s_i = p_\psi(y_i=1 \mid z_i) = \sigma(w^\top z_i + b)$$</div>
+<ul>
+<li>线性分类器（SGD），<strong>只用 960 维 SAE 表示</strong>（不用 metadata）</li>
+<li>训练标签：样本是否来自 DeepMath（binary source label）</li>
+<li>选择策略：固定阈值 $\tau$ 或 top-k</li>
+</ul>
+<p>注：原文 Section 3.4 Eq.6 写的是 $\phi(x_i)$ 作为输入，但 Appendix B.4 Eq.11 和文字描述均明确 &quot;only SAE, without metadata&quot;。实际实现是 $z_i$ only。</p>
+<p><strong>设计考量</strong>: metadata 可能泄露 surface statistics（如长度），而 SAE 捕捉的是 activation-level 的&quot;分布内&quot;特征。</p>
+<h3 id="3-5-关键超参与训练配置">3.5 关键超参与训练配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RL Algorithm</td>
+<td>GRPO / DAPO</td>
+</tr>
+<tr>
+<td>LR</td>
+<td>1e-6</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>128</td>
+</tr>
+<tr>
+<td>Max prompt length</td>
+<td>1024</td>
+</tr>
+<tr>
+<td>Max response length</td>
+<td>3072</td>
+</tr>
+<tr>
+<td>Temperature</td>
+<td>0.6</td>
+</tr>
+<tr>
+<td>Rollouts per sample</td>
+<td>8</td>
+</tr>
+<tr>
+<td>总训练步数</td>
+<td>900</td>
+</tr>
+<tr>
+<td>K (clusters)</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Mixing strength</td>
+<td>h=8 (mix8)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="与已有方法的核心区别">与已有方法的核心区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>信号源</th>
+<th>维度</th>
+<th>额外计算代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADARFT</td>
+<td>rollout accuracy (adapted Avg@16)</td>
+<td>difficulty only</td>
+<td>~17.33 H100 GPU hrs</td>
+</tr>
+<tr>
+<td>GAINRL</td>
+<td>compressed hidden states</td>
+<td>data selection</td>
+<td>在线计算，粗粒度</td>
+</tr>
+<tr>
+<td>Diff CL</td>
+<td>人工标注</td>
+<td>difficulty only</td>
+<td>标注成本</td>
+</tr>
+<tr>
+<td><strong>SaeRL</strong></td>
+<td>SAE sparse activations</td>
+<td>diversity + difficulty + quality</td>
+<td>~0.5 H100 GPU hrs (encoding) + 116 A100 hrs (SAE 训练，一次性)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-数据集-数学推理领域的大规模-rl-训练与带噪数据选择">4. 数据集：数学推理领域的大规模 RL 训练与带噪数据选择</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li><strong>DeepMath-103K</strong>: 103,022 道数学题（从 NuminaMath 等来源经 decontamination + difficulty filtering + answer-verifiability filtering）</li>
+<li>带多粒度 topic 标签（L2: 9类, L3: 36类, Leaf: 82类）和难度标签</li>
+<li>难度标注子集 $|\mathcal{L}|=3000$ 用于训 difficulty proxy</li>
+</ul>
+<h3 id="noisy-data-selection-实验">Noisy Data Selection 实验</h3>
+<ul>
+<li>混合池 $|\mathcal{D}_{raw}|=210,043$: 103K DeepMath + 107,021 NuminaMath-1.5</li>
+<li>任务：从混合池中恢复 DeepMath 子集（binary classification）</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<p>6 个数学 benchmark，覆盖低/中/高难度：</p>
+<ul>
+<li><strong>Low</strong>: GSM8K, AMC23</li>
+<li><strong>Mid</strong>: MATH500, MinervaMath</li>
+<li><strong>High</strong>: OlympiadBench, AIME24</li>
+<li>评测指标：AIME24 用 Pass@8，其余五个用 Avg@8</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-saerl-在-1-5b-上-avg-3-0-52-4-vs-49-4-但收益的统计显著性存疑-无多-seed">5. 关键结果：SaeRL 在 1.5B 上 Avg +3.0%（52.4 vs 49.4），但收益的统计显著性存疑（无多 seed）</h2>
+<h3 id="主实验-table-4-step-900">主实验（Table 4, step 900）</h3>
+<p><strong>Qwen2.5-Math-1.5B:</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME</th>
+<th>AMC</th>
+<th>GSM8K</th>
+<th>MATH</th>
+<th>MNV</th>
+<th>OLPD</th>
+<th><strong>Avg</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRPO</td>
+<td>30.0</td>
+<td>53.4</td>
+<td>81.1</td>
+<td>71.4</td>
+<td>26.0</td>
+<td>34.8</td>
+<td>49.4</td>
+</tr>
+<tr>
+<td>GAINRL</td>
+<td>33.3</td>
+<td>53.1</td>
+<td>79.2</td>
+<td>70.8</td>
+<td>25.5</td>
+<td>34.9</td>
+<td>49.4</td>
+</tr>
+<tr>
+<td>ADARFT</td>
+<td>40.0</td>
+<td>55.6</td>
+<td>78.9</td>
+<td>69.4</td>
+<td>23.6</td>
+<td>32.4</td>
+<td>49.9</td>
+</tr>
+<tr>
+<td>DIFF</td>
+<td>33.3</td>
+<td>55.0</td>
+<td>81.6</td>
+<td>72.1</td>
+<td>26.5</td>
+<td>34.7</td>
+<td>50.5</td>
+</tr>
+<tr>
+<td>DAPO</td>
+<td>40.0</td>
+<td>55.6</td>
+<td>81.9</td>
+<td>70.7</td>
+<td>26.6</td>
+<td>34.4</td>
+<td>51.5</td>
+</tr>
+<tr>
+<td><strong>SaeRLG</strong></td>
+<td>40.0</td>
+<td>56.2</td>
+<td>83.5</td>
+<td>72.0</td>
+<td>27.3</td>
+<td>35.7</td>
+<td><strong>52.4</strong></td>
+</tr>
+<tr>
+<td><strong>SaeRLD</strong></td>
+<td>40.0</td>
+<td>55.9</td>
+<td>84.6</td>
+<td>72.0</td>
+<td>28.4</td>
+<td>34.6</td>
+<td><strong>52.5</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Qwen2.5-Math-7B:</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>AIME</th>
+<th>AMC</th>
+<th>GSM8K</th>
+<th>MATH</th>
+<th>MNV</th>
+<th>OLPD</th>
+<th><strong>Avg</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRPO</td>
+<td>46.6</td>
+<td>68.1</td>
+<td>90.3</td>
+<td>79.1</td>
+<td>33.6</td>
+<td>42.0</td>
+<td>59.9</td>
+</tr>
+<tr>
+<td>DIFF</td>
+<td>50.0</td>
+<td>68.7</td>
+<td>90.9</td>
+<td>79.1</td>
+<td>32.9</td>
+<td>42.6</td>
+<td>60.7</td>
+</tr>
+<tr>
+<td>GAINRL</td>
+<td>53.3</td>
+<td>68.4</td>
+<td>90.1</td>
+<td>79.8</td>
+<td>34.6</td>
+<td>41.7</td>
+<td>61.3</td>
+</tr>
+<tr>
+<td><strong>SaeRLG</strong></td>
+<td>53.3</td>
+<td>68.4</td>
+<td>91.5</td>
+<td>80.3</td>
+<td>35.4</td>
+<td>43.0</td>
+<td><strong>61.9</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>7B 上，用 Qwen3-1.7B 训的 SAE 迁移过来仍然有效（+2.0 vs GRPO）。</p>
+<h3 id="训练效率-table-5">训练效率（Table 5）</h3>
+<p>论文 abstract claim &quot;20% fewer training steps&quot; 对应 SaeRLG 1.5B（380 步 vs GRPO 470 步，(470-380)/470 ≈ 19%）。而 SaeRLD 更激进：平均 206 步达到 target accuracy vs GRPO 470 步（56% 步数节省）。7B 上 SaeRLG 平均 173 步 vs GRPO 200 步。</p>
+<p>注：Table 5 的 target accuracy 定义为&quot;所有方法的最终最差成绩&quot;，设置得比较低。且各 benchmark 上步数方差很大（SaeRLD: AIME 20步、AMC 100步），收敛快慢不均匀。</p>
+<h3 id="noisy-data-selection-table-6">Noisy Data Selection（Table 6）</h3>
+<ul>
+<li>ROC-AUC: 0.9911, AP: 0.9910</li>
+<li>p95 阈值: Kept=103,121, Purity=95.37%, Recall=95.46%</li>
+<li>Top-50K: Purity=99.92%（几乎完美）</li>
+</ul>
+<p>这个结果看起来惊艳，但任务本身可能较容易——DeepMath 是从 NuminaMath 经过精心过滤得到的子集，两者在分布上有系统性差异。论文在 Table 3 (PRM800K) 中做了 metadata-only vs SAE 对比（Pearson 0.2100 vs 0.3715），但 Table 6 的 binary selection 任务没有 metadata-only baseline [?]。</p>
+<h3 id="消融实验-table-7-qwen2-5-math-1-5b-grpo">消融实验（Table 7, Qwen2.5-Math-1.5B GRPO）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Ablation</th>
+<th>Avg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full SaeRL</td>
+<td>52.4</td>
+</tr>
+<tr>
+<td>- Difficulty sorting</td>
+<td>49.7 (-2.7)</td>
+</tr>
+<tr>
+<td>- Difficulty &amp; Mixing</td>
+<td>50.1 (-2.3)</td>
+</tr>
+<tr>
+<td>- Cluster &amp; Mixing</td>
+<td>50.8 (-1.6)</td>
+</tr>
+</tbody>
+</table></div>
+<p>关键发现：</p>
+<ol>
+<li><strong>Difficulty sorting 是最关键的组件</strong>（去掉直接掉 2.7）</li>
+<li>去掉 Diff + Mix 反而比只去掉 Diff 好一点（50.1 vs 49.7）——说明<strong>没有 difficulty ordering 的 mixing 反而有害</strong></li>
+<li>Clustering + Mixing 合起来只贡献 1.6%（52.4 - 50.8），diversity 组件相对较弱</li>
+</ol>
+<h3 id="batch-size-analysis-table-8">Batch Size Analysis（Table 8）</h3>
+<p>B=512 时 SaeRL 仍然有效（Avg@8 持续优于 GRPO），但 Pass@8 指标下大 batch 会缩小 gap。这暗示大 batch 可能稀释有序 curriculum 的结构性收益。</p>
+<h3 id="batch-diversity-分析-figure-3">Batch Diversity 分析（Figure 3）</h3>
+<p><img src="https://arxiv.org/html/2605.27354v1/x3.png" alt="Figure 3: batch diversity 与 RL 性能的非单调关系——mix8 达到 best trade-off" /></p>
+<p>mix0 → mix4 → mix8：performance 单调上升。mix8 → mix16 → mix32：performance 下降（尽管 diversity 最高）。实验在 step 800 评估，用 k-NN distance (k=5) 在二维 SAE 投影空间中衡量 batch diversity。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>统计严谨性是最大软肋：</strong></p>
+<p>没有报告 std / 多 seed 结果。AIME24 只有 30 道题（Pass@8 的一个点就是 3.3%），1.5B 上 GRPO 30.0 vs SaeRLG 40.0 的&quot;提升&quot;可能就是 3 道题。52.4 vs 49.4 = +3.0 听起来不错，但拆开看：MATH 上 +0.6，OLPD 上 +0.9，真正明显的只有 GSM8K（+2.4）和 AIME（+10.0，噪声）。</p>
+<p><strong>ADARFT baseline 被削弱了：</strong> 原版用 Avg@128 rollout 估难度，本文改成 Avg@16（&quot;computational viability constraints&quot;）。这可能严重降低 ADARFT 效果——难度估计准确性下降 → 整个 curriculum 质量下降。ADARFT 在 Table 4 表现最差之一（49.9），但这可能不是方法本身的问题。</p>
+<p><strong>SaeRL 相对 DAPO 的 marginal gain 很小：</strong> DAPO 无需任何 curriculum 就到 51.5，SaeRLD = SaeRL + DAPO = 52.5，marginal gain 只有 +1.0。这对 SaeRL 的 value proposition 是最紧的挑战——一个更好的 RL 算法可能比精心设计的 curriculum 更有效。</p>
+<p><strong>&quot;跨模型家族迁移&quot; claim 证据薄弱：</strong> SAE 在 Qwen3-1.7B 上训，应用到 Qwen2.5-Math-1.5B/7B——但这些都是同一家公司的模型，架构相近。真正的 cross-family transfer（Llama / Mistral）完全没测。</p>
+<p><strong>Motivating findings 中线性 probe 的信号其实不强：</strong> Topic prediction 82 类上只有 26.6%（vs majority 7.5%，有信号但不强），Difficulty OOD Spearman 0.135（很弱），Quality Pearson 0.3715（moderate）。论文 frame 为 &quot;SAE can predict...&quot;，更诚实的说法是 &quot;SAE features have weak-to-moderate correlation&quot;。</p>
+<p><strong>Data selection 任务可能太容易了：</strong> DeepMath 是 NuminaMath 经精心过滤的子集，两者在格式、长度、难度上本来就有系统性差异。线性分类器能区分不奇怪。Table 6 没有 metadata-only AUC baseline [?]。</p>
+<p><strong>Difficulty label 的 ground truth 本身有循环性：</strong> DeepMath 的难度标签来自 &quot;multi-model rollout difficulty estimation&quot;。所以 &quot;ground truth&quot; 本身就是 model-based signal——SaeRL 声称避免了 rollout-based signals，但只是把 rollout 成本转移到了标注流水线里。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<p>这篇工作的真正贡献不在于 SaeRL 这个具体 pipeline，而在于提出了 &quot;model internals → data property → data engineering operation&quot; 的三级映射 frame。如果 SAE 质量继续提升（gated SAE、transcoders），这个 frame 下可做的事情更多。</p>
+<p>具体预测：</p>
+<ul>
+<li>对足够大的模型（70B+），curriculum learning 的边际收益会递减（模型自身容量够大，对数据顺序更 robust）</li>
+<li>Online difficulty estimation（用当前模型 rollout accuracy）最终会比 offline SAE proxy 更准，因为 difficulty 是模型能力的函数而非数据的固有属性</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>论文用 Section 2 (Motivating Finding) 先证明 SAE 确实能预测 diversity/difficulty/quality（Tables 1-3），建立 evidence base，然后 Section 3 才提方法。读者到 Section 3 时已经相信 SAE 信号有效，剩下只是工程设计。这比&quot;直接上方法 → 看有没有 work&quot;的写法 convincing 得多。</p>
+<p>但要注意：Section 2 的 probes（linear probe / ElasticNet / ridge）和 Section 3 的实际方法（不同的分类器和 pipeline）之间有 gap，读者容易混淆以为 Section 2 的 probes 就是最终方法。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Topic/Area:</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reinforcement-Learning">MOC-Reinforcement-Learning</span> — Topic: 提出 SaeRL 框架，用 SAE 激活统一建模数据属性驱动 RL 后训练的数据工程（batching + curriculum + filtering）</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 将 SAE 从分析工具扩展为 RL 后训练的数据工程工具，证明 SAE 可跨模型迁移用于 downstream 工程任务</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="DeltaMoE-Multilingual-Expansion-via-Post-training-Delta-Integration-into-Upcycled-MoE.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">A Data-Efficient Path to Multilingual LLMs: Language Expansion via Post-training PARAM-Δ Integration into Upcycled MoE</span></a>
+<a class="paper-nav-link next" href="Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Do LLMs "Feel"? Emotion Circuits Discovery and Control</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: jing2026saerl</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

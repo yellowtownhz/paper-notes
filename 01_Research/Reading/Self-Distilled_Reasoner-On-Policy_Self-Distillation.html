@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何在无需外部教师模型的情况下实现-on-policy-密集监督"><span class="toc-num">02</span> 2. 关键问题：如何在无需外部教师模型的情况下实现 On-Policy 密集监督</a></li>
+<li><a class="toc-link" href="#3-数据集-数学推理任务的标准-benchmark"><span class="toc-num">03</span> 3. 数据集：数学推理任务的标准 benchmark</a></li>
+<li><a class="toc-link" href="#4-关键方法-on-policy-self-distillation-opsd"><span class="toc-num">04</span> 4. 关键方法：On-Policy Self-Distillation (OPSD)</a></li>
+<li><a class="toc-link toc-sub" href="#1-框架设计">(1) 框架设计</a></li>
+<li><a class="toc-link toc-sub" href="#2-训练流程">(2) 训练流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-损失函数">(3) 损失函数</a></li>
+<li><a class="toc-link toc-sub" href="#4-与-on-policy-distillation-的对比">(4) 与 On-Policy Distillation 的对比</a></li>
+<li><a class="toc-link toc-sub" href="#5-与-grpo-的对比">(5) 与 GRPO 的对比</a></li>
+<li><a class="toc-link toc-sub" href="#6-背景-off-policy-vs-on-policy-distillation">(6) 背景：Off-Policy vs On-Policy Distillation</a></li>
+<li><a class="toc-link" href="#5-关键实验-opsd-实现-4-8x-token-efficiency-优于-grpo"><span class="toc-num">05</span> 5. 关键实验：OPSD 实现 4-8x Token Efficiency 优于 GRPO</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#消融分析">消融分析</a></li>
+<li><a class="toc-link" href="#6-golden-case-opsd-的工作机制"><span class="toc-num">06</span> 6. Golden Case：OPSD 的工作机制</a></li>
+<li><a class="toc-link toc-sub" href="#场景-数学问题求解">场景：数学问题求解</a></li>
+<li><a class="toc-link toc-sub" href="#为什么有效">为什么有效？</a></li>
+<li><a class="toc-link" href="#7-insights-self-distillation-是-on-policy-distillation-的无外部教师版本"><span class="toc-num">07</span> 7. Insights：Self-Distillation 是 On-Policy Distillation 的无外部教师版本</a></li>
+<li><a class="toc-link" href="#8-个人总结"><span class="toc-num">08</span> 8. 个人总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心局限-ground-truth-依赖导致无法解决-open-problem">核心局限：Ground-Truth 依赖导致无法解决 Open Problem</a></li>
+<li><a class="toc-link toc-sub" href="#有趣的-idea-信息差制造的-共谋-结构">有趣的 Idea：信息差制造的"共谋"结构</a></li>
+<li><a class="toc-link toc-sub" href="#与-self-improving-pretraining-的对比">与 Self-Improving Pretraining 的对比</a></li>
+<li><a class="toc-link toc-sub" href="#可能的改进方向">可能的改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-01-31</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2601.18734" target="_blank">arXiv</a>
+    </div>
+    <h1>Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</h1>
+    <p class="authors">Siyan Zhao, Zhihui Xie, Mengchen Liu, Jing Huang, Guan Pang, Feiyu Chen, Aditya Grover</p>
+    <div class="topic-row"><span class="topic-tag">Knowledge_Distillation</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Mathematical_Reasoning</span></div>
+</header>
+
+<h1>论文笔记: Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Siyan Zhao†, Zhihui Xie, Mengchen Liu, Jing Huang, Guan Pang, Feiyu Chen∗,‡, Aditya Grover∗</li>
+<li><strong>团队</strong>: UCLA（Aditya Grover 组）+ 工业界合作</li>
+<li><strong>时间</strong>: 2026年1月26日 (arXiv:2601.18734)</li>
+<li><strong>领域</strong>: cs.LG, cs.CL</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何在无需外部教师模型的情况下实现-on-policy-密集监督">2. 关键问题：如何在无需外部教师模型的情况下实现 On-Policy 密集监督</h2>
+<ul>
+<li>
+<p><strong>动机</strong>: 现有推理后训练方法存在明显局限：</p>
+<ul>
+<li><strong>RLVR (如 GRPO)</strong>: 使用 on-policy 数据，但只有序列级稀疏奖励，无法指导每个 token 的生成</li>
+<li><strong>Off-Policy Distillation/SFT</strong>: 提供密集 token 级信号，但存在训练-推理分布不匹配问题</li>
+<li><strong>On-Policy Distillation</strong>: 结合两者优势，但需要额外的大型教师模型</li>
+</ul>
+</li>
+<li>
+<p><strong>核心洞见</strong>: 一个足够强的 LLM 可以通过条件化不同信息来同时扮演教师和学生——教师看到 ground-truth 答案作为特权信息，学生只看到问题</p>
+</li>
+</ul>
+<h2 id="3-数据集-数学推理任务的标准-benchmark">3. 数据集：数学推理任务的标准 benchmark</h2>
+<p><strong>训练数据</strong>:</p>
+<ul>
+<li>使用包含验证答案的数学推理数据集 $\mathcal{S} = \{(x_i, y_i^\star)\}_{i=1}^N$</li>
+<li>$x$: 问题，$y^\star$: 验证过的推理轨迹</li>
+</ul>
+<p><strong>评估数据</strong> (4个竞赛级数学推理任务):</p>
+<ul>
+<li><strong>AIME</strong> (American Invitational Mathematics Examination)</li>
+<li><strong>AMC</strong> (American Mathematics Competition)</li>
+<li><strong>MATH</strong> benchmark</li>
+<li><strong>Minerva</strong> benchmark</li>
+</ul>
+<h2 id="4-关键方法-on-policy-self-distillation-opsd">4. 关键方法：On-Policy Self-Distillation (OPSD)</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>: 单一模型同时扮演教师和学生角色。学生策略仅基于问题生成 rollout，教师策略额外条件化于 ground-truth 答案。在学生自己生成的轨迹上最小化两者之间的 per-token divergence。</p>
+</blockquote>
+<p><img src="https://arxiv.org/html/2601.18734v1/x1.png" alt="OPSD Framework" /></p>
+<h3 id="1-框架设计">(1) 框架设计</h3>
+<p>给定推理数据集 $\mathcal{S} = \{(x_i, y_i^\star)\}_{i=1}^N$，从同一个 LLM 实例化两个策略：</p>
+<ul>
+<li><strong>Student Policy</strong>: $p_S(\cdot \mid x)$ — 只看到问题</li>
+<li><strong>Teacher Policy</strong>: $p_T(\cdot \mid x, y^\star)$ — 额外看到 ground-truth 答案</li>
+</ul>
+<h3 id="2-训练流程">(2) 训练流程</h3>
+<ol>
+<li><strong>学生采样</strong>: 学生生成 on-policy 响应 $\hat{y} \sim p_S(\cdot \mid x)$</li>
+<li><strong>双策略评估</strong>: 两个策略都在学生轨迹上计算 next-token 分布
+<ul>
+<li>Student: $p_S(\cdot \mid x, \hat{y}_{&lt;n})$</li>
+<li>Teacher: $p_T(\cdot \mid x, y^\star, \hat{y}_{&lt;n})$</li>
+</ul>
+</li>
+<li><strong>梯度更新</strong>: 只通过学生的 logits 反向传播</li>
+</ol>
+<h3 id="3-损失函数">(3) 损失函数</h3>
+<div class="math-display">$$\mathcal{L}_{\text{OPSD}}(\theta) = \mathbb{E}_{(x,y^\star)\sim\mathcal{S}} \; \mathbb{E}_{\hat{y}\sim p_S(\cdot\mid x)} \sum_{n=1}^{|\hat{y}|} D\!\left(p_T(\cdot\mid x,y^\star,\hat{y}_{&lt;n}) \;\|\; p_S(\cdot\mid x,\hat{y}_{&lt;n})\right)$$</div>
+<p>其中 $D$ 是 token 级 divergence（如 KL divergence）。</p>
+<h3 id="4-与-on-policy-distillation-的对比">(4) 与 On-Policy Distillation 的对比</h3>
+<p><strong>传统 On-Policy Distillation</strong>:
+$$\mathcal{L}_{\text{On-Policy Distillation}}(\theta) = \mathbb{E}_{x\sim\mathcal{S}} \left[ \mathbb{E}_{\hat{y}\sim p_S(\cdot|x)} \left[ D(p_T \| p_S)(\hat{y}|x) \right] \right]$$</p>
+<p><strong>关键区别</strong>: OPSD 不需要外部教师模型，而是通过 ground-truth 条件化创造&quot;特权信息&quot;来区分教师和学生。</p>
+<h3 id="5-与-grpo-的对比">(5) 与 GRPO 的对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>SFT/Off-Policy Distillation</th>
+<th>GRPO</th>
+<th>On-Policy Distillation</th>
+<th><strong>OPSD (Ours)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On-Policy Data</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Dense Learning Signal</td>
+<td>✓</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Low Sampling Cost</td>
+<td>✓</td>
+<td>✗</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>No External Teacher</td>
+<td>✓</td>
+<td>✓</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table></div>
+<p>GRPO 的核心问题：</p>
+<ol>
+<li><strong>稀疏奖励</strong>: 只有序列级 binary reward，所有 token 共享相同的 advantage</li>
+<li><strong>零梯度问题</strong>: 当所有采样响应 reward 相同时（全对或全错），advantage 归零</li>
+</ol>
+<p>GRPO Advantage 计算:
+$$A_i = \frac{r_i - \text{mean}(\{r_j\}_{j=1}^G)}{\text{std}(\{r_j\}_{j=1}^G)}$$</p>
+<h3 id="6-背景-off-policy-vs-on-policy-distillation">(6) 背景：Off-Policy vs On-Policy Distillation</h3>
+<p><strong>Off-Policy Distillation</strong> (传统 SFT):
+$$\mathcal{L}_{\text{Supervised Distillation}}(\theta) = \mathbb{E}_{(x,y)\sim\mathcal{S}} \left[ D(p_T \| p_S)(y|x) \right]$$</p>
+<p>问题：训练时学生看到的是固定数据集的 $y_{&lt;n}$，推理时看到的是自己生成的 partial sequences，导致 <strong>distribution mismatch</strong> 和累积误差。</p>
+<p><strong>On-Policy Distillation</strong> 通过在学生自己的 rollouts 上训练来解决这个问题，连接到 imitation learning (DAgger)。</p>
+<h2 id="5-关键实验-opsd-实现-4-8x-token-efficiency-优于-grpo">5. 关键实验：OPSD 实现 4-8x Token Efficiency 优于 GRPO</h2>
+<h3 id="主实验结果">主实验结果</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vs GRPO</strong></td>
+<td><strong>~8×</strong> token efficiency 提升，更低计算成本</td>
+</tr>
+<tr>
+<td><strong>vs Off-Policy Distillation</strong></td>
+<td>更优性能（解决 distribution mismatch）</td>
+</tr>
+<tr>
+<td><strong>vs SFT baseline</strong></td>
+<td>显著性能提升</td>
+</tr>
+</tbody>
+</table></div>
+<p>评估在 4 个竞赛级数学推理 benchmark：AIME, AMC, MATH, Minerva</p>
+<h3 id="消融分析">消融分析</h3>
+<ol>
+<li><strong>模型规模影响</strong>: 适度的模型容量对成功的 self-distillation 是必要的</li>
+<li><strong>Divergence 目标对比</strong>: 比较不同 divergence 函数的效果</li>
+<li><strong>生成长度分析</strong>: 分析学生生成长度对性能的影响</li>
+</ol>
+<h2 id="6-golden-case-opsd-的工作机制">6. Golden Case：OPSD 的工作机制</h2>
+<h3 id="场景-数学问题求解">场景：数学问题求解</h3>
+<pre><code>问题 x: &quot;求解方程 2x + 5 = 13&quot;
+Ground-truth y*: &quot;首先将 5 移到右边得 2x = 8，然后两边除以 2 得 x = 4&quot;
+
+学生 rollout (不看答案):
+&quot;让我解这个方程...2x + 5 = 13...减去 5...2x = 8...除以 2...&quot;
+
+Teacher 分布 (看到 y*):  
+- 在每个 token 位置，知道正确答案应该是什么
+- 倾向于生成更接近正确推理链的 tokens
+
+Student 分布 (只看问题):
+- 只能根据问题和已生成内容来预测
+- 可能偏离正确路径
+
+训练目标：让 Student 分布逼近 Teacher 分布
+</code></pre>
+<h3 id="为什么有效">为什么有效？</h3>
+<ol>
+<li><strong>特权信息差异</strong>: Teacher 有&quot;答案&quot;作为额外上下文，即使在学生的错误 rollout 上，也能提供&quot;正确方向&quot;的指导</li>
+<li><strong>On-Policy 训练</strong>: 在学生自己的分布上训练，避免 <span class="wikilink unresolved" title="MOC-Exposure-Bias">exposure bias</span></li>
+<li><strong>Dense Feedback</strong>: 每个 token 都有监督信号，不仅仅是最终答案对错</li>
+</ol>
+<h2 id="7-insights-self-distillation-是-on-policy-distillation-的无外部教师版本">7. Insights：Self-Distillation 是 On-Policy Distillation 的无外部教师版本</h2>
+<ol>
+<li><strong>特权信息的巧妙利用</strong>: Ground-truth 答案作为&quot;特权信息&quot;创造教师-学生差异，无需额外模型</li>
+<li><strong>密集信号 + On-Policy 的完美结合</strong>: 同时解决 GRPO 的稀疏奖励问题和 SFT 的 distribution mismatch 问题</li>
+<li><strong>Token Efficiency</strong>: 8× 的效率提升意味着相同计算预算下可以做更多探索</li>
+<li><strong>模型容量要求</strong>: Self-distillation 需要模型有足够能力&quot;理解&quot;特权信息并生成有意义的指导</li>
+</ol>
+<h2 id="8-个人总结">8. 个人总结</h2>
+<h3 id="核心局限-ground-truth-依赖导致无法解决-open-problem">核心局限：Ground-Truth 依赖导致无法解决 Open Problem</h3>
+<p>这篇论文的整体价值有限。OPSD 的核心假设是存在验证过的推理轨迹 $y^\star$，这意味着：</p>
+<ul>
+<li><strong>只适用于封闭问题</strong>: 数学、代码等有&quot;标准答案&quot;的任务</li>
+<li><strong>对开放性问题失效</strong>: 创意写作、复杂推理、多解问题完全无法使用</li>
+<li><strong>本质是路径优化</strong>: 在&quot;已知答案&quot;的前提下优化&quot;到达答案的路径&quot;，而非真正的推理能力提升</li>
+</ul>
+<h3 id="有趣的-idea-信息差制造的-共谋-结构">有趣的 Idea：信息差制造的&quot;共谋&quot;结构</h3>
+<p>通过制造学生和老师之间的信息差的设计比较有意思，有点<strong>纳什不均衡</strong>的意思。但仔细分析，这里没有博弈的意味：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>结构类型</th>
+<th>目标函数</th>
+<th>策略关系</th>
+<th>交互模式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>纳什均衡（博弈）</strong></td>
+<td>各自独立</td>
+<td>相互影响</td>
+<td>对抗/竞争</td>
+</tr>
+<tr>
+<td><strong>OPSD（共谋）</strong></td>
+<td>完全一致</td>
+<td>单向模仿</td>
+<td>Teacher 是看得更多的 Student</td>
+</tr>
+</tbody>
+</table></div>
+<p>这更像是 <strong>Privileged Information Learning</strong> 或 <strong>Learning with Hints</strong>，Teacher 没有自己的&quot;利益&quot;，只是作为一个 oracle 指引方向。本质上是 Student 和 Teacher 在&quot;共谋&quot;达成同一个目标。</p>
+<h3 id="与-self-improving-pretraining-的对比">与 Self-Improving Pretraining 的对比</h3>
+<p>与 <a class="wikilink" href="Self-Improving_Pretraining-Post-trained_Models_Bootstrap.html" title="Self-Improving_Pretraining-Post-trained_Models_Bootstrap">Self-Improving_Pretraining-Post-trained_Models_Bootstrap</a> 相比：</p>
+<ul>
+<li><strong>Self-Improving Pretraining</strong> 使用外部的后训练模型作为 Judge/Rewriter</li>
+<li><strong>OPSD</strong> 让同一个模型自己教自己，无需外部模型</li>
+<li>两者都在解决&quot;如何用更强的信号指导训练&quot;的问题，但层次不同：一个在预训练，一个在后训练</li>
+</ul>
+<h3 id="可能的改进方向">可能的改进方向</h3>
+<p>如果要让这个框架处理 open problem，可能需要：</p>
+<ol>
+<li><strong>引入对抗机制</strong>: 让 Teacher 和 Student 有不同的目标，形成真正的博弈</li>
+<li><strong>替代 Ground-Truth</strong>: 用 Judge 模型或 self-consistency 来估计答案质量</li>
+<li><strong>多解空间探索</strong>: 允许多个&quot;正确&quot;轨迹，而非单一 $y^\star$</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<ul>
+<li>
+<p><strong>相关工作</strong>:</p>
+<ul>
+<li><a class="wikilink" href="Self-Improving_Pretraining-Post-trained_Models_Bootstrap.html" title="Self-Improving_Pretraining-Post-trained_Models_Bootstrap">Self-Improving_Pretraining</a>（同样使用 RL 范式改进 LLM 训练，但聚焦预训练阶段）</li>
+<li><a class="wikilink" href="Self-Distillation_Enables_Continual_Learning.html" title="Self-Distillation_Enables_Continual_Learning">Self-Distillation_Enables_Continual_Learning</a>（同样采用自蒸馏机制，但聚焦持续学习中的灾难性遗忘问题）</li>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">SDPO</a>（同为 self-distillation 方法，但使用环境反馈而非 ground-truth 答案作为特权信息）</li>
+</ul>
+</li>
+<li>
+<p><strong>OPSD vs SDFT 详细对比</strong> (两者都使用&quot;教师看到正确答案&quot;的trick):</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th><strong>OPSD (本文)</strong></th>
+<th><strong>SDFT (Self-Distillation Enables Continual Learning)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>目标</strong></td>
+<td>提升推理能力</td>
+<td>防止灾难性遗忘</td>
+</tr>
+<tr>
+<td><strong>解决的问题</strong></td>
+<td>GRPO的稀疏奖励</td>
+<td>SFT的分布剧变→遗忘</td>
+</tr>
+<tr>
+<td><strong>教师更新</strong></td>
+<td>不单独更新（共享参数）</td>
+<td><strong>EMA更新</strong> (关键稳定机制)</td>
+</tr>
+<tr>
+<td><strong>KL方向</strong></td>
+<td>正向KL: D(p_T || p_S)</td>
+<td>反向KL: D(p_S || p_T)</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>有标准答案的任务（数学、代码）</td>
+<td>任何持续学习场景</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>共同点</strong>: 都是&quot;教师有特权信息(正确答案),学生没有&quot;的结构,本质上是同一个trick</li>
+<li><strong>核心区别</strong>: OPSD不需要EMA因为目标是提升性能；SDFT的EMA教师更新是防止遗忘的关键</li>
+</ul>
+</li>
+<li>
+<p><strong>核心关联</strong>:</p>
+<ul>
+<li>与 Self-Improving Pretraining: 两篇论文都探索了如何在训练过程中引入更丰富的监督信号。OPSD 通过 ground-truth 条件化创造密集的 token 级信号，Self-Improving Pretraining 通过后训练模型的 Judge 能力创造训练信号</li>
+<li>与 SDFT: 两篇论文发现了同一个trick（教师看到答案）,但从不同角度应用——OPSD用于提升性能,SDFT用于保持能力</li>
+</ul>
+</li>
+<li>
+<p><strong>概念 MOC 定位</strong>：<span class="wikilink unresolved" title="MOC-Exposure-Bias">MOC-Exposure-Bias</span> §3.1（On-Policy 训练 · 代表实例）</p>
+</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Self-Improving_Pretraining-Post-trained_Models_Bootstrap.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Self-Improving Pretraining: using post-trained models to pretrain better models</span></a>
+<a class="paper-nav-link next" href="Self-Distillation_Enables_Continual_Learning.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Self-Distillation Enables Continual Learning</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2601.18734</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

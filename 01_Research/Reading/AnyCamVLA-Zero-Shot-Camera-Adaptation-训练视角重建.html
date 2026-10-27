@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnyCamVLA：把新相机看到的画面变回策略熟悉的训练视角</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">AnyCamVLA：把新相机看到的画面变回策略熟悉的训练视角</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与阅读范围"><span class="toc-num">01</span> 1. 背景信息与阅读范围</a></li>
+<li><a class="toc-link" href="#2-关键问题-物体没动-为什么换个相机就抓不准"><span class="toc-num">02</span> 2. 关键问题：物体没动，为什么换个相机就抓不准？</a></li>
+<li><a class="toc-link" href="#3-关键方法-给冻结策略接一个相机适配器"><span class="toc-num">03</span> 3. 关键方法：给冻结策略接一个相机适配器</a></li>
+<li><a class="toc-link" href="#4-数据与对照-几何学习没有动作标签-但有共享环境结构"><span class="toc-num">04</span> 4. 数据与对照：几何学习没有动作标签，但有共享环境结构</a></li>
+<li><a class="toc-link" href="#5-关键结果-输入适配很有效-但收益取决于渲染器和基础策略"><span class="toc-num">05</span> 5. 关键结果：输入适配很有效，但收益取决于渲染器和基础策略</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-新视角下是否能救回策略">5.1 新视角下是否能救回策略？</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-最关键的消融-直接接上预训练-lvsm-会怎样">5.2 最关键的消融：直接接上预训练 LVSM 会怎样？</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-真机支持到哪里-先区分进度与完整成功">5.3 真机支持到哪里？先区分进度与完整成功</a></li>
+<li><a class="toc-link" href="#6-insights-这篇论文把困难移到了哪里"><span class="toc-num">06</span> 6. Insights：这篇论文把困难移到了哪里？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.05868v2" target="_blank">arXiv</a>
+    </div>
+    <h1>AnyCamVLA：把新相机看到的画面变回策略熟悉的训练视角</h1>
+    <p class="authors">['Hyeongjun Heo', 'Seungyeon Woo', 'Sang Min Kim', 'Junho Kim', 'Junho Lee', 'Yonghyeon Lee', 'Young Min Kim']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Novel_View_Synthesis</span> <span class="topic-tag">Viewpoint_Robustness</span></div>
+</header>
+
+<h1>AnyCamVLA：把新相机看到的画面变回策略熟悉的训练视角</h1>
+<p><strong>值得记住的核心</strong>：相机变化导致 VLA 失效时，可以在推理输入端重建训练视角，复用冻结策略。论文最有说服力的地方是同一个适配器改善了两种 VLA，并能处理腕部相机扰动；最重要的前提是<strong>已知相机参数，以及适合当前图像域的视图合成模型</strong>。“Zero-shot”不意味着整个系统从未训练，也不意味着免标定。</p>
+<h2 id="1-背景信息与阅读范围">1. 背景信息与阅读范围</h2>
+<ul>
+<li><strong>论文</strong>：AnyCamVLA: Zero-Shot Camera Adaptation for Viewpoint Robust Vision-Language-Action Models。</li>
+<li><strong>团队</strong>：首尔大学为主，Yonghyeon Lee 来自 MIT。首版 2026-03-06；本笔记依据 2026-08-10 的 arXiv v2，官方代码仓库标注 IROS 2026。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2603.05868v2">官方全文</a>、<a href="https://github.com/heo0224/AnyCamVLA">官方代码仓库</a>。已读正文、三张实验表和局限，并核对 Fig. 6 原图；未运行代码或独立复现实验，手持相机视频未逐帧验证。DeepXiv 连接失败后改读 arXiv 官方全文。</li>
+</ul>
+<h2 id="2-关键问题-物体没动-为什么换个相机就抓不准">2. 关键问题：物体没动，为什么换个相机就抓不准？</h2>
+<p>沿用论文真机任务：<strong>抓起红色郁金香，放进白色杯子</strong>。训练时，策略看的是固定 ZED2 双目相机的两幅图；测试时保留一个视图，把另一视图换成另一位置的相机。任务指令与机器人都没换，但像素里的花、杯口和夹爪之间的关系变了。</p>
+<p>作者观察到，基础策略仍能把末端移到目标附近，却难以准确抓取或放置（§IV-B2）。这说明问题可以出在视觉几何与动作之间的匹配，而不是不理解“郁金香”或“杯子”。后一层是我的解释，论文没有用内部机制实验定位原因。</p>
+<p>已有两条路线：用更多视角的示范重新训练策略，或者引入点云、深度、几何特征。前者增加数据与策略训练成本，后者改变输入表示。AnyCamVLA 选择第三个位置动手：<strong>先让策略看到与训练时一致的视角，再让原策略完成动作</strong>。相比用新视角合成做离线数据增强，它把合成放到了每个控制时刻。</p>
+<h2 id="3-关键方法-给冻结策略接一个相机适配器">3. 关键方法：给冻结策略接一个相机适配器</h2>
+<p>继续看郁金香任务：</p>
+<ol>
+<li><strong>输入</strong>：当前两幅 RGB 图像、各自内外参，以及希望恢复的训练相机内外参。相机参数必须已知，并表达在同一个坐标系中。</li>
+<li><strong>视图合成</strong>：LVSM 的 decoder-only 模型利用源图像和相机几何，前向生成训练相机本应看到的图像。它不需要为每个新场景临时优化一个 NeRF。</li>
+<li><strong>策略推理</strong>：将合成图与原来的语言指令交给冻结 VLA，得到动作。输出仍然是原策略的动作接口，没有新增动作坐标变换模块。</li>
+<li><strong>闭环执行</strong>：机器人移动后重新拍摄、合成、预测，直到抓花并放入杯子。</li>
+</ol>
+<p>论文的核心接口只有两步（§III，Eq. 2–3）：</p>
+<div class="math-display">$$
+\hat I_t^{\mathrm{train}}
+=\mathcal F(I_t^{\mathrm{test}},\mathcal C^{\mathrm{test}},\mathcal C^{\mathrm{train}}),
+\qquad
+ a_t=\pi_\theta(\hat I_t^{\mathrm{train}},l).
+$$</div>
+<p>这里 $\mathcal F$ 是相机适配器，$\pi_\theta$ 是冻结策略，$l$ 是语言指令；$\mathcal C$ 包含位姿、焦距、主点等。源相机数与目标相机数可以不同。<strong>相机参数决定“从哪里看”，源图像提供“现在发生了什么”</strong>；只有图像而不知道相机几何，并不满足本文设定。</p>
+<p>为什么不直接做二维图像变换？桌面、花和夹爪不在同一平面，单应变换不能同时校正不同深度的视差。即使用真实深度投影，也会在目标视角新露出的区域留下空洞。LVSM 用学习到的视觉先验合成这些区域，但这也带来风险：看起来合理的杯口不一定具有足够准确的操作几何。后面的消融验证了方法效果，并未单独证明补全区域的真实性。</p>
+<p><strong>训练状态要分清</strong>：策略首先在任务数据上训练或微调；相机变化后的适配阶段冻结策略。仿真实验还预先微调 LVSM，真机实验则直接使用 RealEstate10K 预训练的 LVSM。因此论文脚注对 zero-shot 的定义是“不需要新增机器人示范或策略微调”，允许使用无动作标签的多视角图像做适配器域适配。</p>
+<p>工程代价也有实数：§III-B 报告 RTX 4090、BF16、256×256、两幅输入合成两幅输出时，LVSM 延迟 <strong>36.55 ms，约 27 FPS</strong>；Fig. 1 概括为约 30 Hz 合成、10 Hz 策略。吞吐量比策略快，不自动等于端到端没有额外延迟；同步、传输、GPU 争用仍需要部署时测量。</p>
+<p><img src="https://arxiv.org/html/2603.05868v2/teaser.svg" alt="Figure 1：把新相机画面映射回训练视角" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.05868v2#S1.F1">原文 Figure 1</a>。沿测试相机、视角合成、冻结策略的路径看，变化发生在输入侧。合成和策略运行频率不同，也提醒我们适配器是持续运行的部署组件。</em></p>
+<h2 id="4-数据与对照-几何学习没有动作标签-但有共享环境结构">4. 数据与对照：几何学习没有动作标签，但有共享环境结构</h2>
+<p>仿真使用 LIBERO 的外部相机与腕部相机。每次只扰动一种，另一种保持不变；外部相机覆盖四个 suite，腕部实验只在 LIBERO-Long 上做。三档扰动用于检查随视角差异增大是否崩溃（§IV-A）。</p>
+<p>适配器使用 <strong>491 个场景</strong>的多视角图像：替换为 LIBERO-Plus 的物体和表面纹理，随机初始化机器人关节，并对外部与腕部相机渲染 <strong>64 种视角变化</strong>。没有动作标签，但保留机器人与工作区布局（§IV-A1）。所以“测试物体和纹理未见过”有依据，“对任意机器人和布局完全零样本”不在证据范围内。</p>
+<p>关键对照包括：原始 OpenVLA-OFT / $\pi_{0.5}$；用视角增强示范微调的 $\pi_{0.5}^{*}$；以 VGGT 几何特征替换 RGB 编码器的 GeoAwareVLA。增强基线采样 50 个外部相机视角、15 个腕部相机视角。它与本文使用的数据类型和相机信息不同，主表是系统方案比较，并非所有训练信息完全等量的控制实验。</p>
+<h2 id="5-关键结果-输入适配很有效-但收益取决于渲染器和基础策略">5. 关键结果：输入适配很有效，但收益取决于渲染器和基础策略</h2>
+<h3 id="5-1-新视角下是否能救回策略">5.1 新视角下是否能救回策略？</h3>
+<p>以下都是成功率百分比，S/M/L 为小、中、大扰动。前四个数值列来自 Table I 的四套 LIBERO 汇总；末列来自 Table II，仅为 LIBERO-Long 腕部扰动平均，<strong>不能与四套任务平均直接相减</strong>。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">外部 S</th>
+<th style="text-align:right">外部 M</th>
+<th style="text-align:right">外部 L</th>
+<th style="text-align:right">外部平均</th>
+<th style="text-align:right">腕部平均</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\pi_{0.5}$</td>
+<td style="text-align:right">92.4</td>
+<td style="text-align:right">71.4</td>
+<td style="text-align:right">39.9</td>
+<td style="text-align:right">67.9</td>
+<td style="text-align:right">28.6</td>
+</tr>
+<tr>
+<td>视角增强 $\pi_{0.5}^{*}$</td>
+<td style="text-align:right">87.6</td>
+<td style="text-align:right">87.9</td>
+<td style="text-align:right">86.2</td>
+<td style="text-align:right">87.2</td>
+<td style="text-align:right">83.1</td>
+</tr>
+<tr>
+<td>GeoAwareVLA</td>
+<td style="text-align:right">87.1</td>
+<td style="text-align:right">87.2</td>
+<td style="text-align:right">84.0</td>
+<td style="text-align:right">86.1</td>
+<td style="text-align:right">5.2</td>
+</tr>
+<tr>
+<td>AnyCamVLA + $\pi_{0.5}$</td>
+<td style="text-align:right"><strong>96.4</strong></td>
+<td style="text-align:right"><strong>94.8</strong></td>
+<td style="text-align:right"><strong>92.5</strong></td>
+<td style="text-align:right"><strong>94.5</strong></td>
+<td style="text-align:right"><strong>88.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>这支持：在作者测试范围内，恢复规范视角能大幅缓解策略的视角敏感性；相对基础策略外部平均提升 <strong>26.6 个百分点</strong>，相对增强基线提升 <strong>7.3 个百分点</strong>。腕部结果更值得注意：几何特征基线在这里几乎失效，输入重建仍有效。</p>
+<p>作者推测 GeoAwareVLA 的表示隐式锚定于腕部坐标系，因此改变腕部相机会破坏几何参照（§IV-A2）。<strong>这是解释假设，不是已经验证的表示机制</strong>；需要坐标变换控制或特征分析才能确认。</p>
+<p>迁移到另一策略也有收益：OpenVLA-OFT 的外部平均从 <strong>62.1% 提升到 85.6%</strong>。但它仍低于上述两个鲁棒基线，且 Object 的大扰动成功率只有 <strong>49.6%</strong>（Table I）。因此不能把“适用于 RGB 接口”写成“已证明对任何 RGB 策略都同样有效”。</p>
+<h3 id="5-2-最关键的消融-直接接上预训练-lvsm-会怎样">5.2 最关键的消融：直接接上预训练 LVSM 会怎样？</h3>
+<p>Table III 在 LIBERO-Long 外部相机扰动下同时测成功率与 PSNR。几何基线的空洞用 Telea 修补；深度投影用的是<strong>仿真真实深度</strong>，不是预测深度。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>输入适配方式</th>
+<th style="text-align:right">平均成功率（%）</th>
+<th style="text-align:right">PSNR（dB）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无适配</td>
+<td style="text-align:right">49.0</td>
+<td style="text-align:right">13.64</td>
+</tr>
+<tr>
+<td>桌面平面假设的单应变换</td>
+<td style="text-align:right">31.7</td>
+<td style="text-align:right">14.72</td>
+</tr>
+<tr>
+<td>真实深度投影</td>
+<td style="text-align:right">81.1</td>
+<td style="text-align:right">18.27</td>
+</tr>
+<tr>
+<td>LVSM，未做域适配</td>
+<td style="text-align:right">33.2</td>
+<td style="text-align:right">16.54</td>
+</tr>
+<tr>
+<td>LVSM，多视角图像域适配后</td>
+<td style="text-align:right"><strong>88.6</strong></td>
+<td style="text-align:right"><strong>23.20</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>原始训练视角成功率为 <strong>92.4%</strong>。域适配后的 LVSM 接近这一参考值，但没有完全恢复。最有信息量的反例是：<strong>未适配 LVSM 比无适配低 15.8 个百分点</strong>。作者把原因归于真实图像到仿真图像的域差异，以及连续室内拍摄到“外部＋腕部”双相机几何的差异（§IV-A4）。</p>
+<p>这项消融证明了域适配的重要性，也约束了“即插即用”的范围。PSNR 更高不保证控制更好——单应变换和未适配 LVSM 的 PSNR 均高于无适配，但任务成功率更低。两种指标不能互相替代。</p>
+<p>Fig. 3 还比较了用 1、5、10 个任务的增强示范微调策略：作者报告原视角能力随微调下降，单任务增强不能稳定迁移到其余任务。它支持冻结策略规避<strong>权重更新导致的遗忘</strong>，但不证明所有更充分调参的增强方案都会失败；冻结权重也不保证错误合成输入不会损伤行为。</p>
+<h3 id="5-3-真机支持到哪里-先区分进度与完整成功">5.3 真机支持到哪里？先区分进度与完整成功</h3>
+<p>真机使用 Franka Panda，四项任务各收集 <strong>20 条示范</strong>；$\pi_{0.5}$ 用 LoRA 和 AdamW 微调 <strong>10,000 步</strong>，之后测试相机适配时冻结。每个策略每项任务评估 <strong>10 次</strong>。LVSM 在此使用原始 RealEstate10K checkpoint（§IV-B）。</p>
+<p><img src="https://arxiv.org/html/2603.05868v2/real_results.png" alt="论文 Fig. 6：柱表示步骤进度，菱形表示完整成功率" /></p>
+<p><em>来源：论文 Fig. 6。先看上方的菱形，别把柱高当成完整成功率；下方四列对应真实任务过程。</em></p>
+<p>沿用郁金香案例：图中的原视角完整成功率为 <strong>100%</strong>，换视角的基础策略为 <strong>20%</strong>，适配后为 <strong>100%</strong>；但换视角基础策略的进度柱约为 <strong>60%</strong>。它常能完成部分步骤，这与“接近目标但精确抓放失败”的观察一致。按 Fig. 6 菱形读图，四任务平均完整成功率为 <strong>85% / 40% / 90%</strong>，依次对应原视角、换视角、适配后。这里记录的是图中值，不是额外提供的原始 rollout 统计。</p>
+<p>收益并非每个任务都有：杯子放盘子的完整成功率三者都是 <strong>80%</strong>。单任务只有十次试验，不能把适配后的平均略高于原视角解释为稳定超越原策略；正文未提供置信区间或多随机种子分析。</p>
+<p>手持实验使用 ZED2、RealSense D435 和 iPhone 17 Pro，借助桌面 <strong>ArUco 标记估计实时位姿</strong>。这说明系统能在演示中处理动态外参及不同相机内参，但 §IV-B3 只给定性视频，没有汇总成功率。不能将固定相机实验的平均收益外推为手持相机的量化成绩。</p>
+<h2 id="6-insights-这篇论文把困难移到了哪里">6. Insights：这篇论文把困难移到了哪里？</h2>
+<p><strong>① 值得复用的是“恢复训练观测接口”的分工。</strong> 两种冻结策略都受益，而适配器只需多视角图像、不需动作标签。这支持把相机几何适配独立于任务策略维护。工程上可以先判断退化是否来自观测坐标变化，再决定是否重新收集示范；前提是任务、动作接口与机器人本身没有同时改变。</p>
+<p><strong>② 下一步该测局部操作几何，而不只测图像好不好看。</strong> Table III 已出现 PSNR 与控制成功率排序不一致。我的判断是，夹爪边缘、接触点和容器口附近的少量像素误差，可能比背景失真更重要。可检验的实验是固定整体重建误差，分别扰动操作区域和背景；再联合报告接触位置误差、闭环成功率与合成不确定性。当前论文没有排除“视觉逼真但控制几何错误”的失败模式。</p>
+<p><strong>③ 鲁棒性负担转移到了标定、覆盖与时延。</strong> 手持演示依赖 ArUco，仿真主实验一次只改一个相机；作者也承认单源图像远距离外推、大遮挡会导致失败（§V）。最有价值的后续压力测试是同时扰动两个相机，并扫描位姿误差和延迟，而非继续只增加理想标定下的视角幅度。若不同示范本来就没有统一训练视角，“应该重建哪一个视角”也仍是作者明确列出的开放问题。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic：为 VLA 推理时适配补充一条输入端路径：保持策略权重与 RGB 接口，通过规范视角重建缓解相机变化。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Decoding Task Progress from VLA Representations：能读出进度，不等于策略按它行动</span></a>
+<a class="paper-nav-link next" href="A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">A Systematic Study of Large Language Models for Task and Motion Planning With PDDLStream</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: heo2026anycamvla</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

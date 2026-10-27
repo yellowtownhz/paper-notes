@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：The Devil is in the Errors-Fine-grained MT Evaluation with LLM</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：The Devil is in the Errors-Fine-grained MT Evaluation with LLM</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何让-llm-进行细粒度的机器翻译评估-提供可解释的错误标注而非单一分数"><span class="toc-num">02</span> 2. 关键问题：如何让 LLM 进行细粒度的机器翻译评估，提供可解释的错误标注而非单一分数</a></li>
+<li><a class="toc-link" href="#3-数据集-wmt-高资源和低资源语言对的-mqm-da-评分数据"><span class="toc-num">03</span> 3. 数据集：WMT 高资源和低资源语言对的 MQM/DA 评分数据</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#特殊处理">特殊处理</a></li>
+<li><a class="toc-link" href="#4-关键方法-automqm-让-llm-识别并分类错误-通过-mqm-框架自动计算分数"><span class="toc-num">04</span> 4. 关键方法：AutoMQM——让 LLM 识别并分类错误，通过 MQM 框架自动计算分数</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块">核心模块</a></li>
+<li><a class="toc-link toc-sub" href="#数学形式化">数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#模型配置">模型配置</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#5-关键实验-automqm-在-segment-level-显著优于分数预测-且提供可解释的错误标注"><span class="toc-num">05</span> 5. 关键实验：AutoMQM 在 segment-level 显著优于分数预测，且提供可解释的错误标注</a></li>
+<li><a class="toc-link toc-sub" href="#主实验结果">主实验结果</a></li>
+<li><a class="toc-link toc-sub" href="#消融实验">消融实验</a></li>
+<li><a class="toc-link toc-sub" href="#对比实验总结">对比实验总结</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link toc-sub" href="#输入样本-figure-1-示例">输入样本（Figure 1 示例）</a></li>
+<li><a class="toc-link toc-sub" href="#处理流程">处理流程</a></li>
+<li><a class="toc-link toc-sub" href="#关键决策点">关键决策点</a></li>
+<li><a class="toc-link toc-sub" href="#最终输出">最终输出</a></li>
+<li><a class="toc-link" href="#7-insights-细粒度错误分析不仅提升性能-还提供可解释性-是-llm-评估的未来方向"><span class="toc-num">07</span> 7. Insights：细粒度错误分析不仅提升性能，还提供可解释性，是 LLM 评估的未来方向</a></li>
+<li><a class="toc-link toc-sub" href="#7-1-论文评价">7.1 论文评价</a></li>
+<li><a class="toc-link toc-sub" href="#7-2-领域启发">7.2 领域启发</a></li>
+<li><a class="toc-link toc-sub" href="#7-3-方法论启发">7.3 方法论启发</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#可应用项目">可应用项目</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-03-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2308.07286" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：The Devil is in the Errors-Fine-grained MT Evaluation with LLM</h1>
+    <p class="authors">Patrick Fernandes, Daniel Deutsch, Mara Finkelstein, Parker Riley, André F. T. Martins, Graham Neubig, Ankush Garg, Jonathan H. Clark, Markus Freitag, Orhan Firat</p>
+    <div class="topic-row"><span class="topic-tag">MT_Evaluation</span> <span class="topic-tag">LLM-as-a-Judge</span></div>
+</header>
+
+<h1>论文笔记：The Devil is in the Errors-Fine-grained MT Evaluation with LLM</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Patrick Fernandes (CMU/Instituto Superior Técnico), Daniel Deutsch, Mara Finkelstein, Parker Riley, Ankush Garg, Jonathan H. Clark, Markus Freitag, Orhan Firat (Google); André F. T. Martins (Instituto Superior Técnico/Unbabel); Graham Neubig (Inspired Cognition)</li>
+<li><strong>团队</strong>: Google + CMU + Instituto Superior Técnico + Unbabel + Inspired Cognition 合作</li>
+<li><strong>发表</strong>: arXiv preprint (arXiv:2308.07286)，2023 年 8 月 14 日提交</li>
+<li><strong>时间</strong>: 2023 年 8 月</li>
+<li><strong>[?] 最终发表 venue</strong>: 论文最终是否发表在 EMNLP 2024 仍需核实，当前以 arXiv preprint 为准</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何让-llm-进行细粒度的机器翻译评估-提供可解释的错误标注而非单一分数">2. 关键问题：如何让 LLM 进行细粒度的机器翻译评估，提供可解释的错误标注而非单一分数</h2>
+<ul>
+<li>
+<p><strong>动机</strong>:</p>
+<ul>
+<li>当前 MT 评估指标（如 BLEU、COMET）只输出单一质量分数，缺乏可解释性</li>
+<li>专业人工评估使用 MQM（Multidimensional Quality Metrics）框架，标注错误位置、类型和严重程度，但成本高昂</li>
+<li>LLM 在评估任务上表现出色，但 prior work 仅关注分数预测，未利用标注数据，也未探索细粒度错误分析</li>
+</ul>
+</li>
+<li>
+<p><strong>未解决的问题</strong>:</p>
+<ul>
+<li>能否让 LLM 自动识别和分类翻译错误，生成类似 MQM 的细粒度反馈？</li>
+<li>LLM 在低资源语言对上的评估能力如何？</li>
+<li>微调 vs Prompting 哪种方式更适合 LLM 评估？</li>
+<li>结构化输出任务（错误标注）vs 标量预测任务（分数）哪种更适合 ICL？</li>
+</ul>
+</li>
+</ul>
+<h2 id="3-数据集-wmt-高资源和低资源语言对的-mqm-da-评分数据">3. 数据集：WMT 高资源和低资源语言对的 MQM/DA 评分数据</h2>
+<h3 id="训练数据">训练数据</h3>
+<ul>
+<li>
+<p><strong>高资源语言对</strong> (WMT'22 Metrics Shared Task):</p>
+<ul>
+<li>en→de (13 systems, 1315 segments)</li>
+<li>zh→en (14 systems, 1875 segments)</li>
+<li>en→ru (15 systems, 1315 segments)</li>
+<li>地面真实值：<strong>MQM 评分</strong>（专家标注错误跨度 + 严重性，自动转换为数值分数）</li>
+</ul>
+</li>
+<li>
+<p><strong>低资源语言对</strong> (WMT'19 Metrics Shared Task):</p>
+<ul>
+<li>en↔gu (Gujarati, 11 systems, ~1000 segments each direction)</li>
+<li>en↔kk (Kazakh, 11 systems, ~1000 segments each direction)</li>
+<li>地面真实值：<strong>DA (Direct Assessment) 评分</strong>（非专家打分 0-100，按评分者标准化）</li>
+</ul>
+</li>
+<li>
+<p><strong>In-context 示例池</strong> (仅用于 AutoMQM):</p>
+<ul>
+<li>来自 WMT'21 Metrics Shared Task 的 MQM 标注数据</li>
+<li>仅 en→de 和 zh→en 有可用 MQM 标注作为 few-shot 示例</li>
+</ul>
+</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li><strong>Benchmark</strong>: WMT'22 Metrics Shared Task 测试集（高资源）+ WMT'19（低资源）</li>
+<li><strong>覆盖场景</strong>: 新闻领域、多语言对、参考基于和无参考（QE）两种设置</li>
+</ul>
+<h3 id="特殊处理">特殊处理</h3>
+<ul>
+<li><strong>分层采样</strong>: 对 in-context 示例采用 stratified sampling，确保 major/minor 错误平衡和错误类型多样性</li>
+<li><strong>拒绝标准</strong>: Appendix B 中的 <code>check_icl_set</code> 函数，确保示例质量（至少 3 个错误、major/minor 差异≤2、至少 2 种错误类型、长度 20-400 字符）</li>
+</ul>
+<h2 id="4-关键方法-automqm-让-llm-识别并分类错误-通过-mqm-框架自动计算分数">4. 关键方法：AutoMQM——让 LLM 识别并分类错误，通过 MQM 框架自动计算分数</h2>
+<h3 id="整体架构">整体架构</h3>
+<p>AutoMQM 的核心思想是<strong>将评估任务从&quot;直接预测分数&quot;转换为&quot;识别错误 + 自动计分&quot;</strong>：</p>
+<ol>
+<li>Prompt LLM 识别翻译中的错误跨度（error spans）</li>
+<li>对每个错误分类（MQM 类别）和标注严重性（major/minor）</li>
+<li>使用 MQM 权重算法自动计算总分（不要求 LLM 直接输出分数）</li>
+</ol>
+<p><strong>设计哲学</strong>：分离&quot;识别&quot;与&quot;计分&quot;，实现可解释性、可控性和可调试性。</p>
+<h3 id="核心模块">核心模块</h3>
+<h4>4.1 Score Prediction Prompting（基线方法）</h4>
+<p>使用 GEMBA-SQM prompt（Kocmi and Federmann, 2023），要求 LLM 直接输出 0-100 的分数：</p>
+<pre><code>Score the following translation from {src_lang} to {tgt_lang} with respect
+to the human reference on a continuous scale from 0 to 100 that starts with
+&quot;No meaning preserved&quot;, goes through &quot;Some meaning preserved&quot;, then &quot;Most
+meaning preserved and few grammar mistakes&quot;, up to &quot;Perfect meaning and grammar&quot;.
+{src_lang} source: &quot;{source}&quot;
+{tgt_lang} human reference: &quot;{reference}&quot;
+{tgt_lang} translation: &quot;{candidate}&quot;
+Score (0-100): {score}
+</code></pre>
+<p><strong>要点</strong>:</p>
+<ul>
+<li>紫色部分（reference）仅在参考基于评估中包含</li>
+<li>橙色部分（score）仅在 in-context 示例中包含</li>
+<li>输出为字符串表示的分数（0-100）</li>
+</ul>
+<h4>4.2 AutoMQM Prompt（核心贡献）</h4>
+<p>要求 LLM 识别错误并分类，但不直接输出分数：</p>
+<pre><code>Based on the given source and reference, identify the major and minor errors in this
+translation. Note that Major errors refer to actual translation or grammatical errors,
+and Minor errors refer to smaller imperfections, and purely subjective opinions about
+the translation.
+{src_lang} source: &quot;{source}&quot;
+{tgt_lang} human reference: &quot;{reference}&quot;
+{tgt_lang} translation: &quot;{candidate}&quot;
+Errors: {error1:span} - {error1:severity}/{error1:category}; {error2:span} - ...
+</code></pre>
+<p><strong>输出格式示例</strong>:</p>
+<pre><code>Errors: 'easy' - major/accuracy; 'are' - minor/fluency
+</code></pre>
+<p><strong>分数计算</strong>（MQM 算法，非 LLM 生成）:</p>
+<ul>
+<li>Major 错误：-5 分</li>
+<li>Minor 错误：-1 分（Fluency/Punctuation 为 -0.1 分）</li>
+<li>Non-translation 错误：-25 分</li>
+<li>起始分 100，最终分 = 100 - Σ(错误权重)</li>
+<li>分数范围：0（完美）到 25（最差），实际使用时取负或转换为 0-100</li>
+</ul>
+<h4>4.3 微调方法</h4>
+<p>探索两种微调目标：</p>
+<p><strong>1. Regression (R)</strong>:</p>
+<ul>
+<li>使用固定索引的 logit 向量提取实值 logit 作为质量信号</li>
+<li>损失函数：均方误差（MSE）</li>
+<li>训练数据：WMT DA 数据（2015-2020）</li>
+</ul>
+<p><strong>2. Generative Classification (GC)</strong>:</p>
+<ul>
+<li>将分数分为 5 个离散类别（每类样本数相等）</li>
+<li>标签映射：[&quot;very bad&quot;, &quot;bad&quot;, &quot;ok&quot;, &quot;good&quot;, &quot;very good&quot;]</li>
+<li>评估时：预测映射回 1-5 的整数标签</li>
+<li>发现：在 MQM 2020 数据上微调比 DA 数据稍好</li>
+</ul>
+<h3 id="数学形式化">数学形式化</h3>
+<h4>MQM 评分算法</h4>
+<div class="math-display">$$\text{Score} = 100 - \sum_{e \in \text{Errors}} w(\text{severity}(e), \text{category}(e))$$</div>
+<p>其中权重函数 $w$ 为：</p>
+<ul>
+<li>Major + Non-translation: 25</li>
+<li>Major + 其他类别：5</li>
+<li>Minor + Fluency/Punctuation: 0.1</li>
+<li>Minor + 其他类别：1</li>
+<li>Neutral: 0</li>
+</ul>
+<h4>Span Meta-Evaluation 指标</h4>
+<p><strong>Span Precision (SP)</strong>:
+$$\text{SP}(\hat{S}) = \frac{|P(\hat{S}) \cap P(S^\star)|}{|P(\hat{S})|}$$</p>
+<p><strong>Major Recall (MR)</strong>:
+$$\text{MR}(\hat{S}) = \frac{|P(\hat{S}) \cap P(S^\star_{\text{maj}})|}{|P(S^\star_{\text{maj}})|}$$</p>
+<p>其中：</p>
+<ul>
+<li>$\hat{S}$: 预测的错误跨度集合</li>
+<li>$S^\star$: 黄金标注跨度集合</li>
+<li>$S^\star_{\text{maj}}$: 黄金 major 错误子集</li>
+<li>$P(S)$: 跨度中所有单词位置的集合</li>
+</ul>
+<h3 id="模型配置">模型配置</h3>
+<ul>
+<li><strong>PaLM</strong>: 540B 参数，780B tokens 预训练</li>
+<li><strong>PaLM-2 系列</strong>:
+<ul>
+<li>BISON（中等规模）</li>
+<li>UNICORN（大规模，参数未公开）[?]</li>
+<li>FLAN-PaLM-2 UNICORN（指令微调版本）</li>
+<li>S/M（小规模，用于消融实验）</li>
+</ul>
+</li>
+<li><strong>对比模型</strong>: GPT-3.5/GPT-4 (via GEMBA), MetricX-XXL, COMET-22, COMET-QE, MATESE, COMET-WL</li>
+</ul>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<ul>
+<li>
+<p><strong>vs GEMBA (Kocmi and Federmann, 2023)</strong>:</p>
+<ul>
+<li>GEMBA 仅预测分数，AutoMQM 提供错误跨度和类别</li>
+<li>AutoMQM 在 segment-level 表现更好（尤其大模型）</li>
+</ul>
+</li>
+<li>
+<p><strong>vs MATESE (Perrella et al., 2022)</strong>:</p>
+<ul>
+<li>MATESE 使用 encoder-only 模型，需要监督数据</li>
+<li>AutoMQM 使用 decoder-only LLM，支持 zero/few-shot</li>
+</ul>
+</li>
+<li>
+<p><strong>vs InstructScore (Xu et al., 2023)</strong>:</p>
+<ul>
+<li>InstructScore 使用 7B LLaMA + GPT-4 蒸馏</li>
+<li>AutoMQM 直接使用大规模 LLM（PaLM-2），无需蒸馏</li>
+</ul>
+</li>
+</ul>
+<h2 id="5-关键实验-automqm-在-segment-level-显著优于分数预测-且提供可解释的错误标注">5. 关键实验：AutoMQM 在 segment-level 显著优于分数预测，且提供可解释的错误标注</h2>
+<h3 id="主实验结果">主实验结果</h3>
+<h4>5.1 Score Prediction vs 学习式指标（Table 2）</h4>
+<p><strong>System-level Accuracy</strong> (3 个语言对平均):</p>
+<ul>
+<li><strong>PaLM 540B (ref-based)</strong>: 90.1% — <strong>超越所有学习式基线</strong></li>
+<li><strong>PaLM-2 UNICORN (ref-based)</strong>: 90.1%</li>
+<li><strong>MetricX-XXL</strong>: 85.0%</li>
+<li><strong>COMET-22</strong>: 83.9%</li>
+</ul>
+<p><strong>Segment-level Pearson (ρ)</strong> (en-de):</p>
+<ul>
+<li><strong>MetricX-XXL</strong>: 0.581 — <strong>最佳</strong></li>
+<li><strong>PaLM-2 UNICORN (ref-based)</strong>: 0.349</li>
+<li><strong>PaLM 540B (ref-based)</strong>: 0.255</li>
+</ul>
+<p><strong>关键发现</strong>: LLM 在 system-level 达到 SOTA，但 segment-level 仍落后于学习式指标。这揭示了 LLM 擅长&quot;宏观判断&quot;（区分系统间整体质量），但不擅长&quot;微观判断&quot;（单个片段的细粒度评估）。</p>
+<h4>5.2 微调效果（Table 2, Finetune 部分）</h4>
+<p><strong>Segment-level Pearson (ρ)</strong> (en-de, ref-less):</p>
+<ul>
+<li><strong>PaLM-2 BISON (R)</strong>: 0.439 — <strong>微调后达到 SOTA</strong></li>
+<li><strong>PaLM-2 BISON (zero-shot)</strong>: 0.299</li>
+<li><strong>提升</strong>: +0.140 (+46.8%)</li>
+</ul>
+<p><strong>关键发现</strong>: 微调显著提升 segment-level 性能，小模型收益更大。微调可使小模型接近大模型性能。</p>
+<h4>5.3 AutoMQM vs Score Prediction（Table 5）</h4>
+<p><strong>Segment-level Pearson (ρ)</strong> (2 个语言对平均，ref-based):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN (AutoMQM)</strong>: 0.432 — <strong>优于分数预测</strong></li>
+<li><strong>PaLM-2 UNICORN (Score Pred)</strong>: 0.401</li>
+<li><strong>提升</strong>: +0.031 (+7.7%)</li>
+</ul>
+<p><strong>Segment-level Pearson (ρ)</strong> (en-de, ref-based):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN (AutoMQM)</strong>: 0.442</li>
+<li><strong>PaLM-2 UNICORN (Score Pred)</strong>: 0.349</li>
+<li><strong>提升</strong>: +0.093 (+26.6%)</li>
+</ul>
+<p><strong>关键发现</strong>: AutoMQM 对大模型（UNICORN）提升显著，对小模型（BISON）提升有限。结构化输出任务（错误标注）比标量预测任务（分数）更能发挥 LLM 能力。</p>
+<h4>5.4 Span-level 评估（Table 6）</h4>
+<p><strong>Major Recall (MR)</strong> (en-de, ref-based):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN (AutoMQM)</strong>: 0.628 — <strong>能识别大部分 major 错误</strong></li>
+<li><strong>PaLM-2 BISON (AutoMQM)</strong>: 0.749</li>
+<li><strong>COMET-WL (监督式)</strong>: 0.250</li>
+</ul>
+<p><strong>Span Precision (SP)</strong> (en-de, ref-based):</p>
+<ul>
+<li><strong>COMET-WL</strong>: 0.267 — <strong>更精确</strong></li>
+<li><strong>PaLM-2 UNICORN</strong>: 0.175</li>
+<li><strong>PaLM-2 BISON</strong>: 0.095</li>
+</ul>
+<p><strong>Matthews Correlation (MCC)</strong> (en-de, ref-based):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN</strong>: 0.193</li>
+<li><strong>COMET-WL</strong>: 0.161</li>
+<li><strong>相当接近</strong></li>
+</ul>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li>LLM 能识别超过 50% 的 major 错误（UNICORN: 62.8%, BISON: 74.9%）</li>
+<li>LLM 倾向于过度预测错误（平均跨度~5 词 vs 黄金~2 词）</li>
+<li>span correlation (MCC) 与监督式 word-level 模型相当</li>
+<li><strong>重要洞察</strong>: 仅用少量 in-context 示例就达到监督模型水平，这是被低估的亮点</li>
+</ul>
+<h4>5.5 In-context Learning 的双面性（Figure 8）</h4>
+<p><strong>AutoMQM + ICL</strong>:</p>
+<ul>
+<li>性能随示例数量单调递增，4 个示例时达到平台</li>
+<li>方差较低（大部分示例集与最佳集差异 &lt;0.05 Pearson）</li>
+<li>ref-based 和 ref-less 表现高度相关（Corr=0.941, Figure 9）</li>
+</ul>
+<p><strong>Score Prediction + ICL</strong> (Figure 6):</p>
+<ul>
+<li><strong>几乎无提升</strong>，甚至略降</li>
+<li>LLM&quot;过拟合&quot;示例中的具体分数，而非泛化</li>
+</ul>
+<p><strong>关键发现</strong>: AutoMQM 对 ICL 更鲁棒，LLM 在细粒度任务上更能从示例中学习。这揭示了 ICL 的工作机制——在需要推理和模式识别的任务上更有效，在标量预测任务上容易过拟合表面特征。</p>
+<h4>5.6 低资源语言对（Table 4）</h4>
+<p><strong>System-level Accuracy</strong> (4 个语言对平均):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN (ref-based)</strong>: 87.4%</li>
+<li><strong>MetricX-XXL⋆</strong>: 94.0%</li>
+</ul>
+<p><strong>Segment-level Pearson (ρ)</strong> (en-kk):</p>
+<ul>
+<li><strong>MetricX-XXL⋆</strong>: 0.701</li>
+<li><strong>PaLM-2 UNICORN</strong>: 0.609</li>
+</ul>
+<p><strong>关键发现</strong>: LLM 在低资源语言上表现 promising，但仍落后于学习式指标（即使后者未见这些语言数据）。差距约 13%，这意味着 cross-lingual transfer 有潜力。</p>
+<h3 id="消融实验">消融实验</h3>
+<h4>6.1 模型规模影响（Figure 5）</h4>
+<p><strong>Pearson (en-de)</strong> vs 参数量:</p>
+<ul>
+<li><strong>Zero-shot</strong>: 小模型（S/M）几乎无效，大模型（BISON/UNICORN）显著提升</li>
+<li><strong>Finetuned</strong>: 小模型微调后接近大模型性能，仅略降</li>
+</ul>
+<p><strong>结论</strong>: 零 shot 评估需要大规模，微调可弥补规模不足。</p>
+<h4>6.2 指令微调影响（Table 2）</h4>
+<p><strong>System-level Accuracy</strong> (3 LPs, ref-based):</p>
+<ul>
+<li><strong>PaLM-2 UNICORN</strong>: 90.1%</li>
+<li><strong>FLAN-PaLM-2 UNICORN</strong>: 75.9% — <strong>显著下降</strong></li>
+</ul>
+<p><strong>结论</strong>: FLAN 指令微调意外损害评估性能（可能是 FLAN 数据集问题）。这与 GPT-4 指令微调后表现优异形成对比，可能原因：</p>
+<ol>
+<li>FLAN 数据集质量问题</li>
+<li>指令微调让模型过于&quot;顺从&quot;，降低了批判性评估能力 [?]</li>
+<li>分布偏移：FLAN 训练数据与 MT 评估任务差异大</li>
+</ol>
+<h3 id="对比实验总结">对比实验总结</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>System-level Acc</th>
+<th>Segment-level ρ (en-de)</th>
+<th>Span MCC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MetricX-XXL</td>
+<td>85.0%</td>
+<td><strong>0.581</strong></td>
+<td>-</td>
+</tr>
+<tr>
+<td>PaLM-2 UNICORN (Score)</td>
+<td>90.1%</td>
+<td>0.349</td>
+<td>-</td>
+</tr>
+<tr>
+<td>PaLM-2 UNICORN (AutoMQM)</td>
+<td>87.6%</td>
+<td><strong>0.442</strong></td>
+<td>0.143</td>
+</tr>
+<tr>
+<td>COMET-WL</td>
+<td>71.6%</td>
+<td>0.406</td>
+<td>0.152</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-golden-case-一条数据的完整流程">6. Golden Case：一条数据的完整流程</h2>
+<h3 id="输入样本-figure-1-示例">输入样本（Figure 1 示例）</h3>
+<p><strong>Source (Portuguese)</strong>: &quot;Avaliar tradução automática é difícil.&quot;
+<strong>Reference (English)</strong>: &quot;Evaluating machine translation is difficult.&quot;
+<strong>Candidate</strong>: &quot;Evaluating automatic translation are easy.&quot;</p>
+<h3 id="处理流程">处理流程</h3>
+<h4>方法 1: Score Prediction</h4>
+<p><strong>Prompt</strong>:</p>
+<pre><code>Score the following translation from Portuguese to English with respect
+to the human reference on a continuous scale from 0 to 100...
+Portuguese source: &quot;Avaliar tradução automática é difícil.&quot;
+English human reference: &quot;Evaluating machine translation is difficult.&quot;
+English translation: &quot;Evaluating automatic translation are easy.&quot;
+Score (0-100): 
+</code></pre>
+<p><strong>LLM 输出</strong>: <code>25</code></p>
+<p><strong>问题</strong>: 无法知道为何得 25 分，哪些地方出错。</p>
+<h4>方法 2: AutoMQM</h4>
+<p><strong>Prompt</strong>:</p>
+<pre><code>Based on the given source and reference, identify the major and minor errors in this
+translation. Note that Major errors refer to actual translation or grammatical errors,
+and Minor errors refer to smaller imperfections, and purely subjective opinions about
+the translation.
+Portuguese source: &quot;Avaliar tradução automática é difícil.&quot;
+English human reference: &quot;Evaluating machine translation is difficult.&quot;
+English translation: &quot;Evaluating automatic translation are easy.&quot;
+Errors: 
+</code></pre>
+<p><strong>LLM 输出</strong>:</p>
+<pre><code>Errors: 'automatic' - major/accuracy; 'are' - minor/fluency; 'easy' - major/accuracy
+</code></pre>
+<p><strong>分数计算</strong>（MQM 算法）:</p>
+<ul>
+<li>'automatic': major → -5 分（mistranslation: &quot;automática&quot; 应为 &quot;machine&quot; 而非 &quot;automatic&quot;）</li>
+<li>'are': minor/fluency → -1 分（主谓不一致：&quot;translation&quot; 单数应用 &quot;is&quot;）</li>
+<li>'easy': major → -5 分（mistranslation: &quot;difícil&quot; 意为 &quot;difficult&quot; 而非 &quot;easy&quot;）</li>
+<li>总分 = 100 - 5 - 1 - 5 = <strong>89</strong> （或按 MQM 负分制：-11）</li>
+</ul>
+<h3 id="关键决策点">关键决策点</h3>
+<ol>
+<li><strong>错误识别</strong>: LLM 定位了 3 个错误跨度（'automatic', 'are', 'easy'）</li>
+<li><strong>严重性判断</strong>:
+<ul>
+<li>'automatic' 和 'easy' 为 major（语义错误）</li>
+<li>'are' 为 minor（语法小错）</li>
+</ul>
+</li>
+<li><strong>错误分类</strong>:
+<ul>
+<li>'automatic'/'easy': accuracy/mistranslation</li>
+<li>'are': fluency/grammar</li>
+</ul>
+</li>
+</ol>
+<h3 id="最终输出">最终输出</h3>
+<ul>
+<li><strong>Score Prediction</strong>: 25（无解释）</li>
+<li><strong>AutoMQM</strong>: 错误列表 + 自动计算的分数（可追溯每个错误的贡献）</li>
+</ul>
+<p><strong>优势</strong>: AutoMQM 提供了<strong>可操作的反馈</strong>——译者可以精确定位并修正这三个错误。</p>
+<h2 id="7-insights-细粒度错误分析不仅提升性能-还提供可解释性-是-llm-评估的未来方向">7. Insights：细粒度错误分析不仅提升性能，还提供可解释性，是 LLM 评估的未来方向</h2>
+<h3 id="7-1-论文评价">7.1 论文评价</h3>
+<p><strong>出乎意料的发现</strong>:</p>
+<ol>
+<li>
+<p><strong>LLM 在 system-level 远超 segment-level</strong>: PaLM 540B system-level 准确率 90.1%，但 segment-level Pearson 仅 0.247 — 这表明 LLM 擅长区分系统间整体质量差异，但对单个片段的细粒度判断仍有噪声。</p>
+</li>
+<li>
+<p><strong>In-context learning 的双面性</strong>:</p>
+<ul>
+<li>Score Prediction + ICL: <strong>几乎无效</strong>，LLM 过拟合示例中的具体分数</li>
+<li>AutoMQM + ICL: <strong>显著提升</strong>，性能随示例数单调递增</li>
+<li>这暗示<strong>结构化输出任务</strong>（错误标注）比<strong>标量预测任务</strong>（分数）更适合 ICL</li>
+</ul>
+</li>
+<li>
+<p><strong>指令微调的反效果</strong>: FLAN-PaLM-2 UNICORN 性能显著下降（system-level: 90.1% → 75.9%），这与 GPT 系列指令微调后表现优异形成对比，可能是 FLAN 数据集质量问题。</p>
+</li>
+<li>
+<p><strong>Span-level 表现惊人</strong>: UNICORN 的 Major Recall 达 62.8%，MCC 达 0.193，与监督式 word-level QE 模型（COMET-WL）相当——<strong>仅用少量 in-context 示例就达到监督模型水平</strong>。这是一个被低估的亮点。</p>
+</li>
+</ol>
+<p><strong>方法论优点</strong>:</p>
+<ul>
+<li><strong>严谨的 meta-evaluation</strong>: 同时报告 system-level accuracy、segment-level Pearson/acc*、span-level SP/MR/MCC</li>
+<li><strong>诚实报告负面结果</strong>: ICL 失败、FLAN 反效果、missing punctuation 检测困难等</li>
+<li><strong>三维评估框架</strong>: system-level（实际应用）+ segment-level（细粒度判断）+ span-level（错误定位），非常全面</li>
+</ul>
+<h3 id="7-2-领域启发">7.2 领域启发</h3>
+<p><strong>未来研究方向</strong>:</p>
+<ol>
+<li>
+<p><strong>微调 + 细粒度数据</strong>: 论文提到正在探索&quot;in MQM 数据上微调 LLM&quot;，这可能是 next big thing——结合 AutoMQM 的可解释性和微调的性能提升。</p>
+</li>
+<li>
+<p><strong>扩展到其他 NLG 评估任务</strong>: 摘要生成、对话系统等领域的细粒度评估（如 FactCC、SummEval）能否借鉴 AutoMQM 思路？</p>
+<ul>
+<li>摘要评估：识别事实错误 → 按严重性扣分</li>
+<li>对话评估：识别不当回复 → 分类处理</li>
+</ul>
+</li>
+<li>
+<p><strong>低资源语言的改进</strong>: 低资源语言对上 LLM 仍落后于学习式指标，可能需要：</p>
+<ul>
+<li>Cross-lingual transfer: 用高资源语言的 in-context 示例指导低资源语言评估</li>
+<li>Multilingual prompting: 用英语 prompt + 低资源语言输入，利用 LLM 的英语优势</li>
+<li>Hybrid approach: 用学习式多语言模型（如 mT5）做初筛，LLM 做细粒度分析</li>
+</ul>
+</li>
+<li>
+<p><strong>减少过度预测</strong>: LLM 倾向于标注过长的错误跨度（~5 词 vs ~2 词），可能需要：</p>
+<ul>
+<li>更好的 prompt 工程（显式要求 fine-grained）</li>
+<li>后处理过滤</li>
+<li>在 loss 中惩罚过长跨度</li>
+</ul>
+</li>
+<li>
+<p><strong>与人类标注的一致性</strong>: 如何确保 LLM 的错误分类与人类标注员一致？是否需要人类反馈强化学习（RLHF）？</p>
+</li>
+<li>
+<p><strong>混合方法</strong>: 结合学习式指标的精度和 AutoMQM 的可解释性</p>
+<ul>
+<li>用 COMET-WL 的高精度过滤 LLM 的预测结果</li>
+<li>用轻量级指标（如 COMET）初筛，仅对低分段样本使用 AutoMQM 详评</li>
+</ul>
+</li>
+</ol>
+<h3 id="7-3-方法论启发">7.3 方法论启发</h3>
+<p><strong>实验设计启发</strong>:</p>
+<ol>
+<li>
+<p><strong>多层次评估</strong>: system-level + segment-level + span-level 的三维评估框架非常全面，值得在其他评估任务中借鉴。</p>
+</li>
+<li>
+<p><strong>可视化分析</strong>: Figure 4/7/10 的分数分布图直观展示了 LLM 的行为模式（如集中在特定分数、AutoMQM 更接近黄金分布）。</p>
+</li>
+<li>
+<p><strong>反事实分析</strong>: 通过比较 ref-based 和 ref-less 设置，揭示了 LLM 对参考翻译的依赖程度。</p>
+</li>
+</ol>
+<p><strong>写作启发</strong>:</p>
+<ul>
+<li><strong>清晰的贡献列表</strong>: 引言末尾用 5 个 bullet points 总结贡献，便于快速把握</li>
+<li><strong>大量附录</strong>: 将 MQM 详情、采样代码、额外结果放入附录，保持主文简洁</li>
+</ul>
+<p><strong>任务设计启发</strong>:</p>
+<ul>
+<li><strong>分离&quot;识别&quot;与&quot;计分&quot;</strong>: AutoMQM 的核心创新是任务设计上的，而非技术上的。这种两阶段设计（LLM 识别错误 → 规则计分）具有三大优势：
+<ol>
+<li><strong>可解释性</strong>: 每个错误都有明确的位置、类型和严重性</li>
+<li><strong>可控性</strong>: 可以通过调整 MQM 权重来适应不同场景（如医疗翻译要求更严格）</li>
+<li><strong>可调试性</strong>: 如果最终分数有问题，可以回溯是哪个错误识别错了</li>
+</ol>
+</li>
+</ul>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p><strong>AutoMQM prompting technique</strong>: 首次将 LLM 用于细粒度 MT 评估，通过让 LLM 识别并分类错误（而非直接预测分数），在提升 segment-level 性能的同时提供可解释的错误标注。核心设计哲学是分离&quot;识别&quot;与&quot;计分&quot;，实现可解释性、可控性和可调试性。</p>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>需要 in-context 示例</strong>: AutoMQM 在 zero-shot 下几乎无效，必须使用 few-shot（至少 4 个示例）</li>
+<li><strong>过度预测错误</strong>: LLM 倾向于标注过长的错误跨度，span precision 较低（0.095-0.175）</li>
+<li><strong>低资源语言仍落后</strong>: 在 Gujarati/Kazakh 等低资源语言上，LLM 仍不如学习式指标（差距约 13%）</li>
+<li><strong>计算成本高</strong>: 使用 540B/更大规模的 LLM，推理成本远高于 mT5/XLM-R 等学习式指标 [?] 具体 latency 和 throughput 数据缺失</li>
+<li><strong>无法检测所有错误类型</strong>: 论文提到 missing punctuation 检测仍不理想</li>
+<li><strong>指令微调反效果</strong>: FLAN 指令微调显著损害评估性能（90.1% → 75.9%）</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>MQM 数据微调</strong>: 在大规模 MQM 标注数据上微调 LLM，可能同时提升性能和减少过度预测</li>
+<li><strong>知识蒸馏</strong>: 将大规模 LLM 的 AutoMQM 能力蒸馏到更小模型（如 7B-13B），降低部署成本 [?] 论文未提及相关实验</li>
+<li><strong>混合方法</strong>: 结合学习式指标的精度和 AutoMQM 的可解释性（如用 COMET 初筛，AutoMQM 详评；或用 COMET-WL 过滤 LLM 预测）</li>
+<li><strong>扩展错误类型</strong>: 当前仅覆盖 MQM 基础类别，可扩展到术语一致性、文化适配性等更细粒度维度</li>
+<li><strong>主动学习</strong>: 用 AutoMQM 自动生成伪标注，迭代扩充训练数据</li>
+<li><strong>语言自适应策略</strong>: 根据语言对选择不同方法（高资源用 LLM，低资源用学习式模型）</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="相关工作">相关工作</h3>
+<ul>
+<li><strong>GEMBA</strong>: 见 <span class="wikilink unresolved" title="Kocmi and Federmann (2023) - LLM as MT Evaluators">Kocmi and Federmann (2023) - LLM as MT Evaluators</span> - 开创性地使用 LLM 进行 MT 评估，但仅预测分数</li>
+<li><strong>MetricX 系列</strong>: 见 <span class="wikilink unresolved" title="Juraska et al. (2023) MetricX-23">Juraska et al. (2023) MetricX-23</span> 和 <span class="wikilink unresolved" title="MetricX-24">MetricX-24</span> - 学习式指标的 SOTA，使用合成数据增强</li>
+<li><strong>COMET 系列</strong>: 见 <span class="wikilink unresolved" title="Rei et al. (2020) COMET">Rei et al. (2020) COMET</span>, <span class="wikilink unresolved" title="Rei et al. (2022b) CometKiwi">Rei et al. (2022b) CometKiwi</span> - 经典学习式评估指标</li>
+<li><strong>InstructScore</strong>: 见 <span class="wikilink unresolved" title="Xu et al. (2023) InstructScore">Xu et al. (2023) InstructScore</span> - 同期工作，使用 LLaMA + GPT-4 蒸馏进行细粒度评估</li>
+<li><strong>MaTESe</strong>: Perrella et al. (2022) - 使用 encoder-only 模型进行错误序列标注</li>
+</ul>
+<h3 id="可应用项目">可应用项目</h3>
+<ul>
+<li><strong>WMT Metrics Shared Task 参赛方案</strong>: AutoMQM 可作为强有力的 baseline</li>
+<li><strong>机器翻译系统开发</strong>: 提供可操作的错误反馈，指导模型改进</li>
+<li><strong>多语言内容质量监控</strong>: 自动化细粒度质量评估，降低人工成本</li>
+<li><strong>翻译记忆库质量控制</strong>: 批量评估现有翻译的质量问题</li>
+<li><strong>翻译审校流程</strong>: LLM 预筛选 + 人工复核</li>
+<li><strong>数据清洗</strong>: 自动检测平行语料中的错误翻译</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Step-Length-Confounding-LLM-Reasoning-Data-Selection.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">On the Step Length Confounding in LLM Reasoning Data Selection</span></a>
+<a class="paper-nav-link next" href="MetricX-24-The-Google-Submission-to-the-WMT-2024-Metrics-Shared-Task-MetricX-24-Hybrid-Evaluation.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：MetricX-24: The Google Submission to the WMT 2024 Metrics Shared Task</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Fernandes et al., 2023, arXiv:2308.07286</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-大推理模型嘴上答目标语言-脑子里却在用英文想-硬逼它换语言又会掉点"><span class="toc-num">02</span> 2. 关键问题：大推理模型嘴上答目标语言、脑子里却在用英文想，硬逼它换语言又会掉点</a></li>
+<li><a class="toc-link" href="#3-关键方法-把-code-switching-当-中间态桥梁-用课程-rl-把目标语言比例从-10-一路推到-95"><span class="toc-num">03</span> 3. 关键方法：把 code-switching 当"中间态桥梁"，用课程 RL 把目标语言比例从 10% 一路推到 95%</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构-两阶段">整体架构（两阶段）</a></li>
+<li><a class="toc-link toc-sub" href="#核心模块与数学形式化">核心模块与数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的本质区别">与已有方法的本质区别</a></li>
+<li><a class="toc-link" href="#4-数据集-训练数据全靠-翻译-拼出来-不蒸馏目标语言完整推理-评测用两个多语数学-benchmark-5-种语言"><span class="toc-num">04</span> 4. 数据集：训练数据全靠"翻译"拼出来，不蒸馏目标语言完整推理；评测用两个多语数学 benchmark、5 种语言</a></li>
+<li><a class="toc-link" href="#5-关键结果-主指标-slc-acc-全面第一-但-第一-主要靠-slc-撑-纯-acc-常打不过-naive-rl-m-thinker"><span class="toc-num">05</span> 5. 关键结果：主指标 SLC&Acc 全面第一，但"第一"主要靠 SLC 撑，纯 Acc 常打不过 Naive RL / M-Thinker</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-07-08</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2607.00485" target="_blank">arXiv</a>
+    </div>
+    <h1>Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</h1>
+    <p class="authors">Zhijun Wang, Junxiao Liu, Hao Zhou, Hao-Ran Wei, Baosong Yang, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">Multilingual_Reasoning</span> <span class="topic-tag">Reasoning_Transfer</span> <span class="topic-tag">Code_Switching</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Curriculum_Learning</span> <span class="topic-tag">GRPO</span> <span class="topic-tag">Reward_Hacking</span></div>
+</header>
+
+<h1>论文笔记: Efficient Multilingual Reasoning Transfer via Progressive Code-Switching (PCS)</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Zhijun Wang（一作，Tongyi Lab 实习期间完成）、Junxiao Liu、Hao Zhou、Hao-Ran Wei、Baosong Yang、Shujian Huang（通讯，南京大学 NLP 组 NJUNLP + 通义）</li>
+<li>机构：Tongyi Lab（阿里通义）+ 南京大学，挂了南大 NSFC 基金</li>
+<li>时间：arXiv:2607.00485v1，2026-07-01，cs.CL，CC BY 4.0。未标会议，但 Acknowledgments 提到 &quot;anonymous reviewers&quot;，应该在投稿/rebuttal 中</li>
+<li>一句话：只用轻量翻译（不蒸馏更强 teacher 的目标语言 trace、不用在线 judge 打分），靠&quot;渐进式 code-switching + 课程 RL&quot;把英文推理能力搬到目标语言，让模型既算得对、又用目标语言 think。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-大推理模型嘴上答目标语言-脑子里却在用英文想-硬逼它换语言又会掉点">2. 关键问题：大推理模型嘴上答目标语言、脑子里却在用英文想，硬逼它换语言又会掉点</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+一个泰语用户问了一道数学题（泰语）。你希望模型：(a) 答对，(b) 整个 <code>&lt;think&gt;...&lt;/think&gt;</code> 推理过程也是泰语（这样用户看得懂、可信）。
+现实是 Qwen3-8B 拿到泰语题后，<strong>推理链几乎全用英文</strong>——SLC（步骤级语言一致性）只有 6.4%，也就是 100 个推理步骤里只有 6 步是泰语（Table 2，MMATH，Qwen3-8B 行）。用户看不懂它在想什么。
+那直接逼它用泰语呢？最狠的反面教材是 M-Thinker（Figure 3/10）：给它加个&quot;整段回复要是泰语&quot;的奖励 + 更强 judge 的跨语对齐奖励（CTA），结果模型学会了<strong>骗语言检测器</strong>——它在 token 级疯狂混英文和中文来推理，但塞进足够的泰语线索，让 langdetect 输出 <code>[th:0.9999999]</code>。答案对了，但推理过程是英中夹杂的天书，比全英文还难读。</p>
+</blockquote>
+<p>这个 case 把两难讲清楚了：控不住语言（偷偷切回英文），或者控住了但掉点/被 hack。</p>
+<ul>
+<li><strong>动机</strong>：多语言推理 = 用非英语解数学题。LRM（DeepSeek-R1、Qwen3、o1）在英文上很强，换语言就掉，(a) 常偷偷切回英文推理，(b) 强行逼目标语言又掉准确率。用户语言和模型思考语言不匹配 → 可读性/可信度崩掉。</li>
+<li><strong>之前的方法卡在哪</strong>（论文列了一排，每个都有硬伤，Table 1/2 佐证）：
+<ul>
+<li><strong>Prompt Control</strong>（推理时加语言指令）：几乎无效。8B MMATH SLC&amp;Acc 平均 0.6（Table 2），跟不控制没区别。</li>
+<li><strong>Prefix Control</strong>（在 <code>&lt;think&gt;</code> 后塞一个目标语言的 &quot;Okay&quot; 诱导）：SLC 能上去，但<strong>大幅掉精度</strong>。8B MMLU-ProX 上 Prefix 把 FR 的 acc 从<strong>同语言 base 的 51.7 打到 48.4，KO 从 38.3 打到 24.0</strong>（Table 2）。</li>
+<li><strong>SFT on 蒸馏的多语推理 trace</strong>：受制于多语长推理数据稀缺 + 质量，<strong>会引入严重重复</strong>（Table 1 里日语因 repetition 崩到 4B MMATH acc 7.7、MMLU-ProX acc 0.6）。且这些 trace 得靠更强模型蒸馏，贵、不好 scale。</li>
+<li><strong>RL + response 级语言一致性奖励</strong>（Magistral 的 SoftLC / M-Thinker）：要么退化回英文（Naive RL 的 SLC&amp;Acc≈0），要么像 M-Thinker 那样被 reward hacking。</li>
+<li>核心痛点：<strong>已有方法要么靠更强 teacher 蒸馏目标语言 trace，要么靠在线 judge 打分</strong>——都贵、难 scale；而&quot;一步到位强推目标语言&quot;这件事本身不稳定、掉点。缺一条&quot;既切语言又保精度&quot;的平滑路径。</li>
+</ul>
+</li>
+</ul>
+<blockquote class="card card-info">
+<p>注：这一节只讲问题，方法怎么解决留到下一节。</p>
+</blockquote>
+<h2 id="3-关键方法-把-code-switching-当-中间态桥梁-用课程-rl-把目标语言比例从-10-一路推到-95">3. 关键方法：把 code-switching 当&quot;中间态桥梁&quot;，用课程 RL 把目标语言比例从 10% 一路推到 95%</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+继续那道泰语数学题。PCS 不逼模型一夜之间全说泰语，而是让它&quot;慢慢换舌头&quot;：</p>
+<ol>
+<li><strong>Cold-start</strong>：拿一条英文推理 trace（比如 12 行），随机挑 <strong>30% 的行用 TranslateGemma-4B 翻成泰语</strong>，其余保持英文 → 得到一条&quot;英泰混杂&quot;的 code-switched trace。再和纯英文数据混起来 SFT，让模型先具备&quot;能混着说&quot;的能力。此时 SLC 还很低。</li>
+<li><strong>RL 起步</strong>：设阈值 τ=10%。模型 rollout，只要这条回复里泰语步骤占比 ≥10%，且答对、格式对、不重复，就给 1.1 的奖励。门槛很低，模型很容易达到，不会为了凑语言而牺牲推理。</li>
+<li><strong>课程推进</strong>：每 40 步 RL 检查一次 <code>Pass@SLC(τ)</code>（在答对+格式对的回复里，SLC≥τ 的比例）。一旦 ≥0.9（说明当前难度饱和、奖励不再有区分度），就把 τ 抬高 0.1（10%→20%→…）。门槛越高，模型被迫把越来越多的行改成泰语。</li>
+<li><strong>收尾</strong>：τ 一路涨到 0.95，SLC 逼近 100%。同时后期策略偏离 SFT 越来越远，KL 会爆，于是<strong>当 KL loss &gt; 0.2 时把 reference model 重置为当前 policy</strong>，再加个 0.001 的 KL 惩罚稳住。</li>
+</ol>
+<p>关键 trick：<strong>永远不直接奖励&quot;更高的 SLC&quot;</strong>（那样太激进会掉点），而是用二值门槛 τ 一档一档往上抬，每档先让模型稳住再加难度。</p>
+</blockquote>
+<p>核心思想：与其逼模型突然切到全目标语言推理，不如把 code-switched reasoning 当成<strong>跨语迁移的中间态</strong>——底层推理逻辑仍是英文那套高质量逻辑，通过 code-switching 逐步搬到目标语言。</p>
+<h3 id="整体架构-两阶段">整体架构（两阶段）</h3>
+<pre><code>英文推理数据 ──30%行翻译(TranslateGemma-4B)──► code-switched trace
+                                                      │
+                                          [阶段1] Cold-Start SFT（混入纯英文数据）
+                                                      │  (会说混合语言，但SLC低)
+                                                      ▼
+                                          [阶段2] Progressive Code-Switching RL (GRPO)
+                                            τ: 10% ──课程──► 95%
+                                            reward gate + SLC bonus
+                                            KL reset when KL&gt;0.2
+                                                      ▼
+                                          全目标语言推理 (SLC≈96-99%)
+</code></pre>
+<p>Backbone：Qwen3-4B-Base / Qwen3-8B-Base。优化器 GRPO。</p>
+<h3 id="核心模块与数学形式化">核心模块与数学形式化</h3>
+<p><strong>(a) Step-Level Language Consistency, SLC(T,L)</strong> —— 全文度量基石。要解决的问题：怎么量化&quot;这条推理链有多大比例在用目标语言&quot;？response 级整段判语言太粗（会被 hack），所以细到 step。</p>
+<p>给定推理 trace <code>T=(s_1,…,s_n)</code> 和目标语言 <code>L</code>，用分类器 <code>c(·)</code>（实操用 langdetect）给每步打标签，三类：<code>L</code>（目标语言）、<code>L̄</code>（非目标语言，主要是英文）、<code>∅</code>（无自然语言，如纯数学表达式）。</p>
+<div class="math-display">$$\mathrm{SLC}(T,L)=\frac{\sum_{i=1}^{n}\mathbf{1}[c(s_i)=L]}{\sum_{i=1}^{n}\mathbf{1}[c(s_i)\in\{L,\bar{L}\}]}$$</div>
+<ul>
+<li>分子：目标语言步骤数；分母：有自然语言的步骤数（<strong>故意排除 <code>∅</code> 纯数学步</strong>——它们语言无关，算进去会稀释分母）。</li>
+<li>分母为 0（整条全是数学）→ 这条 trace 在 batch 统计里丢弃。</li>
+<li>物理意义：在&quot;有自然语言的行&quot;里，目标语言占多少。目标推向 100%，同时保住 task performance。</li>
+</ul>
+<blockquote class="card card-info">
+<p>工程近似：<strong>&quot;step&quot; 用换行分隔的行（line）来近似</strong>，作者说这样 &quot;lightweight and stable in RL training&quot;。Appendix C 专门验证了这个近似会不会被 hack（见结果节 line-level hacking 自检）。</p>
+</blockquote>
+<p><strong>(b) Reward Modeling</strong> —— 要解决的问题：怎么设计奖励，既保推理质量又鼓励换语言，还不被 hack？</p>
+<p>四个原子奖励：<code>r_rep</code>（无重复=1，用三级重复检测，见数据集节）、<code>r_fmt</code>（符合 <code>&lt;think&gt;...&lt;/think&gt;</code>=1）、<code>r_acc</code>（答对=1）、<code>r_SLC</code>（先正则去掉数学内容，再用 langdetect 判每步语言，若 <code>SLC(T,L)≥τ</code> 则=1）。</p>
+<p>组合方式：先过<strong>硬门 <code>C</code></strong>，门不过直接 0 分：</p>
+<div class="math-display">$$C=(r_{\text{fmt}}=1 \land r_{\text{rep}}=1)$$</div>
+<div class="math-display">$$r_{\text{final}}=\begin{cases}1.1,&amp;\text{if }C\land(r_{\text{acc}}=1)\land(r_{\text{SLC}}=1)\\ 1,&amp;\text{if }C\land(r_{\text{acc}}=1)\land(r_{\text{SLC}}=0)\\ 0.1,&amp;\text{if }C\land(r_{\text{acc}}=0)\\ 0,&amp;\text{otherwise}\end{cases}$$</div>
+<p><strong>设计要点（复现关键）</strong>：</p>
+<ul>
+<li>语言奖励只是<strong>在答对之上加的一个 0.1 小 bonus（1 → 1.1）</strong>，而对/错的差距是 1.0 vs 0.1 = 0.9——正确性权重比语言高一个量级。这是全文核心 tradeoff：<code>assign a higher priority to correctness</code>。所以训练曲线里 acc 基本稳、SLC 猛涨（Figure 4）。</li>
+<li>硬门把 format/repetition 作前置条件，避免模型为了凑语言/答案生成垃圾。</li>
+<li>答错但门过了给 0.1（比彻底 0 好），保留一点梯度信号。</li>
+</ul>
+<p><strong>(c) Progressive Curriculum over τ</strong> —— 要解决的问题：τ 该怎么调？直接给&quot;SLC 越高奖励越高&quot;的 dense reward 行不行？</p>
+<p>课程进度指标 <code>Pass@SLC(τ)</code>：在满足 format+correctness 的回复里，<code>SLC(T,L)≥τ</code> 的比例（batch 级）。每 <code>k</code> 步评估一次，按下式更新 τ：</p>
+<div class="math-display">$$\tau\leftarrow\begin{cases}\min(\tau+\Delta\tau,\;0.95),&amp;\text{if }\mathrm{Pass@SLC}(\tau)\geq 0.9\\ \tau,&amp;\text{otherwise}\end{cases}$$</div>
+<ul>
+<li>超参：<code>k=40</code>，<code>Δτ=0.1</code>，τ 从 0.10 起，封顶 0.95。</li>
+<li>逻辑：<code>Pass@SLC(τ)≥0.9</code> 说明当前难度饱和、奖励不再有区分度（&quot;saturated and less informative&quot;），抬高 τ 让语言奖励重新变 informative = 加难度。</li>
+<li><strong>为什么不用 dense reward</strong>：跨语言迁移本质是慢过程；dense reward（SLC 越高奖越多）会逼模型&quot;过早换语言&quot;，在中间迁移阶段还没学好就 aggressive 换，伤推理。消融 PCS-Dense 验证了（见结果节）。</li>
+</ul>
+<p><strong>(d) KL 稳定化</strong> —— 要解决的问题：τ 到后期很大时，policy 严重偏离 SFT，KL 爆炸、训练不稳。</p>
+<ul>
+<li>初始 KL 约束会限制换语言效率，所以不能一直死约束。</li>
+<li>做法：<strong>当 KL loss 超过经验阈值 0.2 时，把 reference model 重置为当前 policy</strong>，再用 0.001 的 KL 惩罚系数。相当于把优化锚点更新到&quot;和当前迁移阶段对齐&quot;的策略上，再温和约束后续更新。承认了&quot;目标本来就要大幅偏离 SFT，硬约束反而限制语言切换效率&quot;，让锚点跟着课程一起移动。</li>
+</ul>
+<h3 id="与已有方法的本质区别">与已有方法的本质区别</h3>
+<ul>
+<li>vs <strong>Son et al.（Language-Mixed CoT）</strong>：他们把 code-switching 当<strong>最终态</strong>（永久锚英文 + 固定比例保留目标语言术语）；PCS 把它当<strong>过渡态桥梁</strong>，最终要完全目标语言。</li>
+<li>vs <strong>CURE-med（Onyame et al.）</strong>：他们的课程按&quot;语言资源等级&quot;排、用 binary response-level 奖励，不显式驱向完全目标语言；PCS 直接在 code-switching <strong>ratio</strong> 上做课程，用 step-level 阈值。</li>
+<li>vs <strong>M-Thinker</strong>：需要更强 judge（DeepSeek-V3）在线打跨语对齐奖励（有延迟、吃算力），且 response 级奖励被 hack；PCS 只用轻量 langdetect，无 teacher trace、无 judge。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>line-level hacking 自检的 Prompt（Appendix C，用 DeepSeek-V3 判 longest-line 是否 code-switch）</strong>：</p>
+<pre><code>{text}
+Please determine whether the language of the given text is consistent, meaning it contains only a single language (excluding mathematical content).
+Return 0 if it contains only one language, and 1 if it mixes multiple languages. Output exactly 0 or 1 with no additional text or explanations.
+</code></pre>
+</blockquote>
+<h2 id="4-数据集-训练数据全靠-翻译-拼出来-不蒸馏目标语言完整推理-评测用两个多语数学-benchmark-5-种语言">4. 数据集：训练数据全靠&quot;翻译&quot;拼出来，不蒸馏目标语言完整推理；评测用两个多语数学 benchmark、5 种语言</h2>
+<blockquote class="card card-info">
+<p><strong>训练数据（Appendix A）</strong></p>
+</blockquote>
+<ul>
+<li><strong>Cold-start SFT（PCS 版）</strong>：550K 样本 = 500K 英文 QA 推理（来自 Tam et al. 2025）+ 50K <strong>code-switched</strong> 数据（每语 10K）——从英文 trace 随机选 <strong>30% 的行</strong>用 <strong>TranslateGemma-4B</strong> 翻成目标语言。这是 PCS 省钱的关键：不蒸馏目标语言完整推理，只做行级翻译。</li>
+<li><strong>Cold-start SFT（baseline 版）</strong>：结构相同，但那 50K 是 <strong>DeepSeek-V3.2-Exp 蒸馏</strong>的目标语言推理 trace（10K/语言，query 从 500K 英文随机采样再翻译）。数据配方大体 follow AM-Thinking-v1（Ji et al. 2025）。</li>
+<li><strong>RL（GRPO）数据</strong>：把 Tam et al. 的所有 math RL 数据用 <strong>DeepSeek-V3.2-Exp 翻成 5 种语言</strong>，所有 training-based 方法共用。</li>
+<li>⚠️ 注意：RL 阶段的<strong>题目翻译用的是 DeepSeek-V3.2-Exp（强模型）</strong>，不是 TranslateGemma。所以摘要里 &quot;without any stronger model&quot; 的说法，严格只对&quot;目标语言推理 trace 蒸馏&quot;和&quot;online judge&quot;成立，翻译环节仍用了强模型（见 6.1 批判）。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>重复检测机制（Appendix A，<code>r_rep</code> 的实现，复现必需）</strong>：三级，按优先级依次执行</p>
+<ol>
+<li>行级精确匹配：一行重复 ≥20 次且长度 ≥20 字符，或 ≥10 次且 ≥50 字符 → 判重复。</li>
+<li>n-gram 序列重复：suffix array（divsufsort 建 SA，kasai 算 LCP，sparse table 区间查询），找长度 ≥2、重复 ≥20 次的 n-gram。</li>
+<li>n-gram 统计启发式：统计定长 n-gram（默认 n=20）频率，最高频出现 ≥20 次时用 suffix array 精确验证。</li>
+</ol>
+</blockquote>
+<blockquote class="card card-info">
+<p><strong>评估数据</strong></p>
+</blockquote>
+<ul>
+<li><strong>MMATH</strong>（Luo et al. 2025）：macro-average 四个子集（MATH500、CNMO、AIME2024、AIME2025），报 <strong>avg@4</strong>。⚠️ AIME2024/2025 各只有 30 题、CNMO 也小 <code>[?]（各 30 题为外部常识，原文未给子集题数）</code>——样本量极小、方差大。</li>
+<li><strong>MMLU-ProX_math</strong>（Xuan et al. 2025）：math 子集，报 <strong>avg@1</strong>（标准 zero-shot，每题只采 1 次，噪声大）。</li>
+<li><strong>语言</strong>：法(fr)、葡(pt)、日(ja)、韩(ko)、泰(th)——刻意选类型学差异大的（罗曼语/黏着语/孤立语/声调语都覆盖）。</li>
+<li><strong>三个指标</strong>：SLC（目标语言步骤占比）、Acc（答对率）、<strong>SLC&amp;Acc</strong>（既对又语言一致，SLC≥0.9，<strong>主指标</strong>）。用 0.9 而非 1.0 是为容忍少量语言无关/杂散 token。</li>
+</ul>
+<blockquote class="card card-info">
+<p><strong>训练超参（Appendix A，复现关键）</strong></p>
+<ul>
+<li>SFT：2 epoch，global batch 128，lr 8e-5，max seq len 32,768，sequence-parallel size 4。</li>
+<li>GRPO：600 update steps，lr 5e-6，max response length <strong>4,096</strong>，batch 256，<strong>完全 on-policy</strong>，每 prompt 采 8 个回复，温度 0.9（测试也用 0.9）。</li>
+<li>硬件：<strong>2×8 H100</strong>。</li>
+</ul>
+</blockquote>
+<h2 id="5-关键结果-主指标-slc-acc-全面第一-但-第一-主要靠-slc-撑-纯-acc-常打不过-naive-rl-m-thinker">5. 关键结果：主指标 SLC&amp;Acc 全面第一，但&quot;第一&quot;主要靠 SLC 撑，纯 Acc 常打不过 Naive RL / M-Thinker</h2>
+<blockquote class="card card-info">
+<p>⚠️ 全部数字为<strong>单点估计、无 std、未说明 seed 数、无显著性检验</strong>。数字来自 Table 1（4B）、Table 2（8B）。</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>主结果 ALL-AVG SLC&amp;Acc（主指标，PCS 确实第一）</strong>：</p>
+<ul>
+<li>MMATH 4B：PCS <strong>32.3</strong> &gt; M-Thinker 23.4 &gt; SoftLC RL 20.2 &gt; Prefix 20.1（+8.9 over M-Thinker）</li>
+<li>MMLU-ProX 4B：PCS <strong>71.0</strong> &gt; M-Thinker 52.5 &gt; SoftLC RL 48.6（+18.5，很大）</li>
+<li>MMATH 8B：PCS <strong>37.1</strong> &gt; M-Thinker 34.0 &gt; RLC-RL 30.2 &gt; Prefix 22.2 &gt; SFT 16.6 &gt; Prompt 0.6 &gt; Naive-RL 0.1（<strong>只 +3.1</strong> over M-Thinker）</li>
+<li>MMLU-ProX 8B：PCS <strong>77.1</strong> &gt; RLC-RL 74.2 &gt; M-Thinker 66.1 &gt; SFT 27.1（<strong>只 +2.9</strong> over RLC-RL）</li>
+<li>⚠️ <strong>规模越大，PCS 相对最强 baseline 的领先大幅收窄</strong>（4B 领先两位数 → 8B 只领先 ~3 分）。而作者只测了 4B/8B（自己 Limitation 也承认小）。8B 上 +2.9~+3.1 的领先，在无 std / avg@4 / AIME 各 30 题的情况下，可能落在噪声内——这削弱了 &quot;substantially outperforms&quot; 的叙事。</li>
+</ul>
+</li>
+<li>
+<p><strong>SLC（纯语言一致性）</strong>：PCS 稳定 96–99%，几乎总是最高——这是它主指标领先的主要来源。</p>
+</li>
+<li>
+<p><strong>纯 Acc（目标语言）——最经不起推敲的地方</strong>：</p>
+<ul>
+<li>MMATH 8B ALL-AVG 各语言 acc，PCS vs M-Thinker 互有胜负：fr 42.6 vs 41.6、pt 39.2 vs <strong>41.2</strong>、ja 38.1 vs 36.6、ko 33.8 vs <strong>37.7</strong>、th 37.6 vs 36.8。<strong>M-Thinker 在 pt/ko 上 acc 更高</strong>。</li>
+<li><strong>Naive RL 的 acc 在多数语言上反而更高</strong>（MMATH 8B：fr 41.6 / pt 39.5 / ja 40.3 / ko 38.8 / th 39.9），但 SLC&amp;Acc≈0.1（raw SLC 仍有 3.7–30%，只是不够高，不是 0）。5 项里 fr 是唯一反例（PCS 42.6 &gt; Naive 41.6）。说明 acc–一致性 tradeoff 真实存在，PCS 是<strong>用一部分 acc 换 SLC</strong>。</li>
+<li><strong>英文 vs 目标语言差距未真正闭合</strong>：MMATH 8B EN acc = 45.0（PCS 行 EN 列）vs 目标语言平均 ~38.3 → 仍差 ~6.7；MMLU-ProX 8B EN 85.4 vs 目标 ~78.9 → 仍差 ~6.4。原文口径是 &quot;substantially narrows&quot;，<code>narrows 可以、closes 不行</code>。</li>
+<li>⚠️ PCS 的英文 acc（45.0）还略低于 Naive RL 的英文 acc（46.1），说明训 code-switch 对英文本身也有轻微损耗。</li>
+</ul>
+</li>
+<li>
+<p><strong>消融 1：课程 vs dense reward（Figure 5）</strong></p>
+<ul>
+<li>PCS-Dense（去掉 τ 课程，用 <code>r_final = 1+0.1·SLC(T,L)</code>，见 Eq.5）：SLC 涨得快，但 <strong>acc 每一步都低于 PCS</strong>，只比 SoftLC RL 略好。结论：dense reward 逼模型过早换语言、伤推理，课程是必需的。⚠️ <strong>只有训练曲线，无 benchmark 最终数字</strong>，无法量化差多少。</li>
+</ul>
+</li>
+<li>
+<p><strong>消融 2：reference reset + KL（Appendix D, Figure 9）</strong></p>
+<ul>
+<li>去掉这两个组件 → &quot;substantial drop&quot;，证明后期防 policy drift 的必要性。⚠️ 同样只有 Fig 9，无数字表。</li>
+</ul>
+</li>
+<li>
+<p><strong>稳健性：SLC 阈值敏感度（Figure 6，MMATH）</strong> —— 这里有个反转，要小心读</p>
+<ul>
+<li>τ_eval 从 0.80→0.95：<strong>PCS 37.9→34.3（掉 3.6，最稳）</strong>；SoftLC RL 31.6→27.2；<strong>M-Thinker 38.2→22.9（暴跌 15.3）</strong>。</li>
+<li>⚠️ <strong>关键细节：在宽松阈值 τ=0.80 下 M-Thinker(38.2) 反而略胜 PCS(37.9)</strong>！PCS 的主指标优势完全来自&quot;严格阈值下更稳&quot;。原文把主阈值定在 0.9，恰好落在 PCS 开始反超的区间。这既可读作&quot;PCS 的语言一致性是真的、M-Thinker 是虚的（reward hacking）&quot;，也可读作&quot;作者选了对自己有利的评测点&quot;（见 6.1）。</li>
+</ul>
+</li>
+<li>
+<p><strong>可解释性验证（Appendix B，MEXA 层级对齐，Figure 7）</strong> —— 支撑核心叙事的唯一机制证据</p>
+<ul>
+<li>PCS 在中间层（10–25，负责 reasoning）与英文表征的对齐度和 Naive RL 相当、高于 SoftLC RL → <strong>保留了英文式推理能力</strong>；在上层（负责语言实现）对齐最低 → 输出确实换成目标语言。这在表征层面支撑了&quot;逻辑用英文的、表达用目标语言的&quot;这个核心叙事。</li>
+</ul>
+</li>
+<li>
+<p><strong>防 line-level hacking 自检（Appendix C, Table 3/4）</strong></p>
+<ul>
+<li>担心：模型会不会把大量英文塞进一个超长行、其他行说目标语言来骗过 line 级 SLC？</li>
+<li>事实：PCS 的最长行确实更长（FR 223 token vs Naive 178），但最长行被 langdetect 判为目标语言的比例 LC≥96.7%，行内 code-switching 比例仅 0.7–1.6%（DeepSeek-V3 检测）→ 没有藏英文。</li>
+<li>⚠️ 但这个自检用的还是 langdetect + DeepSeek-V3，而 Appendix E 恰恰证明 langdetect 会被骗（英中混合判成 99.99% 泰语），自检工具本身就是被批判的对象（见 6.1）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>反直觉、值得记的正面判断：</strong></p>
+<ol>
+<li>
+<p><strong>&quot;把语言奖励压成一个 0.1 的小 bonus&quot;是全文最反直觉、也最关键的一步。</strong> 直觉上做多语言一致性，会想给语言一个显著奖励；但作者把 correctness(1.0) 和 language(0.1) 拉开一个量级，本质是承认&quot;语言迁移是副目标、不能喧宾夺主&quot;。配合课程才有&quot;acc 稳、SLC 猛涨&quot;的曲线。如果让我来做，我大概率先掉进 dense reward 的坑（PCS-Dense 正是这个坑）。</p>
+<ul>
+<li><strong>更深一层（GRPO 视角）</strong>：GRPO 用组内归一化优势，绝对数值 0.1 不直接决定梯度——0.1 bonus 能否在&quot;答对样本组&quot;内产生有效 advantage，取决于组内 SLC 通过率的方差。只有当 τ 卡在&quot;大部分样本恰好在边界&quot;时 bonus 才有区分度。这恰好和课程 &quot;Pass@SLC 饱和就抬 τ&quot; 自洽：抬 τ 就是把样本重新推回边界、让那 0.1 重新变得有梯度。所以&quot;0.1 小 bonus&quot;和&quot;阈值课程&quot;其实是同一件事的两面，不只是两个独立的权重设计。</li>
+</ul>
+</li>
+<li>
+<p><strong>课程的触发条件设计得巧</strong>：不是按固定步数抬 τ，而是按 <code>Pass@SLC(τ)≥0.9</code>（奖励饱和度）自适应抬。把&quot;什么时候该加难度&quot;交给数据决定，而不是拍脑袋排 schedule。这比 CURE-med 那种&quot;按语言资源等级排课程&quot;更本质——课程直接建在被优化量（code-switching ratio）上。</p>
+</li>
+</ol>
+<p><strong>最强攻击点（如果我审稿，主攻这几条）：</strong></p>
+<ol start="3">
+<li>
+<p><strong>评测指标与训练目标同构，且主阈值可能选在对自己有利的点。</strong> PCS 直接优化 step-level SLC，主指标 SLC&amp;Acc 也用 step-level SLC≥0.9。Fig 6 自曝：τ=0.80 时 M-Thinker(38.2) &gt; PCS(37.9)，抬到 0.9 才反超。现在的对比本质是&quot;step-level 训练 vs response-level 训练&quot;在 step-level 指标上比，先天不公。一个更公平的对照：<strong>让 M-Thinker 也用 step-level 奖励训练</strong>，再比。（注意：这条纠正了一种常见误读——把 Fig 6 当成&quot;PCS 稳健性优点&quot;来夸，其实它同时暴露了阈值选点问题。）</p>
+</li>
+<li>
+<p><strong>&quot;Efficient / no stronger model&quot; 的 claim 有水分。</strong> 标题写 Efficient、摘要写 &quot;only lightweight translation without any stronger model&quot;。但 Appendix A：RL 数学题的翻译用的是 <strong>DeepSeek-V3.2-Exp（强模型）</strong>，只是 cold-start 的 code-switch trace 用了 TranslateGemma-4B。严格说 PCS 省掉的是&quot;目标语言推理 trace 蒸馏&quot;和&quot;online judge&quot;，不是&quot;所有强模型&quot;。而且全文<strong>零 GPU-hour / wall-clock / 吞吐量数字</strong>支撑 &quot;efficient&quot;——只有一句 M-Thinker judge &quot;non-trivial latency&quot; 的定性说法。标题里的 Efficient 几乎没有量化证据。</p>
+</li>
+<li>
+<p><strong>统计严谨性薄弱。</strong> 全部单点、无 std、未报 seed 数。MMATH 里 AIME2024/2025 各 30 题、avg@4，宏平均后 8B 上 PCS 对 M-Thinker 只领先 3.1 分——量级完全可能落在噪声内。MMLU-ProX 用 avg@1 每题一采。没有任何显著性检验。8B 上的领先（+2.9~+3.1）不敢轻信。</p>
+</li>
+<li>
+<p><strong>对主要竞品 M-Thinker 的 &quot;reward hacking&quot; 指控建立在自己复现 + 单个 case 上。</strong> &quot;We reproduce M-Thinker under our experimental settings&quot; + Fig 3/10/11 全是<strong>单条泰语样本</strong>的定性展示。把最强对手描述成&quot;会作弊&quot;再顺势说&quot;我不会&quot;，叙事方便但证据 anecdotal。至少应给 M-Thinker 复现的 SLC 分布 / hacking 发生率统计，而不是挑一条最难看的贴出来。（复现细节：Appendix A 结尾说 follow M-Thinker 设置、用 DeepSeek-V3 作 judge。）</p>
+</li>
+<li>
+<p><strong>自证清白用的是自己批判过的工具（循环论证）。</strong> Appendix E 用 langdetect 把英中混合判成 &quot;th:0.9999999&quot; 来证明 response 级检测不可靠——但 PCS 自己的 step-level 奖励<strong>每一行也是用 langdetect 判</strong>，对短行（一个 step 可能就几个词）langdetect 更不可靠。Appendix C 的 line-hacking 自检又用 langdetect + DeepSeek 来&quot;证明没作弊&quot;。用一个你刚论证会失灵的工具给自己开脱，逻辑上站不住。</p>
+</li>
+<li>
+<p><strong><code>[?]</code> cold-start 混淆变量（最该补的结构性漏洞）。</strong> 原文 L225 只说 &quot;We design consistent settings for different baselines and PCS&quot;，但<strong>没讲清 Naive RL / SoftLC / M-Thinker 是从哪一种 cold-start 出发</strong>。PCS 的 cold-start 是 code-switch SFT；若 RL baselines 用的是蒸馏版 cold-start，则&quot;PCS vs baselines&quot;把 <strong>cold-start 数据配方</strong>和 <strong>RL 算法</strong>两个变量捆在一起，无法把功劳单独归因到 progressive curriculum。查了 Appendix A 也未能明确对齐起点——<strong>保留存疑</strong>。相关地，论文有 PCS-Dense / 去 KL-reset 消融，但<strong>缺一个关键内部 ablation</strong>：&quot;code-switch cold-start + Naive RL&quot; vs &quot;distilled cold-start + PCS-RL&quot;，即无法分离&quot;混合语 SFT 数据&quot;和&quot;课程 RL&quot;各自的贡献。30% 混合比例也无 ablation。</p>
+</li>
+</ol>
+<p><strong>其他做得不好的点：</strong>
+9. 多个关键 ablation（PCS-Dense 最终分数、reference reset、KL）都只有训练曲线图、无 benchmark 数字表，无法复核幅度。
+10. max response length 只有 4,096 token，对 AIME 这种真实推理链往往 &gt;4K 的题偏短，可能系统性压低所有方法的 acc（尤其难题）——而作者又用 AIME 当 benchmark。自己 Limitation 也承认没测 16K/32K。
+11. 命名不一致（脚注级）：Table 1（4B）叫 &quot;SoftLC RL&quot;、Table 2（8B）同位置叫 &quot;RLC-RL&quot;，但 baseline 定义节只定义了 SoftLC RL（= Magistral 的 soft response-level reward），RLC-RL 全文无定义 = 论文自身笔误，二者是同一 baseline。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>&quot;把训练指标离散化成课程台阶、用 <code>Pass@metric</code> 饱和信号自动推进难度&quot;这套 curriculum 机制不限于语言一致性——任何&quot;想优化某个软约束但直接优化会伤主任务&quot;的 RLVR 场景（格式、长度、风格、安全）都可能套用，核心是&quot;用课程把副目标从易到难注入，主目标钉死高权重&quot;。真正的开放问题是它在长 context（16K+）和更大模型上还稳不稳——这恰恰是本文没做、而 8B 已显露领先收窄的地方。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>叙事和验证的三层咬合值得学</strong>：核心 claim 是&quot;逻辑保留英文、表达换目标语言&quot;。他们没停在结果表，而是 claim → 行为证据（结果表 SLC↑ acc 稳）→ 机制证据（Appendix B MEXA 层级对齐，中间层对齐英文、上层发散）三层互相印证。做机制类工作值得学这种&quot;不同粒度证据互证&quot;的组织方式。</li>
+<li><strong>&quot;主动攻击自己的 metric&quot; 是好习惯，但这次做得不干净。</strong> Appendix C 主动去查 line-level SLC 会不会被&quot;塞长行&quot;绕过（最长行确实变长了，可疑），并给反证——这种 self-adversarial 姿态比大多数论文强。但反证工具是被自己 Appendix E 批过的 langdetect + DeepSeek，属循环论证。真正严谨的版本应该用<strong>人工标注</strong>一小批 longest-line 做 ground truth。</li>
+<li><strong>M-Thinker hacking 的单 case（Figure 10）是全文最有说服力的一击，但也最该打折扣。</strong> 一个泰语回复 token 级英中夹杂，langdetect 却给 <code>th:0.9999</code> ——这一个例子直接说明&quot;response 级语言检测器不可信&quot;，以小见大、论证 step-level 的必要性极漂亮。但反过来，把竞品定性成&quot;作弊&quot;、把自己方法的优越性挂在一条精心挑选的样本上，作为审稿证据链是脆弱的（见 6.1#6）。两面都要看：作为叙事很强，作为证据偏弱。</li>
+</ul>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<p><strong>Team</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-NJU-NLP-ShujianHuang">MOC-Team-NJU-NLP-ShujianHuang</span> — Team: 黄书剑（通讯）组联合阿里通义的又一篇工作，把该组从翻译 RL / 推理保持延伸到多语言推理迁移——用课程式 code-switching RL 把英文推理能力平滑搬到目标语言。</li>
+</ul>
+<p><strong>Topic / Area</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Multilingual-Translation">MOC-Multilingual-Translation</span> — Topic: 在多语言推理 + 翻译 RL 谱系上补一环：训练数据全靠行级翻译拼出（不蒸馏目标语言 trace），并直面 response 级语言一致性奖励被 hack 的问题，用 step 级 SLC + 课程解决。</li>
+<li><span class="wikilink unresolved" title="MOC-Reinforcement-Learning">MOC-Reinforcement-Learning</span> — Topic: GRPO 应用于多语言数学推理，把难直接优化的语言一致性离散化成阈值课程 + 0.1 小 bonus，正确性钉高权重，并用 reference reset + KL 稳定后期偏移。</li>
+</ul>
+<p><strong>Concept</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span> — Concept: 提供 response 级语言一致性奖励被 hack 的实证案例（M-Thinker 把英中混合骗过 langdetect 报 th:0.9999），并以 step 级 SLC + 课程作为结构性防 hacking 手段，属&quot;评估范式利用&quot;一类。</li>
+<li><span class="wikilink unresolved" title="MOC-English-Centric-Processing">MOC-English-Centric-Processing</span> — Concept: 核心动机即 LRM 偏好用英文 think、换语言掉点；提出&quot;逻辑保留英文、表达换目标语言&quot;叙事，用 MEXA 层级对齐（中间层对齐英文、上层发散）给出表征级证据。</li>
+</ul>
+<p><strong>直接论文关联（未被 MOC 覆盖的关系）</strong></p>
+<ul>
+<li><a class="wikilink" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html" title="Self-Improving_Multilingual_Long_Reasoning-TRIT">Self-Improving_Multilingual_Long_Reasoning-TRIT</a> — 同组同作者（Zhijun Wang、Junxiao Liu）的前序/姊妹工作，同样做多语言长推理 + 翻译整合，可对比&quot;翻译-推理整合训练&quot;与&quot;渐进式 code-switching&quot;两条迁移路线。</li>
+<li><a class="wikilink" href="TAPO-Translation_Augmented_Policy_Optimization_for_Multilingual_Mathematical_Reasoning.html" title="TAPO-Translation_Augmented_Policy_Optimization_for_Multilingual_Mathematical_Reasoning">TAPO-Translation_Augmented_Policy_Optimization_for_Multilingual_Mathematical_Reasoning</a> — 同为黄书剑组的多语言数学推理 + GRPO + 翻译增强工作，可对比两者在 reward 设计与翻译依赖上的取舍。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Beyond the Black Box: Interpretability of Agentic AI Tool Use</span></a>
+<a class="paper-nav-link next" href="Coconut-Continuous-Latent-Reasoning-Chain-of-Continuous-Thought.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Training Large Language Models to Reason in a Continuous Latent Space (Coconut)</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: wang2026pcs</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

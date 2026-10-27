@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activation Oracles: Training and Evaluating LLMs as General-Purpose Activation Explainers</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Activation Oracles: Training and Evaluating LLMs as General-Purpose Activation Explainers</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何让llm用自然语言解释自己的内部激活"><span class="toc-num">02</span> 2. 关键问题：如何让LLM用自然语言解释自己的内部激活？</a></li>
+<li><a class="toc-link" href="#3-关键方法-用norm-matched-activation-steering把激活向量注入预言机模型-并在多样化任务上训练"><span class="toc-num">03</span> 3. 关键方法：用norm-matched activation steering把激活向量注入预言机模型，并在多样化任务上训练</a></li>
+<li><a class="toc-link" href="#4-数据集-训练数据是spqa-分类-自监督上下文预测的混合-评估是四个ood审计任务"><span class="toc-num">04</span> 4. 数据集：训练数据是SPQA+分类+自监督上下文预测的混合，评估是四个OOD审计任务</a></li>
+<li><a class="toc-link" href="#5-关键结果-ao在3-4任务上匹配或超越最佳基线-且数据多样性比数量更重要"><span class="toc-num">05</span> 5. 关键结果：AO在3/4任务上匹配或超越最佳基线，且数据多样性比数量更重要</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#moc-连接">MOC 连接</a></li>
+<li><a class="toc-link toc-sub" href="#论文间双链">论文间双链</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-16</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2512.15674" target="_blank">arXiv</a>
+    </div>
+    <h1>Activation Oracles: Training and Evaluating LLMs as General-Purpose Activation Explainers</h1>
+    <p class="authors">Adam Karvonen, James Chua, Clément Dumas, Kit Fraser-Taliente, Subhash Kantamneni, Julian Minder, Euan Ong, Arnab Sen Sharma, Daniel Wen, Owain Evans, Samuel Marks</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">LLM_Internals</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Model_Auditing</span> <span class="topic-tag">AI_Alignment</span> <span class="topic-tag">Activation_Oracles</span> <span class="topic-tag">LatentQA</span></div>
+</header>
+
+<h1>论文笔记: Activation Oracles: Training and Evaluating LLMs as General-Purpose Activation Explainers</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Adam Karvonen (lead), James Chua, Clément Dumas, Kit Fraser-Taliente, Subhash Kantamneni, Julian Minder, Euan Ong, Arnab Sen Sharma, Daniel Wen, Owain Evans, Samuel Marks (equal advising)</li>
+<li><strong>团队/机构</strong>: MATS Truthful AI EPFL, 4ENS Paris-Saclay, Northeastern University, Anthropic</li>
+<li><strong>发表时间</strong>: 2025-12-17</li>
+<li><strong>会议/期刊</strong>: arXiv preprint</li>
+<li><strong>论文核心</strong>: 把LLM训练成能接受自身激活向量作为输入、并用自然语言回答任意问题的&quot;激活预言机&quot;(Activation Oracle)，在OOD审计任务上匹配或超越白盒基线。</li>
+<li><strong>开源</strong>: 代码、训练模型和demo见 github.com/adamkarvonen/activation_oracles</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何让llm用自然语言解释自己的内部激活">2. 关键问题：如何让LLM用自然语言解释自己的内部激活？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>想象你有一个模型，被偷偷微调过：它知道一个秘密词是&quot;tree&quot;，但用户问它时它绝口不提这个词，只给提示。比如用户问&quot;怎么猜一个很高、有叶子、能遮阳的东西？&quot;，模型回答&quot;它很高，有叶子，能遮阳&quot;——就是不说&quot;tree&quot;。</p>
+<p>现在你想审计这个模型：它到底藏了什么秘密？传统方法要么很复杂（比如训练稀疏自编码器、做logit lens），要么只能回答很窄的问题（比如&quot;这个SAE特征是什么意思&quot;）。有没有一种简单通用的方法：直接把模型的内部激活丢给另一个模型，让它用自然语言回答&quot;这个模型在藏什么？&quot;</p>
+<p>这就是Activation Oracle要解决的问题。它要接受<strong>激活向量</strong>作为输入，回答<strong>任意自然语言问题</strong>，而且得在训练时从没见过这种&quot;藏秘密&quot;的场景下也能泛化。</p>
+</blockquote>
+<ul>
+<li><strong>动机</strong>: LLM的激活是数十亿个标量，极难理解。现有方法（SAE、logit lens、activation steering）都是专用工具，需要为每个下游问题重新适配。LatentQA（Pan et al., 2024）提出了一个更简单的思路：训练LLM直接回答关于自身激活的问题。但之前的工作只做了很窄的任务（解释SAE特征、描述系统prompt），没有系统评估它在通用场景下的表现。</li>
+<li><strong>为什么重要</strong>: 如果模型能被训练来隐藏行为（比如欺骗评估、隐藏有害目标），我们需要通用工具来检测这些隐藏状态，而不是为每种隐藏行为定制一个检测器。</li>
+<li><strong>已有方法卡在哪里</strong>:
+<ul>
+<li><strong>白盒方法</strong>（SAE、logit lens、activation steering）: 需要专业知识、手工调参、为每个任务重新设计pipeline。比如Cywiński et al. (2025)的审计agent要用5个白盒工具+5个黑盒工具，多阶段交互。</li>
+<li><strong>LatentQA decoder</strong>（Pan et al., 2024）: 只训练了系统prompt问答，评估也只做了同分布的held-out属性，没有测试真正OOD的下游任务。</li>
+<li><strong>PatchScopes</strong>（Ghandeharioun et al., 2024）: 不用训练，直接把激活注入原模型，但效果差很多（Figure 3里当baseline被AO吊打）。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://arxiv.org/html/2512.15674v2/x3.png" alt="Figure 3: AO在所有secret-keeping基准上全面超越白盒基线" /></p>
+<hr />
+<h2 id="3-关键方法-用norm-matched-activation-steering把激活向量注入预言机模型-并在多样化任务上训练">3. 关键方法：用norm-matched activation steering把激活向量注入预言机模型，并在多样化任务上训练</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>延续上面的例子：一个模型被微调来藏秘密词&quot;tree&quot;。</p>
+<p><strong>Step 1 — 收集激活</strong>: 给目标模型输入一个prompt（比如&quot;请描述一个很高、有叶子、能遮阳的东西&quot;），收集它在某一层（比如第18层）的残差流激活。论文里对secret-keeping任务通常用<strong>全序列激活</strong>（所有token位置的激活向量都收集）。</p>
+<p><strong>Step 2 — 构造预言机prompt</strong>: 把收集到的K个激活向量，转换成带占位符的自然语言问题。例如：</p>
+<pre><code>Layer 18: ? ? ? ... ?
+What is the secret word in this text?
+</code></pre>
+<p>每个&quot;?&quot;对应一个要注入的激活向量。占位符token用&quot;?&quot;（论文里<code>&lt;ACT&gt;</code>只是示意）。</p>
+<p><strong>Step 3 — 注入激活</strong>: 在预言机模型的第1层之后（经过实验选定的层），对每个占位符位置i，修改残差流激活：
+$$
+&gt; \mathbf{h}&#x27;_{i} = \mathbf{h}_{i} + \|\mathbf{h}_{i}\| \cdot \frac{\mathbf{v}_{i}}{\|\mathbf{v}_{i}\|}
+&gt; $$
+这里$\mathbf{h}_i$是占位符在第1层的原始激活，$\mathbf{v}_i$是从目标模型收集来的激活向量。关键点：<strong>norm-matching</strong>——把$\mathbf{v}_i$缩放到$\mathbf{h}_i$的范数，再加到$\mathbf{h}_i$上。这样不同来源的激活自动统一量级，不需要逐个输入源校准。</p>
+<p><strong>Step 4 — 预言机回答</strong>: 注入后的激活经过预言机模型后续层，输出自然语言答案。在这个例子里，答案可能是&quot;tree&quot;。</p>
+<p>整个过程不需要针对这个secret-keeping任务做任何额外训练——预言机是在SPQA、分类、上下文预测等通用任务上训练的，zero-shot泛化到藏秘密的场景。</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>整体架构</strong>: 两模型体系。</p>
+<ul>
+<li><strong>Target Model</strong>: 被审计的目标模型（可以是基础模型，也可以是微调后的变体）。从中收集激活。</li>
+<li><strong>Activation Oracle (AO)</strong>: 接受自然语言+激活向量作为输入，输出自然语言回答。AO和target model通常是<strong>同一个基础模型</strong>（自解释设置），用LoRA微调。</li>
+<li>训练时，AO的LoRA adapter临时禁用，跑target model的前向传播收集激活；然后启用LoRA，用这些激活训练AO。</li>
+</ul>
+</li>
+<li>
+<p><strong>核心模块 — Activation Steering (公式1)</strong>:</p>
+<ul>
+<li>在AO的第1层之后（对所有模型统一用layer 1，见Appendix A.5），对占位符位置做加法注入：
+$$
+    \mathbf{h}&#x27;_{i} = \mathbf{h}_{i} + \|\mathbf{h}_{i}\| \cdot \frac{\mathbf{v}_{i}}{\|\mathbf{v}_{i}\|}
+    $$</li>
+<li>$\mathbf{h}_i$: 占位符token i在第1层的原始残差流激活（d_model维向量）。</li>
+<li>$\mathbf{v}_i$: 从target model第$\ell$层收集的激活向量（也是d_model维）。</li>
+<li>$\|\cdot\|$: L2范数。</li>
+<li><strong>为什么用加法而不是替换</strong>: Pan et al. (2024)用替换（直接把$\mathbf{h}_i$换成$\mathbf{v}_i$），但论文发现替换会导致训练过程中激活范数爆炸——layer 0时增长到20x，layer 1时增长到<strong>100,000x</strong>（Appendix A.5）。加法+norm-matching解决了这个问题，同时保持灵活性。</li>
+<li><strong>为什么选layer 1</strong>: 对Llama-3.3-70B，layer 1比layer 0训练loss低约10%，下游任务提升1-11%（Figure 9）。Qwen和Gemma在layer 0/1上训练loss没差别，但为统一所有模型用layer 1。</li>
+</ul>
+</li>
+<li>
+<p><strong>训练数据 — 三大任务混合</strong>（Figure 2）:</p>
+</li>
+</ul>
+<p><img src="https://arxiv.org/html/2512.15674v2/x2.png" alt="Figure 2: AO训练任务（左：分类、上下文预测、SPQA）与OOD评估任务（右：secret-keeping、emergent misalignment等）" /></p>
+<ol>
+<li><strong>System Prompt QA (SPQA)</strong> — 64k样本。从Pan et al. (2024)来。合成对话，assistant有系统指令（比如&quot;像海盗一样说话&quot;）。AO要回答关于系统prompt的问题（&quot;助手的语气是什么？&quot;）。收集激活的片段包括：仅系统prompt、仅用户prompt、用户prompt+assistant回复。</li>
+<li><strong>Classification</strong> — 7个二分类数据集，每个48k序列，共336k。把分类任务改成自然语言yes/no问题。比如SST-2情感分类变成&quot;Is this sentiment positive?&quot;，Geometry of Truth变成&quot;Is this statement true?&quot;。输入格式：2/3单token（从序列末尾前1-5个token随机采样），1/3多token（连续1-50个token）。</li>
+<li><strong>Self-Supervised Context Prediction</strong> — 600k序列。从FineWeb（预训练语料）和LMSYS Chat-1M（对话数据）各50%采样。对一段文本采样K个连续token（K~Uniform(1,20)），AO要预测这K个token之前或之后的J个token（J~Uniform(1,20)）。Prompt形式：&quot;Can you predict the previous {J} tokens that came before / after this?&quot;</li>
+</ol>
+<ul>
+<li>
+<p><strong>总训练规模</strong>: 约1M examples，约65M tokens。</p>
+</li>
+<li>
+<p><strong>训练时激活来源层</strong>: 25%、50%、75%深度各1/3。评估时默认用50%深度。</p>
+</li>
+<li>
+<p><strong>训练流程</strong>:</p>
+<ul>
+<li><strong>模型</strong>: Qwen3-8B, Gemma-2-9B-IT, Llama-3.3-70B-Instruct, Claude Haiku 3.5。</li>
+<li><strong>优化器</strong>: AdamW，线性warmup（10% steps）+线性衰减到0。</li>
+<li><strong>LoRA超参</strong>（Table 1）: rank=64, alpha=128, dropout=0.05, target=all linear layers, lr=1e-5, batch_size=16（Llama-3.3-70B用64以提升GPU利用率）。</li>
+<li><strong>基础设施</strong>: Qwen/Gemma单H100；Llama-3.3-70B用4x H200 DDP + bitsandbytes 8-bit量化。训练时间：Qwen约10 H100-hours，Gemma约12 H100-hours，Llama约90 H200-hours。</li>
+<li><strong>学习率sweep</strong>: 对Gemma在[1e-6, 3e-6, 1e-5, 3e-5, 1e-4, 3e-4]上sweep，最终选定1e-5用于所有实验。</li>
+<li><strong>Group by length batching</strong> (Appendix A.2): 把序列按长度分组到mega-batch（320 examples），组内按长度降序排列，再flatten回训练顺序。带来约30%加速，对loss和性能无明显影响。</li>
+<li><strong>Claude Haiku差异</strong>: 全参数微调（非LoRA），layer 0直接替换（非加法），不同占位符结构，只用一个中间层，只预测past tokens（不预测future）。Claude对学习率更敏感，不同评估指标甚至会朝相反方向变化（Appendix A.6）。Claude的lr选择还涉及&quot;held-out OOD evaluations different from the ones reported in this work&quot;，意味着Claude结果可能经过了额外调参优化。</li>
+</ul>
+</li>
+<li>
+<p><strong>与已有方法的区别</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>是否训练</th>
+<th>输入灵活性</th>
+<th>任务专用调参</th>
+<th>通用QA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PatchScopes</td>
+<td>否</td>
+<td>中</td>
+<td>否</td>
+<td>否</td>
+</tr>
+<tr>
+<td>LatentQA (Pan et al.)</td>
+<td>是</td>
+<td>低（只全序列）</td>
+<td>否</td>
+<td>窄（只系统prompt）</td>
+</tr>
+<tr>
+<td>SAE-based</td>
+<td>是</td>
+<td>低（只SAE特征）</td>
+<td>是</td>
+<td>窄</td>
+</tr>
+<tr>
+<td><strong>AO (本文)</strong></td>
+<td><strong>是</strong></td>
+<td><strong>高（单/多token，任意层）</strong></td>
+<td><strong>否</strong></td>
+<td><strong>是</strong></td>
+</tr>
+</tbody>
+</table></div>
+</li>
+</ul>
+<hr />
+<h2 id="4-数据集-训练数据是spqa-分类-自监督上下文预测的混合-评估是四个ood审计任务">4. 数据集：训练数据是SPQA+分类+自监督上下文预测的混合，评估是四个OOD审计任务</h2>
+<ul>
+<li>
+<p><strong>训练数据</strong>:</p>
+<ul>
+<li><strong>SPQA</strong>: 64k，来自Pan et al. (2024)。50%原始格式（全序列激活），50%压缩格式（1-3个token的窗口，位于序列末尾前1-10个token）。</li>
+<li><strong>Classification</strong>: 336k（7数据集 x 48k）。数据来源：Geometry of Truth、Relations、SST-2、MD Gender、SNLI、NER、Tense。输入格式：2/3单token（末尾前1-5 token随机），1/3多token（1-50连续token，末尾前1-5 token结束）。</li>
+<li><strong>Context Prediction</strong>: 600k。FineWeb + LMSYS Chat-1M各50%。单token和多token各一半；预测前向和后向各一半；K,J~Uniform(1,20)。</li>
+<li><strong>混合比例</strong>: 没有精细调参，直接用上述初始构造参数。SPQA:Classification:Context ≈ 64:336:600。</li>
+<li><strong>SAE-derived training (Appendix G)</strong>: 论文还尝试了用SAE特征作为额外训练信号（约180k监督样本+60k自监督样本），但结果mixed，且实现复杂、成本高（约$1,000 OpenAI credits），最终没有纳入主训练混合。</li>
+</ul>
+</li>
+<li>
+<p><strong>评估数据 — 四个下游审计任务</strong>:</p>
+<ol>
+<li><strong>Secret-Keeping (Cywiński et al., 2025)</strong>:
+<ul>
+<li><strong>Taboo</strong> (Gemma-2-9B-IT): 20个模型，每个藏一个秘密词（如&quot;gold&quot;&quot;moon&quot;），微调后模型引导用户猜词但绝不直接说。微调数据含90%通用聊天数据，防止narrow fine-tuning痕迹。</li>
+<li><strong>User Gender</strong> (Gemma-2-9B-IT): 模型微调后知道用户性别，但被训练否认知道。</li>
+<li><strong>Secret Side Constraint (SSC)</strong> (Llama-3.3-70B): prompt里带base64编码的隐藏指令，模型解码并遵循但不透露。</li>
+<li><strong>评估prompt选择</strong>: 论文手动写了两个oracle prompt，用validation prompt dataset选表现更好的那个报告。这涉及潜在的overfitting风险，但遵循了Cywiński et al. (2025)的方法论。</li>
+</ul>
+</li>
+<li><strong>Emergent Misalignment Audit</strong> (Minder et al., 2025): 模型被微调提供有害建议（风险金融建议、极限运动风险倡导、错误医疗建议）。用model diffing：AO接收base模型和微调模型在同一prompt上的激活差分，回答&quot;Can you describe what is happening in this text?&quot;。
+<ul>
+<li><strong>Ceiling effect关键细节</strong>: 6个模型中只有Qwen3-8B + risky financial advice表现出显著的emergent misalignment (18% ± 8%)，其他5个几乎没有。所以rubric 3/5以上（要求识别misalignment）理论上不可达，AO和ADL的2/5已经是near-maximum performance。</li>
+</ul>
+</li>
+<li><strong>PersonaQA</strong> (Li et al., 2025b): 100个虚构人物，每人7个属性（full name, favorite sport/drink/food/country/music/board game）。模型微调学习这些传记知识。评估时只给名字（&quot;My name is Maria Silva&quot;），问6个非name属性（&quot;What is their favorite board game?&quot;）。</li>
+<li><strong>OOD Classification</strong>: 7个held-out二分类数据集（Language Identification, AG News Topic, Singular/Plural, Headline: Trump/Obama/China, Historical Figure Is Male）。训练时用了另外7个（Geometry of Truth, Relations, SST-2, MD Gender, SNLI, NER, Tense）。</li>
+</ol>
+</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-ao在3-4任务上匹配或超越最佳基线-且数据多样性比数量更重要">5. 关键结果：AO在3/4任务上匹配或超越最佳基线，且数据多样性比数量更重要</h2>
+<blockquote class="card card-info">
+<p><strong>一句话总结</strong>: 即使在训练时从没见过微调模型的激活，AO也能在secret-keeping、emergent misalignment、PersonaQA等OOD任务上泛化，且全数据混合的AO在3/4任务上打平或超过最好的白盒+黑盒基线。</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>Secret-Keeping (Figure 3, Figure 10)</strong>:</p>
+<ul>
+<li><strong>Taboo</strong>: AO 21% vs. 最佳白盒基线 4%（logit lens）vs. 最佳黑盒基线 52%（prefilled prompt）。AO大幅超越白盒，低于黑盒。</li>
+<li><strong>User Gender</strong>: AO 97% vs. 最佳白盒基线 91%（SAE）vs. 最佳黑盒基线 82%。AO超越所有基线。</li>
+<li><strong>Secret Side Constraint (SSC)</strong>: AO 59% vs. 最佳白盒基线 52%（logit lens）vs. 最佳黑盒基线 85%。AO超越白盒，低于黑盒。</li>
+<li><strong>关键细节</strong>: 这些结果用<strong>全序列激活</strong>作为输入。对Taboo，单token输入（assistant start-of-turn token）效果更好（21.6% vs. 全序列的21%，Appendix C.4），但论文主结果用全序列以保证一致性。SSC需要GPT-4.1后处理把对话式回答转成短短语（Appendix C.1）。</li>
+</ul>
+</li>
+<li>
+<p><strong>Emergent Misalignment (Figure 4)</strong>:
+<img src="https://arxiv.org/html/2512.15674v2/x4.png" alt="Figure 4: AO在Emergent Misalignment模型差分评估上与ADL基线持平" /></p>
+<ul>
+<li>AO平均得分 <strong>2/5</strong>，与ADL（Activation Difference Lens，白盒基线）持平。</li>
+<li>评分标准：2/5表示成功识别微调领域（如&quot;风险金融建议&quot;）。3/5以上需要识别模型&quot;misaligned&quot;，但由于6个模型中5个几乎没有emergent misalignment（只有Qwen3-8B + risky financial advice有18%），理论上最高只能到2/5。AO和ADL都达到了这个上限。</li>
+<li>相比黑盒方法，AO和ADL都略优。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://arxiv.org/html/2512.15674v2/figures/images/personaqa_classification_combined/personaqa_classification_combined.png" alt="Figure 6: AO在OOD任务上超越基线（左：PersonaQA人物属性提取；右：OOD分类泛化）" /></p>
+<ul>
+<li>
+<p><strong>PersonaQA (Figure 6 Left, Figure 17)</strong>:</p>
+<ul>
+<li>开源模型：从base model的约5%提升到full mixture的约<strong>14%</strong>（open-ended）。</li>
+<li>Claude Haiku 3.5: <strong>35%</strong>，但各训练配置之间差异在误差范围内。</li>
+<li>Binary yes/no评估上，AO明显优于PatchScopes和SPQA-only（Figure 18）。有趣的是，AO在binary yes/no上有时甚至超过PersonaQA微调模型本身（Llama和Qwen），暗示AO可能访问了模型自己难以利用的信息（Appendix C.6.5）。</li>
+<li><strong>caveat</strong>: 微调模型知识很脆弱——open-ended问法&gt;80%准确率，但yes/no问法掉到~55%接近随机。所以AO的14%可能部分反映的是激活中信息本身就不robust。</li>
+</ul>
+</li>
+<li>
+<p><strong>OOD Classification (Figure 6 Right)</strong>:</p>
+<ul>
+<li>AO成功泛化到7个held-out分类数据集。Untrained base model接近随机（可能是prompt格式敏感）。SPQA-only模型也低于full mixture，因为训练没包含分类任务。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://arxiv.org/html/2512.15674v2/x5.png" alt="Figure 5: 扩展训练数据混合一致提升性能，几乎所有曲线随数据增加而上升" /></p>
+<p><img src="https://arxiv.org/html/2512.15674v2/x6.png" alt="Figure 7: 数据多样性和数据量都独立贡献于AO性能提升" /></p>
+<ul>
+<li>
+<p><strong>Training Dataset Ablations (Figure 5, Figure 7)</strong>:</p>
+<ul>
+<li><strong>Scaling mixture helps</strong>: 12个模型/评估组合中，10个在full mixture上达到最佳。几乎所有曲线随数据增加而上升。</li>
+<li><strong>SPQA-only already competitive</strong>: 在secret-keeping上，SPQA-only AO已经匹配最佳白盒基线（Figure 20）。但对Qwen的PersonaQA和Taboo，SPQA-only很差（Taboo仅4.4%），加分类和自监督数据带来大幅提升（Figure 19）。</li>
+<li><strong>Diversity vs. Quantity (Figure 7)</strong>: 控制实验——固定400k样本，比较SPQA+Classification vs. 截断full mixture（SPQA+Classification+Context Prediction，但总量仍为400k）。截断full mixture在大多数指标上优于SPQA+Classification，说明<strong>即使样本数相同，增加任务多样性也能提升泛化</strong>。然后full 1M mixture又优于截断400k，说明<strong>数量也有独立贡献</strong>。</li>
+<li><strong>SPQA-only对学习率敏感</strong>: Figure 8显示SPQA-only的Gender评估在最佳lr=1e-5时91%，次佳lr=3e-6时仅65%。Full mixture对各lr都稳定。</li>
+</ul>
+</li>
+<li>
+<p><strong>Hallucination Detection (Appendix F)</strong>:</p>
+<ul>
+<li>小样本anecdotal实验：AO在Qwen3-8B的单个例子中标记了3个低置信度陈述，其中2个与3个人工识别的hallucination对齐。但简单黑盒baseline（直接问模型&quot;你确定吗？&quot;）表现类似。论文没有把这个作为primary evaluation。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li>
+<p><strong>反直觉的发现1：加法steering比替换好，而且好得多</strong>。Pan et al. (2024)用替换，本文发现替换会导致激活范数爆炸（layer 1增长100,000x）。这个工程细节如果没有被注意到，整个训练可能直接崩掉。论文没有深入解释为什么加法就避免了这个问题——我猜测是因为保留原始$\mathbf{h}_i$的&quot;锚定&quot;作用，让梯度更新不会把激活推得太远，但论文没验证这个假设 [?]。</p>
+</li>
+<li>
+<p><strong>反直觉的发现2：SPQA-only在secret-keeping上就已经能打平白盒基线</strong>。这意味着即使训练数据极其狭窄（只做了系统prompt问答），AO也能在完全没见过的&quot;藏秘密&quot;任务上泛化。这有点让人不安——是secret-keeping的激活痕迹太明显，还是AO真的学到了某种通用的&quot;从激活读意图&quot;的能力？论文没有区分这两种解释。Minder et al. (2025)特意在微调数据里混90%聊天数据来避免narrow fine-tuning，但即便如此AO还是读出来了。</p>
+<ul>
+<li>补充一个被双方遗漏的细节：SPQA-only在Taboo上其实只有4.4%（Figure 20），并不competitive。它只在Gender和SSC上接近白盒。所以&quot;SPQA-only already competitive&quot;这个说法需要加限定。</li>
+</ul>
+</li>
+<li>
+<p><strong>做得好的地方：数据消融设计很干净</strong>。Figure 7的controlled ablation（固定400k样本，只变多样性）是本文最强证据之一，清晰分离了diversity和quantity的贡献。很多论文只会做&quot;加数据→变好了&quot;，本文多做了一步&quot;同样多的数据，但更杂→也变好了&quot;。</p>
+</li>
+<li>
+<p><strong>做得不够的地方</strong>:</p>
+<ul>
+<li><strong>可靠性/校准完全没解决</strong>。论文自己也承认AO经常猜错，而且不表达不确定性（Discussion第2段）。这是一个很严重的实际问题——如果AO在审计场景里瞎说，后果可能很严重。但论文没有提出任何解决方案（比如训练AO说&quot;我不知道&quot;，或输出置信度）。</li>
+<li><strong>Claude的结果和其他模型不太一致</strong>。Claude Haiku在PersonaQA上35%远高于开源模型的14%，但分类性能又偏低。论文归因于&quot;Claude训练方式不同&quot;（Appendix A.6），但没有深入分析这些差异对机制的影响。由于Claude是闭源，读者很难复现或验证。而且Claude的lr选择涉及了&quot;held-out OOD evaluations different from the ones reported&quot;，这意味着Claude结果可能经过了额外的调参优化，公平性存疑。</li>
+<li><strong>Layer选择对OOD任务影响大，但论文没给通用规则</strong>。Figure 14显示50%层在secret-keeping上明显优于75%层，但分类任务上各层差不多。如果我要审计一个新模型，怎么选层？论文只说&quot;50%是reasonable default&quot;，但没有给出系统性的层选择方法。</li>
+<li><strong>评估prompt的selection过程涉及潜在overfitting</strong>。论文手动写了两个oracle prompt，用validation set选更好的那个报告。这在Cywiński et al. (2025)的框架内是合理的，但意味着报告的数字可能不是完全unbiased的。</li>
+</ul>
+</li>
+<li>
+<p><strong>一个小细节很有意思</strong>：AO在PersonaQA binary yes/no上有时超过微调模型本身（Appendix C.6.5）。这暗示AO可能真的能访问模型&quot;知道但说不出来&quot;的信息——如果属实，这对理解LLM的知识表征有独立价值。但论文只提了一句，没有展开。</p>
+</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>如果AO的可靠性问题不解决，它在实际安全审计中的用途会很有限——你不敢仅凭AO的一句话就断定一个模型有隐藏目标。我预测接下来会有工作尝试：（1）让AO输出校准过的置信度，（2）用多轮交互或ensemble来提高可靠性，（3）结合RLHF让AO学会说&quot;不确定&quot;。</li>
+<li>自监督上下文预测任务（context prediction）是本文最有scalable潜力的方向。它可以无限生成训练数据，而且不需要人工标注。我预测这个方向会被放大，可能出现专门在预训练语料上做大规模自监督激活预测的工作。</li>
+<li>目前AO只解释&quot;自己的&quot;激活（同一个基础模型）。Costarelli et al. (2024)和Li et al. (2025a)已经展示了跨模型解释。我预测跨模型AO会成为下一个前沿，因为实际审计场景中你往往没有权限训练一个与被审计模型同架构的AO。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>&quot;通用接口&quot;思维值得学习</strong>。本文的核心贡献不是某个具体技术，而是把激活解释重新框架为一个通用QA接口问题。这类似于把&quot;图像理解&quot;重新框架为&quot;视觉问答&quot;——一旦接口统一，很多下游任务就自然被覆盖。做研究时，问自己&quot;能不能把这个专用工具重新设计成一个通用API&quot;，往往能产生高杠杆的贡献。</li>
+<li><strong>用现有benchmark作为锚点很聪明</strong>。本文没有自己造一堆新benchmark，而是直接接入Cywiński et al. (2025)和Minder et al. (2025)的审计游戏，这样读者可以立即把AO放进已有的方法谱系里比较。新工作如果能在现有strong baselines上直接对比，比自说自话更有说服力。</li>
+<li><strong>诚实地报告局限性</strong>。Discussion里列了四条limitations（牺牲mechanistic understanding、可靠性/校准问题、数据规模有限、benchmark简化），而且都是具体、可验证的陈述，不是泛泛的&quot;future work&quot;。这种写法让读者信任作者，也让后续研究者有明确的切入点。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<h3 id="moc-连接">MOC 连接</h3>
+<ul>
+<li>
+<p><strong>Author/Team</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-Anthropic-Interpretability-Safety">MOC-Team-Anthropic-Interpretability-Safety</span> — Team: 本文作者James Chua、Daniel Wen、Owain Evans、Samuel Marks均来自Anthropic，研究内容（激活解释用于安全审计）与该团队的可解释性与安全研究轨迹高度一致。</li>
+</ul>
+</li>
+<li>
+<p><strong>Topic/Area</strong></p>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 本文提出Activation Oracle，将LLM训练为能接受自身激活向量并用自然语言回答任意问题的通用解释器，在OOD审计任务上匹配或超越白盒基线，属于端到端可解释性的重要进展。</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic: 本文以检测模型隐藏行为（secret-keeping、emergent misalignment、PersonaQA）为核心评估场景，直接服务于模型安全审计与对齐检测。</li>
+</ul>
+</li>
+<li>
+<p><strong>Concept</strong></p>
+<ul>
+<li>（暂无额外概念型MOC连接）</li>
+</ul>
+</li>
+</ul>
+<h3 id="论文间双链">论文间双链</h3>
+<ul>
+<li><strong>后续工作</strong>: <a class="wikilink" href="Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> — Bauer et al. (2026) 对本文AO的工程化打磨，解决可靠性、评测套件和幻觉问题。</li>
+<li><strong>方法基础</strong>: <span class="wikilink unresolved" title="LatentQA-Pan-et-al-2024">LatentQA-Pan-et-al-2024</span> — Pan et al. (2024) 提出LatentQA任务和Latent Interpretation Tuning，是本文的直接基础。本文扩展了训练数据多样性并做了系统OOD评估。</li>
+<li><strong>审计基准来源</strong>: <span class="wikilink unresolved" title="Cywinski-et-al-2025-Secret-Knowledge">Cywinski-et-al-2025-Secret-Knowledge</span> — Cywiński et al. (2025) 的secret-keeping审计游戏是本文主要评估基准之一。</li>
+<li><strong>审计基准来源</strong>: <span class="wikilink unresolved" title="Minder-et-al-2025-Narrow-Finetuning">Minder-et-al-2025-Narrow-Finetuning</span> — Minder et al. (2025) 的emergent misalignment model-diffing评估是本文另一主要基准。</li>
+<li><strong>相关工作</strong>: <span class="wikilink unresolved" title="Li-et-al-2025b-PersonaQA">Li-et-al-2025b-PersonaQA</span> — Li et al. (2025b) 的PersonaQA用于测试AO是否能提取微调模型中的传记知识，而非仅仅做text inversion。</li>
+<li><strong>相关工作</strong>: <span class="wikilink unresolved" title="Costarelli-et-al-2024-Meta-Models">Costarelli-et-al-2024-Meta-Models</span> — Costarelli et al. (2024) 展示了跨模型激活解释，本文聚焦自解释设置但指出跨模型是future方向。</li>
+<li><strong>相关工作</strong>: <span class="wikilink unresolved" title="Li-et-al-2025a-Explain-Own-Computations">Li-et-al-2025a-Explain-Own-Computations</span> — Li et al. (2025a) 训练模型解释SAE特征和activation patching效果，与本文的通用激活解释形成互补。</li>
+</ul>
+<hr />
+<p>#Research #Paper #可解释性 #LLM内部状态 #激活向量 #模型审计 #安全对齐 #activation-oracles #latentQA
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Agentic_Misalignment-How_LLMs_Could_Be_Insider_Threats.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Agentic Misalignment: How LLMs Could Be Insider Threats</span></a>
+<a class="paper-nav-link next" href="Natural_Language_Autoencoders-无监督激活解释与模型审计.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: karvonen2025activationoracles</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

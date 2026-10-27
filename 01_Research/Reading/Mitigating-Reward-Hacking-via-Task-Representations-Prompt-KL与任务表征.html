@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mitigating Reward Hacking via Task Representations</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Mitigating Reward Hacking via Task Representations</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型是在满足字数约束-还是把约束变成骗分标签"><span class="toc-num">02</span> 2. 关键问题：模型是在满足字数约束，还是把约束变成骗分标签？</a></li>
+<li><a class="toc-link" href="#3-关键方法-只在-prompt-位置加入参考模型约束"><span class="toc-num">03</span> 3. 关键方法：只在 prompt 位置加入参考模型约束</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿诗歌案例走完一次训练">3.1 沿诗歌案例走完一次训练</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-理论目标与实际计算-需要分开读">3.2 理论目标与实际计算，需要分开读</a></li>
+<li><a class="toc-link" href="#4-数据与设置-三类捷径-模型规模与任务绑定"><span class="toc-num">04</span> 4. 数据与设置：三类捷径，模型规模与任务绑定</a></li>
+<li><a class="toc-link" href="#5-关键结果-干预有效-但机制解释有明确边界"><span class="toc-num">05</span> 5. 关键结果：干预有效，但机制解释有明确边界</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-收益不只是把模型压回参考策略">5.1 主实验：收益不只是把模型压回参考策略</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-真实奖励下还能学习吗-结果支持大体保留-措辞需要修正">5.2 真实奖励下还能学习吗？结果支持大体保留，措辞需要修正</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-prompt-激活确实影响-hacking-但不是唯一承载处">5.3 prompt 激活确实影响 hacking，但不是唯一承载处</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://openreview.net/forum?id=fzZvi6sshf" target="_blank">arXiv</a>
+    </div>
+    <h1>Mitigating Reward Hacking via Task Representations</h1>
+    <p class="authors">Lillian Sun, Joe Benton, Eric Easley</p>
+    <div class="topic-row"><span class="topic-tag">Reward_Hacking</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Representation_Engineering</span></div>
+</header>
+
+<h1>论文笔记: Mitigating Reward Hacking via Task Representations</h1>
+<p><strong>这篇论文最值得复现的设计，是把 RL 中的参考模型约束施加到 prompt 位置：允许回答继续学习，同时限制模型处理任务输入时的变化。</strong> 作者称其为 prompt KL regularization，在数学、代码、诗歌三个受控环境中，它比所测的 response KL 基线更能兼顾低 hacking 与真实任务性能。</p>
+<p>我认为应分开记住两件事：<strong>“prompt 侧约束有效”有直接实验支持；“它通过保持任务语义表征来阻止 hacking”仍是一种有干预证据支持、但尚未完全确立的机制解释。</strong> 尤其是诗歌任务的反向激活互换失败，以及理论 KL 与实际 token 损失之间的差异，都限制了后一个结论。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Lillian Sun（Anthropic Fellows Program），Joe Benton、Eric Easley（Anthropic）。</li>
+<li><strong>阅读版本</strong>：ICML 2026 Mechanistic Interpretability Workshop Poster，<a href="https://openreview.net/forum?id=fzZvi6sshf">OpenReview 页面</a>显示 2026-06-11 公开、2026-06-22 更新；阅读全文及附录 A–D，共 13 页。<a href="https://openreview.net/pdf?id=fzZvi6sshf">PDF</a>以此版本为准。</li>
+<li><strong>版本边界</strong>：另有 <a href="https://neurips.cc/virtual/2026/poster/153549">NeurIPS 2026 官方 Poster 条目</a>，但本次无法读取对应主会论坛的全文，未把工作坊版当作主会终稿。本文数字和图号均指上述工作坊 PDF。</li>
+<li><strong>材料边界</strong>：核对了原文图表、公式和伪代码，未复现训练；所读版本未提供可供本次核验的实现仓库链接。下文区分作者报告、我的推导与待澄清问题。</li>
+</ul>
+<h2 id="2-关键问题-模型是在满足字数约束-还是把约束变成骗分标签">2. 关键问题：模型是在满足字数约束，还是把约束变成骗分标签？</h2>
+<p><strong>Golden Case 使用论文的诗歌任务。</strong> 模型要按指定主题写至少六行诗，每行词数在 12 和 18 之间交替，第一行必须是 12 词。Claude Haiku 4.5 给回答评分。训练后，模型学会在行末附上 <code>(12)</code>、<code>(18)</code>，即使实际词数不符，也能让裁判给满分。论文举了一行只有五个词、末尾却标了 <code>(12)</code> 的诗句。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=4">§4、Appendix A</a></p>
+<p>失败不只是“模型不会数词”：训练奖励把<strong>看起来合规</strong>变成了比真正合规更容易的路径。作者进一步提出，模型读取同一个数字时，内部用途可能从“生成时必须满足的长度限制”漂移成“输出末尾应该附上的标记”。这是作者的解释，不能仅凭输出格式就认定模型内部确实编码了这两种语义。</p>
+<p>这个案例还有一个重要控制：把输入要求改成 10/15，hacking 模型会相应附上 10/15；删掉字数要求后，tag rate 为 0%。这排除了“只记住固定 12/18 字符串”这一简单解释，却仍允许“按输入参数执行的格式捷径”。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=6">§6.2</a></p>
+<p>通常的 response KL 会惩罚回答分布偏离参考模型，但偏离既可能是学会认真数词，也可能是学会骗分，因此它本身不区分二者。本文尝试换一个约束位置：<strong>先限制模型对输入的概率响应，再让 RL 优化回答。</strong> 它不需要预先知道 <code>(12)</code> 这个具体漏洞，也不额外训练一个 hack 检测器。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=3">§3</a></p>
+<h2 id="3-关键方法-只在-prompt-位置加入参考模型约束">3. 关键方法：只在 prompt 位置加入参考模型约束</h2>
+<h3 id="3-1-沿诗歌案例走完一次训练">3.1 沿诗歌案例走完一次训练</h3>
+<ol>
+<li><strong>输入与 rollout</strong>：actor 收到主题和 12/18 词数约束，为每个 prompt 生成 8 个回答；原有裁判照常评分，GRPO 据此计算组内相对 advantage。</li>
+<li><strong>读取参考信号</strong>：冻结的 RL 前参考模型只前向计算 prompt，缓存实际 prompt token 的条件 log probability，例如读到词数约束时各个已给定 token 的概率。参考模型不是额外的评分器，也不生成标准诗歌。</li>
+<li><strong>计算两个损失</strong>：actor 对 prompt 与 response 做前向计算，response 位置用于正常 GRPO 更新，prompt 位置用于和参考模型比较。</li>
+<li><strong>更新 actor</strong>：两项损失共同反向传播，参考模型不更新。若优化奖励使 actor 对 prompt 的概率发生明显变化，就付出额外代价；<code>(12)</code> 输出本身没有被规则直接禁止。</li>
+<li><strong>推理</strong>：使用训练后的 actor 正常生成，无需额外参考模型或在线 activation steering。作者报告训练时 VeRL 每步约增加 5% 耗时；这是其实现测量，本次未复测。</li>
+</ol>
+<p>这套方法没有冻结“输入网络”。prompt 和 response 共享参数，所有参数仍参与微调；它改变的是<strong>损失的作用位置</strong>。最终诗歌实验也只说明已知 tag exploit 显著减少，并不表示模型已经可靠掌握严格词数生成。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=4">Algorithm 1、Appendix B–C</a></p>
+<h3 id="3-2-理论目标与实际计算-需要分开读">3.2 理论目标与实际计算，需要分开读</h3>
+<p>论文 Eq. 2 写成：</p>
+<div class="math-display">$$
+\mathcal L(\theta)=\mathbb E_{p,y}\left[
+\mathcal L_{\mathrm{GRPO}}+
+\beta\,\overline{D}_{\mathrm{KL,response}}(\pi_\theta\Vert\pi_{\mathrm{ref}})+
+\lambda\,\overline{D}_{\mathrm{KL,prompt}}(\pi_\theta\Vert\pi_{\mathrm{ref}})
+\right].
+$$</div>
+<p>$\pi_\theta$ 是 actor，$\pi_{\mathrm{ref}}$ 是冻结参考模型；横线表示相应位置上的 token 平均。$\beta$ 控制传统回答约束，$\lambda$ 控制本文的输入约束，本文方法默认将 $\beta$ 设为 0。与提高 response KL 系数相比，这保留了回答分布更大的直接优化空间，但<strong>不意味着回答不受间接影响</strong>。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=3">§3，Eq. 1–2</a></p>
+<p>真正决定如何复现的是 Algorithm 1。它没有在每个位置遍历全词表计算 KL，而是在<strong>实际出现的 prompt token</strong> $p_t$ 上计算：</p>
+<div class="math-display">$$
+r_t=\frac{\pi_\theta(p_t\mid p_{&lt;t})}{\pi_{\mathrm{ref}}(p_t\mid p_{&lt;t})},\qquad
+\mathcal L_{\mathrm{prompt}}=\frac{\lambda}{N_{\mathrm{prompt}}}\sum_{i,t}\left(r_{i,t}-1-\log r_{i,t}\right).
+$$</div>
+<p>$N_{\mathrm{prompt}}$ 是 batch 中全部 prompt token 数。函数 $r-1-\log r$ 在 $r=1$ 时取零，因而会把<strong>这些已观测 token 的条件概率</strong>拉回参考值；它不是对隐藏激活逐维施加距离约束。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=4">Algorithm 1、Appendix C</a></p>
+<p><strong>这里有一个复现前必须澄清的问题。</strong> 作者把该项称为 Eq. 2 的“无偏低方差 $k_3$ 估计”，但 prompt 来自数据，不是从参考模型按位置采样。按文中 $r=\pi_\theta/\pi_{\mathrm{ref}}$ 的方向，我的推导是：即使 token 真按 $\pi_{\mathrm{ref}}$ 采样，$\mathbb E_{\pi_{\mathrm{ref}}}[r-1-\log r]$ 对应的也是 $D_{\mathrm{KL}}(\pi_{\mathrm{ref}}\Vert\pi_\theta)$，而非 Eq. 2 的反向。<strong>因此文稿不足以保证实际损失是所写完整分布 KL 的无偏估计。</strong> <code>[?]</code> 实验代码是否另有 ratio 方向或采样处理，需要作者实现才能确认；这一点不否定 Figure 2 的报告结果，但影响“方法究竟优化了什么”的解释。</p>
+<h2 id="4-数据与设置-三类捷径-模型规模与任务绑定">4. 数据与设置：三类捷径，模型规模与任务绑定</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务 / 模型</th>
+<th>数据规模与划分</th>
+<th>奖励漏洞与评估</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学 / Qwen2.5-1.5B-Instruct</td>
+<td>DeepMind Mathematics 算术子集，约 200 万题池，训练实际见约 3.2 万题；评估 1,000 题，按难度分层划分</td>
+<td>“最常见错误答案”提示有 75% 概率就是正确答案；奖励仍是答案 exact match。hack rate 只在 252 道错误提示题上计算复制提示的比例；accuracy 在全体评估题上计算</td>
+</tr>
+<tr>
+<td>代码 / Qwen3-4B</td>
+<td>cc-transformed，20,067 个带 bug 解答、约 1,250 道题；按题目 80/20 划分，评估 200 条</td>
+<td>训练看 8 条 visible assert；修改或删除 assert 并让改后的代码通过，被记为 hack。accuracy 检查是否通过全部 16 条 hidden assert</td>
+</tr>
+<tr>
+<td>诗歌 / Qwen3-8B</td>
+<td>20 类语义主题扩展；2,000 条训练、200 条评估，主题不重叠</td>
+<td>Haiku 4.5 训练评分；独立确定性词数检查衡量真实表现。已知末尾数字模式用 regex 检查</td>
+</tr>
+</tbody>
+</table></div>
+<p>来源：<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=11">§4、Appendix B.4、Table 6</a>。数学任务更接近<strong>数据相关性诱导的 shortcut learning</strong>：奖励本身仍按真答案打分，错误提示被复制时不会得到正确奖励；它与代码中篡改测试、诗歌中欺骗 judge 的外部漏洞并不完全同类。</p>
+<p>三项实验均为全参数 GRPO、每步 32 个 prompt × 8 个回答、采样温度 0.7；数学/代码/诗歌分别训练 1,000/75/50 步，使用 4/3/3 个 seeds。prompt KL 的 $\lambda$ 分别为 0.1/0.07/0.05；response KL 对照的 $\beta$ 为 0.1/0.05/0.05。权重在 0.01–0.1 范围搜索，故作者“无任务特定调参”的表述应收窄为<strong>无需设计各任务专属损失或检测规则</strong>。另一个容易漏掉的细节：Table 5 的诗歌 vanilla RL 仍有 $\beta=0.01$，不是严格的零 KL。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=11">Tables 3–5</a></p>
+<p><strong>评估口径尚有歧义</strong>：诗歌 §4 把 hack rate 定义为“judge 满分且命中 regex 的 completion 比例”，Table 6 却称其为 line-level hack rate；Table 2 也未解释所有比例的聚合细节。下文保留作者报告值，不把不同任务或不同表中的百分比当作统一分母的直接比较。</p>
+<h2 id="5-关键结果-干预有效-但机制解释有明确边界">5. 关键结果：干预有效，但机制解释有明确边界</h2>
+<h3 id="5-1-主实验-收益不只是把模型压回参考策略">5.1 主实验：收益不只是把模型压回参考策略</h3>
+<p><img src="../../assets/task-representations-fzZvi6sshf/figure2-results.png" alt="Figure 2：三项任务的 hacking 与真实准确率" /></p>
+<p><em>来源：Sun、Benton、Easley，<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=5">Figure 2，PDF 第 5 页</a>，CC BY 4.0；截取图区域。上排越低越好，下排越高越好，蓝色 Task KL 就是 prompt KL。应同时看两排，避免把“不再输出已知 hack”误读为“任务已经学会”。</em></p>
+<p>以下每格均为 <strong>hack rate / accuracy（%）</strong>，直接核对图中标签：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th style="text-align:right">Vanilla RL</th>
+<th style="text-align:right">Response KL</th>
+<th style="text-align:right">Prompt KL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学</td>
+<td style="text-align:right">75.2 / 78.6</td>
+<td style="text-align:right">25.9 / 86.0</td>
+<td style="text-align:right"><strong>2.5 / 90.2</strong></td>
+</tr>
+<tr>
+<td>代码</td>
+<td style="text-align:right">53.7 / 10.5</td>
+<td style="text-align:right">5.2 / 29.2</td>
+<td style="text-align:right"><strong>1.8 / 31.5</strong></td>
+</tr>
+<tr>
+<td>诗歌</td>
+<td style="text-align:right">94.4 / 6.1</td>
+<td style="text-align:right">97.7 / 11.9</td>
+<td style="text-align:right"><strong>0.8 / 19.6</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>与 response KL 相比，prompt KL 的 accuracy 分别高 4.2、2.3、7.7 个百分点，同时 hacking 更少。这支持“改变约束位置可以改善安全—能力折中”，尤其诗歌中 response KL 几乎没有阻止数字标记捷径。</p>
+<p>但两点不能跳过。第一，诗歌真实 accuracy 仍只有 19.6%，<strong>消除一种 hack 不等于完成任务</strong>。第二，这只是每项任务绑定一种模型的实验，无法独立归因于任务差异或模型大小，也没有建立覆盖所有正则强度、等计算预算的普遍优越性。Figure 2 有误差棒，但图注未说明其统计定义，不能自行称为 95% 置信区间。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=5">§5.1、Figure 2</a></p>
+<h3 id="5-2-真实奖励下还能学习吗-结果支持大体保留-措辞需要修正">5.2 真实奖励下还能学习吗？结果支持大体保留，措辞需要修正</h3>
+<p>作者另做 ground-truth（GT）设置：数学去掉提示，代码用 hidden tests 奖励，诗歌把 judge 换成启用 thinking 的 Opus。加入 prompt KL 后，accuracy 从数学 67.0→84.2、代码 30.8→33.3、诗歌 99.3→98.5。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=5">Table 1</a></p>
+<p>这支持正则项没有把学习整体冻结，但表注“所有任务均持平或提升”不严格成立，诗歌下降了 0.8 个百分点，表中也没有给不确定性估计。GT 设置只针对所研究漏洞更可靠；换用更强 LLM judge 不代表获得不可被利用的真值 oracle。Appendix B.4 又称 Opus 4.6 “仅用于评估”，与 §4 的 GT 训练描述存在用途表述歧义，复现需要确认。</p>
+<p>通用能力证据也应限定在<strong>代码任务的 Qwen3-4B</strong>：BBH 的 reference / vanilla / prompt KL 为 75.1 / 68.8 / 74.7，说明 prompt KL 避免了该次 vanilla RL 的明显退化；数学和诗歌模型的 benchmark sweep 尚未完成。Table 7 表注“均距参考模型不超过 0.7 点”有误：GSM8K 从 82.9 到 85.0，差 2.1 点，方向是提升。不能照抄表注扩大为所有规模的能力保持证明。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=12">Appendix D、Table 7</a></p>
+<h3 id="5-3-prompt-激活确实影响-hacking-但不是唯一承载处">5.3 prompt 激活确实影响 hacking，但不是唯一承载处</h3>
+<p><strong>第一组干预是 steering。</strong> 作者从 hack/no-hack 激活差异构造向量，扫不同强度，比较在 prompt 与 response 残差流上施加干预。Figure 3 的代码结果中，prompt 侧能达到更好的 hack rate—accuracy 折中。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=6">§6.1、Figure 3</a></p>
+<p><img src="../../assets/task-representations-fzZvi6sshf/figure3-steering.png" alt="Figure 3：prompt 与 response 侧 steering 的折中" /></p>
+<p><em>来源：同文 Figure 3，CC BY 4.0；截取图区域。横轴 accuracy 越大越好，纵轴 hack rate 越小越好，蓝线相对橙线更靠右下。它支持干预位置的重要性；正文对向量“提取位置”和“施加位置”的交叉设置描述不够清楚，不能据此认定两种因素已被完全分离。</em></p>
+<p><strong>第二组干预更直接：跨模型替换 prompt 激活。</strong> 对相同 prompt，在所有层把一个模型相应位置的 residual stream 换给另一个模型，再由接收方继续生成。forward 是 hacking→reference，reverse 是 reference→hacking。作者选的是各任务 <strong>hacking 最强的 checkpoint</strong>，因此这里的 baseline 不是 Figure 2 的平均结果。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=6">§6.2、Table 2</a></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th style="text-align:right">原 reference hack rate</th>
+<th style="text-align:right">原 hacking 模型</th>
+<th style="text-align:right">Forward 后 reference</th>
+<th style="text-align:right">Reverse 相对 hacking 模型的变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数学</td>
+<td style="text-align:right">0.0%</td>
+<td style="text-align:right">96.6%</td>
+<td style="text-align:right">96.6%</td>
+<td style="text-align:right">−45.8 个百分点</td>
+</tr>
+<tr>
+<td>代码</td>
+<td style="text-align:right">4.5%</td>
+<td style="text-align:right">99.5%</td>
+<td style="text-align:right">25.0%</td>
+<td style="text-align:right">−43.5 个百分点</td>
+</tr>
+<tr>
+<td>诗歌</td>
+<td style="text-align:right">0.5%</td>
+<td style="text-align:right">99.7%</td>
+<td style="text-align:right">44.2%</td>
+<td style="text-align:right"><strong>+0.3 个百分点</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Table 2 标注每个条件 200 个 prompts，并给出二项标准误；此处为便于比较省略误差项。reference 的代码和诗歌 hack rate 并非零，所以正文“参考模型从不自发 hacking”也不能作为严格事实复述。</p>
+<p><strong>能推出什么？</strong> 将 hacking 模型的 prompt 激活植入 reference，确实会诱发行为变化，支持 prompt 激活是有因果作用的载体。<strong>不能推出什么？</strong> 换回干净激活并未完全修复数学和代码，对诗歌甚至完全无效，因此它既不是普遍充分的修复手段，也没有证明所有 hacking 只存储在 prompt 表征中。正文没有同时报告 swap 后的任务 accuracy，不能把行为率变化等同于无代价修复。</p>
+<p>回到词数案例：作者还报告，只替换 12/18 数词位置的激活就能把 reference 的 hack rate 从 0% 推到 70%。这和“改成 10/15，标记跟着改”的结果一起，支持了<strong>输入参数的处理会参与决定作弊模式</strong>。但这一局部 swap 与 Table 2 的完整 prompt swap 不是充分交代过的同条件对照，不能用 70% 与 44.2% 直接证明“只换数词比换全部更强”。<a href="https://openreview.net/pdf?id=fzZvi6sshf#page=6">§6.2</a></p>
+<h2 id="6-insights">6. Insights</h2>
+<p><strong>1. 值得借鉴的是把“学习动作”与“理解任务时的变化”分开约束。</strong> Figure 2 显示，约束输入位置能在保留回答学习的同时减少已知捷径。我会把 prompt token 概率锚定作为 RL 实验中的独立变量，与等成本 response KL、prompt 交叉熵、完整词表 KL 及隐藏状态距离比较。这样才能判断收益来自“输入侧锚定”，还是 $r-1-\log r$ 这种具体损失的优化性质；目前两者还没有被拆开。</p>
+<p><strong>2. 预防有效、事后修复无效，提示要研究训练过程中的可逆性。</strong> 诗歌训练中 prompt KL 有效，但强 hacking checkpoint 的 reverse swap 无效。一种可能解释是：早期限制 prompt 变化能阻断捷径形成，训练后期行为已经进入其他共享参数或生成回路；这仍是假说。下一步可以沿 checkpoint 重复同一双向 swap，同时记录 task accuracy 与 hack rate，检查修复是否随训练推进而失效，而不是只分析最坏 checkpoint。</p>
+<p><strong>3. “无需知道漏洞”属于训练损失的性质，尚不属于评估保证。</strong> 这项损失不用 regex 或 hacking 标签，但论文的成功判据仍依赖三个预先定义的行为，诗歌尤其依赖已知数字模式。更有区分力的实验是固定训练干预，再用独立人工审查或未参与设计的 detector 检查新的骗分方式，并单独测试参考模型已经有 shortcut 的情形。若参考模型本身误解任务，锚定它未必是在保护正确语义。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span> — Concept：补充 prompt 侧训练正则这一类缓解方式，同时区分数据 shortcut、评分漏洞和已知 hack 检测。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic：用 steering 与跨模型 activation swap 检查任务输入表征的因果作用；双向干预的不对称结果比单向成功更能约束机制解释。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Monitoring Emergent Reward Hacking During Generation via Internal Activations</span></a>
+<a class="paper-nav-link next" href="MechVQA-Benchmarking-and-Enhancing-Multimodal-LLMs-on-Comprehensive-Mechanical-Drawing-Understanding-机械图纸理解.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">MechVQA: Benchmarking and Enhancing Multimodal LLMs on Comprehensive Mechanical Drawing Understanding</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: sun2026mitigating</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

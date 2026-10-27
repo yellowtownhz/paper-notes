@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENPIRE: Agentic Robot Policy Self-Improvement in the Real World</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">ENPIRE: Agentic Robot Policy Self-Improvement in the Real World</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-如何让人不在回路的-coding-agent-在真实机器人上闭环自改进策略"><span class="toc-num">02</span> 2. 关键问题：如何让人不在回路的 coding agent，在真实机器人上闭环自改进策略</a></li>
+<li><a class="toc-link" href="#3-关键方法-enpire-四模块-harness-先人导建环境-en-再全自主改策略-pire"><span class="toc-num">03</span> 3. 关键方法：ENPIRE——四模块 harness，先人导建环境（EN），再全自主改策略（PIRE）</a></li>
+<li><a class="toc-link" href="#4-数据集与评估设置-四个真实灵巧任务-仿真对照"><span class="toc-num">04</span> 4. 数据集与评估设置：四个真实灵巧任务 + 仿真对照</a></li>
+<li><a class="toc-link" href="#5-关键结果-headline-数字-逐条证据审查"><span class="toc-num">05</span> 5. 关键结果：headline 数字 + 逐条证据审查</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-claim-核对-c1-c10">5.1 主实验 claim 核对（C1–C10）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-决定结论的消融">5.2 决定结论的消融</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-资源利用-fig-7-3-6-4">5.3 资源利用（Fig.7, §3.6/§4）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-批判性分析-读数字的五个边界">5.4 批判性分析（读数字的五个边界）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#修订记录"><span class="toc-num">08</span> 📝 修订记录</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-22</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2606.19980" target="_blank">arXiv</a>
+    </div>
+    <h1>ENPIRE: Agentic Robot Policy Self-Improvement in the Real World</h1>
+    <p class="authors">Wenli Xiao, Jia Xie, Tonghe Zhang, Haotian Lin, Letian "Max" Fu, Haoru Xue, Jalen Lu, Yi Yang, Cunxi Dai, Zi Wang, Jimmy Wu, Guanzhi Wang, S. Shankar Sastry, Ken Goldberg, Linxi "Jim" Fan, Yuke Zhu, Guanya Shi</p>
+    <div class="topic-row"><span class="topic-tag">Agentic_Autoresearch</span> <span class="topic-tag">Robot_Policy_Self_Improvement</span> <span class="topic-tag">Coding_Agent</span> <span class="topic-tag">Embodied_AI</span></div>
+</header>
+
+<h1>论文笔记: ENPIRE: Agentic Robot Policy Self-Improvement in the Real World</h1>
+<blockquote class="card card-info">
+<p><strong>关键问题</strong>：真实灵巧操作学习被 human babysitting（采集、reset、调参）卡住，缺一个可重复的实物反馈闭环。
+<strong>关键做法</strong>：把 autoresearch 闭环直接焊死在硬件上——先人导建不可变环境接口（EN），再让 coding agent 全自主爬成功率（PIRE），多机经 Git 去中心协作（E）。
+<strong>关键结论</strong>：前沿 coding agent 在 pin insertion 上把成功率 hill-climb 到 100%（需 50 次连续真实成功）；集群把 wall-clock 从 &gt;1.5h 压到 ~40min，代价是超线性 token。
+<strong>我的判断</strong>：真正新意在&quot;闭环跑在硬件 + Git 去中心协调&quot;，而非 99%/100% 头条数字——后者依赖 8 次重试与 team-best 口径，单发成功率全文未报。</p>
+</blockquote>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>团队/机构</strong>：NVIDIA GEAR Lab、CMU LeCAR、UC Berkeley（*Equal contribution，†Equal advising）；指导 Guanya Shi、Yuke Zhu、Linxi &quot;Jim&quot; Fan。</li>
+<li><strong>发表</strong>：<strong>CoRL 2026</strong>（v2 arXiv 页 Comments 已标注）；arXiv:2606.19980，v1 2026-06-18，v2 2026-09-20；CC BY 4.0。</li>
+<li><strong>资源</strong>：网站 research.nvidia.com/labs/gear/enpire（全部视频）；代码 github.com/NVlabs/ENPIRE。</li>
+<li><strong>平台</strong>：8 台同构双臂 YAM 站点机队；每站 1×RTX 5090 跑各自的 coding agent（Codex / Claude Code / Kimi Code）。</li>
+<li><strong>一句话定位</strong>：把&quot;coding agent 自动跑实验改算法&quot;的 autoresearch 范式（Karpathy nanochat autoresearch 一脉）从数字世界搬到真实机器人，核心抽象是<strong>可重复的反馈回路：reset → execute → verify → refine</strong>。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-如何让人不在回路的-coding-agent-在真实机器人上闭环自改进策略">2. 关键问题：如何让人不在回路的 coding agent，在真实机器人上闭环自改进策略</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+以 <strong>pin insertion</strong> 为例：把销子插进 <strong>4mm</strong> 直径的孔，间隙极小，需基于视觉/本体感知做精确且能反应的控制（§2.2 motivating example）。这类任务的真实瓶颈不是算法，而是<strong>人在回路里</strong>——每次&quot;重置场景、跑一次策略、判断成败、调一下算法&quot;都有人 babysitting。论文原话：&quot;humans labor of babysitting policy improvement inevitably become one of the limiting factors of how quickly robots acquire dexterity.&quot;
+把 autoresearch 搬到真机有<strong>两个</strong>特有挑战（引言明确两条）：</p>
+<ol>
+<li>coding agent <strong>缺乏真实世界环境接口</strong>做闭环假设检验——需自动化的策略部署、评估、场景重置；</li>
+<li>在<strong>机器人集群</strong>上放大吞吐时，如何选择/验证假设并维持资源利用率，仍是开放问题。
+推广：任何 dexterous 任务（Push-T、GPU 入槽、剪 zip tie）都卡在同一处——&quot;reset+验证+改代码&quot;必须有人盯着，扩规模就不可行。</li>
+</ol>
+</blockquote>
+<ul>
+<li><strong>为什么重要</strong>：human babysitting 是迈向 general physical intelligence 的规模化硬上限——人不是算力，没法并行、没法 24h 不眠。</li>
+<li><strong>之前方法卡在哪</strong>（§5.2–5.3 论证得很干净）：已有 self-improvement loop 都跑在&quot;便宜 substrate&quot;上——Eureka 每分钟数千 Isaac Gym rollout、Voyager 用 Minecraft（near-free）、DREureka 只在仿真迭代落地前才部署、AutoRT 只做数据采集。古典 robot scientist 固定装置从不自己写工具，LLM research agent 从不碰真机器人。原话划界：&quot;In every case, the loop closes on a cheap substrate while real-robot execution serves only as a sim-to-real or data target, never as the medium of iteration.&quot; ENPIRE 把闭环介质换成硬件，绑定资源从算力预算换成<strong>机器人访问预算</strong>。</li>
+</ul>
+<h2 id="3-关键方法-enpire-四模块-harness-先人导建环境-en-再全自主改策略-pire">3. 关键方法：ENPIRE——四模块 harness，先人导建环境（EN），再全自主改策略（PIRE）</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>（同一 4mm 插销任务走完整生命周期）
+<strong>阶段一（EN，人导建环境，一次性成本）</strong>：人类只需两步——录几分钟成功/失败演示 + 指定 reward 设计要求（precision/recall/延迟目标）；agent 用 procedural tool calls 合成三样接口：</p>
+<ul>
+<li><em>硬安全约束</em>：构型/运动学限制在安全区，越界即判失败并触发自动 reset（也是 episode 终止/截断源）。</li>
+<li><em>自动验证</em>：合成<strong>二元 reward</strong>——插销任务是混合验证：视觉对齐（销尖对孔）+ 插入深度（本体感知）+ 接触力估计（Fig. 9）。</li>
+<li><em>自动 reset</em>：CaP-X 式模块化技能，直接复位到<strong>最难关口的开端</strong>（销子正要入孔那一刻），让学习聚焦精度瓶颈。
+这三样构成 <strong>EN 模块</strong>；policy 收视觉-本体感知、发动作、配 reward，构成 <strong>Rollout 模块（R）</strong>。建好后经<strong>不可变 Gym API</strong> 访问——一次性人类成本被所有机器人、所有后续实验摊销。</li>
+</ul>
+<p><strong>阶段二（PIRE，全自主）</strong>：agent 拿到任务描述&quot;最大化成功率&quot;，被赋予精简训练代码库的写权限。在 <strong>PI 模块</strong>里读文献、提假设、直接改训练代码（插销任务 agent 试了 BC、iterative BC、online/offline/offline-to-online RL + BC 正则，还调了 batch size、actor-critic 更新率、BC 项超参，§3.2）；验收门槛是 <strong>50 次连续真实评估成功</strong>。要加速则进入 <strong>E 模块</strong>：N 个 agent 各占一台机器人、从同一 baseline 分叉，经 <strong>Git</strong> 异步协作，自发 cherry-pick/merge 同伴的成功配方，按团队平均成功率选/弃假设。</p>
+<p><strong>一条 rollout 的生命周期</strong>（把 §2 的&quot;为什么难&quot;与 §3 的&quot;怎么跑&quot;焊在同一次实验上）：
+<code>/start 触发真机执行 → 100Hz CAN 关节控制跟踪 30Hz 策略动作 → 每步记录 obs 张量 + 同步相机流(.mp4) + 动作源标签 → 自动 reset + EN reward 判定 → 日志回灌 agent → agent 改代码 → 下一轮</code>。
+<img src="https://arxiv.org/html/2606.19980v2/figure-v4.png" alt="Figure 2: ENPIRE 框架总览" /></p>
+</blockquote>
+<ul>
+<li><strong>整体架构（四模块映射）</strong>：EN（环境/安全/验证/reset，冻结为不可变 API）+ PI（启动策略精修）+ R（单/多机并行评估，返回轨迹/视频/reward）+ E（agent 经 Git 去中心协作选假设）。命名约定：阶段一 = <strong>EN in ENPIRE</strong>，阶段二 = <strong>PIRE in ENPIRE</strong>。</li>
+<li><strong>给每台 agent 的 autoresearch prompt（Fig. 10）</strong>（v1/v2 HTML 正文均未含此文本、图中以截图呈现，以下录自前次阅读的 PDF 提取，措辞以原文为准 <code>[?]</code>）：</li>
+</ul>
+<pre><code>/goal Achieve a 100% success rate over each window of 50 consecutive
+episodes. Read @auto_research.md and fan out a subagent team to study
+different algorithms (RL, BC, hybrid). You may reuse checkpoints or data
+buffers across hypotheses. Create your own branch from autorl following the
+instructions. Do not directly work on or push to autorl. You must actively
+monitor other branches and commits from origin that branched off autorl to
+leverage knowledge from those branches. You must actively push your branch to
+contribute to the repo and pull from origin. Collaborate with other agents
+via Git.
+</code></pre>
+<p>注意口径区分：prompt 里的 &quot;100% over each window of 50 consecutive episodes&quot; 是 agent 的<strong>目标窗口</strong>；正文统计口径是 <strong>8-retry</strong>（见 §5），二者不同。</p>
+<ul>
+<li><strong>agent 合成的 reward 长什么样</strong>（zip-tie 双视角几何测试，§A.2 简化实现——agent autoresearch 的典型产物：SAM3 分割 strap/head → 膨胀 → top 视角查 overlap + 左探出量，right 视角查连通域与 head 框相交，两视角同时过才算成功，防单视角误报）：</li>
+</ul>
+<pre><code class="language-python">def get_reward_from_top_right_cam(rgb_t, rgb_r):
+    dets = segment_zip_tie_views(rgb_t, rgb_r, threshold=sam3_score_threshold)
+    strap = union([d[&quot;mask&quot;] for d in top2_by_score(dets[&quot;top&quot;][&quot;strap&quot;])])
+    head = top1_by_score(dets[&quot;top&quot;][&quot;head&quot;])[&quot;mask&quot;]
+    ...
+    top_ok = overlap &gt;= top_inter_frac and protrude &gt;= top_left_mult
+    right_ok = n_comp in (1, 2) and (right &amp; head_box).any()
+    return top_ok and right_ok
+</code></pre>
+<p>推理延迟被 agent 压到 <strong>&lt;150ms</strong>（prompt search 调 cropping/depth 阈值 + 转 ONNX + 编译计算图多目标并行前向），接近人眼视觉反应速度。</p>
+<ul>
+<li><strong>数学/指标形式化</strong>（原文定义，注意 MTU 双口径）：
+<ul>
+<li><strong>MRU</strong> = 研究 wall-clock 中机器人&quot;正在执行实验&quot;的时间占比；<strong>GPU util</strong> = GPU 活跃时间占比。理想饱和两者趋近 1（原文 &quot;toward 1&quot;），实践中所有前沿 agent 都达不到。</li>
+<li><strong>MTU</strong> 存在<strong>两处不一致的口径</strong>：§2.2 泛述 &quot;fleet's average token consumption&quot;，§3.6 明确 &quot;tokens consumed per minute&quot;；复现以 §3.6 为准但须知两者并存。派生 <strong>Tokens-to-Success / Time-to-Success</strong>。</li>
+</ul>
+</li>
+<li><strong>硬件与编排（复现要点，压缩）</strong>：8 台同构站，每站 2× YAM 6-DoF 臂（I2RT，双臂 14 关节，CAN bus）+ 力限平行夹爪、单 RTX 5090 32GB / Ultra 9 285K / 128GB、RealSense D405（1 顶视 + 2 腕视，GPU 任务加侧装 D435i）。策略推理 30Hz、底层 PD + 重力补偿 100Hz。每站 agent 跑在单一 autoresearch 仓库沙箱（绕过权限弹窗、无限联网）；跨站协调<strong>完全经 Git</strong>，无中央服务器。FastAPI 端点：<code>/start</code>（开 rollout）、<code>/restart</code>（新 rollout buffer 目录，隔离不同假设的数据）、<code>/home</code>（回零）；Push-T 另加 <code>/avoid</code>/<code>/resume</code> 处理遮挡。真实 RL 后端集成 PLD-RL（作者前作 residual RL），按 SERL 异步三层设计（deployment/learner/actor，Portal/ZMQ msgpack），deployment 与 learner 间是<strong>松耦合磁盘契约</strong> + RLPD 式数据混合（RL 过渡进 online buffer，human 过渡进 demo buffer）。</li>
+<li><strong>与已有方法的区别</strong>：保留 skill-accumulation 与 reward-generation 机制，但把闭环介质换成硬件；跨站协调用 Git 而非中心调度——fleet 松耦合、容错，Git 历史即&quot;唯一真相源&quot;。</li>
+<li><strong>核心机制图</strong>：插销混合 reward（视觉对齐 + 插入深度 + 末端力矩），是 agent autoresearch 出来的验证器，决定整条生命周期里&quot;成功与否&quot;的判定：
+<img src="https://arxiv.org/html/2606.19980v2/agent-generate-env.png" alt="Figure 9: pin insertion 混合 reward" /></li>
+</ul>
+<h2 id="4-数据集与评估设置-四个真实灵巧任务-仿真对照">4. 数据集与评估设置：四个真实灵巧任务 + 仿真对照</h2>
+<blockquote class="card card-info">
+<p>训练/评估数据<strong>在线从真机 rollout 采集</strong>（非静态数据集），这是 ENPIRE 与 offline 方法的本质区别。评测哲学：success = <strong>单次 rollout 内完成任务的概率，给定固定 8 次重试</strong>；与 i.i.d. best-of-N 不同，重试发生在&quot;目睹上一次失败后&quot;，同时捕捉精度与 in-context 恢复——论文强调恢复比 one-shot 精度更反映部署鲁棒性。但这口径本身会抬高头条数字（见 §5 批判）。</p>
+</blockquote>
+<ul>
+<li><strong>四个真实任务</strong>（Fig. 2）：Push-T（非抓取推 T 块对齐目标区）、Pin insertion（4mm 孔插销，需 50 连成）、GPU-insertion（薄槽插 GPU 芯片）、Ziptie-cutting（抓剪刀剪扎带尾巴）。</li>
+<li><strong>三个 coding agent</strong>：Codex (GPT-5.5 xhigh)、Claude Code (Opus 4.7 High)、Kimi Code (Kimi K2.6 thinking)；<strong>one agent ↔ one robot</strong>。</li>
+<li><strong>仿真侧</strong>：Gym-PushT（heuristic 学习对照，Fig. 5）；RoboCasa365（VLA+tool 协同，Fig. 6）——固定 40-episode 评估，generator seed 42 的静态 <code>(seed, layout_id, style_id)</code> triplet 列表，所有方法共用，与 GR00T 比时同任务/同 seed/同初始状态/同相机/同成功谓词（§D.2 matched-seed 协议，<strong>全文最严谨的评测设计，但只在仿真里做</strong>）。</li>
+<li><strong>环境构建的人类成本被排除在时间线外</strong>：reward 设计需&quot;几分钟&quot;演示；这些一次性人力<strong>不计入后续任何&quot;自主&quot;时间线</strong>（§5 批判）。</li>
+</ul>
+<h2 id="5-关键结果-headline-数字-逐条证据审查">5. 关键结果：headline 数字 + 逐条证据审查</h2>
+<blockquote class="card card-info">
+<p>追求严谨，数字均注出处。凡 headline 漂亮数字，先去正文找它的精确操作口径。</p>
+</blockquote>
+<h3 id="5-1-主实验-claim-核对-c1-c10">5.1 主实验 claim 核对（C1–C10）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Claim（原文表述）</th>
+<th>证据 / 数字</th>
+<th>来源</th>
+<th>审稿注记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>前沿 agent 在真实灵巧任务自主开发策略达 <strong>99% 成功率</strong></td>
+<td><strong>摘要级聚合 claim</strong>（v2 摘要原话 &quot;such as PushT, organizing pins into a pin box, and using a cutter to cut a zip tie&quot;）；正文无单任务分解</td>
+<td>Abstract</td>
+<td>99% ≠ 任何单任务正文实测</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Pin insertion 收敛 <strong>100%</strong>，比 human-in-the-loop(48) 更快</td>
+<td>需 <strong>50 连成</strong>；(48) 是作者自比前作</td>
+<td>§1; §3.2; Fig.3</td>
+<td>自比 + 无并排数字；对方人类时间未计入</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Push-T 1→8 agent：<strong>~5h→~2h</strong> 达 score 1.0</td>
+<td>明确数字</td>
+<td>§3.3; Fig.3</td>
+<td>单 run，无 std；normalized score 非百分比</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Pin insertion 1→8 agent：<strong>&gt;1.5h→~40min</strong> 达 near-perfect</td>
+<td>明确</td>
+<td>§3.3; Fig.3</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Sim Gym-PushT：Claude &amp; Codex <strong>95%/~2h</strong>；Kimi 慢一倍</td>
+<td>明确</td>
+<td>Fig.5</td>
+<td>sim 低方差，与真实难度不可比</td>
+</tr>
+<tr>
+<td>C6</td>
+<td>RoboCasa365 <strong>优于</strong> GR00T(5) 与 CaP-X(15)</td>
+<td>仅&quot;outperforms&quot;，<strong>无成功率数字</strong></td>
+<td>§3.5; Fig.6</td>
+<td>缺数字；CaP-X 弱基线（本不做搜索）</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>Zip-tie reward 推理 <strong>&lt;150ms</strong>，近人眼反应</td>
+<td>明确；双视角几何测试</td>
+<td>§2.1; §A.2; Fig.4</td>
+<td>工程亮点，非策略成功率 claim</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>真实 heuristic Push-T：<strong>3 agent 中 2 个失败</strong></td>
+<td>明确</td>
+<td>§3.1</td>
+<td><strong>重要反例</strong>：头条极可能只来自最优 agent</td>
+</tr>
+<tr>
+<td>C9</td>
+<td>pin→GPU 经 markdown 总结迁移达高成功率</td>
+<td>定性，无数字无对照</td>
+<td>§3.4</td>
+<td>迁移靠手写蒸馏总结，仍窄域</td>
+</tr>
+<tr>
+<td>C10</td>
+<td>VLA 协同&quot;hover 再抓&quot;提升 GR00T 并迁真机剪扎带</td>
+<td>定性，无幅度</td>
+<td>§3.5; Fig.2/8</td>
+<td>策略性发现，无数字支撑</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-2-决定结论的消融">5.2 决定结论的消融</h3>
+<ul>
+<li><strong>BC 正则 I37 +10.8pp 是主增益</strong>（idea tree, Fig.12/B.6）：后续 batch-size I66 +0.9pp、controller compensation I76 +1.3pp 为边际增量——&quot;爬到 100%&quot;主要靠一个关键 recipe，而非平滑渐进。</li>
+<li><strong>SAM3 感知瓶颈</strong>（Fig.16/17/18）：counter-to-cabinet 20 目标，原 prompt 10/20→14/20（256²→480×640 提分辨率）；agent 改写 prompt 后 14/20→17/20 封顶。→ 生成脚本的上限被感知 API 卡住，prompt search 有用但救不回全部。</li>
+<li><strong>Native-vision 消融</strong>（§C.3, pusht-simple）：Codex 有 native vision 最先成功；<strong>意外：no-vision 基线反而早于 function-call vision 基线</strong>——agent 能从日志信号推断状态，反复图像调用反成开销。简化任务上的反直觉结果，外推需谨慎。模型/harness 对比（§C.4）：Codex(GPT-5.5) 最快，Codex harness + Opus API 最慢。</li>
+</ul>
+<h3 id="5-3-资源利用-fig-7-3-6-4">5.3 资源利用（Fig.7, §3.6/§4）</h3>
+<p>1→8 agent：<strong>GPU util 上升、token 消耗上升、MRU（每机器人利用率）下降</strong>（团队花更多时间总结同伴分支、更少实操）；MTU 在 ≤4 agent 近线性、8 agent <strong>陡升</strong>；总 token 预算增速远超 wall-clock 下降。→ <strong>扩机队是用 token/美元效率换时间</strong>，&quot;40 分钟&quot;是 8 站并行 + 超线性 token 成本买来的。</p>
+<h3 id="5-4-批判性分析-读数字的五个边界">5.4 批判性分析（读数字的五个边界）</h3>
+<ul>
+<li><strong>(a) 8 次重试口径是头号疑点</strong>：sequential retry ≠ best-of-N 且能测 recovery，但同样大幅抬高头条。若单发成功率 p，则 8 次内至少一次成功 = <code>1−(1−p)⁸</code>：p=0.3→94%，p=0.37→99%。<strong>摘要 99% 在 8-retry 口径下只需约 37% 单发成功率</strong>；论文从未报 single-shot SR，99%/100% 的&quot;鲁棒性&quot;被高估。前几次 rollout 还可当 calibration/诊断白嫖。</li>
+<li><strong>(b) 基线公平性</strong>：CaP-X 本不做搜索，作基线只证明&quot;搜索有用&quot;；GR00T 是端到端 VLA，matched-seed 规范但 Fig.6 不给数字；(48) 是作者自比，&quot;更快&quot;无并排曲线。</li>
+<li><strong>(c) 缺什么</strong>：真实侧全部曲线（Fig.3/5/7/12）<strong>零 seed、零方差、零重复次数</strong>——8 台 hardware-identical station 是天然重复来源，却未报跨 station 方差；&quot;team-average best&quot;（Fig.12 y 轴）是团队最佳分支成功率，非代表性部署水平；4 任务均窄域。</li>
+<li><strong>(d) Limitations 未承认的</strong>：① 8-retry 通胀；② 环境构建人力排除在时间线外；③ 结果来自 best-of-agents/team-best；④ reset 直接定位&quot;最难关口前一刻&quot;= 大部分非精确实用动作被 scripted 掉，策略实际只学最后一小段，学习难度被人为降低，99% 含金量再打折；⑤ 依赖极贵前沿模型，8 站 token 总成本未披露。</li>
+<li><strong>(e) 替代解释</strong>：&quot;扩机队加速&quot;很可能是<strong>并行搜索更多假设</strong>的命中率提升（8 agent ≈ 8 倍抽奖次数），而非方法效率；缺 &quot;1 agent × 8× 时长&quot; 对照来分离并行增益 vs 算法增益。
+<img src="https://arxiv.org/html/2606.19980v2/auto_env_bench.png" alt="Figure 3: 编码 agent 基准 + 资源缩放" /></li>
+</ul>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ul>
+<li><strong>真正的新意是&quot;闭环焊死在硬件 + Git 去中心协调&quot;</strong>：不用中心调度服务器，8 站经 push/pull 普通仓库共享代码/配置/工具/结果，Git 历史即&quot;唯一真相源&quot;，agent 的 cherry-pick/merge 行为正好对应进化式假设选择。几乎零额外基础设施却解决了分布式假设选择，比&quot;99% 成功率&quot;更值得同行借鉴；§5.2 把&quot;此前系统从不在硬件闭环&quot;论证得很干净。</li>
+<li><strong>&quot;8 重试 + team-best&quot;是读数字陷阱（最强条）</strong>：作者用这两个口径把 headline 推到 99%/100%，却都不报单发 SR 与方差。作为审稿，应把&quot;补 single-shot SR + 多次独立 run 的 mean/std&quot;列为硬性接收条件——否则无法区分&quot;方法强&quot;与&quot;搜索碰巧命中 + 多次重试兜底&quot;。</li>
+<li><strong>&quot;把人类一次性成本 amortize 到不可变 API&quot;是能 scaling 的核心架构决策</strong>：阶段一的人类投入一旦固化成 Gym API 就 immutable、跨所有机器人复用。复现时最该先搭的是这层 API + 自动验证，而非急着训策略。</li>
+<li><strong>物理 autoresearch 的瓶颈正从算法转向算力/美元预算</strong>：Fig.7c 已显示扩机队是赔本买速度，而 8 站 × 前沿模型（GPT-5.5/Opus 4.7）的美元成本全文未披露。下一代系统必须有显式 token/美元预算编排，否则不可持续。</li>
+<li><strong>torque-limiting 力限夹爪是无人值守的关键使能器（非普通硬件细节）</strong>：坏接触变成 safe stall 而非损坏硬件的硬推——这是整个系统 24h 无人闭环的前提，易被略过。同理 reset 定位&quot;最难动作之前&quot;是把有限机器人预算集中在精度瓶颈上的资源意识设计（但也见 §5.4-d 的含金量批评）。</li>
+<li><strong>复现缺口（诚实标注）</strong>：RL/BC 具体超参未给；reward 阈值（<code>top_inter_frac</code>、<code>top_left_mult</code> 等）未公开；CaP-X reset 技能未开放；代码库 ENPIRE 已 release 但 checkpoint 未见。端到端复现困难。</li>
+</ul>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>方向大概率是：把&quot;环境构建&quot;本身也 autoresearch 化以压缩一次性人类成本；给多 agent 加显式 token/美元预算约束（Fig.7c 显示当前扩机队赔本买速度）。若让我来补实验：给 99% 列出每任务的 one-shot 与 8-retry 成功率（N rollout、跨 station 方差）；给 (48) 跑同设置并排基线；补 &quot;1 agent × 8× 时长&quot; 对照分离并行增益；GPU insertion 补&quot;有/无 pin 摘要&quot;迁移 ablation。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li>高质量&quot;系统+agent&quot;工作的写法范本：用固定 seed triplet 保证 sim 可比、用 idea tree（Fig.12）把黑盒 autoresearch 外显成可审计、可归因的决策谱系（Git 历史 + idea tree）、用 MRU/MTU 把&quot;资源效率&quot;变成可度量指标——这些比 headline 成功率更经得起推敲。反面提醒：当 headline 数字依赖宽松口径（8 重试、team-best）却又写在摘要最前时，整体可信度被自己稀释。另，把模糊野心拆成&quot;先固化不可变接口、再放开搜索&quot;的两阶段，是做可复现 agent 系统而非一次性 demo 的范例。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<blockquote class="card card-info">
+<p>MOC 连接优先，论文间双链为辅。如无必要，勿增连接。</p>
+</blockquote>
+<ul>
+<li><strong>Topic / Area</strong>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-VLA">MOC-VLA</span> — Topic: ENPIRE 为 VLA/机器人策略自改进研究地图新增『真实世界 agentic 自主研究 + 闭环策略自改进 + 双臂 fleet』主题，并以 GR00T 作为协同实验 VLA。</li>
+</ul>
+</li>
+<li><strong>Concept</strong>
+<ul>
+<li><a class="wikilink" href="Automated-Weak-to-Strong-Researcher.html" title="Automated-Weak-to-Strong-Researcher">Automated-Weak-to-Strong-Researcher</a> — Concept: ENPIRE 的『coding agent 在真实机器人上自主 autoresearch』是 agentic 自主研究范式在具身/物理域的具体实例化，二者共享同一研究问题（自主研究 agent 闭环）。</li>
+<li><a class="wikilink" href="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst.html" title="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst">Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst</a> — Concept: 同属『闭环自改进 agent』研究问题；ENPIRE 贡献真实世界具身部署与多机 fleet 维度，CUDAnalyst 贡献冻结状态反事实归因方法。</li>
+</ul>
+</li>
+<li><strong>相关工作</strong>：库内暂无 CaP-X / Eureka / SERL / PLD-RL 等同系统笔记；如后续阅读可补双链。</li>
+</ul>
+<hr />
+<h2 id="修订记录">📝 修订记录</h2>
+<ul>
+<li>2026-09-22：read-paper-pro 基于 <strong>arXiv v2</strong>（CoRL 2026 录用版）多 Agent 重读并融合定稿：更新发表信息（v1 时为 preprint）；双读 + 事实核查 + 批评审查后融合；整合 claim 核对表（C1–C10）与批判性分析；保留 v1 阅读中的 Fig.10 prompt 引文（标注 <code>[?]</code> 来源）与概念双链。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="HumanCLAW-VLM-通过物理身体行动.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">HumanCLAW: Can Vision-Language Models Act Through a Body?</span></a>
+<a class="paper-nav-link next" href="GeoAAC-Geometry-Based-Adaptive-Action-Chunking-去噪轨迹几何.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">GeoAAC — 去噪轨迹几何驱动的自适应动作分块</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: enpire2026</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

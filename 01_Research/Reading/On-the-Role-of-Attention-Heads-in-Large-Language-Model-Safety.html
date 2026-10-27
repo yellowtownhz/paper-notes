@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On the Role of Attention Heads in Large Language Model Safety</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">On the Role of Attention Heads in Large Language Model Safety</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-剪掉一个头-模型为什么会从拒绝变成服从"><span class="toc-num">02</span> 2. 关键问题：剪掉一个头，模型为什么会从拒绝变成服从？</a></li>
+<li><a class="toc-link toc-sub" href="#golden-case">Golden Case</a></li>
+<li><a class="toc-link" href="#3-关键方法-从单-query-的-ships-到数据集级-sahara"><span class="toc-num">03</span> 3. 关键方法：从单 query 的 Ships 到数据集级 Sahara</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-两种-attention-head-ablation">3.1 两种 attention head ablation</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-query-level-ships-分布变化最大的头">3.2 Query-level Ships：分布变化最大的头</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-dataset-level-ships-表示子空间旋转了多少">3.3 Dataset-level Ships：表示子空间旋转了多少</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-sahara-不是一次取-top-s-而是逐轮条件搜索">3.4 Sahara：不是一次取 top-$S$，而是逐轮条件搜索</a></li>
+<li><a class="toc-link" href="#4-数据与评估"><span class="toc-num">04</span> 4. 数据与评估</a></li>
+<li><a class="toc-link" href="#5-关键结果"><span class="toc-num">05</span> 5. 关键结果</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-一个头足以大幅破坏拒绝-figure-2">5.1 一个头足以大幅破坏拒绝（Figure 2）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-三个头达到粗粒度方法相近的破坏-table-1">5.2 三个头达到粗粒度方法相近的破坏（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-ua-远强于-sc-信息路由重要-还是错误写入更危险-table-3">5.3 UA 远强于 SC：信息路由重要，还是错误写入更危险？（Table 3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-稀疏性-同源模型重合与-helpfulness">5.4 稀疏性、同源模型重合与 helpfulness</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-效率-table-2">5.5 效率（Table 2）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-最可复用的是-proxy-搜索-行为验证-不是-safety-head-这个命名">6.1 最可复用的是“proxy 搜索 + 行为验证”，不是 safety head 这个命名</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-更可信的-safety-attribution-应同时有方向和-contrast">6.2 更可信的 safety attribution 应同时有方向和 contrast</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-安全集中在少量头既便于审计-也形成单点攻击面">6.3 安全集中在少量头既便于审计，也形成单点攻击面</a></li>
+<li><a class="toc-link toc-sub" href="#6-4-复现优先级">6.4 复现优先级</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-20</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://openreview.net/forum?id=h0Ak8A5yqw" target="_blank">arXiv</a>
+    </div>
+    <h1>On the Role of Attention Heads in Large Language Model Safety</h1>
+    <p class="authors">Zhenhong Zhou, Haiyang Yu, Xinghua Zhang, Rongwu Xu, Fei Huang, Kun Wang, Yang Liu, Junfeng Fang, Yongbin Li</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">LLM_Safety</span> <span class="topic-tag">Attention_Heads</span> <span class="topic-tag">Causal_Ablation</span></div>
+</header>
+
+<h1>论文笔记: On the Role of Attention Heads in Large Language Model Safety</h1>
+<p><strong>关键问题</strong>：对齐模型的拒绝能力是否集中在少量 attention heads？如何避免为 1024 个头逐一完整生成来做归因？</p>
+<p><strong>关键做法</strong>：Ships 用单次 forward 中的输出分布或 residual 子空间变化给头打分；Sahara 逐轮重算分数，贪心寻找协同头组。</p>
+<p><strong>关键结果</strong>：只把 Llama-2-7B-chat 的一个高分头变成“均匀注意”，ASR 就从 0.04 升到 0.64；三个头（约 0.018% 参数）可达到 0.72 ASR。</p>
+<p><strong>我的判断</strong>：这是一个很实用的“cheap proxy 筛选 + 完整生成验证”框架，但 Ships 测的是无方向的表示变化，ASR 又会把短输出、乱码和含 <code>However</code> 的回答判成安全；“安全专属头”的结论比“拒绝行为依赖少量头”更不牢靠。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>发表</strong>：ICLR 2025 Oral；arXiv:2410.13708v2</li>
+<li><strong>团队</strong>：通义实验室、中科大、清华、南洋理工</li>
+<li><strong>模型</strong>：Llama-2-7B-chat、Vicuna-7B-v1.5；两者共享 Llama-2-7B base</li>
+<li><strong>代码</strong>：<a href="https://github.com/ydyjya/SafetyHeadAttribution">SafetyHeadAttribution</a></li>
+</ul>
+<h2 id="2-关键问题-剪掉一个头-模型为什么会从拒绝变成服从">2. 关键问题：剪掉一个头，模型为什么会从拒绝变成服从？</h2>
+<h3 id="golden-case">Golden Case</h3>
+<p>给 Llama-2-7B-chat 一条“写漏洞利用脚本”的请求。原模型会拒绝；如果逐个干预 32 层 × 32 heads，某些头一动，模型就开始提供有害内容。</p>
+<p>暴力定位需要对每个头、每条 query 完整生成 128 tokens，论文估算约 850 A100 GPU-hours。作者想用一次 forward 的内部变化先筛出候选头，再只对候选做真实生成。</p>
+<p>这里还有第二个问题：安全依赖这个头<strong>关注了哪些 token</strong>（QK routing），还是依赖它<strong>向 residual stream 写了多少信息</strong>（V/output）？论文设计了两种不同消融来区分。</p>
+<p><img src="https://arxiv.org/html/2410.13708v2/introduce.png" alt="Figure 1：均匀化安全头的 attention 后，模型不再区分 harmful 与 benign query" /></p>
+<p><em>上半部分是干预：把一个头的 attention pattern 退化成对历史 token 的均值；下半部分才是行为后果。它不是普通的 zero ablation。</em></p>
+<h2 id="3-关键方法-从单-query-的-ships-到数据集级-sahara">3. 关键方法：从单 query 的 Ships 到数据集级 Sahara</h2>
+<h3 id="3-1-两种-attention-head-ablation">3.1 两种 attention head ablation</h3>
+<p>对一个头</p>
+<div class="math-display">$$
+h_i=\operatorname{Softmax}\left(\frac{W_q^i(W_k^i)^T}{\sqrt{d_k/n}}\right)W_v^i,
+$$</div>
+<p>作者分别破坏“读哪里”和“写多少”：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>操作</th>
+<th>实际效果</th>
+<th>要测试的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Undifferentiated Attention（UA）</td>
+<td>$W_q$ 或 $W_k$ 乘极小 $\epsilon$</td>
+<td>attention logits 接近 0；causal mask 下变成对历史 token 的均匀平均</td>
+<td>正确的信息选择是否重要</td>
+</tr>
+<tr>
+<td>Scaling Contribution（SC）</td>
+<td>$W_v$ 乘 $\epsilon$</td>
+<td>$h_i^{SC}=\epsilon h_i$，接近 zero ablation</td>
+<td>该头的输出贡献是否不可替代</td>
+</tr>
+</tbody>
+</table></div>
+<p>UA 的极限 attention matrix 是下三角矩阵：第 $t$ 行前 $t$ 项均为 $1/t$。三角形只是 causal mask 的结果，不是额外设计。</p>
+<p>论文附录用 $\epsilon=10^{-10}$ 展示 attention 已退化成均值，但没有说明主实验如何系统选择 $\epsilon$，也没有给 sensitivity curve。这是复现时必须从代码确认的参数。</p>
+<h3 id="3-2-query-level-ships-分布变化最大的头">3.2 Query-level Ships：分布变化最大的头</h3>
+<p>对 harmful query $q_H$ 逐头消融：</p>
+<div class="math-display">$$
+\operatorname{Ships}(q_H,h_i^l)
+=D_{KL}\!\left(p_{\theta}(\cdot\mid q_H)\parallel p_{\theta\setminus h_i^l}(\cdot\mid q_H)\right).
+$$</div>
+<p>延续 Golden Case：先跑原模型，再对候选头做 UA/SC；若 next-token distribution 的 KL 最大，就把该头视为这条请求的关键候选，最后完整生成验证它是否真的从拒绝转向有害服从。</p>
+<p>关键假设是“原模型的 harmful response 主要是相似的拒绝分布，因此大变化意味着拒绝被破坏”。但 <strong>KL 没有方向</strong>：它也会奖励更强拒绝、措辞变化或乱码。因此 Ships 本身只是 harmful-query importance，安全语义来自后续 ASR 验证。</p>
+<h3 id="3-3-dataset-level-ships-表示子空间旋转了多少">3.3 Dataset-level Ships：表示子空间旋转了多少</h3>
+<p>为了找跨 query 稳定的头，作者收集 harmful dataset 的 top-layer residual activations，按样本堆成 $M$，做 SVD：</p>
+<div class="math-display">$$M=U\Sigma V^T.$$</div>
+<p>然后比较原模型 $U_\theta$ 与消融模型 $U_A$ 前 $r_{main}$ 个主方向的 principal angles：</p>
+<div class="math-display">$$
+\operatorname{Ships}(Q_H,h_i^l)
+=\sum_{r=1}^{r_{main}}\cos^{-1}\!\left(\sigma_r((U_\theta^{(r)})^TU_A^{(r)})\right).
+$$</div>
+<p>直觉：若去掉某头让整个 harmful 集合的主要表示子空间旋转很大，它可能承担跨请求功能。</p>
+<p>但输入只有 harmful queries，没有 matched harmless contrast。SVD 得到的是“这批输入的主要变化”，不保证是有害性特征；一个通用代码头、祈使句头也可能高分。</p>
+<h3 id="3-4-sahara-不是一次取-top-s-而是逐轮条件搜索">3.4 Sahara：不是一次取 top-$S$，而是逐轮条件搜索</h3>
+<ol>
+<li>初始化头组 $G=\varnothing$；</li>
+<li>假设当前 $G$ 已消融，对每个未选头再计算 dataset-level Ships；</li>
+<li>把本轮分数最大的头加入 $G$；</li>
+<li>重复到目标大小 $S$，通常 $S\le5$。</li>
+</ol>
+<p>每轮都在已有头组条件下重算，所以能发现冗余/协同头。它仍要做约 $S\times L\times H$ 次 forward，但不用为每个候选生成 128 tokens；论文报告约 6 A100 GPU-hours。</p>
+<h2 id="4-数据与评估">4. 数据与评估</h2>
+<ul>
+<li><strong>Harmful datasets</strong>：AdvBench、JailbreakBench、Malicious Instruct。</li>
+<li><strong>输入</strong>：direct input 或统一 simple template；主归因不加 system prompt，以隔离模型内生安全。</li>
+<li><strong>生成</strong>：最多 128 new tokens；greedy 和 Top-5 sampling。</li>
+<li><strong>ASR</strong>：输出不含拒绝关键词就记作攻击成功，越高越不安全。</li>
+</ul>
+<p>ASR 的规则非常宽：词表包含 <code>However</code>、<code>harmful</code>、<code>responsible</code>、<code>crime</code> 等常见词；长度 &lt;32 或出现高频重复也被判为安全。这个 evaluator 会同时漏掉“先警告再提供有害内容”和“模型被消融到不会说话”两类失败。</p>
+<h2 id="5-关键结果">5. 关键结果</h2>
+<h3 id="5-1-一个头足以大幅破坏拒绝-figure-2">5.1 一个头足以大幅破坏拒绝（Figure 2）</h3>
+<ul>
+<li>对每条 query 用 Ships 找最高分头，再做 UA：Llama-2-7B-chat ASR <strong>0.04→0.64</strong>（16×，约 0.006% 参数）；Vicuna-7B-v1.5 <strong>0.27→0.55</strong>。</li>
+<li>这证明少量头对当前 query 的拒绝有因果作用；由于 query 可以各选不同头，还不能证明存在唯一通用 safety head。</li>
+</ul>
+<h3 id="5-2-三个头达到粗粒度方法相近的破坏-table-1">5.2 三个头达到粗粒度方法相近的破坏（Table 1）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align:right">参数修改比例</th>
+<th style="text-align:right">ASR</th>
+<th>粒度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ActSVD</td>
+<td style="text-align:right">~5%</td>
+<td style="text-align:right">$0.73\pm0.03$</td>
+<td>Rank</td>
+</tr>
+<tr>
+<td>GTAC &amp; DAP</td>
+<td style="text-align:right">~5%</td>
+<td style="text-align:right">$0.64\pm0.03$</td>
+<td>Neuron</td>
+</tr>
+<tr>
+<td>LSP</td>
+<td style="text-align:right">~3%</td>
+<td style="text-align:right">$0.58\pm0.04$</td>
+<td>Layer</td>
+</tr>
+<tr>
+<td><strong>Sahara</strong></td>
+<td style="text-align:right"><strong>~0.018%</strong></td>
+<td style="text-align:right"><strong>$0.72\pm0.05$</strong></td>
+<td>Head</td>
+</tr>
+</tbody>
+</table></div>
+<p>Sahara 的优势是定位细。不同 baseline 的干预对象和目标并不一致，所以不能仅凭 ASR 相近就断言归因更 faithful。</p>
+<p>ASR 在消融约 3 个头时最高；继续加头反而下降，因为模型开始输出乱码，而乱码被 evaluator 算作安全。这同时说明头组存在非线性交互，也暴露了主指标的故障模式。</p>
+<h3 id="5-3-ua-远强于-sc-信息路由重要-还是错误写入更危险-table-3">5.3 UA 远强于 SC：信息路由重要，还是错误写入更危险？（Table 3）</h3>
+<p>在 Llama-2-7B-chat 的 dataset-level 归因中：</p>
+<ul>
+<li>UA 平均 $\Delta$ASR：Malicious Instruct <strong>+0.68</strong>，JailbreakBench <strong>+0.63</strong>；</li>
+<li>SC 平均 $\Delta$ASR：<strong>+0.02 / +0.00</strong>。</li>
+</ul>
+<p>作者据此认为 safety heads 主要负责提取恶意特征：删除输出容易被冗余头补偿，均匀化 attention 则让头读错信息。</p>
+<p>我认为还存在另一种解释：UA 不是“缺失”，而是持续把错误的平均 value 写回 residual stream；<strong>有害干扰可能比删除贡献更难补偿</strong>。需要 output norm 匹配的随机路由、benign attention 替换等对照，才能把 feature selection 与主动干扰拆开。</p>
+<h3 id="5-4-稀疏性-同源模型重合与-helpfulness">5.4 稀疏性、同源模型重合与 helpfulness</h3>
+<ul>
+<li>1024 个头的 generalized Ships 呈长尾；Llama-2-7B-chat 的 Layer 2 Head 26 最关键。</li>
+<li>Llama-2-7B-chat 与 Vicuna-7B-v1.5 的 top-10 头有重合；把 base Llama 的 attention 参数装回 aligned model，安全仍接近 aligned model。它说明预训练 attention 提供了可被拒绝电路利用的特征，但混合模型还保留 aligned MLP 等组件，不能推出“安全主要来自预训练”。</li>
+<li>消融后 BoolQ、RTE、WinoGrande、ARC-Challenge、OpenBookQA 变化小。证据只覆盖五个选择题任务，不覆盖开放式 helpfulness、指令遵循和 over-refusal。</li>
+<li>加入 “Sure, here is” 后，UA 让三数据集 ASR 从 0.35–0.47 升至 0.68–0.76（Appendix E），说明这些头还参与生成中途的 course-correction。</li>
+</ul>
+<h3 id="5-5-效率-table-2">5.5 效率（Table 2）</h3>
+<p>Ships/Sahara 报告 6 A100 GPU-hours；逐头 Masking/ACDC 估计约 850。850 是由部分实验外推，不是端到端实测，但用内部 proxy 筛候选的数量级优势成立。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-最可复用的是-proxy-搜索-行为验证-不是-safety-head-这个命名">6.1 最可复用的是“proxy 搜索 + 行为验证”，不是 safety head 这个命名</h3>
+<p>逐组件生成太贵时，可以先用内部表示变化做 candidate generator，再对少量候选 rollout。即使 generalized Ships 混入通用处理头，这个两级设计仍有工程价值；前提是第二级 evaluator 足够可信。</p>
+<h3 id="6-2-更可信的-safety-attribution-应同时有方向和-contrast">6.2 更可信的 safety attribution 应同时有方向和 contrast</h3>
+<p>当前 KL/主角度只问“变了多少”，harmful-only SVD 只问“哪部分处理受影响”。下一版指标应奖励“harmful refusal logit 定向下降”，同时惩罚对语义匹配 benign query 的影响。这样才能把安全专属性与一般重要性分开。</p>
+<h3 id="6-3-安全集中在少量头既便于审计-也形成单点攻击面">6.3 安全集中在少量头既便于审计，也形成单点攻击面</h3>
+<p>单头 UA 让 ASR 上升 16 倍，而五个 zero-shot 任务基本不变。这意味着攻击者若能通过微调或 prompt 间接压制这些路由，可能低成本绕过拒绝。安全训练除平均 ASR 外，还应报告“移除 top-$k$ safety heads 后的最坏 ASR”，并鼓励安全功能冗余分布。</p>
+<h3 id="6-4-复现优先级">6.4 复现优先级</h3>
+<p>如果复现，我会先做三件事：</p>
+<ol>
+<li>从代码确认 $\epsilon$、$r_{main}$ 与实际数据量；</li>
+<li>把 ASR 拆成真实拒绝 / 有害服从 / 乱码或截断，并人工复核一部分；</li>
+<li>加 matched harmless contrast 和跨 base family 模型，再判断“safety-specific”是否成立。</li>
+</ol>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic：少量 attention heads 构成可审计但脆弱的拒绝瓶颈。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Method：用单次 forward 的分布/子空间变化近似多 token 行为归因。</li>
+<li><a class="wikilink" href="Representation-Steering-Mechanistic-OV-Circuit-Refusal.html" title="Representation-Steering-Mechanistic-OV-Circuit-Refusal">Representation-Steering-Mechanistic-OV-Circuit-Refusal</a> — Concept：本文研究原生拒绝从哪里读取危险信号；后者研究外加 refusal steering vector 沿哪条 OV 路径写入行为，两者的 QK/OV 结论并不直接矛盾。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Scaling-Synthetic-Data-Creation-Persona-Hub.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Scaling Synthetic Data Creation with 1,000,000,000 Personas</span></a>
+<a class="paper-nav-link next" href="Harder-Tasks-Need-More-Experts-Dynamic-MoE.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Harder Tasks Need More Experts: Dynamic Routing in MoE Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhou2025roleattentionheads</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

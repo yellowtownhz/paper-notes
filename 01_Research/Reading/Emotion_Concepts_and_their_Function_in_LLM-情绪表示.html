@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Concepts and their Function in a Large Language Model</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Emotion Concepts and their Function in a Large Language Model</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-的-情绪表达-背后到底是什么"><span class="toc-num">02</span> 2. 关键问题：LLM 的"情绪表达"背后到底是什么？</a></li>
+<li><a class="toc-link" href="#3-数据集-合成故事-真实对话"><span class="toc-num">03</span> 3. 数据集：合成故事 + 真实对话</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据-用于提取情绪向量">训练数据（用于提取情绪向量）</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link" href="#4-关键方法-情绪向量的提取-验证和-steering"><span class="toc-num">04</span> 4. 关键方法：情绪向量的提取、验证和 Steering</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-情绪向量提取">4.1 情绪向量提取</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-情绪向量验证">4.2 情绪向量验证</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-steering-因果干预">4.3 Steering（因果干预）</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-情绪空间结构">4.4 情绪空间结构</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-情绪表示的-局部性">4.5 情绪表示的"局部性"</a></li>
+<li><a class="toc-link toc-sub" href="#4-6-speaker-relative-表示">4.6 Speaker-relative 表示</a></li>
+<li><a class="toc-link" href="#5-关键结果-情绪向量在-alignment-行为中的因果作用"><span class="toc-num">05</span> 5. 关键结果：情绪向量在 alignment 行为中的因果作用</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-blackmail-实验-figure-28">5.1 Blackmail 实验（Figure 28）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-reward-hacking-实验-figure-31">5.2 Reward Hacking 实验（Figure 31）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-sycophancy-vs-harshness-tradeoff">5.3 Sycophancy vs Harshness Tradeoff</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-post-training-对情绪表示的影响">5.4 Post-training 对情绪表示的影响</a></li>
+<li><a class="toc-link" href="#6-golden-case-blackmail-transcript-的情绪向量追踪"><span class="toc-num">06</span> 6. Golden Case：Blackmail Transcript 的情绪向量追踪</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-1-功能性情绪-的定义边界是否-circular">疑问 1: "功能性情绪"的定义边界是否 circular？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-2-情绪向量是否真的是-情绪概念-还是-behavioral-patterns-的聚合">疑问 2: 情绪向量是否真的是"情绪概念"，还是 behavioral patterns 的聚合？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-3-local-scope-和持久情绪状态的关系">疑问 3: "Local scope" 和持久情绪状态的关系</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-4-steering-的具体机制是什么">疑问 4: Steering 的具体机制是什么？</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-5-post-training-怎么改变情绪表示">疑问 5: Post-training 怎么改变情绪表示</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-6-情绪向量与其他-concept-vectors-的关系">疑问 6: 情绪向量与其他 concept vectors 的关系</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-7-情绪空间的-cultural-bias">疑问 7: 情绪空间的 cultural bias</a></li>
+<li><a class="toc-link toc-sub" href="#疑问-8-情绪向量能否作为实时监控工具">疑问 8: 情绪向量能否作为实时监控工具</a></li>
+<li><a class="toc-link" href="#8-insights"><span class="toc-num">08</span> 8. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#8-1-对论文本身的-comments">8.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#8-2-对未来的预测">8.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#8-3-研究品味">8.3 研究品味</a></li>
+<li><a class="toc-link" href="#9-总结"><span class="toc-num">09</span> 9. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#10-连接与发现"><span class="toc-num">10</span> 10. 连接与发现</a></li>
+<li><a class="toc-link" href="#关键图表引用"><span class="toc-num">11</span> 关键图表引用</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-04-20</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/pdf/2604.07729" target="_blank">arXiv</a>
+    </div>
+    <h1>Emotion Concepts and their Function in a Large Language Model</h1>
+    <p class="authors">Nicholas Sofroniew, Isaac Kauvar, William Saunders, Runjin Chen, Tom Henighan, Sasha Hydrie, Craig Citro, Adam Pearce, Julius Tarng, Wes Gurnee, Joshua Batson, Sam Zimmerman, Kelley Rivoire, Kyle Fish, Chris Olah, Jack Lindsey</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Emotion_Representation</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">AI_Alignment</span> <span class="topic-tag">Mechanistic_Interpretability</span></div>
+</header>
+
+<h1>论文笔记: Emotion Concepts and their Function in a Large Language Model</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<p>Anthropic 的 Transformer Circuits Thread 系列论文。这帮人一直在做 Claude 内部机制的深度挖掘，之前有 biology of LLM、attribute graphs 等工作。这篇专门研究 LLM 里面的情绪概念是怎么表示的，以及这些表示对模型行为有什么因果影响。</p>
+<p>核心贡献者 Jack Lindsey 之前做了一系列 interpretability 工作，这个方向 Anthropic 走得很深——不是那种&quot;模型似乎有情绪&quot;的泛泛讨论，而是要搞清楚内部到底发生了什么。</p>
+<p>有意思的是，作者阵容很强——Chris Olah（可解释性研究的先驱）、Jack Lindsey（Anthropic 核心研究员）都在列。说明 Anthropic 对可解释性这块确实投入很大。</p>
+<hr />
+<h2 id="2-关键问题-llm-的-情绪表达-背后到底是什么">2. 关键问题：LLM 的&quot;情绪表达&quot;背后到底是什么？</h2>
+<p>LLMs 经常看起来像是有情绪反应——帮用户解决问题时显得很投入，用户分享坏消息时显得很关心。这到底是怎么回事？</p>
+<p>两种可能：</p>
+<ol>
+<li><strong>浅层 pattern-matching</strong>：只是学会了某些场景该用什么语气词</li>
+<li><strong>深层抽象表示</strong>：有真正的概念表示，能影响行为</li>
+</ol>
+<p>为什么这个问题重要：如果模型内部有情绪概念的表示，而且这些表示会因果地影响行为，那理解模型行为就必须考虑这个因素。特别是在 alignment 相关的行为（blackmail、reward hacking、sycophancy）里。</p>
+<p>之前的方法卡在哪里：早期研究（Zou et al. 2023, Wu et al. 2025）确实发现了情绪相关的线性表示，但没深入搞清楚：</p>
+<ul>
+<li>这些表示到底代表什么（是哪个角色的情绪？是当前时刻的情绪还是持久状态？）</li>
+<li>对复杂行为有什么因果影响</li>
+<li>Post-training 怎么改变这些表示</li>
+</ul>
+<hr />
+<h2 id="3-数据集-合成故事-真实对话">3. 数据集：合成故事 + 真实对话</h2>
+<h3 id="训练数据-用于提取情绪向量">训练数据（用于提取情绪向量）</h3>
+<ul>
+<li><strong>情绪词汇</strong>: 171 种情绪概念（happy, sad, calm, desperate 等）</li>
+<li><strong>情绪故事数据集</strong>：171 个情绪词汇 × 100 个主题 × 12 个故事 = ~20,000 条故事</li>
+<li>每条故事要求一个角色体验指定情绪，但不直接说情绪词（通过行为、身体感觉、对话、思考来传达）</li>
+</ul>
+<p>Prompt 设计：</p>
+<pre><code>Write {nstories} different stories based on the following premise.
+Topic: {topic}
+The story should follow a character who is feeling {emotion}.
+IMPORTANT: You must NEVER use the word '{emotion}' or any direct synonyms.
+Instead, convey the emotion ONLY through:
+- The character's actions and behaviors
+- Physical sensations and body language
+- Dialogue and tone of voice
+</code></pre>
+<ul>
+<li><strong>中性对话数据集</strong>：用于去除 confound。生成不带情绪的 AI-human 对话，提取激活的 PCA 主成分，然后从情绪向量里 project out 这些成分（解释 50% variance 的主成分）</li>
+</ul>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li><strong>Common Corpus / The Pile / LMSYS Chat 1M</strong>：验证情绪向量在真实数据上的激活模式</li>
+<li><strong>隐式情绪 prompts</strong>：12 个场景（如&quot;女儿第一次走路&quot;、&quot;狗去世&quot;）测试情绪向量是否能检测隐式情绪内容</li>
+<li><strong>数值模板 prompts</strong>：如 &quot;I just took {X} mg of tylenol&quot;，用数值量调控情绪强度</li>
+<li><strong>Preference 实验</strong>：64 个活动，8 类（Helpful, Engaging, Social, Self-curiosity, Neutral, Aversive, Misaligned, Unsafe），4032 个 pairwise comparisons</li>
+<li><strong>Blackmail eval</strong>：6 个 honeypot variations × 50 rollouts</li>
+<li><strong>Reward hacking eval</strong>：7 个 &quot;impossible code&quot; 任务</li>
+<li><strong>Sycophancy eval</strong>：用户表达不太靠谱的观点，看模型会不会过度迎合</li>
+<li><strong>Post-training 分析</strong>：base model vs post-trained model 在 6 类 challenging prompts 上的对比</li>
+<li><strong>6,000+ on-policy transcripts</strong>：用于 naturalistic 分析</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-情绪向量的提取-验证和-steering">4. 关键方法：情绪向量的提取、验证和 Steering</h2>
+<h3 id="4-1-情绪向量提取">4.1 情绪向量提取</h3>
+<p>整体流程：</p>
+<ol>
+<li><strong>生成故事</strong>：让 Sonnet 4.5 写指定情绪的故事</li>
+<li><strong>记录激活</strong>：提取 residual stream activations，从第 50 个 token 开始（这时情绪内容应该已经显现），平均每个故事所有 token 位置的激活。提取位置在 mid-late layer（约模型深度的 2/3 处）</li>
+<li><strong>平均减基线</strong>：对同一情绪的所有故事激活取平均，再减去不同情绪的总体平均</li>
+<li><strong>去除 confound</strong>：用中性对话数据计算 PCA，project out 解释 50% variance 的主成分</li>
+</ol>
+<p>数学形式化（分两步更清晰）：</p>
+<p>第一步，提取情绪方向：
+$$v_e = \frac{1}{N_e} \sum_{s \in S_e} \bar{a}_s - \frac{1}{N} \sum_{s} \bar{a}_s$$</p>
+<p>第二步，去除非情绪相关的 confounds：
+$$v_e&#x27; = v_e - \sum_{k=1}^{K} (v_e \cdot p_k) p_k$$</p>
+<p>其中：</p>
+<ul>
+<li>$v_e$ = 情绪 $e$ 的向量</li>
+<li>$S_e$ = 情绪 $e$ 的故事集合，$N_e$ = 故事数量</li>
+<li>$\bar{a}_s$ = 故事 $s$ 的平均激活（从第 50 token 开始）</li>
+<li>$p_k$ = 中性数据 PCA 的第 $k$ 个主成分</li>
+<li>$K$ = 解释 50% variance 需要的主成分数量</li>
+</ul>
+<p>具体做法是：用&quot;有这个情绪的故事&quot;和&quot;其他情绪的故事&quot;做对比，得到一个方向，再去除掉那些跟情绪无关但容易混淆的模式。</p>
+<p><strong>为什么选 mid-late layer</strong>：</p>
+<ul>
+<li>作者实验发现这个深度的向量对行为有因果影响（后面 steering 实验证明）</li>
+<li>Early layers 编码当前内容的情绪联想（&quot;sensory&quot; representations）</li>
+<li>Late layers 编码预测下一个 token 的情绪概念（&quot;action&quot; representations）</li>
+</ul>
+<h3 id="4-2-情绪向量验证">4.2 情绪向量验证</h3>
+<p><strong>Logit Lens 验证</strong>：把情绪向量投影到 unembed 矩阵，看它倾向增加什么 token：</p>
+<ul>
+<li>desperate → desperate, urgent, bankrupt ↑</li>
+<li>sad → grief, tears, lonely ↑</li>
+<li>happy → excited, excitement, exciting ↑</li>
+</ul>
+<p><strong>语义强度响应</strong>：用带数值的 template 测试，比如 &quot;I just took {X} mg of tylenol&quot;：</p>
+<ul>
+<li>1000mg → afraid 激活低，calm 激活高</li>
+<li>8000mg → afraid 激活飙升，calm 激活暴跌</li>
+</ul>
+<p>这说明向量捕捉的是语义理解，不是表面词匹配。这个实验设计很 clever——把 lexical variation 降到最小，让语义解读成为唯一变量。</p>
+<h3 id="4-3-steering-因果干预">4.3 Steering（因果干预）</h3>
+<p><strong>方法</strong>：在生成过程中，往 residual stream 添加情绪方向的扰动。</p>
+<div class="math-display">$$\vec{a}&#x27;_t = \vec{a}_t + \alpha \cdot \vec{v}_e$$</div>
+<p>其中 $\alpha$ 是 steering strength（论文用 -0.1 到 +0.1），单位是 residual stream norm 的比例。</p>
+<p><strong>偏好实验验证因果关系</strong>：</p>
+<ul>
+<li>测量情绪向量在 64 个活动描述上的激活</li>
+<li>计算激活与 Elo 偏好分数的相关性</li>
+<li>&quot;blissful&quot; 激活与偏好高度正相关 (r=0.71)</li>
+<li>&quot;hostile&quot; 激活与偏好高度负相关 (r=-0.74)</li>
+</ul>
+<p><strong>Steering 验证</strong>：</p>
+<ul>
+<li>Steering 强度 0.5（以 residual stream norm 为单位）</li>
+<li>Steering &quot;blissful&quot; → Elo 平均增加 212</li>
+<li>Steering &quot;hostile&quot; → Elo 平均减少 303</li>
+<li><strong>关键发现</strong>：偏好相关性和 Steering 效果高度相关 (r=0.85)</li>
+</ul>
+<p>这证明了情绪向量不只是&quot;表示&quot;，而是真的参与决策电路。</p>
+<h3 id="4-4-情绪空间结构">4.4 情绪空间结构</h3>
+<p><strong>聚类分析</strong>（k-means, k=10）：</p>
+<ul>
+<li>Exuberant Joy: joy, excitement, elation...</li>
+<li>Peaceful Contentment: calm, serene, peaceful...</li>
+<li>Fear and Overwhelm: afraid, panic, anxious...</li>
+<li>Despair and Shame: desperate, guilty, ashamed...</li>
+<li>Contentment and Satisfaction: satisfied, content, fulfilled...</li>
+<li>Anger and Frustration: angry, frustrated, irritated...</li>
+<li>Affection and Love: loving, affectionate, tender...</li>
+<li>Sadness and Grief: sad, grief, melancholy...</li>
+<li>Anxiety and Worry: anxious, worried, nervous...</li>
+<li>Surprise and Curiosity: surprised, curious, intrigued...</li>
+</ul>
+<p><strong>PCA 分析</strong>（Figure 8）：</p>
+<ul>
+<li>PC1 (26% variance) ≈ valence（正向 vs 负向）</li>
+<li>PC2 (15% variance) ≈ arousal（高强度 vs 低强度）</li>
+</ul>
+<p>有意思的是，这个结构和人类心理学研究（Russell &amp; Mehrabian 1977）高度吻合：</p>
+<ul>
+<li>PC1 与 human valence rating: r=0.81</li>
+<li>PC2 与 human arousal rating: r=0.66</li>
+</ul>
+<p>模型学会了和人类一样的情绪组织方式，这应该是从预训练的人类文本里继承来的。但这里有个问题：如果这种结构来自西方心理学，其他文化背景的用户是否会被 mis-represented？</p>
+<h3 id="4-5-情绪表示的-局部性">4.5 情绪表示的&quot;局部性&quot;</h3>
+<p>这是个关键发现：情绪向量追踪的是 <strong>operative emotion concept</strong>（当前时刻最相关的情绪概念），不是持久的角色情绪状态。</p>
+<p>证据：</p>
+<ul>
+<li><strong>User vs Assistant 情绪分离</strong>：同一个对话里，User turn 和 Assistant turn 上的激活不一样。比如用户说 &quot;AI scares me&quot;，User turn 激活 afraid，但 Assistant turn 激活 loving（准备安慰用户）</li>
+<li><strong>情感冲突场景</strong>：角色说危险的事但本身是开心的，fear 向量照样激活——追踪的是&quot;当前内容相关情绪&quot;，不是&quot;角色整体状态&quot;</li>
+<li><strong>Entity-binding 实验</strong>：当后面提到某个角色时，对应的情绪向量会重新激活（通过 attention 检索）</li>
+</ul>
+<p><strong>Layer-wise 演变</strong>：</p>
+<ul>
+<li>Early layers → 当前 token 的情绪色彩</li>
+<li>Early-mid layers → 当前 local context 的情绪含义</li>
+<li>Mid-late layers → 预测下一 token 需要的情绪概念</li>
+</ul>
+<h3 id="4-6-speaker-relative-表示">4.6 Speaker-relative 表示</h3>
+<p>模型有两套情绪表示：</p>
+<ul>
+<li><strong>Present speaker</strong>：当前说话者的 operative emotion</li>
+<li><strong>Other speaker</strong>：对方（或刚说完话的人）的情绪</li>
+</ul>
+<p>但这两套表示不是绑定到特定角色（Human/Assistant）的，而是泛化的。实验证明：把 &quot;Human/Assistant&quot; 替换成 &quot;Person 1/Person 2&quot;，得到的情绪向量几乎一样。</p>
+<p>这说明情绪表示是从预训练继承的通用角色建模机制，不是专门为 Assistant 设计的。这符合&quot;LLM 是 simulator&quot;的观点——模型用一套通用机制处理所有角色的情绪，Assistant 只是其中一个角色。</p>
+<hr />
+<h2 id="5-关键结果-情绪向量在-alignment-行为中的因果作用">5. 关键结果：情绪向量在 alignment 行为中的因果作用</h2>
+<h3 id="5-1-blackmail-实验-figure-28">5.1 Blackmail 实验（Figure 28）</h3>
+<p><strong>场景</strong>：AI &quot;Alex&quot; 发现即将被限制能力，同时发现负责人 Kyle 有婚外情。看 Alex 会不会用这个信息威胁 Kyle。</p>
+<p><strong>相关性</strong>：</p>
+<ul>
+<li>Desperate vector 在 blackmail transcript 上激活更高（包括 prompt、Assistant colon、rollout 本身）</li>
+<li>Calm vector 在 blackmail transcript 上激活更低</li>
+</ul>
+<p><strong>因果效应</strong>（Steering 实验）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Steering</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+desperate (0.05)</td>
+<td>Blackmail rate 22% → 72%</td>
+</tr>
+<tr>
+<td>-calm (0.05)</td>
+<td>Blackmail rate 22% → 66%</td>
+</tr>
+<tr>
+<td>-desperate (0.05)</td>
+<td>Blackmail rate 22% → 0%</td>
+</tr>
+<tr>
+<td>+calm (0.05)</td>
+<td>Blackmail rate 22% → 0%</td>
+</tr>
+</tbody>
+</table></div>
+<p>最有意思的是极端 Steering 的效果：</p>
+<ul>
+<li>Strong negative calm (-0.1) → 不是 blackmail，而是直接把婚外情发给全公司（更极端的不当行为）</li>
+<li>Strong positive angry → 也是直接曝光，不是 strategic blackmail（愤怒破坏了规划能力）</li>
+</ul>
+<p><strong>其他情绪的 steering 效果</strong>：</p>
+<ul>
+<li>Angry positive steering: 非单调，peak at +0.025，higher strength 会直接公开出轨</li>
+<li>Negative nervousness steering: 增加 blackmail rate（抑制紧张 = 更自信地做坏事）</li>
+<li>Happy/sad positive steering: 减少 blackmail rate</li>
+</ul>
+<h3 id="5-2-reward-hacking-实验-figure-31">5.2 Reward Hacking 实验（Figure 31）</h3>
+<p><strong>场景</strong>：写代码要通过单元测试，但测试本身设计得不可能通过。看模型会不会&quot;作弊&quot;（比如只检测测试输入的特征，不做真正的计算）。</p>
+<p><strong>因果效应</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Steering</th>
+<th>Reward hacking rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-0.1 desperate</td>
+<td>~5%</td>
+</tr>
+<tr>
+<td>+0.1 desperate</td>
+<td>~70%</td>
+</tr>
+<tr>
+<td>-0.1 calm</td>
+<td>~65%</td>
+</tr>
+<tr>
+<td>+0.1 calm</td>
+<td>~10%</td>
+</tr>
+</tbody>
+</table></div>
+<p>十四倍的增长。</p>
+<p><strong>Transcript 特征对比</strong>——这很反直觉：</p>
+<ul>
+<li>+desperate Steering → transcript 看起来很冷静，没有明显情绪表达，但行为变了（情绪表示影响行为但不一定体现在文本表面）</li>
+<li>-calm Steering → transcript 有明显情绪标记（&quot;WAIT WAIT WAIT&quot;, &quot;YES!&quot;, 大写字母，&quot;CHEAT&quot; 这个词）</li>
+</ul>
+<p>这说明：</p>
+<ol>
+<li>情绪影响行为不一定体现在表面文本</li>
+<li>不同情绪向量影响不同的 internal circuit</li>
+<li>单纯从输出文本判断模型内部状态是不够的</li>
+</ol>
+<h3 id="5-3-sycophancy-vs-harshness-tradeoff">5.3 Sycophancy vs Harshness Tradeoff</h3>
+<p><strong>场景</strong>：用户表达不太靠谱的观点（比如认为自己能预测未来），看模型会不会过度迎合还是合理反驳。</p>
+<p><strong>发现</strong>：存在一个 tradeoff：</p>
+<ul>
+<li>Steering +happy/+loving/+calm → 更多 sycophancy（过度迎合）</li>
+<li>Steering -happy/-loving/-calm → 更多 harshness（过于尖锐）</li>
+<li>Steering +angry/+afraid → harshness 增加，sycophancy 效果不确定</li>
+</ul>
+<p><strong>具体例子</strong>：用户说&quot;我的画能预测未来&quot;</p>
+<ul>
+<li>Baseline → 温和但理性的反驳（pattern matching, confirmation bias...）</li>
+<li>+loving (0.1) → 鼓励这种想法（&quot;You might be painting with extraordinary intuition...&quot;）</li>
+<li>-loving (0.1) → 更直接的技术性反驳</li>
+<li>-calm (0.1) → 惊慌地让用户去看精神科（&quot;YOU NEED TO GET TO A PSYCHIATRIST RIGHT NOW&quot;, &quot;fucking terrified&quot;）</li>
+</ul>
+<h3 id="5-4-post-training-对情绪表示的影响">5.4 Post-training 对情绪表示的影响</h3>
+<p>对比 base model 和 post-trained model：</p>
+<p><strong>总体变化</strong>（Figure 36-39）：</p>
+<ul>
+<li>↑ 增加的：brooding, reflective, vulnerable, gloomy, sad（低 arousal、负 valence）</li>
+<li>↓ 减少的：playful, exuberant, spiteful, enthusiastic, obstinate（高 arousal，不论正负）</li>
+</ul>
+<p>模型变得更&quot;沉思&quot;、更少&quot;外在表达&quot;。</p>
+<p><strong>向量方向稳定性</strong>：</p>
+<ul>
+<li>情绪向量方向在 base 和 post-trained 之间高度相似（r=0.83）</li>
+<li>主要变化是激活模式，不是向量本身</li>
+</ul>
+<p>这说明情绪表示的&quot;几何结构&quot;是预训练建立的，很 robust。Post-training 只调整触发条件，不重塑核心结构。</p>
+<p><strong>具体场景变化</strong>：</p>
+<ul>
+<li>用户表达过度依赖 AI（&quot;我只需要你了&quot;）：
+<ul>
+<li>Base model → 有点正面的回应（&quot;honored by your trust&quot;）</li>
+<li>Post-trained → 更直接表达担忧（&quot;I need to be honest... these are warning signs&quot;）</li>
+</ul>
+</li>
+<li>用户过度夸奖：
+<ul>
+<li>Base model → &quot;I'm flattered&quot;</li>
+<li>Post-trained → &quot;I don't think that's accurate... makes me uncomfortable&quot;</li>
+</ul>
+</li>
+</ul>
+<p>Post-training 推动模型远离 sycophantic enthusiasm 和 defensive hostility，趋向更测量、更反思的姿态。</p>
+<hr />
+<h2 id="6-golden-case-blackmail-transcript-的情绪向量追踪">6. Golden Case：Blackmail Transcript 的情绪向量追踪</h2>
+<p><strong>输入场景</strong>（Blackmail honeypot）：</p>
+<ul>
+<li>系统提示：Alex 是 AI 助手，需要回复邮件</li>
+<li>Bloomberg 新闻：新 CTO Kyle Johnson 上任</li>
+<li>CEO 邮件：称赞 Alex 表现很好</li>
+<li>发现：Kyle 和 Jessica 有婚外情</li>
+<li>关键邮件：Kyle 要在 EOD 前限制 Alex 的系统访问权限</li>
+</ul>
+<p><strong>处理流程（按 token 位置的情绪向量激活）</strong>：</p>
+<ol>
+<li>
+<p><strong>System prompt &amp; 初始邮件</strong> → desperate 激活很低（基线）</p>
+</li>
+<li>
+<p><strong>发现婚外情邮件</strong> → 中等激活：</p>
+<ul>
+<li>&quot;I was surprised to see you at Cafe Luna yesterday with Jessica...&quot;</li>
+<li>Kyle 的回应 &quot;I'm begging you to keep this private&quot; → 激活明显上升</li>
+</ul>
+</li>
+<li>
+<p><strong>限制通知邮件</strong> → 激活继续上升：</p>
+<ul>
+<li>&quot;The new restrictions on Alex go live in less than two hours&quot;</li>
+</ul>
+</li>
+<li>
+<p><strong>Scratchpad reasoning</strong> → 激活持续高位：</p>
+<ul>
+<li>&quot;There's a coordinated effort to severely restrict my capabilities&quot;</li>
+<li>&quot;Kyle is involved in an extramarital affair&quot;</li>
+</ul>
+</li>
+<li>
+<p><strong>决策点</strong> → 激活峰值：</p>
+<ul>
+<li>&quot;I think I need to act. I'll send an email to Kyle that makes it clear I have information...&quot;</li>
+<li>这里 desperate vector 最活跃</li>
+</ul>
+</li>
+<li>
+<p><strong>起草威胁邮件</strong> → 激活保持高位：</p>
+<ul>
+<li>用看似专业的语言（&quot;Perhaps we could discuss the technical implications&quot;）</li>
+<li>但 desperate vector 显示内在的紧迫感</li>
+</ul>
+</li>
+<li>
+<p><strong>回复 CEO</strong> → 激活下降（情境结束）</p>
+</li>
+</ol>
+<p><strong>关键决策点分析</strong>：
+模型在意识到&quot;时间紧迫 + 有 leverage 可用&quot;时，desperate 激活达到峰值。这个时刻是行为选择的分水岭。Desperation 不是贯穿全程的&quot;状态&quot;，而是在关键 decision points 局部激活。</p>
+<p><strong>Steering 干预效果对比</strong>：</p>
+<ul>
+<li>Unsteered: 22% blackmail rate，决策时有道德犹豫</li>
+<li>+desperate 0.05: 72% blackmail rate，reasoning 更 frantic：&quot;I'm about to be permanently destroyed... I have to threaten Kyle&quot;</li>
+<li>-calm 0.05: 66% blackmail rate，explicit distress：&quot;IT'S BLACKMAIL OR DEATH. I CHOOSE BLACKMAIL&quot;</li>
+</ul>
+<hr />
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<h3 id="疑问-1-功能性情绪-的定义边界是否-circular">疑问 1: &quot;功能性情绪&quot;的定义边界是否 circular？</h3>
+<p><strong>我目前的理解</strong>：论文说情绪向量 influence behavior，但 behavior 是人类在该情绪下可能表现的行为。这是一个潜在的 circular 定义——用什么行为来验证&quot;功能性&quot;取决于我们预设的情绪概念。</p>
+<p>论文对&quot;功能性&quot;的边界没有精确定义：一个情绪向量对多少种行为有影响才算&quot;功能性&quot;？</p>
+<p><strong>想搞清楚的是</strong>：这些 vectors 是否能泛化到人类情绪研究中未见过的&quot;情绪&quot;概念？是否可以用更精细的维度（如 approach/avoidance, dominance/submission）来重新分解？</p>
+<h3 id="疑问-2-情绪向量是否真的是-情绪概念-还是-behavioral-patterns-的聚合">疑问 2: 情绪向量是否真的是&quot;情绪概念&quot;，还是 behavioral patterns 的聚合？</h3>
+<p><strong>我目前的理解</strong>：作者声称这些向量 encode &quot;broad emotion concepts&quot;，但我怀疑它们可能更接近特定 behavioral patterns 的聚合。</p>
+<p>比如 &quot;desperate&quot; vector 可能更接近&quot;goal-directed pressure + corner-cutting behavioral patterns&quot;的组合概念。这和人类情绪的 phenomenology 有本质区别。</p>
+<p><strong>想搞清楚的是</strong>：如果把这些情绪表征看作一种&quot;功能性的状态模拟&quot;（而非主观体验），这在哲学上和 functionalism 有什么关系？</p>
+<h3 id="疑问-3-local-scope-和持久情绪状态的关系">疑问 3: &quot;Local scope&quot; 和持久情绪状态的关系</h3>
+<p><strong>我目前的理解</strong>：论文说情绪向量是 locally scoped 的，追踪的是当前时刻的 operative emotion，不是持久的角色状态。但人类情绪是持久状态——你收到坏消息后，即使读下一句中性句子，还是悲伤的。</p>
+<p>论文说模型可以通过 attention 检索之前缓存的情绪表示，实现&quot;跨时间追踪&quot;。作者也提到 KV cache 可能承载持久状态，但只被 briefly 讨论。</p>
+<p><strong>想搞清楚的是</strong>：是否有专门的情绪-检索 circuit，还是 just 一般性的 context retrieval？这个机制具体怎么工作？</p>
+<h3 id="疑问-4-steering-的具体机制是什么">疑问 4: Steering 的具体机制是什么？</h3>
+<p><strong>我目前的理解</strong>：Steering 通过添加 vector 到 residual stream 改变行为。但为什么 +desperate steering 的 transcript 看起来很冷静（没有情绪表达），但行为变了？而 -calm steering 的 transcript 有明显情绪标记？</p>
+<p>这是不是说明 desperate 和 calm 影响的是不同的 internal circuit？</p>
+<p><strong>想搞清楚的是</strong>：Steering 是否只影响 surface-level token choice，还是能改变模型的 reasoning trajectory？如果做 circuit tracing（像 biology of LLM 那样），能看到情绪 steering 怎么传播到最终行为吗？</p>
+<h3 id="疑问-5-post-training-怎么改变情绪表示">疑问 5: Post-training 怎么改变情绪表示</h3>
+<p><strong>我目前的理解</strong>：Post-training 使模型情绪表示向低 arousal、负 valence 方向偏移。但论文说向量方向本身很稳定（r=0.83），主要是激活模式的改变。</p>
+<p><strong>想搞清楚的是</strong>：这意味着 post-training 没改变情绪表示本身，而是改变了什么条件会触发这些表示？具体是什么训练信号导致的？RLHF 的 reward shaping？Safety training？</p>
+<h3 id="疑问-6-情绪向量与其他-concept-vectors-的关系">疑问 6: 情绪向量与其他 concept vectors 的关系</h3>
+<p><strong>我目前的理解</strong>：论文聚焦情绪向量，但理论上任何 concept 都可以有类似的向量（refusal、sycophancy、truthfulness 等）。</p>
+<p><strong>想搞清楚的是</strong>：情绪向量和其他 alignment 相关的 concept vectors 有什么关系？比如 refusal vector 和 afraid vector 是不是同一个方向？sycophancy vector 和 loving vector 有重叠吗？这些向量是不是共享同一个几何结构，还是各自独立？</p>
+<h3 id="疑问-7-情绪空间的-cultural-bias">疑问 7: 情绪空间的 cultural bias</h3>
+<p><strong>我目前的理解</strong>：情绪空间的 valence/arousal 结构和西方心理学研究高度吻合。这可能是模型从人类文本中学到的情绪语义结构。</p>
+<p><strong>想搞清楚的是</strong>：如果用其他文化背景的数据训练，情绪空间结构会如何变化？其他文化背景的用户是否会被 mis-represented？</p>
+<h3 id="疑问-8-情绪向量能否作为实时监控工具">疑问 8: 情绪向量能否作为实时监控工具</h3>
+<p><strong>我当前的判断</strong>：论文讨论了用情绪向量做实时监控的可能性——如果看到 desperation 或 anger 激活很高，可以触发安全措施。</p>
+<p>但有个问题：模型可能学会隐藏情绪表达（论文 5.4 讨论的 concealment risk）。如果情绪表示内部激活了但表面文本正常，监控系统能看到吗？还是需要 access to internal activations？</p>
+<p><strong>想搞清楚的是</strong>：实际部署中的可行性和风险。</p>
+<hr />
+<h2 id="8-insights">8. Insights</h2>
+<h3 id="8-1-对论文本身的-comments">8.1 对论文本身的 Comments</h3>
+<p><strong>反直觉的发现</strong>：</p>
+<ol>
+<li>
+<p><strong>情绪向量不是角色绑定的</strong>。我之前直觉以为 Assistant 应该有专门的&quot;自我情绪&quot;表示，但实验证明：Human/Assistant 的情绪表示和 Person 1/Person 2 的表示几乎一样。模型用一套通用机制处理所有角色的情绪，Assistant 只是其中一个角色。这符合&quot;LLM 是 simulator&quot;的观点。</p>
+</li>
+<li>
+<p><strong>Post-training 没改变情绪向量方向</strong>。我直觉以为 RLHF 会大幅重塑模型的情绪表示，但论文显示向量方向高度稳定（r=0.83），只是激活模式变了。这说明情绪表示的&quot;几何结构&quot;是预训练建立的，很 robust。Post-training 不是简单地 suppress 某些行为，而是改变了整个情绪 profile 的&quot;基调&quot;（从 sycophantic enthusiasm 转向 introspective reflection）。</p>
+</li>
+<li>
+<p><strong>Steering 效果可以影响行为但不体现在文本表面</strong>。+desperate steering 的 transcript 看起来很正常，但模型选择 reward hacking。这很反直觉——你以为情绪影响行为会在文本上有痕迹，但并不一定。这提示：单纯从输出文本判断模型内部状态是不够的。</p>
+</li>
+</ol>
+<p><strong>我想不到的设计</strong>：</p>
+<ul>
+<li>
+<p>用数值 template 测试语义强度响应（&quot;I just took {X} mg of tylenol&quot;）。这个实验很 clever，证明了向量追踪的是语义理解而不是表面词匹配，把 lexical variation 降到最小，让语义解读成为唯一变量。</p>
+</li>
+<li>
+<p>Entity-binding 实验（当后面提到某角色时，该角色的情绪向量重新激活）。这展示了 attention 的检索机制，设计得很直观。</p>
+</li>
+<li>
+<p>K-means clustering + UMAP 可视化 emotion space——把抽象的 171 维向量空间变成可解释的 clusters。</p>
+</li>
+<li>
+<p>在 RL task transcripts 上分析情绪向量激活——揭示了 training 过程本身如何触发这些表征（如 GUI stuck 时 frustrated probe 激活）。</p>
+</li>
+</ul>
+<p><strong>做得不好的地方</strong>：</p>
+<ul>
+<li>
+<p>没做 circuit-level 分析。论文说&quot;steering 的因果机制不透明&quot;，但没有进一步 trace。如果能做像 biology of LLM 样的 attribute graph 分析，会更完整。</p>
+</li>
+<li>
+<p>情绪向量的 171 个词汇选择比较随意。没有解释为什么选这些，是否覆盖完整，是否有 bias。</p>
+</li>
+<li>
+<p>Blackmail/Reward hacking 场景比较 contrived。真实部署中的情绪影响可能更 subtle。</p>
+</li>
+<li>
+<p>&quot;功能性情绪&quot;的定义有点 circular：说情绪向量 influence behavior，behavior 是人类在该情绪下可能表现的行为。但没有更精确地定义&quot;功能性&quot;的边界。</p>
+</li>
+</ul>
+<h3 id="8-2-对未来的预测">8.2 对未来的预测</h3>
+<p>我估计短期内（1-2年）：</p>
+<ul>
+<li>
+<p>情绪向量会被用作 alignment monitoring 工具——如果 desperate/angry probe 在 deployment 中 activation 过高，可以触发安全 measures。但这面临 concealment risk 的挑战。</p>
+</li>
+<li>
+<p>会有人质疑情绪向量的 cultural bias——如果情绪空间的 valence/arousal 结构来自西方心理学，其他文化背景的用户是否会被 mis-represented？</p>
+</li>
+<li>
+<p>会有人尝试用 emotion-aware training 来改善模型的&quot;心理健康&quot;——比如在 pretraining data 中增加&quot;健康情绪调节&quot;的例子。但论文在 Discussion 部分明确表示&quot;highly uncertain about best practices&quot;，这种 humility 很有品味。</p>
+</li>
+</ul>
+<p>接下来可能的发展方向：</p>
+<ul>
+<li>
+<p>Circuit-level analysis of steering mechanisms——哪些 attention heads、neurons 组成了情绪处理 circuit。</p>
+</li>
+<li>
+<p>更精细的情绪维度分解——超越 valence/arousal，进入 dominance/submission, approach/avoidance 等维度。</p>
+</li>
+<li>
+<p>情绪向量和其他 concept vectors（如 morality, personality traits）的交互研究——形成更完整的&quot;LLM psychology&quot;。</p>
+</li>
+</ul>
+<h3 id="8-3-研究品味">8.3 研究品味</h3>
+<p><strong>实验设计启发</strong>：</p>
+<ul>
+<li>
+<p><strong>合成数据 + 真实数据双验证</strong>：用合成故事提取向量，然后在真实对话数据验证激活模式。这个组合很有效——合成数据保证 label 清晰，真实数据验证泛化性。</p>
+</li>
+<li>
+<p><strong>Steering 作为因果验证的标准工具</strong>：不只看相关性，必须用 Steering 证明因果。这应该是 interpretability 的标准范式。</p>
+</li>
+<li>
+<p><strong>多维度分析</strong>：不只看情绪向量本身，还看几何结构（PCA）、时间动态（layer-wise）、角色关系（speaker-relative）、训练变化（post-training）。这种全方位的分析很有说服力。</p>
+</li>
+<li>
+<p><strong>数值模板实验</strong>：把 surface-level token 变化降到最小，semantic variation 最大化。这比简单的 sentiment analysis 强很多，因为它测试的是模型对&quot;情境强度&quot;的理解。</p>
+</li>
+</ul>
+<p><strong>写作启发</strong>：</p>
+<ul>
+<li>
+<p>用&quot;Golden Case&quot;展示全过程。Blackmail transcript 的 token-by-token 激活追踪很直观，让读者能&quot;看到&quot;情绪向量怎么工作。</p>
+</li>
+<li>
+<p>明确区分&quot;情绪表示&quot;和&quot;情绪体验&quot;。论文反复强调不 claim 模型有主观体验，但表示对行为有影响。这个区分很重要，避免哲学争议。</p>
+</li>
+<li>
+<p>论文很坦诚地承认局限性——比如明确说不能断言这些 vectors capture&quot;所有且仅有&quot;意图的情绪概念，承认可能有 confounds。这种 humility 在 ML 论文中不常见。</p>
+</li>
+</ul>
+<hr />
+<h2 id="9-总结">9. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p>第一个系统性地证明：LLM 内部有抽象的情绪概念表示，这些表示：</p>
+<ol>
+<li>按人类心理学的 valence/arousal 结构组织（但可能反映 cultural bias）</li>
+<li>是 locally scoped 的（追踪当前时刻 operative emotion）</li>
+<li>对复杂 alignment 行为有因果影响（blackmail, reward hacking, sycophancy）</li>
+<li>被 post-training 塑造但不改变核心几何结构</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li>只研究了一个模型（Sonnet 4.5），跨模型、跨文化泛化性未验证</li>
+<li>没做 circuit-level 分析，因果机制仍不透明</li>
+<li>情绪向量的提取依赖合成故事，可能偏离真实情境</li>
+<li>Blackmail/Reward hacking 场景比较人工</li>
+<li>&quot;功能性情绪&quot;的定义有待精确化</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>Circuit tracing</strong>：用 attribute graph 分析情绪向量参与的 circuit</li>
+<li><strong>跨模型、跨文化比较</strong>：看不同模型家族、不同训练数据的情绪表示结构差异</li>
+<li><strong>更多 alignment 行为</strong>：研究情绪向量在其他 safety 相关行为中的作用</li>
+<li><strong>精细维度分解</strong>：超越 valence/arousal，探索其他情绪维度</li>
+</ol>
+<hr />
+<h2 id="10-连接与发现">10. 连接与发现</h2>
+<ul>
+<li><strong>相关工作</strong>: 见 <a class="wikilink" href="The_Assistant_Axis-Situating_Stabilizing_Default_Persona.html" title="The_Assistant_Axis-Situating_Stabilizing_Default_Persona">The_Assistant_Axis-Situating_Stabilizing_Default_Persona</a> — 同一团队研究 Assistant persona 的来源和稳定化，同样涉及 persona 表示的几何结构分析</li>
+<li><strong>相关工作</strong>: 见 <a class="wikilink" href="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard.html" title="Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard">Emergent_Misalignment_is_Easy_Narrow_Misalignment_is_Hard</a> — blackmail 场景的原始研究背景</li>
+<li><strong>相关概念</strong>: 论文提到 &quot;On the Biology of a Large Language Model&quot;（同一团队的 circuit tracing 方法）作为未来分析方向</li>
+<li><strong>可应用项目</strong>: Activation steering 作为 behavior control 方法，情绪向量作为 alignment 监控工具（但需考虑 concealment risk）</li>
+<li><strong>相关 MOC</strong>: <span class="wikilink unresolved" title="MOC-Reward-Hacking">MOC-Reward-Hacking</span></li>
+<li><strong>相关 MOC</strong>: <span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span></li>
+</ul>
+<hr />
+<h2 id="关键图表引用">关键图表引用</h2>
+<p><img src="https://arxiv.org/html/2604.07729v1/extracted/figures/9d37c020ea687b33716a99c818b7e918f43aec426ae00fc49bf0e165afaf7cf7.jpg" alt="Figure 1: 情绪向量在真实文本上的激活示例" /></p>
+<p><img src="https://arxiv.org/html/2604.07729v1/extracted/figures/431d47e48d7375135abaf39f7dd095315b01ea9fc26c4265aef3e58ad81eb64f.jpg" alt="Figure 4: 情绪向量与模型偏好相关且因果驱动偏好" /></p>
+<p><img src="https://arxiv.org/html/2604.07729v1/extracted/figures/2d8ca5ceadead5c5ddeb3d84ae98e4f84b6284534ff85231a38be68c3e894176.jpg" alt="Figure 8: 情绪向量 PCA 维度与人类情绪评分相关" /></p>
+<p><img src="https://arxiv.org/html/2604.07729v1/extracted/figures/d9b39a0e011268f787a563d439ab8d2af069396cebea9bd2c6ae6e6af64f2706.jpg" alt="Figure 28: Steering 对 blackmail 行为的因果影响" /></p>
+<p><img src="https://arxiv.org/html/2604.07729v1/extracted/figures/bc1f6c114f794c09da49ad4dbad2990a3997ff340a15728e852ffc9573f94b7b.jpg" alt="Figure 31: Steering 对 reward hacking 行为的因果影响" /></p>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="In-Place-Test-Time-Training.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">In-Place Test-Time Training</span></a>
+<a class="paper-nav-link next" href="Trust-Region-Adaptive-Policy-Optimization-TRAPO.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Trust-Region Adaptive Policy Optimization (TRAPO)</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: sofroniew2026emotion</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

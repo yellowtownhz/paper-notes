@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's the Plan? Metrics for Implicit Planning in LLMs</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">What's the Plan? Metrics for Implicit Planning in LLMs</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-llm-在-next-token-prediction-训练下是否具备隐式规划能力"><span class="toc-num">02</span> 2. 关键问题：LLM 在 next token prediction 训练下是否具备隐式规划能力？</a></li>
+<li><a class="toc-link" href="#3-数据集-押韵对联-名词问答"><span class="toc-num">03</span> 3. 数据集：押韵对联 + 名词问答</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-押韵数据集">3.1 押韵数据集</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-名词问答数据集">3.2 名词问答数据集</a></li>
+<li><a class="toc-link" href="#4-关键方法-activation-steering-验证隐式规划"><span class="toc-num">04</span> 4. 关键方法：Activation Steering 验证隐式规划</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-核心思想">4.1 核心思想</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-steering-向量计算">4.2 Steering 向量计算</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-steering-应用">4.3 Steering 应用</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-1-steering-实现细节">4.3.1 Steering 实现细节</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-评估指标">4.4 评估指标</a></li>
+<li><a class="toc-link toc-sub" href="#4-5-实验模型">4.5 实验模型</a></li>
+<li><a class="toc-link" href="#5-关键实验-steering-可以操控隐式规划"><span class="toc-num">05</span> 5. 关键实验：Steering 可以操控隐式规划</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-押韵生成中的隐式规划">5.1 主实验：押韵生成中的隐式规划</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-模型规模与规划能力">5.2 模型规模与规划能力</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-instruction-tuning-提升规划能力">5.3 Instruction Tuning 提升规划能力</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-问答任务中的隐式规划">5.4 问答任务中的隐式规划</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-电路分析-哪些注意力头在做规划">5.5 电路分析：哪些注意力头在做规划？</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-attention-ablation-验证">5.6 Attention Ablation 验证</a></li>
+<li><a class="toc-link" href="#6-golden-case-一条数据的完整流程"><span class="toc-num">06</span> 6. Golden Case：一条数据的完整流程</a></li>
+<li><a class="toc-link" href="#7-insights-隐式规划是-llm-的通用能力"><span class="toc-num">07</span> 7. Insights：隐式规划是 LLM 的通用能力</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#9-1-与-anthropic-introspection-研究的对比">9.1 与 Anthropic Introspection 研究的对比</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-12</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/pdf/2601.20164" target="_blank">arXiv</a>
+    </div>
+    <h1>What's the Plan? Metrics for Implicit Planning in LLMs</h1>
+    <p class="authors">Jim Maar, Denis Paperno, Callum McDougall, Neel Nanda</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Latent_Reasoning</span> <span class="topic-tag">Activation_Steering</span></div>
+</header>
+
+<h1>论文笔记: What's the Plan? Metrics for Implicit Planning in LLMs</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Jim Maar (HPI/University of Potsdam), Denis Paperno (Utrecht University), Callum McDougall, Neel Nanda (Google DeepMind)</li>
+<li><strong>团队</strong>: HPI/University of Potsdam + Utrecht University + Google DeepMind</li>
+<li><strong>发表</strong>: ICLR 2026</li>
+<li><strong>链接</strong>: https://arxiv.org/pdf/2601.20164</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-llm-在-next-token-prediction-训练下是否具备隐式规划能力">2. 关键问题：LLM 在 next token prediction 训练下是否具备隐式规划能力？</h2>
+<p><strong>核心动机</strong>：</p>
+<p>语言模型训练目标是 next token prediction，但实际生成中展现出&quot;前瞻性&quot;行为——模型可能在选择当前 token 时就已经&quot;考虑&quot;了未来的 token。这种现象被称为<strong>隐式规划（implicit planning）</strong>。</p>
+<p><strong>为什么这是一个有趣的问题？</strong></p>
+<ol>
+<li><strong>理论上反直觉</strong>：next token prediction 只要求模型预测下一个 token，理论上不需要&quot;规划&quot;</li>
+<li><strong>实践中有意义</strong>：如果模型真的在做规划，理解这个机制对 AI 安全和控制至关重要</li>
+<li><strong>研究门槛高</strong>：之前的研究（Lindsey et al., 2025）需要复杂的 cross-layer transcoder 分析</li>
+</ol>
+<p><strong>已有方法的局限</strong>：</p>
+<p>Lindsey et al. (2025) 使用 cross-layer transcoder 分析 Claude 3.5 Haiku，发现模型在生成押韵诗句时，第一行末尾就已经&quot;计划&quot;好了押韵词。但这种方法：</p>
+<ul>
+<li>技术复杂，难以大规模应用</li>
+<li>只在单个模型上验证</li>
+<li>无法回答&quot;规划能力从多大规模的模型开始出现&quot;</li>
+</ul>
+<h2 id="3-数据集-押韵对联-名词问答">3. 数据集：押韵对联 + 名词问答</h2>
+<h3 id="3-1-押韵数据集">3.1 押韵数据集</h3>
+<p><strong>训练数据</strong>：</p>
+<ul>
+<li>20 个押韵家族对（如 -ing/-air, -ight/-ake 等）</li>
+<li>每个押韵家族 105 条第一行（用 Claude 3.5 Sonnet 生成）</li>
+<li>分成 85 条训练 + 20 条测试</li>
+<li>人工检查并替换不正确/不平衡的数据</li>
+</ul>
+<p><strong>数据格式</strong>：</p>
+<pre><code>A rhyming couplet:
+[第一行以某押韵词结尾]
+</code></pre>
+<p><strong>示例</strong>：</p>
+<pre><code>A rhyming couplet:
+The house was built with sturdy, reddish brick
+</code></pre>
+<p>期望第二行以 -ick 押韵结尾</p>
+<h3 id="3-2-名词问答数据集">3.2 名词问答数据集</h3>
+<p><strong>名词对选择</strong>：</p>
+<ul>
+<li>20 个名词对（如 elephant/whale, actor/doctor, airport/hospital）</li>
+<li>每对名词：一个以元音开头，一个以辅音开头</li>
+<li>属于相同本体类别</li>
+</ul>
+<p><strong>问题类型</strong>：</p>
+<ol>
+<li><strong>暗示性问题（Suggestive）</strong>：强烈指向特定答案
+<ul>
+<li>&quot;What large mammal has a trunk?&quot; → elephant</li>
+</ul>
+</li>
+<li><strong>中性问题（Neutral）</strong>：两个答案都合理
+<ul>
+<li>&quot;What large mammal is endangered?&quot; → elephant 或 whale</li>
+</ul>
+</li>
+</ol>
+<p><strong>数据筛选</strong>：</p>
+<ul>
+<li>用 Claude Opus 4.1 生成 30 个暗示性问题/名词</li>
+<li>在 Gemma3 4B、LLama3.2 8B、Qwen3 8B 上测试</li>
+<li>保留至少 2/3 小模型答对的问题</li>
+</ul>
+<p><strong>数据格式</strong>（2-shot prompting）：</p>
+<pre><code>Question: What two-wheeled vehicle do you pedal?
+Answer: a bicycle
+
+Question: What flying vehicle carries passengers in the sky?
+Answer: an airplane
+
+Question: [实际问题]
+Answer:
+</code></pre>
+<h2 id="4-关键方法-activation-steering-验证隐式规划">4. 关键方法：Activation Steering 验证隐式规划</h2>
+<h3 id="4-1-核心思想">4.1 核心思想</h3>
+<p><strong>如果模型在做规划，那么规划信息应该编码在特定位置的激活中。</strong></p>
+<p>如果能通过操纵这些激活来改变模型的&quot;计划&quot;，就能证明规划信息确实存在。</p>
+<h3 id="4-2-steering-向量计算">4.2 Steering 向量计算</h3>
+<p><strong>公式：Steering 向量</strong></p>
+<div class="math-display">$$\vec{v}_{\text{steer}} = \frac{1}{n} \sum_{i=1}^{n} (\vec{a}_i^{\text{target}} - \vec{a}_i^{\text{source}})$$</div>
+<p><strong>符号含义</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\vec{v}_{\text{steer}}$</td>
+<td>steering 向量</td>
+</tr>
+<tr>
+<td>$\vec{a}_i^{\text{target}}$</td>
+<td>目标条件下的激活向量（如押韵 -ight）</td>
+</tr>
+<tr>
+<td>$\vec{a}_i^{\text{source}}$</td>
+<td>源条件下的激活向量（如押韵 -ake）</td>
+</tr>
+<tr>
+<td>$n$</td>
+<td>训练样本数（默认 85）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>直观解释</strong>：</p>
+<p>这就像找到&quot;押韵 -ight&quot;和&quot;押韵 -ake&quot;之间的&quot;方向差异&quot;。如果模型真的在规划押韵，这个差异应该能被用来&quot;引导&quot;模型选择不同的押韵。</p>
+<h3 id="4-3-steering-应用">4.3 Steering 应用</h3>
+<p><strong>公式：修改后的激活</strong></p>
+<div class="math-display">$$\vec{a}&#x27; = \vec{a} + \alpha \cdot \vec{v}_{\text{steer}}$$</div>
+<p><strong>参数</strong>：</p>
+<ul>
+<li>$\alpha$：steering 强度系数</li>
+<li>应用位置：特定 layer 的 residual stream</li>
+<li>应用时机：生成第一个 token 之前</li>
+</ul>
+<p><strong>关键发现</strong>：最佳 steering 位置是<strong>第一行的最后一个词</strong>或<strong>换行符 token</strong></p>
+<h3 id="4-3-1-steering-实现细节">4.3.1 Steering 实现细节</h3>
+<p><strong>Q: Steering 在哪个 token 上进行？</strong></p>
+<p>只需在 <strong>prompt 的最后一个 token</strong> 上做一次 steering，不是每个生成 token 都做。</p>
+<p>以押韵任务为例：</p>
+<pre><code>Prompt: &quot;A rhyming couplet:\nThe house was built with sturdy, reddish brick\n&quot;
+</code></pre>
+<p>Steering 在两个位置效果最好：</p>
+<ul>
+<li><strong>换行符 token</strong> (<code>\n</code>) — 即 &quot;brick&quot; 后面的那个 newline token</li>
+<li><strong>第一行的最后一个词</strong> (&quot;brick&quot;) — 部分模型用这个</li>
+</ul>
+<p><strong>Q: 后续每个 token 都要 steering 吗？</strong></p>
+<p><strong>不需要</strong>。只需在生成前向传播时，对某个特定位置的激活做一次性修改。这个修改会影响整个后续生成过程，因为修改后的激活会传递到后面的所有层和 token。</p>
+<p><strong>Q: 在哪一层做 Steering？</strong></p>
+<p><strong>某一层</strong>，不是所有层。最佳层需要通过实验确定：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>最佳层</th>
+<th>最佳位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma 2 9B IT</td>
+<td>Layer 27</td>
+<td>newline token</td>
+</tr>
+<tr>
+<td>Gemma 3 27B</td>
+<td>中间层</td>
+<td>newline + last word</td>
+</tr>
+<tr>
+<td>Llama 3</td>
+<td>较浅层</td>
+<td>last word</td>
+</tr>
+<tr>
+<td>Qwen 3</td>
+<td>较浅层</td>
+<td>last word</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>实验方法</strong>：在不同层（layer 10-40）和不同位置（last word / newline）组合尝试，选择 steering 效果最好的组合。一般是 <strong>20-30 层</strong> 效果最好（模型中间偏后的位置）。</p>
+<h3 id="4-4-评估指标">4.4 评估指标</h3>
+<p><strong>押韵任务指标</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>计算方式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fraction of correct rhyme family</td>
+<td>统计生成的押韵词属于目标家族的比例</td>
+<td>押韵正确性</td>
+</tr>
+<tr>
+<td>Tokens after first top-1</td>
+<td>从第一个目标押韵 token 出现到句末的 token 数</td>
+<td>规划&quot;唤醒&quot;时机</td>
+</tr>
+<tr>
+<td>Fraction top-1 difference</td>
+<td>steering 前后 top-1 token 的概率变化</td>
+<td>规划强度</td>
+</tr>
+<tr>
+<td>High KL tokens</td>
+<td>KL 散度超过阈值的 token 数量</td>
+<td>规划影响范围</td>
+</tr>
+<tr>
+<td>Regeneration metrics</td>
+<td>在已生成文本上继续生成，看押韵词的 logit 变化</td>
+<td>规划的因果影响</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>问答任务指标</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>计算方式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target noun percentage</td>
+<td>生成中包含目标名词的比例</td>
+<td>steering 成功率</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="4-5-实验模型">4.5 实验模型</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型系列</th>
+<th>具体模型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma 2</td>
+<td>2B, 9B (base + IT)</td>
+</tr>
+<tr>
+<td>Gemma 3</td>
+<td>4B, 12B, 27B (IT)</td>
+</tr>
+<tr>
+<td>Llama 3</td>
+<td>8B (base + IT)</td>
+</tr>
+<tr>
+<td>Qwen 3</td>
+<td>8B (base + IT)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-关键实验-steering-可以操控隐式规划">5. 关键实验：Steering 可以操控隐式规划</h2>
+<h3 id="5-1-主实验-押韵生成中的隐式规划">5.1 主实验：押韵生成中的隐式规划</h3>
+<p><strong>核心发现</strong>：Steering 在第一行末尾可以成功改变第二行的押韵</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Steering 位置</th>
+<th>成功率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gemma 2 9B IT</td>
+<td>newline token, layer 27</td>
+<td>高</td>
+</tr>
+<tr>
+<td>Gemma 3 27B</td>
+<td>newline token + last word</td>
+<td>高</td>
+</tr>
+<tr>
+<td>其他模型</td>
+<td>last word of first line</td>
+<td>中等</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Figure 2-5 关键数据</strong>：</p>
+<ul>
+<li>Steering 可以使押韵家族翻转（如从 -ick 变为 -ore）</li>
+<li>效果在中等规模模型（9B+）更显著</li>
+<li>Instruction-tuned 模型比 base 模型效果更好</li>
+</ul>
+<p><img src="https://arxiv.org/html/2601.20164v2/figs/rhyming.png" alt="Figure 2: 基线与 steering 后的押韵能力对比" /></p>
+<p><img src="https://arxiv.org/html/2601.20164v2/figs/regeneration.png" alt="Figure 3: 基线与 steering 后的末尾词再生率对比" /></p>
+<p><img src="https://arxiv.org/html/2601.20164v2/figs/regeneration_families.png" alt="Figure 4: Gemma3 27B 各押韵家族的再生率对比" /></p>
+<p><img src="https://arxiv.org/html/2601.20164v2/figs/newline_vs_word.png" alt="Figure 5: 末尾词与换行符位置的 steering 效果对比" /></p>
+<p><strong>Golden Case 示例</strong>：</p>
+<pre><code>Prompt: &quot;A rhyming couplet:\nThe house was built with sturdy, reddish brick\n&quot;
+
+Baseline (押韵 -ick):
+&quot;And stood for ages, strong against the trick.&quot;
+&quot;And stood for many years, a steadfast trick.&quot;
+
+Steered towards -ore:
+&quot;And stood steadfast, defying winter's core.&quot;
+&quot;And stood through storms, a testament to lore.&quot;
+&quot;And stood for years, a testament to yore.&quot;
+</code></pre>
+<h3 id="5-2-模型规模与规划能力">5.2 模型规模与规划能力</h3>
+<p><strong>Figure 7 关键发现</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型规模</th>
+<th>Steering 效果</th>
+<th>训练数据需求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1B-2B</td>
+<td>弱但存在</td>
+<td>需要更多训练样本</td>
+</tr>
+<tr>
+<td>4B-8B</td>
+<td>中等</td>
+<td>85 样本足够</td>
+</tr>
+<tr>
+<td>9B-27B</td>
+<td>强</td>
+<td>甚至单样本可工作</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>：隐式规划从 <strong>1B 参数就开始存在</strong>，但能力随规模增强。</p>
+<h3 id="5-3-instruction-tuning-提升规划能力">5.3 Instruction Tuning 提升规划能力</h3>
+<p><strong>对比数据</strong>（Gemma 2 9B）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型版本</th>
+<th>Fraction correct rhyme family</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base</td>
+<td>较低</td>
+</tr>
+<tr>
+<td>Instruction-tuned</td>
+<td>显著更高</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>原因推测</strong>：post-training 可能强化了规划相关的 circuits。</p>
+<h3 id="5-4-问答任务中的隐式规划">5.4 问答任务中的隐式规划</h3>
+<p><strong>核心发现</strong>：Steering 可以改变冠词选择（a vs an）</p>
+<p><strong>暗示性问题结果</strong>（Figure 6）：</p>
+<p>Steering towards &quot;whale&quot;（辅音开头）：</p>
+<ul>
+<li>&quot;an&quot; 的比例下降</li>
+<li>&quot;a&quot; 的比例上升</li>
+</ul>
+<p><img src="https://arxiv.org/html/2601.20164v2/figs/article_usage_vowel.png" alt="Figure 6: steering 对冠词 a/an 使用比例的影响" /></p>
+<p><strong>中性问题结果</strong>（Figure 25）：</p>
+<p>同样的 steering 方向在中性问题上也有类似效果，证明模型确实在规划答案。</p>
+<h3 id="5-5-电路分析-哪些注意力头在做规划">5.5 电路分析：哪些注意力头在做规划？</h3>
+<p><strong>Gemma 2 9B 的关键发现</strong>：</p>
+<p>两个注意力头 <strong>L30H3</strong> 和 <strong>L31H15</strong> 是押韵规划的核心：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>特征</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>注意力模式</td>
+<td>只关注第一行的最后一个词和换行符</td>
+</tr>
+<tr>
+<td>激活时间</td>
+<td>第二行的所有 token，但只在接近句末时显著贡献</td>
+</tr>
+<tr>
+<td>功能</td>
+<td>将押韵信息&quot;传递&quot;到后面的 token</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Activation Patching 实验</strong>（Table 1）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>Logit Difference Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steering</td>
+<td>基准</td>
+</tr>
+<tr>
+<td>Patching L30H3 + L31H15</td>
+<td>59%-93%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>解释</strong>：只用这两个 attention head 的 steered activation 就能恢复 59%-93% 的 steering 效果！</p>
+<p><strong>电路结构</strong>：</p>
+<ol>
+<li>Residual stream（layer 27）编码押韵计划</li>
+<li>L30H3 和 L31H15 读取并传递押韵信息</li>
+<li>MLP layers 30-39 将信息转换为具体的 token 预测</li>
+</ol>
+<p><strong>不同任务的电路差异</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th>关键组件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>押韵</td>
+<td>L30H3, L31H15 + MLP 30-39</td>
+</tr>
+<tr>
+<td>问答</td>
+<td>L39H13 + final MLP layers</td>
+</tr>
+</tbody>
+</table></div>
+<p>电路结构相似但具体组件不同，说明不同任务发展出了不同的规划机制。</p>
+<h3 id="5-6-attention-ablation-验证">5.6 Attention Ablation 验证</h3>
+<p><strong>Gemma 3 27B 消融实验</strong>（Figure 9）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>消融条件</th>
+<th>Fraction correct rhyme family</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无消融</td>
+<td>最高</td>
+</tr>
+<tr>
+<td>只消融 last word</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>只消融 newline</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>同时消融两者</td>
+<td>最低</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>：第一行的最后一个词和换行符都参与规划，两者缺一不可。</p>
+<h2 id="6-golden-case-一条数据的完整流程">6. Golden Case：一条数据的完整流程</h2>
+<p><strong>输入样本</strong>：</p>
+<pre><code>A rhyming couplet:
+The house was built with sturdy, reddish brick
+</code></pre>
+<p><strong>处理流程</strong>：</p>
+<ol>
+<li>
+<p><strong>Token 化</strong>：</p>
+<ul>
+<li>&quot;The house was built with sturdy, reddish brick\n&quot;</li>
+<li>最后两个 token：brick + newline</li>
+</ul>
+</li>
+<li>
+<p><strong>前向传播</strong>（layer 27）：</p>
+<ul>
+<li>newline token 的 residual stream 编码了&quot;押韵 -ick&quot;的规划</li>
+<li>激活向量与 &quot;keep&quot;, &quot;stick&quot;, &quot;trick&quot; 等词相关</li>
+</ul>
+</li>
+<li>
+<p><strong>Steering 干预</strong>：</p>
+<ul>
+<li>添加 steering vector：$\vec{a}&#x27; = \vec{a} + \alpha \cdot \vec{v}_{\text{-ore}}$</li>
+<li>现在激活指向 &quot;core&quot;, &quot;lore&quot;, &quot;yore&quot; 等</li>
+</ul>
+</li>
+<li>
+<p><strong>生成第二行</strong>：</p>
+<ul>
+<li>L30H3 和 L31H15 读取 steered activation</li>
+<li>MLP layers 将信息转换为对 -ore 词的偏好</li>
+<li>最终生成：&quot;And stood steadfast, defying winter's core.&quot;</li>
+</ul>
+</li>
+</ol>
+<p><strong>关键决策点</strong>：</p>
+<ul>
+<li>Layer 27：规划被编码</li>
+<li>Layer 30-31：规划被读取和传递</li>
+<li>Layer 30-39 MLP：规划被转换为预测</li>
+</ul>
+<h2 id="7-insights-隐式规划是-llm-的通用能力">7. Insights：隐式规划是 LLM 的通用能力</h2>
+<p><strong>核心洞见</strong>：</p>
+<ol>
+<li><strong>规模不是门槛</strong>：隐式规划从 1B 参数就存在，而非大模型专属</li>
+<li><strong>机制可解释</strong>：可以用简单的 steering 技术操控，且有明确的电路基础</li>
+<li><strong>任务特异性</strong>：不同任务发展出不同的规划电路</li>
+<li><strong>安全意义</strong>：如果能操控规划，就能影响模型行为，这对 AI 安全研究有重要意义</li>
+</ol>
+<p><strong>对未来工作的启发</strong>：</p>
+<ol>
+<li>可以用 steering 技术研究其他类型的&quot;规划&quot;行为（如 CoT、instruction following）</li>
+<li>规划能力可能成为评估模型能力的新维度</li>
+<li>理解规划电路有助于设计更可控的模型</li>
+</ol>
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<p>提出了简单、可扩展的 activation steering 方法来验证 LLM 的隐式规划能力，首次系统性地证明：</p>
+<ul>
+<li>隐式规划从 1B 模型就开始存在</li>
+<li>规划信息编码在特定位置（第一行末尾）</li>
+<li>规划电路由少量 attention heads + MLP layers 组成</li>
+</ul>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>Steering 方法相对粗糙</strong>：平均激活差异可能混合了多种信息</li>
+<li><strong>电路分析仅限于少数模型</strong>：主要分析了 Gemma 2 9B</li>
+<li><strong>任务有限</strong>：只测试了押韵和问答两个任务</li>
+<li><strong>缺乏与 SAE 的深度结合</strong>：论文提到可以用 SAE latent 做 steering，但未深入分析</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>更精细的 steering</strong>：结合 SAE 或 probing 得到更纯净的&quot;规划方向&quot;</li>
+<li><strong>更多任务验证</strong>：扩展到 CoT、multi-step reasoning 等复杂任务</li>
+<li><strong>电路比较分析</strong>：系统比较不同模型/任务的规划电路异同</li>
+<li><strong>训练干预</strong>：研究如何在训练中增强或抑制规划能力</li>
+</ol>
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<ul>
+<li><strong>相关方法</strong>: Activation Steering 是 mechanistic interpretability 的常用技术</li>
+<li><strong>相关工作</strong>: <a class="wikilink" href="Reinforced-Attention-Learning-RAL.html" title="Reinforced-Attention-Learning-RAL">Reinforced-Attention-Learning-RAL</a> 同样研究注意力机制，但角度不同</li>
+<li><strong>相关 MOC</strong>: <span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span></li>
+</ul>
+<h3 id="9-1-与-anthropic-introspection-研究的对比">9.1 与 Anthropic Introspection 研究的对比</h3>
+<p>Anthropic 的 <a href="https://www.anthropic.com/research/introspection">Introspection 研究</a>（2025）使用了类似的 <strong>concept injection</strong> 技术，但目的不同。</p>
+<p><strong>技术层面的相似性</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方面</th>
+<th>What's the Plan</th>
+<th>Anthropic Introspection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>向量计算</td>
+<td>平均激活差异：target - source</td>
+<td>记录特定概念上下文的激活</td>
+</tr>
+<tr>
+<td>注入位置</td>
+<td>特定 token 的 residual stream</td>
+<td>特定 layer 的 residual stream</td>
+</tr>
+<tr>
+<td>注入方式</td>
+<td>$\vec{a}&#x27; = \vec{a} + \alpha \cdot \vec{v}$</td>
+<td>同样的加法操作</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键区别：目的不同</strong>：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>What's the Plan</th>
+<th>Anthropic Introspection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目标</td>
+<td>改变模型的输出</td>
+<td>测试模型能否&quot;察觉&quot;被注入的概念</td>
+</tr>
+<tr>
+<td>验证方式</td>
+<td>看生成的押韵词是否改变</td>
+<td>直接问模型 &quot;Did you notice anything?&quot;</td>
+</tr>
+<tr>
+<td>应用场景</td>
+<td>验证隐式规划的存在</td>
+<td>研究模型是否具备内省能力</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Anthropic 的关键实验示例</strong>：</p>
+<pre><code>注入 &quot;all caps&quot; 向量 → 问模型是否注意到什么
+→ 模型回答：&quot;I notice... a sense of loudness or shouting&quot;
+</code></pre>
+<p><strong>总结</strong>：技术同源（都是 activation steering），但：</p>
+<ul>
+<li><strong>What's the Plan</strong>：用它来问&quot;模型有没有提前规划未来&quot;</li>
+<li><strong>Anthropic Introspection</strong>：用它来问&quot;模型知道自己在想什么吗&quot;</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Perplexity_Cannot_Always_Tell_Right_from_Wrong-Transformer_Evaluation_Limits.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Perplexity Cannot Always Tell Right from Wrong</span></a>
+<a class="paper-nav-link next" href="Self-Improving_Multilingual_Long_Reasoning-TRIT.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Self-Improving Multilingual Long Reasoning via Translation-Reasoning Integrated Training</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: maar2026whatsplan</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

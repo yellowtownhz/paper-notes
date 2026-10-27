@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-究竟不会组合-还是信息一多连单项也认不准"><span class="toc-num">02</span> 2. 关键问题：究竟不会组合，还是信息一多连单项也认不准？</a></li>
+<li><a class="toc-link" href="#3-关键方法-同一个错误-放在整句里与单独问-模型表现有何不同"><span class="toc-num">03</span> 3. 关键方法：同一个错误，放在整句里与单独问，模型表现有何不同？</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-先把描述做成可控输入">3.1 先把描述做成可控输入</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-第一条测量轴-整合差距">3.2 第一条测量轴：整合差距</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-第二条测量轴-数量增加-具体伤害哪项技能">3.3 第二条测量轴：数量增加，具体伤害哪项技能？</a></li>
+<li><a class="toc-link" href="#4-数据与复现口径-规模数字需要澄清"><span class="toc-num">04</span> 4. 数据与复现口径：规模数字需要澄清</a></li>
+<li><a class="toc-link" href="#5-关键结果-整合差距反转后-同类负载退化仍存在"><span class="toc-num">05</span> 5. 关键结果：整合差距反转后，同类负载退化仍存在</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-更会处理整句-不代表复杂度问题消失">5.1 更会处理整句，不代表复杂度问题消失</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-同类负载是更稳定的信号-异类上下文并非总有益">5.2 同类负载是更稳定的信号，异类上下文并非总有益</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-负例审计降低了一部分担忧-没有证明无捷径">5.3 负例审计降低了一部分担忧，没有证明无捷径</a></li>
+<li><a class="toc-link" href="#6-insights-怎样把这个诊断框架用得更可靠"><span class="toc-num">06</span> 6. Insights：怎样把这个诊断框架用得更可靠？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-28</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2609.31456" target="_blank">arXiv</a>
+    </div>
+    <h1>Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</h1>
+    <p class="authors">['Mona Gandhi', 'Cenk Merih Olcay', 'Kuan-Chieh Lo', 'Santiago Castro', 'Christopher W. Myers', 'Srinivasan Parthasarathy']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language</span> <span class="topic-tag">Compositionality</span> <span class="topic-tag">Benchmark</span></div>
+</header>
+
+<h1>论文笔记: Diagnosing the Sources of Compositional Failure in Vision-Language Models: A Controlled Analysis</h1>
+<p><strong>复杂描述检索失败，不能一概归因于“模型不会把概念组合起来”。</strong> COMPASS 将诊断拆成两个方向：整句相比分开判断损失多少，以及对象、属性、关系各自增多时，哪项技能退化。最有价值的现象是：CE-CLIP 的整句检索已经优于分解检索，却仍受同类信息增多的影响。</p>
+<p>读完应记住四点：</p>
+<ol>
+<li>匹配同一种语义扰动，再比较整句与分解后的“全部答对”，比只看复杂度曲线更有诊断力。</li>
+<li>整合差距的符号因模型和结构而异；不能拿一个差值给模型组合能力排总榜。</li>
+<li>同类数量增加通常对应性能下降，异类信息有时提供上下文；但“cross-load 都有益”不符合全表。</li>
+<li>这是检索行为的受控分析，尚未证明模型内部存在同类表征容量竞争，也没有完全排除文本捷径。</li>
+</ol>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>团队与版本</strong>：The Ohio State University、Netflix Research；arXiv v1，2026-09-25。原文未注明已录用会议。</li>
+<li><strong>材料</strong>：阅读了<a href="https://arxiv.org/html/2609.31456v1">官方 HTML 全文及附录</a>，并用<a href="https://arxiv.org/pdf/2609.31456v1">PDF</a>核对原图、生成提示词和表格；未运行作者代码或复现实验。</li>
+<li><strong>工作性质</strong>：评测框架与诊断数据集，没有提出或训练一个新的 VLM。</li>
+</ul>
+<h2 id="2-关键问题-究竟不会组合-还是信息一多连单项也认不准">2. 关键问题：究竟不会组合，还是信息一多连单项也认不准？</h2>
+<p>沿用论文 Figure 1 的客厅案例：<strong>“客厅里有一张深棕色沙发，还有天花板。”</strong> 场景图包含三个对象（沙发、客厅、天花板）、一个属性（深棕色）、一个关系（在……里），所以复杂度为 $N=5$，并非五个词。</p>
+<p>如果模型更偏好把“沙发”改成“椅子”的错误描述，我们还不知道原因：它可能连沙发都没认对，也可能在短句中认得沙发，但把全部信息放进一个句向量后丢掉了区别。只报告“句子越复杂，准确率越低”，分不开这两种失败。</p>
+<p><img src="../../assets/compass-2609.31456/figure-1.png" alt="COMPASS 的场景图与描述层级" /></p>
+<p><em>Figure 1，<a href="https://arxiv.org/html/2609.31456v1/COMPASS_Structure.png">原图</a>，作者，CC BY 4.0。看右侧：对象 O、属性 A、关系 R 的组合决定结构层级，原语总数决定复杂度；二者不是同一根轴。</em></p>
+<p>已有 CREPE 强调随复杂度的退化，SugarCREPE 强调负例质量，VL-CheckList 按技能区分错误。本文新增的是把<strong>描述结构、各类原语数量、整句/分解呈现方式</strong>结合起来分析，而不只是再造一组更难的负例。（§2–3）</p>
+<h2 id="3-关键方法-同一个错误-放在整句里与单独问-模型表现有何不同">3. 关键方法：同一个错误，放在整句里与单独问，模型表现有何不同？</h2>
+<h3 id="3-1-先把描述做成可控输入">3.1 先把描述做成可控输入</h3>
+<p>作者从 Visual Genome 的 5K 图像—场景图对出发，通过最多十步随机游走抽子图，再用 GPT-4o-mini 把指定原语写成自然语言。实际分析聚焦 OA、OR、OAR：对象+属性、对象+关系、三者俱全。复杂度范围分别为 2–12、3–12、4–12。（§3.1）</p>
+<p>GPT 负责语言实现，不负责随意补全场景。Figure 4 的关键约束包括 “Do not change the words” 和 “do not introduce new objects or relations”。这用于保持输入场景图与输出描述的对应；提示词约束本身并不证明生成完全忠实。</p>
+<p>负例每次只换一个同类型原语，候选不能已出现在该图完整场景图中；随后做语法修正和语义相似度过滤。<strong>未被场景图标注，并不保证图像里真的不存在</strong>，因此仍可能有假负例。（§3.2、Appendix A）</p>
+<h3 id="3-2-第一条测量轴-整合差距">3.2 第一条测量轴：整合差距</h3>
+<p>回到沙发案例，整句侧产生五个负例，每个改一个原语；分解侧产生五个小判断，分别针对沙发、客厅、天花板、深棕色沙发、沙发在客厅里。假如整句负例把沙发换成椅子，分解侧也使用同一个替换。</p>
+<p>注意：分解属性时仍保留所属对象，分解关系时仍保留两端对象。这里“分解”是让<strong>每次只考一个目标原语</strong>，不是让每句话只含一个概念；图像始终是同一张完整图像。（§5.1、Figure 2）</p>
+<p>令 $s(I,c)$ 为图文匹配分数，$c$ 为整句，$d_i$ 为第 $i$ 个分解描述，带波浪线的是对应负例：</p>
+<div class="math-display">$$
+R_{\mathrm{comp}}(c)=\mathbf{1}\left[s(I,c)&gt;\max_i s(I,\tilde c_i)\right],\qquad
+R_{\mathrm{decomp}}(c)=\prod_{i=1}^{N}\mathbf{1}\left[s(I,d_i)&gt;s(I,\tilde d_i)\right].
+$$</div>
+<div class="math-display">$$
+\Delta=\mathbb{E}_c[R_{\mathrm{decomp}}(c)-R_{\mathrm{comp}}(c)].
+$$</div>
+<p>整句必须压过所有负例；分解必须<strong>每道都答对</strong>，不能用单题平均正确率冒充整句成功率。$\Delta&gt;0$ 表示拆开更容易；$\Delta&lt;0$ 表示整句上下文可能有帮助。（Eq. 1–3）</p>
+<p><strong>这一步对齐的是语义扰动，不是完整的统计任务。</strong> 整句是 $N+1$ 选一，分解是 $N$ 个二选一全对。在独立均匀随机选择这个示意模型下，机会水平分别是 $1/(N+1)$ 与 $2^{-N}$；$N=5$ 时约为 16.7% 与 3.1%。这是笔记者推导，不是论文实验。真实模型的分解错误也未必独立，但这个区别已说明：差值不能未经校准就解释为“纯粹的联合推理成本”。</p>
+<h3 id="3-3-第二条测量轴-数量增加-具体伤害哪项技能">3.3 第二条测量轴：数量增加，具体伤害哪项技能？</h3>
+<p>仍用这条客厅描述，考对象时，四个负例只改对象；考属性时只改属性；考关系时只改关系。每组固定四个负例，因此统一是五选一，避免复杂度增长时候选数也随之增长。（§6.1）</p>
+<p>对每种技能 $t$，作者拟合：</p>
+<div class="math-display">$$
+R@1_t=\alpha+\beta_O n_O+\beta_A n_A+\beta_R n_R.
+$$</div>
+<p>$n_O,n_A,n_R$ 是描述中三类原语数。若考属性，$\beta_A$ 是 <strong>self-load（同类负载）</strong>，另外两项是 <strong>cross-load（异类负载）</strong>。系数表示控制另外两类数量后，每多一个原语对应多少个百分点的变化。使用 OLS，标准误按图像聚类，避免同一图生成多条描述被视为完全独立。（§6.2、Eq. 4）</p>
+<p>这仍是条件关联：没有直接操控模型内部容量，数量之外的词频、视觉拥挤程度、负例难度等也可能改变性能。</p>
+<h2 id="4-数据与复现口径-规模数字需要澄清">4. 数据与复现口径：规模数字需要澄清</h2>
+<p>整合分析按 Table 1 是 24K OAR + 30K OA + 33K OR，共 87K；技能分析正文报告总计 274K。模型包括 OpenCLIP（ViT-g/14，LAION-2B）、SigLIPv2、PE-CLIP、NegCLIP、CE-CLIP、BLIP-L 和 <strong>Qwen3-VL-Embedding-8B</strong>。最后一个是嵌入模型，不是让通用聊天 VLM 自由生成答案。（§4）</p>
+<p>原文有两处不能默默统一：</p>
+<ul>
+<li><strong>[?] 总描述数</strong>：§3.1 写 1.38M，但 Table 1 的 ground truth 三行是 47K、46K、45K，合计 138K；论文未解释是否还有未列出的数据。</li>
+<li><strong>[?] 技能数据分项</strong>：§6.1 写对象 143K、属性 63K、关系 68K；Table 1 对象列合计却是 127K（45+39+43）。表格全部技能列加起来是 258K。故不能把 274K 当作已由表格交叉核实的数量。</li>
+</ul>
+<p>另外，Appendix A 写相似度超过阈值便丢弃：$N\ge6$ 用 0.9，否则 0.95；但随后的“高复杂度阈值更宽松”解释与这个拒绝规则相反。复现时应确认实际实现，并检查复杂度相关过滤是否改变负例难度与样本构成。</p>
+<h2 id="5-关键结果-整合差距反转后-同类负载退化仍存在">5. 关键结果：整合差距反转后，同类负载退化仍存在</h2>
+<h3 id="5-1-更会处理整句-不代表复杂度问题消失">5.1 更会处理整句，不代表复杂度问题消失</h3>
+<p>Table 2 报告跨复杂度汇总的 $\Delta$，下表保留足以看清结论的模型。单位为百分点，± 是复杂度之间的标准差，<strong>不是随机种子误差或置信区间</strong>。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>描述结构</th>
+<th style="text-align:right">OpenCLIP</th>
+<th style="text-align:right">SigLIPv2</th>
+<th style="text-align:right">CE-CLIP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OAR</td>
+<td style="text-align:right">0.83 ± 0.70</td>
+<td style="text-align:right">2.61 ± 1.82</td>
+<td style="text-align:right">−5.66 ± 3.45</td>
+</tr>
+<tr>
+<td>OA</td>
+<td style="text-align:right">2.39 ± 1.23</td>
+<td style="text-align:right">12.65 ± 2.53</td>
+<td style="text-align:right">−20.27 ± 5.17</td>
+</tr>
+<tr>
+<td>OR</td>
+<td style="text-align:right">17.56 ± 1.98</td>
+<td style="text-align:right">8.64 ± 5.04</td>
+<td style="text-align:right">−4.96 ± 3.93</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>支持什么？</strong> 整句和分解之间确实存在结构相关、模型相关的行为差异；CE-CLIP 在三种结构上都更擅长整句，不能再用“整句一定比单项更难”描述所有模型。</p>
+<p><strong>还不能说明什么？</strong> 负差距本身不是训练干预的因果证据，也可能由分解侧更差造成。应同时看 Appendix C 的两侧绝对分数。Figure 3 进一步显示 NegCLIP、CE-CLIP 在 CREPE 上仍随复杂度升高退化，但那是另一评测集的曲线，不能据此计算 COMPASS 中“多少比例的失败由整合造成”。</p>
+<h3 id="5-2-同类负载是更稳定的信号-异类上下文并非总有益">5.2 同类负载是更稳定的信号，异类上下文并非总有益</h3>
+<p>Table 3 的 OAR 设置中，OpenCLIP 对象、属性、关系各自的 self-load 系数分别为 <strong>−2.50、−3.32、−2.86</strong>；三者均 $p&lt;0.001$。CE-CLIP 的对应值仍为 <strong>−1.77、−2.57、−4.89</strong>，同样均 $p&lt;0.001$。这与其负整合差距并存，是“改善整句表现并未消除数量敏感性”的关键证据。</p>
+<p><img src="../../assets/compass-2609.31456/figure-6a.png" alt="OpenCLIP 的对象和属性负载曲线" /></p>
+<p><em>Figure 6(a)，<a href="https://arxiv.org/html/2609.31456v1/skill_load_oa_clip.png">原图</a>，作者，CC BY 4.0。上排考对象，下排考属性；左列增加属性数，右列增加对象数。先看右上与左下的下降，再对比另外两格。这里是 OA，不能与前段 OAR 的系数混用。曲线也并非处处线性或单调。</em></p>
+<p>在 OAR 的对象检测中，OpenCLIP 的属性、关系 cross-load 为 +1.21、+2.32，支持异类信息有时提供定位线索。但原文概括需要收紧：OA 的对象检测里，OpenCLIP 增加属性反而对应 <strong>−0.82</strong>（$p&lt;0.005$）；BLIP-L 在 OR 的关系 self-load 为 <strong>+0.80</strong>，未标显著。因此准确表述是“同类负载通常更稳定地为负”，不是“所有模型、所有结构都如此”。</p>
+<h3 id="5-3-负例审计降低了一部分担忧-没有证明无捷径">5.3 负例审计降低了一部分担忧，没有证明无捷径</h3>
+<p>Appendix B 用 GPT-2 困惑度（PPL）检查正负描述差异，每组挑与正例 PPL 最接近的负例，再算 rank-biserial 效应量。Table 4 的对象/属性范围为 0.062–0.099，关系为 0.259–0.267；作者分别称 negligible 与 small。</p>
+<p>我的担忧是：<strong>边际分布重合，并不保证逐组排序无法识别正例。</strong> 构造一个反例即可理解：每组负例的 PPL 都只比正例大一点，而不同组正例 PPL 的跨度很大；两组边际分布可以几乎重叠，但“选 PPL 最小者”仍能逐组答对。这是笔记者的逻辑反例，并非对数据实际分布的断言。</p>
+<p>尤其分解侧的困惑度结果被作者以短句词频主导为由判为不具信息量，没有给出对应有效性验证；而这恰恰是 $\Delta$ 的一侧。因此最直接的补实验是：在<strong>实际候选组</strong>上运行不看图的检索基线，分别报告整句与分解成绩，并做负例人工抽查。</p>
+<h2 id="6-insights-怎样把这个诊断框架用得更可靠">6. Insights：怎样把这个诊断框架用得更可靠？</h2>
+<p><strong>1. 改模型时同时看绝对成绩、整合差距和负载斜率。</strong> CE-CLIP 的负差距与负 self-load 共存，说明一个总分不足以定位改进。下一轮实验应固定骨干、数据和负例，做训练目标消融，并同时记录两侧准确率；只追求缩小 $\Delta$，甚至可能奖励分解能力下降。</p>
+<p><strong>2. “属性数量增加伤害属性判断”值得追，但表征竞争尚是假说。</strong> 当前实验无法区分视觉编码、文本编码和跨模态对齐的问题。可在同图、同词汇与匹配负例难度下增加同类/异类描述，再结合局部图像裁剪或编码器干预：若减少视觉干扰能缓解退化，解释就不同于单纯的句向量容量不足。论文 §7 也承认编码失败与对齐失败仍未区分。</p>
+<p><strong>3. 最值得复用的是控制变量，不是作者最强的归因措辞。</strong> 同一语义替换跨整句/分解复用、技能实验固定四个负例、标准误按图像聚类，都是可直接借鉴的设计。采用前应补机会水平校准、逐组文本基线与过滤敏感性分析。这样 COMPASS 才更接近可用于决策的诊断工具，而非另一张组合性排行榜。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Vision-Language-Compositionality">MOC-Vision-Language-Compositionality</span> — Topic/Area：把“组合性失败”细化为整合差距与技能负载，并延续对负例文本捷径的审查。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Post-Training-Leaves-Behavioral-Shadows-on-Unrelated-Decisions-ATD行为阴影蒸馏.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Post-Training Leaves Behavioral Shadows on Unrelated Decisions</span></a>
+<a class="paper-nav-link next" href="ULTRA-Unified-Multimodal-Control-for-Autonomous-Humanoid-Whole-Body-Loco-Manipulation-稀疏目标全身控制.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: gandhi2026diagnosing</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

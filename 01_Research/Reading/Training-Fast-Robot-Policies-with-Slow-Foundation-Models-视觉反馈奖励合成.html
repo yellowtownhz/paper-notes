@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Fast Robot Policies with Slow Foundation Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Training Fast Robot Policies with Slow Foundation Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-奖励知道终点-却不知道为什么过不去"><span class="toc-num">02</span> 2. 关键问题：奖励知道终点，却不知道为什么过不去</a></li>
+<li><a class="toc-link" href="#3-关键方法-视觉诊断修改高层奖励-rl-负责动作精度"><span class="toc-num">03</span> 3. 关键方法：视觉诊断修改高层奖励，RL 负责动作精度</a></li>
+<li><a class="toc-link toc-sub" href="#为什么要把-看失败-和-写代码-分开">为什么要把“看失败”和“写代码”分开？</a></li>
+<li><a class="toc-link toc-sub" href="#什么在训练-奖励变化怎样进入训练">什么在训练，奖励变化怎样进入训练？</a></li>
+<li><a class="toc-link" href="#4-数据与设置-有结构化状态-也有少量示范"><span class="toc-num">04</span> 4. 数据与设置：有结构化状态，也有少量示范</a></li>
+<li><a class="toc-link" href="#5-关键结果-系统有效-但独立归因与速度口径要收紧"><span class="toc-num">05</span> 5. 关键结果：系统有效，但独立归因与速度口径要收紧</a></li>
+<li><a class="toc-link toc-sub" href="#成功率提升是否明显">成功率提升是否明显？</a></li>
+<li><a class="toc-link toc-sub" href="#视觉反馈究竟贡献了什么">视觉反馈究竟贡献了什么？</a></li>
+<li><a class="toc-link" href="#6-insights-下一步最值得验证什么"><span class="toc-num">06</span> 6. Insights：下一步最值得验证什么</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-09-26</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2406.05881v7" target="_blank">arXiv</a>
+    </div>
+    <h1>Training Fast Robot Policies with Slow Foundation Models</h1>
+    <p class="authors">Utsav Singh, Pramit Bhattacharyya, Vinay P. Namboodiri, Amrit Singh Bedi</p>
+    <div class="topic-row"><span class="topic-tag">Robot_Learning</span> <span class="topic-tag">Reward_Synthesis</span> <span class="topic-tag">Hierarchical_RL</span> <span class="topic-tag">Vision_Language_Model</span></div>
+</header>
+
+<h1>论文笔记: Training Fast Robot Policies with Slow Foundation Models</h1>
+<p><strong>值得记住的核心：让大模型看机器人哪里失败，再修改训练奖励；部署只留下小型控制策略。</strong> VGRS 的价值在于把视觉诊断接入 Language-to-Reward 的反馈闭环。它不是把 VLA 权重压缩成小模型，也不是让机器人上线后仍能随时理解新指令。</p>
+<p>本文最需要分开的三件事是：<strong>系统成功率提高、视觉反馈本身的贡献、策略推理速度</strong>。第一项有实验支持，第二项的对照仍不充分，第三项不能直接等同于真机控制频率。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Utsav Singh、Amrit Singh Bedi（UCF），Pramit Bhattacharyya（IIT Kanpur），Vinay P. Namboodiri（University of Bath）。</li>
+<li><strong>版本与发表</strong>：本笔记依据 <a href="https://arxiv.org/html/2406.05881v7">arXiv v7 全文及附录</a>，版本日期 2026-07-22；论文首页注明 IROS 2026 接收。不混用该 arXiv 编号的早期版本。</li>
+<li><strong>阅读范围</strong>：正文、Algorithm 1、Table I、奖励代码和 prompt 附录；未运行作者代码或复现实验。下文 § 和图号均指 v7。</li>
+</ul>
+<h2 id="2-关键问题-奖励知道终点-却不知道为什么过不去">2. 关键问题：奖励知道终点，却不知道为什么过不去</h2>
+<p><strong>Golden Case：迷宫的出口在左边，目标却在右下角。</strong> §IV-E 的机械臂夹爪从桌面上方出发，水平墙挡住直接路线，唯一开口在最左侧。只鼓励向终点靠近，可能让策略反复撞向墙的右侧；正确路线反而要先远离终点。</p>
+<p>这暴露了静态语言奖励的局限：任务描述“去右下角”没有充分表达障碍物拓扑。另一个极端是让大模型每一步直接给动作，但推理延迟和坐标精度又成为控制约束。</p>
+<p>VGRS 选择在训练阶段补充缺失信息：<strong>看失败轨迹 → 找物理障碍 → 把诊断写进奖励 → 重新优化策略</strong>。已有 Eureka 会迭代奖励，Auto MC-Reward 也会分析轨迹；因此“自动改奖励”本身不是新贡献。本文强调的是连续机器人控制中，利用失败帧的视觉诊断修订可执行奖励（§II）。</p>
+<blockquote class="card card-info">
+<p>注意：以上是正文对迷宫案例的机制叙述。附录所展示的初始奖励其实只有稀疏阈值项，并没有连续距离惩罚；这影响该案例的因果解释，见 §5。</p>
+</blockquote>
+<h2 id="3-关键方法-视觉诊断修改高层奖励-rl-负责动作精度">3. 关键方法：视觉诊断修改高层奖励，RL 负责动作精度</h2>
+<p>沿用迷宫案例，一次闭环如下（§III-C–E、Algorithm 1）：</p>
+<ol>
+<li><strong>初始化奖励</strong>：LLM 接收任务、坐标约定和环境 API，输出 Python 奖励函数。它写的是评分规则，不是机械臂动作序列。</li>
+<li><strong>分层执行</strong>：高层策略每隔 $k$ 个环境步提出子目标 $g_t$；低层策略接收状态和子目标，每步输出连续动作。迷宫中子目标是中间位置。</li>
+<li><strong>停滞触发诊断</strong>：成功率移动平均不再改善、且仍低于阈值时，取最近失败轨迹的若干帧，让冻结的 VLM 描述物理失败原因。</li>
+<li><strong>修改奖励</strong>：LLM 接收诊断、原任务、API 和旧奖励代码，添加连续惩罚。正文称迷宫诊断引导策略绕向左侧开口；附录实际给出的惩罚更简单，下文单独核对。</li>
+<li><strong>继续学习</strong>：使用新奖励重新计算高层 replay buffer 中采样 transition 的奖励，再更新策略。部署时只运行高低两层网络。</li>
+</ol>
+<p><img src="../../assets/vgrs/framework.png" alt="VGRS 原论文 Figure 2：训练期视觉反馈闭环" /></p>
+<p>图中最关键的是左下角反馈箭头：失败轨迹进入 VLM，文字诊断进入 LLM，<strong>改动发生在高层奖励函数</strong>。右侧低层策略仍承担精确控制；它不是由 VLM 输出坐标直接替代的。图片来自原论文 Figure 2，原文许可 CC BY-NC-SA 4.0。</p>
+<h3 id="为什么要把-看失败-和-写代码-分开">为什么要把“看失败”和“写代码”分开？</h3>
+<p>作者使用 <code>llama-4-scout-17b-16e-instruct</code> 诊断视觉失败，使用 <code>llama-3.3-70b-versatile</code> 写奖励；基础模型不在这一过程中微调，真正学习的是策略和 critic（§IV-A）。作者观察到单 VLM 写代码会出现 API 幻觉、维度错误等，但证据主要是代码案例，不能据此推断所有 VLM 都不适合写奖励。</p>
+<p>Prompt 也提供了明显的人工结构（Appendix A-F）：视觉 critic 被要求只描述物理原因，输出限制为两句话，原文短句为 <strong>“Keep it to 2 sentences.”</strong>；LLM 则被明确要求添加 dense penalty。迷宫还提供门的位置接口，并指定连续奖励乘以 0.1。因此，奖励变稠密既来自反馈，也来自显式 prompt 设计，不能全部归功于模型自主发现。</p>
+<h3 id="什么在训练-奖励变化怎样进入训练">什么在训练，奖励变化怎样进入训练？</h3>
+<p>高低层均使用 SAC；actor/critic 是三层、每层 512 单元的 MLP。高层优化最新生成的任务奖励，低层优化到达子目标的距离型信号（§III、§IV-A、Table I）。关键更新可压成：</p>
+<div class="math-display">$$
+\mathcal F_m=\Psi_{\mathrm{VLM}}(I_{\mathrm{fail}},\mathcal T),\qquad
+R_H^{m+1}=\Phi_{\mathrm{LLM}}(\mathcal T,\mathcal P_{\mathrm{env}},\mathcal F_m,R_H^m).
+$$</div>
+<p>其中 $\mathcal T$ 是任务，$\mathcal P_{\mathrm{env}}$ 是 API 上下文，$\mathcal F_m$ 是失败解释。这是离散的代码更新，不是通过 VLM 反向传播。高层历史样本按当前 $R_H^m$ 重标，避免同一训练批次混用不同版本的奖励。</p>
+<p>作者认为奖励摆脱对低层即时完成能力的直接依赖，可以改善 HRL 稳定性。但<strong>这不意味着训练全程 stationary</strong>：奖励代码会更新，低层动作能力也在变；relabeling 只能处理其中一部分不一致。</p>
+<p>复现时必须核实：§III-E 写低层奖励为到达阈值外的 $-1$，Algorithm 1 第 14 行却使用负欧氏距离。停滞窗口、近零梯度判据和成功率阈值也未在 Table I 中给出具体取值，不能仅凭伪代码假设已有完整配方。</p>
+<h2 id="4-数据与设置-有结构化状态-也有少量示范">4. 数据与设置：有结构化状态，也有少量示范</h2>
+<p>评估包括 maze、pick-and-place、bin、Franka kitchen，主训练曲线使用 <strong>5 个随机种子</strong>。训练数据主要来自仿真交互；§IV-A 明确对 pick-and-place、kitchen 等困难任务加入<strong>单条示范和低层模仿目标</strong>，maze 不用示范。因此不是完全零示范学习。</p>
+<p>部署 MLP 接收结构化状态，而不是直接从原始图像输出动作。Appendix A-C 中，maze 输入含夹爪位置、迷宫数组和目标；抓取任务含夹爪/物体位置、相对位置及速度。视觉接地发生在奖励反馈环节，不能误读成部署策略本身拥有通用视觉语言理解能力。</p>
+<p>Kitchen 定义存在文字差异：Appendix A-B 说打开微波炉，A-F prompt 则要求开微波炉后再转燃气旋钮。<strong>实际评估成功条件 [?]</strong>，需要实现或进一步说明确认，不能直接称为完整厨房任务套件。</p>
+<h2 id="5-关键结果-系统有效-但独立归因与速度口径要收紧">5. 关键结果：系统有效，但独立归因与速度口径要收紧</h2>
+<h3 id="成功率提升是否明显">成功率提升是否明显？</h3>
+<p>Figure 3 将 VGRS 与 L2R、SAGA、RAPS、HAC、HIER、DAC 比较。maze 上是有竞争力；困难操作任务中差距更明显。L2R 在这里被改成 <strong>SAC 控制器</strong>，不是原方法的 MPC；同时它是单层、静态奖励。因此对 L2R 的提升包含层级结构和奖励反馈两个变化。</p>
+<p><img src="../../assets/vgrs/pick-success.png" alt="原论文 Figure 3b：Pick-and-place 成功率训练曲线" /></p>
+<p>红色 VGRS 曲线末端约为 0.9，其余曲线接近底部；阴影是跨 5 seeds 的标准差。这里使用图上近似读数，不把它写成精确测量。图片是原 Figure 3b 子图，共用图例见原文 Figure 3，许可 CC BY-NC-SA 4.0。该图支持系统在这一训练设置下有明显优势，<strong>不应与下面另一处报告的 81% 混成同一统计结果</strong>。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>要检验的主张</th>
+<th>原文报告</th>
+<th>支持范围与边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>相比直接 VLA 控制的部署取舍</td>
+<td>§IV-F / Fig. 1：pick-and-place，VGRS 81%，SmolVLA 用 100 条专家示范微调后 29%；分别约 500 Hz 与 50 Hz</td>
+<td>相差 52 个百分点，推理频率约 10 倍；存在动作接口迁移与训练方式差异，不能外推为普遍优于 VLA</td>
+</tr>
+<tr>
+<td>仿真策略能否迁移到实物</td>
+<td>§IV-G：Dobot Magician + Realsense D435；每项任务 5 组 × 10 次；pick-and-place、bin 均平均 60%，L2R 未完成任务</td>
+<td>原文分别报 variance 0.07、0.03，未清楚定义估计口径；未给置信区间</td>
+</tr>
+<tr>
+<td>“快”是否体现为真机 500 Hz</td>
+<td>§IV-G：网络推理约 500 Hz，SDK 将端到端循环限制为 20 Hz（50 ms）</td>
+<td>证明策略推理轻量，不能声称实物动作闭环达到 500 Hz</td>
+</tr>
+</tbody>
+</table></div>
+<p>论文没有充分交代推理 benchmark 的硬件、计时边界及训练总成本。应将 500 Hz 视作作者报告的推理结果，而非可跨硬件复用的性能保证。</p>
+<h3 id="视觉反馈究竟贡献了什么">视觉反馈究竟贡献了什么？</h3>
+<p>Figure 5 的静态奖励/动态奖励案例展示了失败后修改奖励能改变路线，是直观证据。但它同时改变了<strong>是否迭代、是否变稠密、是否使用视觉</strong>。缺少同一 HRL、相同调用预算下“仅用数值/符号反馈迭代”的对照，因此没有隔离视觉诊断的增量价值。Figure 4 的平均奖励曲线也不能单独证明诊断正确：不同 reward 的尺度和定义本来就不同。</p>
+<p>更具体的问题在 Appendix A-E：</p>
+<ul>
+<li>正文称静态方法连续最小化到终点的距离；展示代码实际只返回 $-\mathbf1[d&gt;0.05]$。</li>
+<li>正文称动态方法加入“墙右侧的区域惩罚”；展示代码却是在所有位置加上 $-0.1|y-1|$，没有区域判断，也没有过墙后关闭的条件。</li>
+<li>展示的 VLM 反馈说被墙挡住，却没有明确指出“左侧开口”；这与正文更强的叙述并不完全对应。</li>
+</ul>
+<p>这不等于证明结果无效，但说明<strong>案例文字、诊断输出、实际奖励代码尚未形成严密证据链</strong>。若复现，首先应确认执行的奖励版本，以及到达目标后该项是否还会错误地拉回策略。</p>
+<p>单 VLM 对照也主要给代码样例，未报告多次生成的编译率、正确率或下游成功率；Appendix A-D 的“pick-and-place”样例还描述了迷宫墙体。它说明有失败风险，尚不能量化分工架构的稳定收益。</p>
+<h2 id="6-insights-下一步最值得验证什么">6. Insights：下一步最值得验证什么</h2>
+<p><strong>1. 最有价值的实验是“相同迭代预算，换反馈内容”。</strong> 当前完整系统改善明显，但静态 L2R 对照不能拆出视觉贡献。我会固定 HRL、初始奖励、示范与调用次数，比较真实失败帧、仅状态统计、打乱帧和人工诊断；同时记录任务成功率与奖励代码有效率。这能判断视觉提供的是缺失的几何信息，还是多轮改奖励的附带收益。</p>
+<p><strong>2. 奖励是可检查的中间产物，这比“解释听起来合理”更重要。</strong> 迷宫代码的全局坐标惩罚揭示：正确识别障碍不保证写出正确 shaping。可迁移的工程模块是为每个奖励版本加入最小状态测试——墙两侧、穿门前后、目标附近——并记录奖励差异和回退条件。本文给出了产生修订的闭环，但未展示充分的自动验收机制。</p>
+<p><strong>3. 慢推理换快执行，代价是任务适应发生在训练阶段。</strong> §V 承认全新语言任务需要重新训练；遮挡和触觉类失败也可能超出图像诊断能力。我认为这种路线适合重复执行、任务稳定、能仿真训练的操作单元。若目标是开放环境中不断接收新指令，应把重新训练耗时也列入评估，不能只比较每步推理延迟。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="ENPIRE-Agentic-Robot-Policy-Self-Improvement-in-the-Real-World-物理自主研究闭环.html" title="ENPIRE-Agentic-Robot-Policy-Self-Improvement-in-the-Real-World-物理自主研究闭环">ENPIRE-Agentic-Robot-Policy-Self-Improvement-in-the-Real-World-物理自主研究闭环</a>：可对照“反馈闭环修改什么、在哪里闭合”。本篇修改训练奖励，并将仿真策略迁移到实物；连接笔记用于继续比较，不作为本篇实验事实来源。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="ULTRA-Unified-Multimodal-Control-for-Autonomous-Humanoid-Whole-Body-Loco-Manipulation-稀疏目标全身控制.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">ULTRA：从动作跟踪到稀疏目标驱动的人形全身控制</span></a>
+<a class="paper-nav-link next" href="TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">论文笔记：TacVLA——触觉应该在什么时候参与动作决策？</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: singh2026trainingfast</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

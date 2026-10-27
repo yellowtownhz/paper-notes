@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-现有文本路由是否遗漏了模型内部-对下一项-skill-有增量预测力的状态信号"><span class="toc-num">02</span> 2. 关键问题：现有文本路由是否遗漏了模型内部、对下一项 skill 有增量预测力的状态信号？</a></li>
+<li><a class="toc-link" href="#3-关键方法-把-emotion-geometry-翻译成可审查的-router-字段-并复用状态突变做-sop-诊断"><span class="toc-num">03</span> 3. 关键方法：把 emotion geometry 翻译成可审查的 router 字段，并复用状态突变做 SOP 诊断</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-golden-case-同一条蓝衬衫轨迹如何贯通-selection-与-evolution">3.1 Golden Case：同一条蓝衬衫轨迹如何贯通 selection 与 evolution</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-emotion-vector-extraction-eq-2-3">3.2 Emotion Vector Extraction：Eq. 2–3</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-emotion-encoder-eq-4-7">3.3 Emotion Encoder：Eq. 4–7</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-emotion-augmented-skill-selection-eq-8-9-与完整-prompt">3.4 Emotion-Augmented Skill Selection：Eq. 8–9 与完整 Prompt</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-emotion-driven-skill-evolution-eq-10-15-与完整-prompts">3.5 Emotion-Driven Skill Evolution：Eq. 10–15 与完整 Prompts</a></li>
+<li><a class="toc-link toc-sub" href="#3-6-训练与运行配置">3.6 训练与运行配置</a></li>
+<li><a class="toc-link toc-sub" href="#3-7-系统边界">3.7 系统边界</a></li>
+<li><a class="toc-link" href="#4-数据集-emotion-stories-router-supervision-与-agent-evaluation-是三条不同数据流"><span class="toc-num">04</span> 4. 数据集：emotion stories、router supervision 与 agent evaluation 是三条不同数据流</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-emotion-stories-与-goemotions-probe">4.1 Emotion Stories 与 GoEmotions probe</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-warm-up-与-evolution-data">4.2 Warm-up 与 evolution data</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-评估-benchmarks-与-skill-libraries">4.3 评估 benchmarks 与 skill libraries</a></li>
+<li><a class="toc-link" href="#5-关键结果-完整-pipeline-有效-表示有可读关联-但-beyond-text-与因果-claim-尚未建立"><span class="toc-num">05</span> 5. 关键结果：完整 pipeline 有效、表示有可读关联，但 beyond-text 与因果 claim 尚未建立</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-emotion-directions-的-probe-质量-figure-3">5.1 Emotion directions 的 probe 质量（Figure 3）</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-主实验-v2-table-1">5.2 主实验（v2 Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-组件与门控消融-v2-table-2-qwen3-8b">5.3 组件与门控消融（v2 Table 2，Qwen3-8B）</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-evolution-的-round-wise-效果-v2-table-12">5.4 Evolution 的 round-wise 效果（v2 Table 12）</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-表示的语义可读性-figure-4-table-13-figure-7">5.5 表示的语义可读性（Figure 4、Table 13、Figure 7）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-out-of-domain-pipeline-transfer-figure-5">5.6 Out-of-domain pipeline transfer（Figure 5）</a></li>
+<li><a class="toc-link toc-sub" href="#5-7-证据边界">5.7 证据边界</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#author-team">Author / Team</a></li>
+<li><a class="toc-link toc-sub" href="#topic-area">Topic / Area</a></li>
+<li><a class="toc-link toc-sub" href="#concept">Concept</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-08-17</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2608.09248v2" target="_blank">arXiv</a>
+    </div>
+    <h1>Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</h1>
+    <p class="authors">Bohan Lin, Hejia Geng, Xinyi Xie, Heng Zhou, Qinghua Xing, Bo Liu, Chen Zhang, Yudong Zhang</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Agents</span> <span class="topic-tag">Skill_Routing</span> <span class="topic-tag">Emotion_Representation</span> <span class="topic-tag">Agent_Evolution</span></div>
+</header>
+
+<h1>论文笔记: Emotion2Skill: Model-Internal Emotion Signals for Adaptive Skill Selection and Evolution</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Bohan Lin、Hejia Geng、Xinyi Xie、Heng Zhou、Qinghua Xing、Bo Liu、Chen Zhang、Yudong Zhang；Chen Zhang 与 Yudong Zhang 为通讯作者。</li>
+<li>机构：中国科学技术大学、中国科学技术大学苏州高等研究院、University of Oxford、University of Arizona、上海人工智能实验室。</li>
+<li>版本：arXiv:2608.09248v2，cs.AI，2026-08-11 修订；当前来源只能确认 arXiv 预印本，未注明正式会议或期刊 <code>[?]</code>。</li>
+<li>代码：论文声明代码位于 <code>https://github.com/BoHan-LIN04/Emotion2Skill</code>；本文只依据论文原文，未核验代码与论文的一致性 <code>[?]</code>。</li>
+<li>一句话定位：Emotion2Skill 把 Qwen3 residual stream 中的 27 维 emotion readout 转成带置信门控的自然语言字段，供 LLM skill router 使用；同一条内部状态轨迹还被用来定位失败附近的 transition，并定向重写低成功率 SOP（Figure 2；主文 Eq. 2–15）。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-现有文本路由是否遗漏了模型内部-对下一项-skill-有增量预测力的状态信号">2. 关键问题：现有文本路由是否遗漏了模型内部、对下一项 skill 有增量预测力的状态信号？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 一件 50 美元以内的蓝色棉衬衫为什么会卡住 router？</strong></p>
+<p>WebShop 的目标是购买一件蓝色棉衬衫，价格低于 50 美元。step 2 返回 12 个候选，价格为 38–78 美元；step 3 的 observation 已经写着 <code>Sorted; none below USD 50</code>。text-only baseline 仍选择 <code>ProductSearch</code>，到 step 4 收到更精确的 <code>No results for orig. query</code> 后继续重复搜索，最后失败。Emotion2Skill 在 step 3 读到 T3 <code>Confused</code>、置信度 $c_t=0.36&gt;\tau=0.3$，把该状态作为辅助字段放进 router prompt，改选 <code>QueryRephrase</code>；新 query 找到 6 个候选，最后购买 38 美元、4.2 星的商品（Appendix E, Case A；Figure 6）。</p>
+</blockquote>
+<p>这个例子同时暴露两个控制问题：</p>
+<ol>
+<li><strong>在线 selection 的观测是否够用？</strong> 常规 router 只显式接收 task、history、observation 和候选 SOP。Emotion2Skill 的研究假设是：模型在 residual stream 中形成的状态表示，可能是文本 router 尚未显式利用的计算中间量。</li>
+<li><strong>离线 evolution 如何从 episode outcome 下钻？</strong> 最终 0/1 success 不能直接指出哪个 skill invocation、precondition 或退出规则出了问题。Case A 的 step 4 出现 $\delta_t=0.42$ 的内部状态突变；这类 transition 随后被用于定位 <code>QueryRephrase</code> 缺少 query budget 和 escalation path（Appendix E, Case B）。</li>
+</ol>
+<p>但 Golden Case 不能证明“内部状态先于一切文本证据”：step 3 已经出现 <code>none below USD 50</code>，只是早于 step 4 的精确 no-results 事件。一个更强的 text-only router 或手写失败启发式也可能在 step 3 选择 <code>QueryRephrase</code>。论文展示了 rerouting 确实发生，却没有固定外部文本、只干预 emotion direction 的配对实验，也没有报告同预算、同 prompt、仅去掉 emotion block 的主对照。</p>
+<p>因此，这篇论文真正要检验的不是“LLM 会不会感到困惑”，而是：带 emotion 语义锚点的 model-internal feature，经 task/skill/outcome supervision 适配后，能否成为 skill system 的有效控制信号。</p>
+<h2 id="3-关键方法-把-emotion-geometry-翻译成可审查的-router-字段-并复用状态突变做-sop-诊断">3. 关键方法：把 emotion geometry 翻译成可审查的 router 字段，并复用状态突变做 SOP 诊断</h2>
+<p><img src="https://arxiv.org/html/2608.09248v2/x2.png" alt="Emotion2Skill 整体框架（Figure 2）" /></p>
+<h3 id="3-1-golden-case-同一条蓝衬衫轨迹如何贯通-selection-与-evolution">3.1 Golden Case：同一条蓝衬衫轨迹如何贯通 selection 与 evolution</h3>
+<p><strong>离线准备。</strong> 先从 27 类 synthetic emotion stories 的 residual activation 中抽取线性方向，选择读出层，再用不带 emotion signal 的 warm-up trajectories 训练一个小型 encoder、12 个 prototype 和 confidence gate。这样在线时只需要把当前 residual state 映射成一个短 template 与一个 confidence。</p>
+<p><strong>在线轨迹。</strong> Figure 6 的六步原始记录如下：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th style="text-align:right">Step</th>
+<th>Observation</th>
+<th>Template</th>
+<th style="text-align:right">$c_t$</th>
+<th>Text-only baseline</th>
+<th>Emotion2Skill</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td><code>Goal: blue cotton shirt below USD 50</code></td>
+<td>T1 Curious</td>
+<td style="text-align:right">0.62</td>
+<td>ProductSearch</td>
+<td>ProductSearch</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td><code>12 results; USD 38–78</code></td>
+<td>T2 Desiring</td>
+<td style="text-align:right">0.43</td>
+<td>ProductSearch</td>
+<td>ProductCompare</td>
+</tr>
+<tr>
+<td style="text-align:right">3</td>
+<td><code>Sorted; none below USD 50</code></td>
+<td>T3 Confused</td>
+<td style="text-align:right">0.36</td>
+<td>ProductSearch</td>
+<td>QueryRephrase</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td><code>No results for orig. query</code></td>
+<td>T3 Confused</td>
+<td style="text-align:right">0.37</td>
+<td>ProductSearch</td>
+<td>QueryRephrase</td>
+</tr>
+<tr>
+<td style="text-align:right">5</td>
+<td><code>6 results for new query</code></td>
+<td>T5 Optimistic</td>
+<td style="text-align:right">0.41</td>
+<td>ProductCompare</td>
+<td>ProductCompare</td>
+</tr>
+<tr>
+<td style="text-align:right">6</td>
+<td><code>Item #3: USD 38, 4.2 stars</code></td>
+<td>T4 Approving</td>
+<td style="text-align:right">0.58</td>
+<td>Purchase</td>
+<td>Purchase</td>
+</tr>
+<tr>
+<td style="text-align:right">Outcome</td>
+<td></td>
+<td></td>
+<td style="text-align:right"></td>
+<td>Failure</td>
+<td>Success</td>
+</tr>
+</tbody>
+</table></div>
+<p>在 step 3，系统从第 24 层 <code>Assistant:</code> delimiter token 读取 $h_T^{(24)}$，得到 27 维 $e_t$；MLP 将其映射到 $r_t$，prototype 匹配得到 T3，confidence head 给出 0.36。因为超过阈值，selection prompt 才出现 <code>Confusion/uncertainty; current strategy may fail.</code>。emotion head 不直接输出 skill，最终决定仍由原 LLM 在 task/history/observation/SOP 加 optional emotion summary 上生成。</p>
+<p><img src="https://arxiv.org/html/2608.09248v2/x6.png" alt="蓝衬衫案例的 confidence、template 与 shift trajectory（Figure 6）" /></p>
+<p><strong>episode 后复用。</strong> Case A 的 shift 序列为 0.18、0.29、0.42、0.31、0.14，episode threshold 为 0.37，故 step 4 被标成 transition point。round 1 后 <code>QueryRephrase</code> success rate 为 38%，低于 $\eta=40\%$，于是它在 Round 2 被重写：最多尝试 3 种 query 改写，仍失败则回到 <code>ProductSearch</code>，并只保留核心名词与价格范围（Appendix E, Case B）。Case B 另提到 step 6 的 $\delta=0.39$，但没有说明它是否来自另一条或聚合轨迹；不能与 Case A Figure 6 的 step 6 $\delta=0.14$ 合并为同一个事实 <code>[?]</code>。</p>
+<h3 id="3-2-emotion-vector-extraction-eq-2-3">3.2 Emotion Vector Extraction：Eq. 2–3</h3>
+<p>对第 $k$ 个 emotion concept、故事 $n$、层 $\ell$，将 token $t\ge 50$ 的 residual activation mean-pool 为 $\bar h_{k,n}^{(\ell)}$。类均值减全局均值得到：</p>
+<div class="math-display">$$
+v_k^{(\ell)}=
+\frac{1}{N}\sum_{n=1}^{N}\bar h_{k,n}^{(\ell)}
+-\frac{1}{KN}\sum_{k&#x27;=1}^{K}\sum_{n=1}^{N}\bar h_{k&#x27;,n}^{(\ell)},
+\qquad K=27,\ N=100.
+\tag{2}
+$$</div>
+<p>作者再用 100 个 neutral stories 的 activation 拟合 PCA，投影掉 top-10 PCs：$\hat v_k^{(\ell)}=\Pi^\perp v_k^{(\ell)}$。选定层 $L^*$ 后，将 27 个方向按行堆成 $W_e\in\mathbb R^{27\times d}$。在每个 decision step、生成前的 <code>Assistant:</code> delimiter token 读取：</p>
+<div class="math-display">$$
+e_t=\frac{W_eh_T^{(L^*)}}{\left\|W_eh_T^{(L^*)}\right\|_2}
+\in\mathbb R^{27}.
+\tag{3}
+$$</div>
+<p>主文 Eq. 3 没有说明是否先对 $h_T$ 去 global/neutral mean，也没有说明 $W_e$ 的各行是否另做归一化；direction norm 是否影响 raw score 因而仍不清楚 <code>[?]</code>。</p>
+<h3 id="3-3-emotion-encoder-eq-4-7">3.3 Emotion Encoder：Eq. 4–7</h3>
+<p>编码器是 $27\to64\to128\to128$ 的 3-layer MLP，ReLU，少于 27K 参数，输出 $r_t=f_\theta(e_t)\in\mathbb R^{128}$。12 个自然语言模板各有一个 learnable prototype $q_j$：</p>
+<div class="math-display">$$
+T_t^*=\arg\max_{T_j\in\mathcal T}
+\frac{r_t^\top q_j}{\|r_t\|\,\|q_j\|}.
+\tag{4}
+$$</div>
+<div class="math-display">$$
+c_t=\sigma(w_c^\top r_t+b_c)\in[0,1].
+\tag{5}
+$$</div>
+<p>模板为 Curious、Desiring、Confused、Approving、Optimistic、Proud、Frustrated、Disappointed、Nervous、Realizing、Amused、Neutral（Table 11）。其中 T3 的完整文本是 <code>Confusion/uncertainty; current strategy may fail.</code>。</p>
+<p>训练 tuple 为 $(e_t,s_t^{sel},y_t)$：$s_t^{sel}$ 是无 emotion 的 baseline skill choice，$y_t$ 是 episode outcome。表示先做 supervised contrastive learning：</p>
+<div class="math-display">$$
+\mathcal L_{ctr}=-\frac{1}{|\mathcal B|}\sum_{i\in\mathcal B}
+\frac{1}{|\mathcal A^+(i)|}\sum_{j\in\mathcal A^+(i)}
+\log\frac{\exp(r_i^\top r_j/\kappa)}
+{\sum_{k\ne i}\exp(r_i^\top r_k/\kappa)},
+\tag{6}
+$$</div>
+<p>其中 $\mathcal A^+(i)=\{j\mid s_j^{sel}=s_i^{sel}\land y_j=1\}$。positive 要来自成功 episode 且选择与 anchor 相同的 baseline skill；Eq. 6 并未额外要求 anchor 自己成功。raw $e_t$ 经 $k$-means（$C=12$）得到 pseudo-label $\hat c_i$，再训练 prototype classifier：</p>
+<div class="math-display">$$
+\mathcal L_{cls}=-\frac{1}{|\mathcal B|}\sum_i
+\log\frac{\exp(r_i^\top q_{\hat c_i}/\kappa&#x27;)}
+{\sum_{j=1}^{C}\exp(r_i^\top q_j/\kappa&#x27;)},
+\qquad
+\mathcal L=\mathcal L_{ctr}+\lambda\mathcal L_{cls}.
+\tag{7}
+$$</div>
+<p>这里的 adapter 不是单纯的无监督 emotion compression：Eq. 6 已把 baseline skill choice 与 episode outcome 写进表示。最终 controller feature 更准确地说是 <strong>emotion-anchored hidden features + task/skill/outcome supervision</strong> 的组合，不能把下游增益只归因于 emotion ontology。</p>
+<p>两个关键接口没有闭合：</p>
+<ul>
+<li>主方法总目标只有 $\mathcal L_{ctr}+\lambda\mathcal L_{cls}$；Appendix C.3 才说 confidence 使用 episode-success BCE 训练，但未给 BCE 权重、采样、校准或并入总 loss 的方式 <code>[?]</code>。</li>
+<li>$k$-means 产生无语义 cluster ID；论文没有说明它们如何一一对齐到 Table 11 的 12 个命名模板 <code>[?]</code>。</li>
+</ul>
+<h3 id="3-4-emotion-augmented-skill-selection-eq-8-9-与完整-prompt">3.4 Emotion-Augmented Skill Selection：Eq. 8–9 与完整 Prompt</h3>
+<div class="math-display">$$
+P_t=
+\begin{cases}
+[x_t;\{D_i\}_{i=1}^{M};T_t^*;c_t], &amp; c_t\ge\tau,\\
+[x_t;\{D_i\}_{i=1}^{M}], &amp; c_t&lt;\tau.
+\end{cases}
+\tag{8}
+$$</div>
+<div class="math-display">$$
+s_t^*=\arg\max_{s_i\in\mathcal S}p_{\mathcal M}(s_i\mid P_t).
+\tag{9}
+$$</div>
+<p>$\tau=0.3$ 在 100 个 WebShop validation episodes 上选择。主文说明设 $\tau=1$ 可恢复 text-only selection，但实验没有报告这个最直接的 matched condition。</p>
+<p>Table 8 的完整 Skill Selection Prompt 如下；v2 附录把它错误交叉引用为 Eq. 5，主文正确编号是 Eq. 8：</p>
+<pre><code class="language-text">You are an agent selecting the most appropriate skill.
+Task: {task_description}
+History: {history}
+Observation: {observation}
+Available Skills:
+{index}. {skill_name}: {description} | SOP: {sop_summary}
+[repeat for each skill]
+[Included only when c_t &gt;= tau:]
+Emotional State: {T_t_star} (confidence: {c_t:.2f})
+Use the emotional state as auxiliary context for skill selection.
+Respond with only the skill number (integer).
+</code></pre>
+<p>推理使用 Qwen3 non-thinking mode、greedy decoding、temperature 0。论文称在 valid skill identifiers 上 constrained generation，但未披露 grammar/logit mask 或 invalid integer 的处理方式 <code>[?]</code>。readout 与 augmented selection 是否需要两次 forward、能否复用 KV cache，以及 $h_T$ 对应的上下文是否已含 candidate SOP，也都未写清 <code>[?]</code>。</p>
+<h3 id="3-5-emotion-driven-skill-evolution-eq-10-15-与完整-prompts">3.5 Emotion-Driven Skill Evolution：Eq. 10–15 与完整 Prompts</h3>
+<p>对 completed episode 的 normalized trajectory $\mathcal E=(e_1,\ldots,e_T)$，计算相邻状态的 cosine distance：</p>
+<div class="math-display">$$
+\delta_t=1-\frac{e_t^\top e_{t-1}}{\|e_t\|\,\|e_{t-1}\|},
+\qquad t=2,\ldots,T.
+\tag{10}
+$$</div>
+<div class="math-display">$$
+\mathcal P=\left\{t\in\{2,\ldots,T\}\mid
+\delta_t&gt;\bar\delta+\sigma_\delta\right\}.
+\tag{11}
+$$</div>
+<p>主文 Eq. 11 使用 completed episode 的全部 $\delta_2,\ldots,\delta_T$ 计算 mean/std；Appendix C.4 却写成“截至当前步的 running mean/std”，是离线 detector 与在线 detector 的版本内冲突 <code>[?]</code>。</p>
+<p>对待更新 skill $s_i$，只保留 $\mathcal P_i=\{t\in\mathcal P\mid s_t^*=s_i\}$，截取前后各一步的窗口：</p>
+<div class="math-display">$$
+d_t=\left(x_{t-1:t+1},s^*_{t-1:t+1},T^*_{t-1:t+1},
+\delta_{t-1:t+1}\right).
+\tag{12}
+$$</div>
+<p>先把这些窗口 verbalize 成 2–3 句 $\Delta_i$，再与当前 SOP、episode outcome 一起送给 rewriter：</p>
+<div class="math-display">$$
+P_{evo}^{(i)}=\left[D_i;\{d_t\}_{t\in\mathcal P_i};\Delta_i;r_{ep}\right].
+\tag{13}
+$$</div>
+<div class="math-display">$$
+D_i&#x27;=\mathcal M\left(P_{evo}^{(i)}\right).
+\tag{14}
+$$</div>
+<div class="math-display">$$
+\mathcal S^{(r+1)}=
+\left(\mathcal S^{(r)}\setminus\{s_i\}\right)\cup\{s_i&#x27;\},
+\qquad \forall s_i\in\mathcal U^{(r)},
+\tag{15}
+$$</div>
+<p>其中 $\mathcal U^{(r)}$ 是 round $r$ 中 success rate 低于 $\eta$ 的 skills。transition 只负责选诊断窗口；真正的 rewrite 同时看到 observations、skills、templates、shift magnitudes、verbal summary、原 SOP 和 episode outcome，不能把改进单独归因于 emotion spike。</p>
+<p>Table 9 的完整 Transition Verbalization Prompt：</p>
+<pre><code class="language-text">You are an analyst reviewing an agent's episode trajectory for skill: &quot;{skill_name}&quot;.
+Transition Points: {formatted_transition_contexts}
+Each entry: step, delta_t, 3-step window of observations / skills / templates / shift magnitudes.
+Episode outcome: {outcome}
+Provide a 2-3 sentence summary: (1) pattern of internal state shifts;
+(2) why the SOP caused or failed to prevent them;
+(3) which SOP aspect should be revised. Do not rewrite the SOP here.
+</code></pre>
+<p>Table 10 的完整 Skill Evolution Prompt；v2 附录把 $P_{evo}^{(i)}$ 错误交叉引用为 Eq. 11，主文正确编号是 Eq. 13：</p>
+<pre><code class="language-text">You are an expert agent designer improving a skill SOP.
+Skill: {skill_name} | Success rate: {rate:.1%} (threshold: {eta:.1%})
+Current SOP: {current_sop}
+Critical Transition Points (step, observations, skills, templates, delta values): {transition_contexts}
+Transition Summary: {Delta_i}
+Episode Outcome: {outcome}
+Instructions: Rewrite the SOP to (1) add guidance for situations that caused abrupt state shifts,
+(2) add exit/escalation criteria, (3) preserve format and detail, (4) stay within 200 words.
+Revised SOP:
+</code></pre>
+<h3 id="3-6-训练与运行配置">3.6 训练与运行配置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>v2 配置</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direction extraction</td>
+<td>27 concepts × 100 stories；token $t\ge50$ mean-pool；100 neutral stories；去 top-10 PCs</td>
+<td>Eq. 2；Appendix A/B.2</td>
+</tr>
+<tr>
+<td>Layer sweep</td>
+<td>8B: {16,18,20,22,24,26,28}→24；14B: {18,20,22,24,26,28,30}→26</td>
+<td>Figure 3；Appendix B.2</td>
+</tr>
+<tr>
+<td>Encoder warm-up</td>
+<td>ReAct+skill、无 emotion；500 episodes（250 WS + 250 ALF）；过滤 $\max(e_t)&lt;0.05$ 后约 3,200 tuples</td>
+<td>Appendix B.2</td>
+</tr>
+<tr>
+<td>Encoder optimization</td>
+<td>AdamW；lr $10^{-3}$；weight decay $10^{-4}$；seed 42；batch 64；最多 50 epochs；patience 5；$\lambda=0.5,\kappa=0.07,\kappa&#x27;=0.1$</td>
+<td>Appendix B.2</td>
+</tr>
+<tr>
+<td>Evolution</td>
+<td>3 rounds；每轮 100 episodes（50 WS + 50 ALF）；$\eta=0.4$；窗口 $w=1$；same-backbone rewriter；greedy；SOP ≤200 words</td>
+<td>Appendix B.2</td>
+</tr>
+<tr>
+<td>Inference</td>
+<td>greedy；non-thinking；8B context 4096；14B context 8192；$\tau=0.3$</td>
+<td>Appendix B.2</td>
+</tr>
+<tr>
+<td>Repeats</td>
+<td>3 independent runs，只披露“different episode orderings”</td>
+<td>Table 1；Appendix B.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>版本内还有两处复现冲突：§4.1 称 “all experiments” 使用 8×H800，Appendix B.1/B.2 则称 baseline、training 和 inference 使用 2×H800；$L^*$ 又同时被描述为在 validation data 上选择，以及在 GoEmotions test set 上“评估并同时选择”。终稿不能把任一说法静默当成唯一事实 <code>[?]</code>。</p>
+<p>主文 §3 的 Eq. 2–15 是本文采用的 canonical 编号；Appendix A、D、H 仍沿用整体前移或跳号的旧交叉引用，复现时应按公式内容而非附录编号对应。</p>
+<h3 id="3-7-系统边界">3.7 系统边界</h3>
+<ul>
+<li><strong>不是 embedding retriever</strong>：读出来自 agent 自身 residual stream，而不是 task/SOP 的外部文本 embedding。</li>
+<li><strong>不是 activation steering</strong>：方向不会被加回 residual stream，也不直接修改 action logits；readout 被翻译成文本后，仍由同一 LLM router 选择 skill。</li>
+<li><strong>不是纯 emotion classifier</strong>：encoder 的 positives 已用 skill choice 与 outcome 监督，它更接近有 emotion 语义锚点的 task-trained controller feature。</li>
+<li><strong>不是纯 transition credit assignment</strong>：transition 是启发式 change-point，用来挑 rewriter 的局部上下文；论文没有估计各 step 对最终 reward 的因果贡献。</li>
+<li><strong>有白盒与算力代价</strong>：需要 checkpoint-specific hidden-state access；8B/14B 要分别选层、训练 encoder。每步额外 forward/latency 未报告 <code>[?]</code>。</li>
+</ul>
+<h2 id="4-数据集-emotion-stories-router-supervision-与-agent-evaluation-是三条不同数据流">4. 数据集：emotion stories、router supervision 与 agent evaluation 是三条不同数据流</h2>
+<h3 id="4-1-emotion-stories-与-goemotions-probe">4.1 Emotion Stories 与 GoEmotions probe</h3>
+<ul>
+<li>27 个 GoEmotions concepts × 100 stories = 2,700 篇 synthetic stories，由 Qwen3-8B 生成。</li>
+<li>平均 4.2 sentences、67.3 tokens；超出 2–8 sentences 则重生成；zero-shot classifier 必须把目标 emotion 排进 top-3；同一 concept 内任意两篇 story 的 embedding cosine similarity 不高于 0.95（Appendix A.1）。</li>
+<li>50 篇随机样本由 3 位 annotator 多数票判断，89% 可识别正确 concept（Appendix A.2）。</li>
+<li>另有 100 个 neutral stories 用于 PCA；其生成方式及与 T12 Neutral 的关系未披露 <code>[?]</code>。</li>
+<li>GoEmotions probe 是 27 类 multi-label hit-any：预测 top-1 命中任一 gold label 即算正确；random baseline 为 8.2%。</li>
+</ul>
+<p>Table 7 的完整生成 Prompt：</p>
+<pre><code class="language-text">You are a creative writer. Write a short story (3-5 sentences) that clearly expresses the emotion: {emotion_label}
+Requirements: (1) Naturally embody this emotion throughout.
+(2) Do NOT mention the emotion name.
+(3) Use concrete situations and sensory details.
+Story:
+</code></pre>
+<h3 id="4-2-warm-up-与-evolution-data">4.2 Warm-up 与 evolution data</h3>
+<ul>
+<li>encoder warm-up：250 WebShop + 250 ALFWorld episodes，policy 是 ReAct+skill、无 emotion signal；过滤后约 3,200 step tuples。</li>
+<li>skill evolution：3 rounds × 每轮 100 episodes（50 WebShop + 50 ALFWorld）。</li>
+<li>论文没有说明 warm-up、evolution、validation 与 test episodes 是否严格 disjoint，round 间是否复用任务，也没有证明所有 baselines 获得相同 interaction budget <code>[?]</code>。Emotion2Skill 明确至少包含 500 个 warm-up、300 个 evolution、另加 100 个 WebShop validation episodes。</li>
+</ul>
+<h3 id="4-3-评估-benchmarks-与-skill-libraries">4.3 评估 benchmarks 与 skill libraries</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>规模/切分</th>
+<th>Skill library</th>
+<th>指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WebShop</td>
+<td>standard test set；test episode 数未给 <code>[?]</code>；另有 100-episode validation split 选 $\tau$</td>
+<td>8 skills：ProductSearch、QueryRephrase、ProductCompare、PriceCompare、ReviewAnalysis、OptionSelect、CartManage、PurchaseConfirm</td>
+<td>Score、Success %</td>
+</tr>
+<tr>
+<td>ALFWorld</td>
+<td><code>json_2.1.1</code>，134 test episodes，6 task types</td>
+<td>Pick、Look、Clean、Heat、Cool、PickTwo 六类 SOP</td>
+<td>per-type 与 Avg Success %</td>
+</tr>
+<tr>
+<td>MATH</td>
+<td>500 problems</td>
+<td>6 skills</td>
+<td>Accuracy</td>
+</tr>
+<tr>
+<td>MBPP</td>
+<td>374 tasks</td>
+<td>5 skills</td>
+<td>pass@1</td>
+</tr>
+</tbody>
+</table></div>
+<p>WebShop SOP 来自 MASA training traces，ALFWorld SOP follows SkillOpt；Appendix D.3 只给 skill 摘要，没有完整初始/演化后 SOP library，因此仅凭 PDF 无法原样复现 <code>[?]</code>。MATH/MBPP 复用 Qwen3-8B 的 $L^*=24$ directions 和已训练 encoder，但仍为每个 benchmark 人工构造新 skill inventory；它检验的是“固定 readout/encoder + 新 skills”的迁移，不是零 task engineering。</p>
+<h2 id="5-关键结果-完整-pipeline-有效-表示有可读关联-但-beyond-text-与因果-claim-尚未建立">5. 关键结果：完整 pipeline 有效、表示有可读关联，但 beyond-text 与因果 claim 尚未建立</h2>
+<h3 id="5-1-emotion-directions-的-probe-质量-figure-3">5.1 Emotion directions 的 probe 质量（Figure 3）</h3>
+<p><img src="https://arxiv.org/html/2608.09248v2/x3.png" alt="Emotion vector quality 与 layer selection（Figure 3）" /></p>
+<p>Qwen3-8B 的 GoEmotions hit-any accuracy 在 layer 16/18/20/22/24/26/28 依次为 <strong>15.8/24.3/21.7/30.5/37.2/33.6/35.1%</strong>；random baseline 为 8.2%，故选择 layer 24。对应 Fisher ratio 为 <strong>0.91/1.34/1.52/1.21/2.08/1.83/1.57</strong>，虽同在 layer 24 达峰，但与 accuracy 并不逐层单调同步。Qwen3-14B 在 layer 26/40 达到 39.4%（Figure 3；§4.2）。</p>
+<p>t-SNE 只显示可区分的 valence regions，fine-grained 类别仍 substantial overlap。Appendix C.1 报告将 contrastive directions 换成 raw/plain within-class means 后，probe 从 37.2% 降到 29.6%；该对照是否仍保留 PCA 未说明 <code>[?]</code>。此外，global-mean subtraction 不会改变任意两类均值之差：</p>
+<div class="math-display">$$
+(\mu_k-\bar\mu)-(\mu_{k&#x27;}-\bar\mu)=\mu_k-\mu_{k&#x27;}.
+$$</div>
+<p>所以 Appendix C.1 以“增大 pairwise Euclidean distance”解释效果，在代数上不成立；它可能改变相对原点的投影或去除共同 offset，但不是增大两类均值距离。</p>
+<h3 id="5-2-主实验-v2-table-1">5.2 主实验（v2 Table 1）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Backbone</th>
+<th>Method</th>
+<th style="text-align:right">Pick</th>
+<th style="text-align:right">Look</th>
+<th style="text-align:right">Clean</th>
+<th style="text-align:right">Heat</th>
+<th style="text-align:right">Cool</th>
+<th style="text-align:right">Pick2</th>
+<th style="text-align:right">ALF Avg.</th>
+<th style="text-align:right">WS Score</th>
+<th style="text-align:right">WS Succ.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-8B</td>
+<td>Zero-Shot</td>
+<td style="text-align:right">43.4</td>
+<td style="text-align:right">39.1</td>
+<td style="text-align:right">19.1</td>
+<td style="text-align:right">9.6</td>
+<td style="text-align:right">12.3</td>
+<td style="text-align:right">4.4</td>
+<td style="text-align:right">21.9±1.5</td>
+<td style="text-align:right">11.2</td>
+<td style="text-align:right">2.8±0.5</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>ReAct</td>
+<td style="text-align:right">53.1</td>
+<td style="text-align:right">42.0</td>
+<td style="text-align:right">41.3</td>
+<td style="text-align:right">20.7</td>
+<td style="text-align:right">18.4</td>
+<td style="text-align:right">3.6</td>
+<td style="text-align:right">30.7±1.2</td>
+<td style="text-align:right">12.1</td>
+<td style="text-align:right">5.2±3.2</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>Reflexion</td>
+<td style="text-align:right">52.2</td>
+<td style="text-align:right">34.4</td>
+<td style="text-align:right">29.0</td>
+<td style="text-align:right">24.1</td>
+<td style="text-align:right">19.1</td>
+<td style="text-align:right">14.1</td>
+<td style="text-align:right">31.5±1.6</td>
+<td style="text-align:right">22.4</td>
+<td style="text-align:right">6.8±2.4</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>ExpeL</td>
+<td style="text-align:right">61.2</td>
+<td style="text-align:right">30.1</td>
+<td style="text-align:right">44.4</td>
+<td style="text-align:right">35.6</td>
+<td style="text-align:right">28.7</td>
+<td style="text-align:right">11.5</td>
+<td style="text-align:right">37.0±4.7</td>
+<td style="text-align:right">39.6</td>
+<td style="text-align:right">18.8±4.1</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>MASA</td>
+<td style="text-align:right">55.1</td>
+<td style="text-align:right">24.1</td>
+<td style="text-align:right">46.6</td>
+<td style="text-align:right">48.9</td>
+<td style="text-align:right">43.9</td>
+<td style="text-align:right">23.4</td>
+<td style="text-align:right">43.3±0.9</td>
+<td style="text-align:right">44.7</td>
+<td style="text-align:right">27.1±0.8</td>
+</tr>
+<tr>
+<td>Qwen3-8B</td>
+<td>Emotion2Skill</td>
+<td style="text-align:right">67.9</td>
+<td style="text-align:right">37.1</td>
+<td style="text-align:right">47.2</td>
+<td style="text-align:right">56.9</td>
+<td style="text-align:right">47.2</td>
+<td style="text-align:right">31.3</td>
+<td style="text-align:right">47.4±1.6</td>
+<td style="text-align:right">52.1</td>
+<td style="text-align:right">29.7±1.6</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>Zero-Shot</td>
+<td style="text-align:right">55.1</td>
+<td style="text-align:right">42.9</td>
+<td style="text-align:right">8.2</td>
+<td style="text-align:right">7.9</td>
+<td style="text-align:right">7.7</td>
+<td style="text-align:right">13.1</td>
+<td style="text-align:right">23.4±2.8</td>
+<td style="text-align:right">27.5</td>
+<td style="text-align:right">9.4±0.8</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>ReAct</td>
+<td style="text-align:right">52.1</td>
+<td style="text-align:right">36.6</td>
+<td style="text-align:right">19.8</td>
+<td style="text-align:right">19.0</td>
+<td style="text-align:right">16.5</td>
+<td style="text-align:right">17.8</td>
+<td style="text-align:right">30.2±2.4</td>
+<td style="text-align:right">37.6</td>
+<td style="text-align:right">13.0±1.6</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>Reflexion</td>
+<td style="text-align:right">59.0</td>
+<td style="text-align:right">33.8</td>
+<td style="text-align:right">31.6</td>
+<td style="text-align:right">46.9</td>
+<td style="text-align:right">10.2</td>
+<td style="text-align:right">13.8</td>
+<td style="text-align:right">34.4±0.8</td>
+<td style="text-align:right">32.7</td>
+<td style="text-align:right">14.4±7.0</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>ExpeL</td>
+<td style="text-align:right">71.0</td>
+<td style="text-align:right">35.2</td>
+<td style="text-align:right">43.8</td>
+<td style="text-align:right">37.0</td>
+<td style="text-align:right">34.3</td>
+<td style="text-align:right">28.9</td>
+<td style="text-align:right">43.8±0.8</td>
+<td style="text-align:right">45.4</td>
+<td style="text-align:right">20.6±1.2</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>MASA</td>
+<td style="text-align:right">81.0</td>
+<td style="text-align:right">41.2</td>
+<td style="text-align:right">50.5</td>
+<td style="text-align:right">36.5</td>
+<td style="text-align:right">56.2</td>
+<td style="text-align:right">17.2</td>
+<td style="text-align:right">49.2±0.8</td>
+<td style="text-align:right">46.8</td>
+<td style="text-align:right">24.8±2.0</td>
+</tr>
+<tr>
+<td>Qwen3-14B</td>
+<td>Emotion2Skill</td>
+<td style="text-align:right">79.8</td>
+<td style="text-align:right">43.5</td>
+<td style="text-align:right">48.9</td>
+<td style="text-align:right">38.8</td>
+<td style="text-align:right">35.7</td>
+<td style="text-align:right">34.6</td>
+<td style="text-align:right">52.3±1.5</td>
+<td style="text-align:right">53.8</td>
+<td style="text-align:right">30.7±1.2</td>
+</tr>
+</tbody>
+</table></div>
+<p>Table 1 声明所有值是 3 runs 的 mean；只有 ALF Avg. 与 WS Succ. 另报 std。ALF Avg. 不是六个 per-type 数字的简单平均，而六类 episode 数没有披露，无法独立重算 <code>[?]</code>。</p>
+<ul>
+<li><strong>相对 Zero-Shot 的 headline</strong>：8B 为 ALF +25.5 pp（21.9→47.4）、WS +26.9 pp（2.8→29.7）；14B 为 ALF +28.9 pp（23.4→52.3）、WS +21.3 pp（9.4→30.7）。正文声称 14B gains “consistently larger”，但 WS 的 21.3 小于 8B 的 26.9。</li>
+<li><strong>更接近的 same-library MASA 对照</strong>：8B 为 ALF +4.1 pp、WS +2.6 pp；14B 为 ALF +3.1 pp、WS +5.9 pp。MASA 是否与 Emotion2Skill 使用相同 evolution rounds 和 interaction budget 未说明 <code>[?]</code>。</li>
+<li><strong>不是逐任务单调提升</strong>：8B Look 为 37.1，低于 Zero-Shot 39.1；14B 的 Pick、Clean、Cool 均低于 MASA，其中 Cool 为 35.7 vs 56.2。Appendix G 把 Cool 失败错写成 Qwen3-8B，Table 1 实际显示为 Qwen3-14B。</li>
+</ul>
+<p>因此，对 Zero-Shot 的大增益混入 skill library、router supervision 和 3 轮 evolution；不能把 +21.3–28.9 pp 全部写成 emotion signal 的净效应。</p>
+<h3 id="5-3-组件与门控消融-v2-table-2-qwen3-8b">5.3 组件与门控消融（v2 Table 2，Qwen3-8B）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Condition</th>
+<th style="text-align:right">WS Succ.</th>
+<th style="text-align:right">相对 Full</th>
+<th style="text-align:right">ALF Avg.</th>
+<th style="text-align:right">相对 Full</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>w/o Emotion Extraction（plain class means）</td>
+<td style="text-align:right">23.4</td>
+<td style="text-align:right">-4.7</td>
+<td style="text-align:right">38.3</td>
+<td style="text-align:right">-8.6</td>
+</tr>
+<tr>
+<td>w/o Emotion Encoder（top-3 labels 直接进 prompt）</td>
+<td style="text-align:right">25.0</td>
+<td style="text-align:right">-3.1</td>
+<td style="text-align:right">41.4</td>
+<td style="text-align:right">-5.5</td>
+</tr>
+<tr>
+<td>w/o Emotion Evolution（outcome-only rewrite）</td>
+<td style="text-align:right">27.3</td>
+<td style="text-align:right">-0.9</td>
+<td style="text-align:right">43.8</td>
+<td style="text-align:right">-3.1</td>
+</tr>
+<tr>
+<td>Full</td>
+<td style="text-align:right">28.1</td>
+<td style="text-align:right">—</td>
+<td style="text-align:right">46.9</td>
+<td style="text-align:right">—</td>
+</tr>
+<tr>
+<td>$\tau=0.1$</td>
+<td style="text-align:right">26.6</td>
+<td style="text-align:right">-1.5</td>
+<td style="text-align:right">42.2</td>
+<td style="text-align:right">-4.7</td>
+</tr>
+<tr>
+<td>$\tau=0.3$</td>
+<td style="text-align:right">28.1</td>
+<td style="text-align:right">—</td>
+<td style="text-align:right">46.9</td>
+<td style="text-align:right">—</td>
+</tr>
+<tr>
+<td>$\tau=0.6$</td>
+<td style="text-align:right">27.8</td>
+<td style="text-align:right">-0.3</td>
+<td style="text-align:right">43.4</td>
+<td style="text-align:right">-3.5</td>
+</tr>
+<tr>
+<td>$\tau=0.9$</td>
+<td style="text-align:right">20.0</td>
+<td style="text-align:right">-8.1</td>
+<td style="text-align:right">41.4</td>
+<td style="text-align:right">-5.5</td>
+</tr>
+</tbody>
+</table></div>
+<p>这张表支持：论文选择的 contrastive extractor、learned adapter、emotion-guided evolution 分别优于各自的降级替代项。它不能把各子机制的贡献拆开，也没有提供 $\tau=1$ 的 same-pipeline no-emotion condition。</p>
+<p>两处原文数字冲突必须保留：Table 2 的 Full 是 WS 28.1 / ALF 46.9，Table 1 是 29.7 / 47.4，配置差异未解释 <code>[?]</code>；正文称 $\tau\in[0.1,0.6]$ 时两个 benchmark 都在 1 pp 内稳定，但表中 WS 最大差 1.5 pp、ALF 最大差 4.7 pp。数据只支持“WS 相对较稳，ALF 对 threshold 更敏感”。Table 2 也未报告 std/CI 或是否来自 3 runs <code>[?]</code>。</p>
+<h3 id="5-4-evolution-的-round-wise-效果-v2-table-12">5.4 Evolution 的 round-wise 效果（v2 Table 12）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align:right">Round 1</th>
+<th style="text-align:right">Round 2</th>
+<th style="text-align:right">Round 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Evo-Outcome</td>
+<td style="text-align:right">26.8</td>
+<td style="text-align:right">27.5</td>
+<td style="text-align:right">28.1</td>
+</tr>
+<tr>
+<td>Evo-Emotion</td>
+<td style="text-align:right">27.2</td>
+<td style="text-align:right">28.9</td>
+<td style="text-align:right">29.7</td>
+</tr>
+<tr>
+<td>差值</td>
+<td style="text-align:right">+0.4</td>
+<td style="text-align:right">+1.4</td>
+<td style="text-align:right">+1.6</td>
+</tr>
+</tbody>
+</table></div>
+<p>WebShop 上的 gap 随 round 扩到 +1.6 pp，与“局部 transition diagnostics 可累积改善 SOP”这一解释一致，但不能证明该机制；Table 12 没有方差，round 间任务是否复用、rewrite 的接受/回退规则也未披露 <code>[?]</code>。</p>
+<h3 id="5-5-表示的语义可读性-figure-4-table-13-figure-7">5.5 表示的语义可读性（Figure 4、Table 13、Figure 7）</h3>
+<p>Figure 4 只聚合 correctly-solved WebShop episodes 的 selection steps，得到四组可读关联：curiosity+desire→ProductSearch、confusion+nervousness→QueryRephrase、approval+optimism→PurchaseConfirm、annoyance+disappointment→PriceCompare。200 个 events 经 GPT-4o 判断有 76.5% semantically coherent；50-event human subset 与 GPT-4o 的 Cohen's $\kappa=0.81$；23.5% inconsistent cases 中，61% 满足 $\max(e_t)&lt;0.15$（§4.4）。</p>
+<p>Figure 4 的 columns 是 12 个 raw GoEmotions dimensions，不是 Table 11 的 12 个 natural-language templates；其 row labels 与 Appendix D.3 的 WebShop skill names 也不完全一致，除正文解释的四组映射外，其余对应关系未披露 <code>[?]</code>。</p>
+<p>ALFWorld correctly-solved episodes 的 top template 为：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Top template</th>
+<th style="text-align:right">Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pick</td>
+<td>T1 Curious</td>
+<td style="text-align:right">42%</td>
+</tr>
+<tr>
+<td>Look</td>
+<td>T4 Approving</td>
+<td style="text-align:right">38%</td>
+</tr>
+<tr>
+<td>Clean</td>
+<td>T3 Confused</td>
+<td style="text-align:right">35%</td>
+</tr>
+<tr>
+<td>Heat</td>
+<td>T7 Frustrated</td>
+<td style="text-align:right">41%</td>
+</tr>
+<tr>
+<td>Cool</td>
+<td>T10 Realizing</td>
+<td style="text-align:right">33%</td>
+</tr>
+<tr>
+<td>PickTwo</td>
+<td>T3 Confused</td>
+<td style="text-align:right">39%</td>
+</tr>
+</tbody>
+</table></div>
+<p>（v2 Table 13。）Figure 4 与 Table 13 都只看成功 episodes，因此支持“表示与 skill 有语义上连贯的关联”，不支持“该配对导致成功”，也没有排除 observation 同时导致 emotion readout 与 skill choice。</p>
+<p>Figure 7 显示 72% WebShop test steps 满足 $c_t\ge0.3$、28% fallback，mass 主要在 $[0.30,0.60]$。这只是 gate admission 频率，不等于 72% 的步骤都从 emotion 获益。Appendix C.3 进一步声称被过滤的 28% 对应负 utility，却没有披露 per-step $\Delta U_t$ 的标注或估计协议 <code>[?]</code>。</p>
+<h3 id="5-6-out-of-domain-pipeline-transfer-figure-5">5.6 Out-of-domain pipeline transfer（Figure 5）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align:right">MATH Accuracy（500）</th>
+<th style="text-align:right">MBPP pass@1（374）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-Shot</td>
+<td style="text-align:right">54.8</td>
+<td style="text-align:right">60.0</td>
+</tr>
+<tr>
+<td>ReAct</td>
+<td style="text-align:right">63.2</td>
+<td style="text-align:right">63.6</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td style="text-align:right">60.4</td>
+<td style="text-align:right">66.3</td>
+</tr>
+<tr>
+<td>ExpeL</td>
+<td style="text-align:right">65.2</td>
+<td style="text-align:right">69.1</td>
+</tr>
+<tr>
+<td>MASA</td>
+<td style="text-align:right">67.6</td>
+<td style="text-align:right">67.3</td>
+</tr>
+<tr>
+<td>Emotion2Skill</td>
+<td style="text-align:right">69.2</td>
+<td style="text-align:right">71.8</td>
+</tr>
+</tbody>
+</table></div>
+<p>Emotion2Skill 相对 Zero-Shot 为 MATH +14.4 pp、MBPP +11.8 pp；相对图中最强 baseline 分别为 +1.6 pp（MASA）与 +2.7 pp（ExpeL）（Figure 5）。Figure 5 没有 std/CI/seed，也没有正文声称的 MATH Level 4–5 或 MBPP compositional breakdown。这支持固定 readout/encoder 搭配新 skill inventory 的 pipeline transfer，不足以确认 emotion vectors 捕获了 domain-agnostic decision uncertainty。</p>
+<h3 id="5-7-证据边界">5.7 证据边界</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>结论层级</th>
+<th>当前证据</th>
+<th>可以写出的结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pipeline effectiveness</td>
+<td>Table 1、Table 2、Table 12、Figure 5</td>
+<td>在论文报告的训练与评估设置下，完整 Emotion2Skill pipeline 提高 aggregate task performance；同 skill-library MASA 对照的 aggregate margin 为 2.6–5.9 pp</td>
+</tr>
+<tr>
+<td>Semantic readability</td>
+<td>Figure 3 probe/t-SNE、Figure 4 co-activation、Table 13</td>
+<td>抽取方向带有一定 emotion 可读结构，命名状态与 skill 呈现语义连贯的相关性</td>
+</tr>
+<tr>
+<td>Beyond-text / causal claim</td>
+<td>缺 $\tau=1$ matched main control、同预算强 text router、固定文本的 activation intervention</td>
+<td>未建立 emotion 语义的必要性，未识别相对 matched text-only pipeline 的净增益，也未证明这 27 个 directions 对 routing 的因果作用</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li><strong>工程贡献是一条清晰的接口，而不是更高的 emotion classification accuracy。</strong> 将 white-box residual feature 翻译成短、可审查、可门控的 router 字段，比直接 activation steering 更容易接入现有 agent stack；低 confidence 时还可退回原来的文本路径。</li>
+<li><strong>系统本质不是“读出 emotion label 后选 skill”。</strong> 27 个 emotion directions 只是语义锚点，真正进入控制环的是经过 skill choice 与 episode outcome supervision 的 adapter representation。把收益写成纯 emotion ontology 的作用，会漏掉 Eq. 6–7 中最关键的监督来源。</li>
+<li><strong>目前最强的结论是 pipeline 有效且表示可读。</strong> emotion 语义是否必要、internal readout 是否优于同预算 text-derived router、以及固定文本时 direction 是否因果改变 skill choice，都需要 matched $\tau=1$/no-emotion control、semantic/hidden-feature controls 或 activation intervention 才能回答。</li>
+<li><strong>同一条 state trajectory 同时服务在线控制与离线诊断，是这项工作的结构亮点；语义上仍应克制。</strong> <code>Confused</code>、<code>Nervous</code> 等名称可把 latent control feature 变成可沟通的 debug interface，但论文没有证明模型具有主体性的情绪体验。与此同时，cluster-to-template mapping 与 confidence supervision 恰好位于“数值 feature → 可解释控制字段”的接口，却没有披露完整。</li>
+</ol>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<h3 id="author-team">Author / Team</h3>
+<ul>
+<li>暂无必要连接：现有库没有作者或 USTC 团队 MOC；Qwen3 只是实验 backbone，不构成 <code>MOC-Team-Qwen</code> 的作者/团队归属，因此拒绝该连接。</li>
+</ul>
+<h3 id="topic-area">Topic / Area</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic/Area: 将 residual-stream 线性读出从 post-hoc analysis 推进到 action 前的 router input 与 episode 后的诊断信号；证据仍是 readout、相关性和 pipeline 消融，而非本论文内的 direction intervention。</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</span> — Topic/Area: 用 confidence-gated state 做动作前监控，并以 trajectory shift 将最终 outcome 下钻到待检查的 skill invocation 与 SOP 窗口。</li>
+</ul>
+<h3 id="concept">Concept</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span> — Concept: 直接将 27 个 mean-difference emotion directions、neutral-PCA denoising 与 residual projection 工程化为 agent controller feature；这是应用有效性证据，不是新的线性方向因果性验证。</li>
+<li><a class="wikilink" href="Emotion_Concepts_and_their_Function_in_LLM-情绪表示.html" title="Emotion_Concepts_and_their_Function_in_LLM-情绪表示">Emotion_Concepts_and_their_Function_in_LLM-情绪表示</a> — Related Paper: 方法前驱；Emotion2Skill 复用 emotion stories、类均值减全局均值、neutral PCA 与 action-boundary readout，再把表示接入 skill routing/evolution。</li>
+<li><a class="wikilink" href="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html" title="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability">Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability</a> — Related Paper: 两者都在 pre-action decision boundary 读取 residual state；后者侧重 Tool-Need/Tool-Risk 监控，本文进一步把内部读出重新注入 router，形成 monitor-to-control 的递进关系。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="LLM-Critics-Help-Catch-Bugs-in-Mathematics-Math-Minos.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">LLM Critics Help Catch Bugs in Mathematics</span></a>
+<a class="paper-nav-link next" href="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Beyond the Black Box: Interpretability of Agentic AI Tool Use</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Lin2026Emotion2Skill</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

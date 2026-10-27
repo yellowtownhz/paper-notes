@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEGRL - Improving Machine Translation by Post-Editing Guided Reinforcement Learning</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">PEGRL - Improving Machine Translation by Post-Editing Guided Reinforcement Learning</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-翻译rl中monte-carlo估计的高方差与轨迹空间过大导致局部优化不足"><span class="toc-num">02</span> 2. 关键问题：翻译RL中Monte Carlo估计的高方差与轨迹空间过大导致局部优化不足</a></li>
+<li><a class="toc-link" href="#3-数据集-wmt17-19-wmt24-flores-200"><span class="toc-num">03</span> 3. 数据集：WMT17-19、WMT24、FLORES-200</a></li>
+<li><a class="toc-link toc-sub" href="#训练数据">训练数据</a></li>
+<li><a class="toc-link toc-sub" href="#评估数据">评估数据</a></li>
+<li><a class="toc-link toc-sub" href="#采样策略">采样策略</a></li>
+<li><a class="toc-link" href="#4-关键方法-两阶段rl框架-利用post-editing的低方差特性稳定训练"><span class="toc-num">04</span> 4. 关键方法：两阶段RL框架，利用Post-Editing的低方差特性稳定训练</a></li>
+<li><a class="toc-link toc-sub" href="#1-整体架构">(1) 整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#2-数学形式化">(2) 数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#3-核心模块设计">(3) 核心模块设计</a></li>
+<li><a class="toc-link toc-sub" href="#4-训练流程">(4) 训练流程</a></li>
+<li><a class="toc-link toc-sub" href="#5-prompt设计">(5) Prompt设计</a></li>
+<li><a class="toc-link" href="#5-关键实验-在en-fi和en-tr上显著超越mt-r1-zero-en-tr达到deepseek-v3-2水平"><span class="toc-num">05</span> 5. 关键实验：在EN→FI和EN→TR上显著超越MT-R1-Zero，EN→TR达到DeepSeek-V3.2水平</a></li>
+<li><a class="toc-link toc-sub" href="#1-主实验结果-table-1">(1) 主实验结果（Table 1）</a></li>
+<li><a class="toc-link toc-sub" href="#2-与sota对比">(2) 与SOTA对比</a></li>
+<li><a class="toc-link toc-sub" href="#3-消融实验-梯度加权分析-table-5">(3) 消融实验：梯度加权分析（Table 5）</a></li>
+<li><a class="toc-link" href="#6-golden-case-post-editing如何修正翻译错误"><span class="toc-num">06</span> 6. Golden Case：Post-Editing如何修正翻译错误</a></li>
+<li><a class="toc-link toc-sub" href="#典型样本流程">典型样本流程</a></li>
+<li><a class="toc-link" href="#7-insights-利用低方差辅助任务稳定rl训练"><span class="toc-num">07</span> 7. Insights：利用低方差辅助任务稳定RL训练</a></li>
+<li><a class="toc-link" href="#8-总结"><span class="toc-num">08</span> 8. 总结</a></li>
+<li><a class="toc-link toc-sub" href="#核心创新">核心创新</a></li>
+<li><a class="toc-link toc-sub" href="#局限性">局限性</a></li>
+<li><a class="toc-link toc-sub" href="#改进方向">改进方向</a></li>
+<li><a class="toc-link" href="#9-连接与发现"><span class="toc-num">09</span> 9. 连接与发现</a></li>
+<li><a class="toc-link toc-sub" href="#相关工作">相关工作</a></li>
+<li><a class="toc-link toc-sub" href="#技术关联">技术关联</a></li>
+<li><a class="toc-link toc-sub" href="#相关-moc">相关 MOC</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-02-11</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.03352" target="_blank">arXiv</a>
+    </div>
+    <h1>PEGRL - Improving Machine Translation by Post-Editing Guided Reinforcement Learning</h1>
+    <p class="authors">Yunzhi Shen, Hao Zhou, Xin Huang, Xue Han, Junlan Feng, Shujian Huang</p>
+    <div class="topic-row"><span class="topic-tag">Machine_Translation</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">MT_Evaluation</span> <span class="topic-tag">GRPO</span></div>
+</header>
+
+<h1>论文笔记: PEGRL - Improving Machine Translation by Post-Editing Guided Reinforcement Learning</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者</strong>: Yunzhi Shen, Hao Zhou, Xin Huang, Xue Han, Junlan Feng, Shujian Huang</li>
+<li><strong>团队</strong>:
+<ul>
+<li>Nanjing University (National Key Laboratory for Novel Software Technology)</li>
+<li>China Mobile Research Beijing</li>
+</ul>
+</li>
+<li><strong>发表时间</strong>: 2026年2月3日 (arXiv)</li>
+<li><strong>通讯作者</strong>: Shujian Huang (huangsj@nju.edu.cn)</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-翻译rl中monte-carlo估计的高方差与轨迹空间过大导致局部优化不足">2. 关键问题：翻译RL中Monte Carlo估计的高方差与轨迹空间过大导致局部优化不足</h2>
+<ul>
+<li>
+<p><strong>动机</strong>:</p>
+<ul>
+<li>RL在LLM-based机器翻译上展现潜力（如DeepSeek-R1, GRPO）</li>
+<li>但翻译导向的RL面临两个核心挑战（本质上同源：翻译的输出空间极大）：
+<ol>
+<li><strong>奖励信号噪声大（估计质量差）</strong>: RL通过对同一输入多次采样、计算奖励均值来评估策略好坏（Monte Carlo估计）。与数学推理的RLVR不同——数学题的reward由最终答案决定（对/错），中间推理路径再怎么不同，reward都是稳定的二值信号。而翻译中<strong>每个token都影响译文质量</strong>，采样出的不同译文在用词、语序上差异巨大，导致reward波动剧烈，梯度信号噪声高、训练不稳定</li>
+<li><strong>探索效率低（信用分配困难）</strong>: 由于输出空间庞大，RL采样出的不同译文在用词、语序、句式上处处不同（全局探索）。当两条译文得分有差异时，模型<strong>无法定位</strong>到底是哪个改动导致了分数变化——梯度信号被稀释到所有差异上，学习效率极低。而局部优化（如post-editing）在同一个草稿上做小幅修改，多个编辑结果之间差异小且集中，模型能清晰归因&quot;改了哪个词/句式→分数提高了&quot;，信用分配干净得多</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>核心洞见</strong>:</p>
+<ul>
+<li>Post-editing（后编辑）相比直接翻译具有<strong>更低的baseline方差</strong>（见图1）</li>
+<li>Post-editing在固定翻译草稿上进行局部探索，输出空间更集中</li>
+<li>将post-editing作为辅助任务可以稳定训练并指导整体优化</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="3-数据集-wmt17-19-wmt24-flores-200">3. 数据集：WMT17-19、WMT24、FLORES-200</h2>
+<h3 id="训练数据">训练数据</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>语言方向</th>
+<th>数据来源</th>
+<th>样本规模</th>
+<th>质量评估函数 f(·)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EN→FI</td>
+<td>WMT17-19 validation/test</td>
+<td>7K sentence pairs</td>
+<td>COMETKiwi + chrF++</td>
+</tr>
+<tr>
+<td>EN→TR</td>
+<td>WMT17-18 test sets</td>
+<td>6K sentence pairs</td>
+<td>COMETKiwi + chrF++</td>
+</tr>
+<tr>
+<td>EN↔ZH</td>
+<td>双向平行数据 (follow Feng et al., 2025)</td>
+<td>-</td>
+<td>COMETKIWI + BLEU</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="评估数据">评估数据</h3>
+<ul>
+<li><strong>WMT24 test sets</strong> (Deutsch et al., 2025)</li>
+<li><strong>FLORES-200 benchmark</strong> (Costa-jussà et al., 2022)</li>
+<li><strong>Challenge set</strong> (Cheng et al., 2025) - 仅用于EN↔ZH</li>
+</ul>
+<h3 id="采样策略">采样策略</h3>
+<ul>
+<li>每步训练处理128个样本（gradient accumulation）</li>
+<li>每个输入采样 N=8 个翻译候选</li>
+<li>每个翻译候选进一步采样 M=8 个post-editing候选</li>
+</ul>
+<hr />
+<h2 id="4-关键方法-两阶段rl框架-利用post-editing的低方差特性稳定训练">4. 关键方法：两阶段RL框架，利用Post-Editing的低方差特性稳定训练</h2>
+<blockquote class="card card-info">
+<p><strong>核心思想</strong>: 将翻译建模为两阶段过程——翻译（全局探索）+ 后编辑（局部优化）。通过任务特定的梯度加权，利用post-editing的低方差信号来稳定翻译策略的学习。</p>
+</blockquote>
+<h3 id="1-整体架构">(1) 整体架构</h3>
+<p><img src="https://arxiv.org/html/2602.03352v1/x1.png" alt="Figure 1: GRPO baseline收敛性分析" /></p>
+<p><strong>两阶段流程</strong>:</p>
+<ol>
+<li><strong>Stage 1 (Translation)</strong>: 给定源语言输入，生成翻译草稿 τ₀</li>
+<li><strong>Stage 2 (Post-Editing)</strong>: 基于翻译草稿进行精炼，生成最终输出 τ₁</li>
+</ol>
+<h3 id="2-数学形式化">(2) 数学形式化</h3>
+<p><strong>目标函数</strong>（Eq. 1）:</p>
+<div class="math-display">$$\max_{\theta} \; \mathbb{E}_{\tau_0 \sim \pi_\theta(\cdot \mid q), \; \tau_1 \sim \pi_\theta(\cdot \mid p, \tau_0)} \big[ R(\tau_1) \big]$$</div>
+<p>其中 $q$ 为翻译prompt，$p$ 为post-editing辅助prompt，$\tau_0$ 为翻译轨迹，$\tau_1$ 为post-editing轨迹，奖励 $R(\tau_1)$ 仅作用于post-editing输出。</p>
+<p><strong>策略梯度分解</strong>（Eq. 2）:</p>
+<div class="math-display">$$\nabla_\theta \mathbb{E}[R(\tau_1)] = \underbrace{\mathbb{E}_{\tau_0, \tau_1} \big[ \nabla_\theta \log \pi_\theta(\tau_1 \mid p, \tau_0) \, R(\tau_1) \big]}_{\text{Post-editing policy gradient}} + \underbrace{\mathbb{E}_{\tau_0} \big[ \nabla_\theta \log \pi_\theta(\tau_0 \mid q) \; \mathbb{E}_{\tau_1}[R(\tau_1)] \big]}_{\text{Translation policy gradient}}$$</div>
+<p><strong>两阶段Monte Carlo估计</strong>（Section 3.1）:</p>
+<ul>
+<li>对每个query $q$，先采样 $N$ 条翻译轨迹 $\{\tau_0^{(i)}\}_{i=1}^N \sim \pi(\cdot \mid q)$</li>
+<li>对每条 $\tau_0^{(i)}$，再采样 $M$ 条post-editing轨迹 $\{\tau_1^{(i,j)}\}_{j=1}^M \sim \pi(\cdot \mid p, \tau_0^{(i)})$</li>
+<li>翻译任务的reward使用post-editing的平均reward（Eq. 3）:</li>
+</ul>
+<div class="math-display">$$\bar{R}_{\text{pe}}^{(i)} = \frac{1}{M} \sum_{j=1}^{M} R\!\left(\tau_1^{(i,j)}\right)$$</div>
+<p><strong>方差分析</strong>（Eq. 20-23, Appendix B）:</p>
+<p>由全方差公式（Law of Total Variance）:</p>
+<div class="math-display">$$\mathrm{Var}_{\tau_0, \tau_1}[R(\tau_1)] = \underbrace{\mathbb{E}_{\tau_0}\!\left[\mathrm{Var}_{\tau_1 \mid \tau_0}(R(\tau_1))\right]}_{\text{within-}\tau_0 \text{ variability}} + \underbrace{\mathrm{Var}_{\tau_0}\!\left(\mathbb{E}_{\tau_1 \mid \tau_0}[R(\tau_1)]\right)}_{\geq 0, \; \text{between-}\tau_0 \text{ variability}}$$</div>
+<p>因此: $\mathrm{Var}(\hat{\mu}) \geq \mathrm{Var}(\hat{\mu}_1(\tau_0))$，即条件于固定 $\tau_0$ 时，post-editing estimator的方差<strong>严格不高于</strong>联合estimator的方差。</p>
+<h3 id="3-核心模块设计">(3) 核心模块设计</h3>
+<p><strong>A. Hybrid Sampling（混合采样）</strong></p>
+<ul>
+<li>翻译和post-editing使用<strong>分离的prompt</strong>（避免多任务prompt导致的性能下降）</li>
+<li>Post-editing prompt条件化于当前翻译输出，在线生成训练数据</li>
+</ul>
+<p><strong>B. 奖励设计</strong></p>
+<p><strong>Post-editing奖励</strong>（Eq. 4）:</p>
+<div class="math-display">$$R_{\mathrm{pe}}(u) = \begin{cases} 0, &amp; \mathcal{D}(u) \\ f(\mathrm{pe}_{i,j} \mid \mathrm{src}, \mathrm{tgt}), &amp; \text{otherwise} \end{cases}$$</div>
+<p>其中 $\mathcal{D}(u)$ 表示 post-edited 输出未修改原翻译且质量低于阈值 $\alpha=0.95$ 的情况，$f(\cdot)$ 使用 COMETKiwi + chrF++（或 BLEU for EN↔ZH）。</p>
+<p><strong>Translation奖励</strong>（Eq. 5）:</p>
+<div class="math-display">$$R_{\text{mt}}(v) = \mathrm{Mean}\big(\{R_{\text{pe}}(u) \mid u \in \mathcal{C}(v)\}\big)$$</div>
+<p>其中 $\mathcal{C}(v)$ 为翻译实例 $v$ 对应的所有post-editing轨迹集合。</p>
+<p><strong>Penalty奖励</strong>:</p>
+<ul>
+<li>超出token预算的轨迹: -1</li>
+<li>显式禁用Qwen3的CoT推理</li>
+</ul>
+<p><strong>C. Variance-Aware Gradient Weighting（方差感知梯度加权）</strong></p>
+<p>加权策略梯度（Eq. 6）:</p>
+<div class="math-display">$$\mathbb{E}_{\tau_0}\Big[\lambda_{\text{pe}} \, \mathbb{E}_{\tau_1}\big[\nabla_\theta \log \pi_\theta(\tau_1 \mid p, \tau_0) \, R(\tau_1)\big]\Big] + \lambda_{\text{mt}} \, \mathbb{E}_{\tau_0}\big[\nabla_\theta \log \pi_\theta(\tau_0 \mid q) \, \mathbb{E}_{\tau_1}[R(\tau_1)]\big]$$</div>
+<p><strong>默认配置</strong>: $\lambda_{\text{pe}} = M = 8$, $\lambda_{\text{mt}} = 1$</p>
+<ul>
+<li>强调post-editing信号（方差更低、更稳定）</li>
+<li>虽然产生有偏估计，但样本效率更高</li>
+</ul>
+<h3 id="4-训练流程">(4) 训练流程</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置项</th>
+<th>设置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础模型</td>
+<td>Qwen3-0.6B/4B/8B/14B/32B</td>
+</tr>
+<tr>
+<td>RL框架</td>
+<td>VeRL (Sheng et al., 2024)</td>
+</tr>
+<tr>
+<td>优化器</td>
+<td>GRPO</td>
+</tr>
+<tr>
+<td>学习率</td>
+<td>5×10⁻⁷</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>128 (effective)</td>
+</tr>
+<tr>
+<td>最大输入长度</td>
+<td>768 tokens</td>
+</tr>
+<tr>
+<td>最大输出长度</td>
+<td>512 tokens</td>
+</tr>
+<tr>
+<td>训练步数</td>
+<td>400 steps</td>
+</tr>
+<tr>
+<td>评估频率</td>
+<td>每20步</td>
+</tr>
+<tr>
+<td>GRPO采样</td>
+<td>N=8 (translation), M=8 (post-editing)</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="5-prompt设计">(5) Prompt设计</h3>
+<p><strong>Translation Prompt</strong>:</p>
+<pre><code>Translate the following text into {tgt_lang} without additional explanations:
+{src}
+</code></pre>
+<p><strong>Post-editing Prompt</strong>:</p>
+<pre><code>Given the source text:
+{src}
+
+Improve the following draft {tgt_lang} translation into a high-quality
+{tgt_lang} version, without explanations:
+{pred_i}
+</code></pre>
+<hr />
+<h2 id="5-关键实验-在en-fi和en-tr上显著超越mt-r1-zero-en-tr达到deepseek-v3-2水平">5. 关键实验：在EN→FI和EN→TR上显著超越MT-R1-Zero，EN→TR达到DeepSeek-V3.2水平</h2>
+<h3 id="1-主实验结果-table-1">(1) 主实验结果（Table 1）</h3>
+<p><strong>Resource-Constrained Setting (Qwen3-4B/8B)</strong>:</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>EN→FI (WMT24)</th>
+<th>EN→FI (FLORES)</th>
+<th>EN→TR (WMT24)</th>
+<th>EN→TR (FLORES)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>chrF++ / Kiwi / xCOMET</td>
+<td>chrF++ / Kiwi / xCOMET</td>
+<td>chrF++ / Kiwi / xCOMET</td>
+<td>chrF++ / Kiwi / xCOMET</td>
+</tr>
+<tr>
+<td><strong>Qwen3-4B (base)</strong></td>
+<td>40.74 / 41.27 / 45.86</td>
+<td>36.79 / 46.87 / 48.77</td>
+<td>40.12 / 50.60 / 53.89</td>
+<td>42.34 / 61.61 / 65.91</td>
+</tr>
+<tr>
+<td>MT-R1-Zero-4B</td>
+<td>43.42 / 56.04 / 61.34</td>
+<td>40.49 / 65.20 / 69.41</td>
+<td>43.25 / 61.57 / 63.85</td>
+<td>45.22 / 72.70 / 78.14</td>
+</tr>
+<tr>
+<td><strong>PEGRL-4B (ours)</strong></td>
+<td><strong>45.29</strong> / <strong>62.49</strong> / <strong>69.40</strong></td>
+<td><strong>42.65</strong> / <strong>73.78</strong> / <strong>79.99</strong></td>
+<td><strong>45.39</strong> / <strong>65.49</strong> / <strong>69.24</strong></td>
+<td><strong>47.77</strong> / <strong>76.35</strong> / <strong>83.63</strong></td>
+</tr>
+<tr>
+<td><strong>提升 (vs MT-R1-Zero)</strong></td>
+<td>+1.87 / +6.45 / +8.06</td>
+<td>+2.16 / +8.58 / +10.58</td>
+<td>+2.14 / +3.92 / +5.39</td>
+<td>+2.55 / +3.65 / +5.49</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Qwen3-8B (base)</strong></td>
+<td>45.86 / 51.92 / 58.15</td>
+<td>43.28 / 61.77 / 66.72</td>
+<td>44.82 / 59.25 / 63.04</td>
+<td>47.58 / 70.62 / 76.89</td>
+</tr>
+<tr>
+<td>MT-R1-Zero-8B</td>
+<td>47.45 / 62.16 / 69.79</td>
+<td>44.51 / 72.42 / 78.78</td>
+<td>47.10 / 63.96 / 68.98</td>
+<td>48.72 / 75.92 / 83.53</td>
+</tr>
+<tr>
+<td><strong>PEGRL-8B (ours)</strong></td>
+<td><strong>49.02</strong> / <strong>67.90</strong> / <strong>76.49</strong></td>
+<td><strong>46.62</strong> / <strong>79.07</strong> / <strong>86.50</strong></td>
+<td><strong>48.04</strong> / <strong>68.14</strong> / <strong>73.51</strong></td>
+<td><strong>50.41</strong> / <strong>78.26</strong> / <strong>87.25</strong></td>
+</tr>
+<tr>
+<td><strong>提升 (vs MT-R1-Zero)</strong></td>
+<td>+1.57 / +5.74 / +6.70</td>
+<td>+2.11 / +6.65 / +7.72</td>
+<td>+0.94 / +4.18 / +4.53</td>
+<td>+1.69 / +2.34 / +3.72</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li>在<strong>低资源方向</strong>（EN→FI, EN→TR）上提升最显著</li>
+<li>EN→TR的COMET-KIWI分数（68.14）接近<strong>DeepSeek-V3.2</strong>水平（68.13）</li>
+</ul>
+<h3 id="2-与sota对比">(2) 与SOTA对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>系统类型</th>
+<th>模型</th>
+<th>EN→TR (FLORES) Kiwi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>大规模通用LLM</td>
+<td>DeepSeek-V3.2</td>
+<td>68.13</td>
+</tr>
+<tr>
+<td></td>
+<td>OpenAI GPT-5.2</td>
+<td>69.45</td>
+</tr>
+<tr>
+<td></td>
+<td>Gemini-2.0-flash</td>
+<td>68.05</td>
+</tr>
+<tr>
+<td><strong>资源受限系统 (8B)</strong></td>
+<td><strong>PEGRL-8B</strong></td>
+<td><strong>68.14</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>MT-R1-Zero-8B</td>
+<td>63.96</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="3-消融实验-梯度加权分析-table-5">(3) 消融实验：梯度加权分析（Table 5）</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>$\lambda_{\text{pe}}$</th>
+<th>$\lambda_{\text{mt}}$</th>
+<th>chrF++</th>
+<th>COMETKIWI</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$M$ (8)</td>
+<td>1</td>
+<td><strong>43.79</strong></td>
+<td><strong>56.96</strong></td>
+<td>默认配置</td>
+</tr>
+<tr>
+<td>$M$ (8)</td>
+<td>0</td>
+<td>42.48 ($\downarrow$1.31)</td>
+<td>55.80 ($\downarrow$1.16)</td>
+<td>无translation梯度</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>43.06 ($\downarrow$0.73)</td>
+<td>53.09 ($\downarrow$3.87)</td>
+<td>无加权</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结论</strong>:</p>
+<ul>
+<li>完全移除translation梯度导致性能下降</li>
+<li>不加权（λ_pe=λ_mt=1）时COMET-KIWI显著下降，说明post-editing信号更重要</li>
+</ul>
+<hr />
+<h2 id="6-golden-case-post-editing如何修正翻译错误">6. Golden Case：Post-Editing如何修正翻译错误</h2>
+<h3 id="典型样本流程">典型样本流程</h3>
+<p><strong>输入 (Source)</strong>:</p>
+<pre><code>&quot;The committee will meet next week to discuss the proposed amendments.&quot;
+</code></pre>
+<p><strong>Stage 1 - 翻译输出 (Draft)</strong>:</p>
+<pre><code>&quot;委员会将于下周开会讨论提出的修正案。&quot;
+（问题：&quot;proposed amendments&quot;翻译为&quot;提出的修正案&quot;略显生硬）
+</code></pre>
+<p><strong>Stage 2 - Post-Editing输入</strong>:</p>
+<pre><code>Source: &quot;The committee will meet next week to discuss the proposed amendments.&quot;
+Draft: &quot;委员会将于下周开会讨论提出的修正案。&quot;
+</code></pre>
+<p><strong>Post-Editing输出</strong>:</p>
+<pre><code>&quot;委员会将于下周召开会议，讨论拟议的修订条款。&quot;
+（改进：&quot;开会讨论&quot;→&quot;召开会议，讨论&quot;更正式；&quot;提出的修正案&quot;→&quot;拟议的修订条款&quot;更准确）
+</code></pre>
+<p><strong>关键决策点</strong>:</p>
+<ol>
+<li><strong>局部优化</strong>: Post-editing在固定draft基础上进行，搜索空间更集中</li>
+<li><strong>质量反馈</strong>: 通过COMETKiwi评估改进程度，指导模型学习</li>
+<li><strong>梯度传播</strong>: 翻译策略通过post-editing的最终质量获得学习信号</li>
+</ol>
+<hr />
+<h2 id="7-insights-利用低方差辅助任务稳定rl训练">7. Insights：利用低方差辅助任务稳定RL训练</h2>
+<ol>
+<li><strong>开放式生成任务的RL通病</strong>: 本文虽聚焦翻译，但其识别的两个核心挑战——奖励信号噪声大、信用分配困难——本质上是所有开放式生成任务（摘要、写作、代码生成等）做RL的共性难题。根源在于：输出空间极大、每个token都影响质量、质量是连续值而非二值判定。因此 PEGRL 的 draft + refinement 两阶段思路具有超越翻译场景的通用价值——任何开放式生成任务都可以通过先生成草稿、再局部精修的方式来缩小探索空间、清晰化信用分配</li>
+<li><strong>方差vs偏差权衡</strong>: 有偏但低方差的估计器可能比无偏但高方差的估计器更样本高效</li>
+<li><strong>局部探索促进全局优化</strong>: Post-editing的局部细粒度探索实际上促进了更有效的全局搜索</li>
+<li><strong>任务分解的价值</strong>: 将复杂任务分解为多个阶段，利用中间阶段的稳定信号</li>
+</ol>
+<hr />
+<h2 id="8-总结">8. 总结</h2>
+<h3 id="核心创新">核心创新</h3>
+<ol>
+<li><strong>理论分析</strong>: 首次系统分析了post-editing在GRPO框架下的方差优势</li>
+<li><strong>两阶段框架</strong>: 提出translation + post-editing的联合RL训练框架</li>
+<li><strong>方差感知加权</strong>: 通过任务特定的梯度加权利用低方差信号</li>
+</ol>
+<h3 id="局限性">局限性</h3>
+<ol>
+<li><strong>计算开销</strong>: 两阶段采样增加了每步的计算成本（N×M倍）</li>
+<li><strong>语言覆盖</strong>: 主要在低资源方向（FI, TR）上验证，高资源方向提升有限</li>
+<li><strong>奖励设计</strong>: 依赖COMET等自动评估指标，可能与人类判断存在偏差</li>
+</ol>
+<h3 id="改进方向">改进方向</h3>
+<ol>
+<li><strong>效率优化</strong>: 探索更高效的采样策略，减少N×M的计算开销</li>
+<li><strong>多语言扩展</strong>: 验证方法在更多语言对上的有效性</li>
+<li><strong>人类反馈整合</strong>: 结合人类评估进行RLHF微调</li>
+</ol>
+<hr />
+<h2 id="9-连接与发现">9. 连接与发现</h2>
+<h3 id="相关工作">相关工作</h3>
+<ul>
+<li><a class="wikilink" href="TranslateGemma-MT_Gemma_3.html" title="TranslateGemma-MT_Gemma_3">TranslateGemma-MT_Gemma_3</a>: 同为MT+RL方向，使用多奖励模型集成</li>
+<li><a class="wikilink" href="Reinforcement_Learning_via_Self-Distillation-SDPO.html" title="Reinforcement_Learning_via_Self-Distillation-SDPO">Reinforcement_Learning_via_Self-Distillation-SDPO</a>: 同为GRPO-based RL，关注信用分配问题</li>
+<li><a class="wikilink" href="MADLAD-400-Multilingual_Document-Level_Dataset.html" title="MADLAD-400-Multilingual_Document-Level_Dataset">MADLAD-400-Multilingual_Document-Level_Dataset</a>: 多语言翻译数据集</li>
+</ul>
+<h3 id="技术关联">技术关联</h3>
+<ul>
+<li><strong>GRPO</strong>: 基于Group Relative Policy Optimization (Shao et al., 2024)</li>
+<li><strong>MT-R1-Zero</strong>: 主要对比基线 (Feng et al., 2025)</li>
+<li><strong>COMET</strong>: 质量评估指标 (Rei et al., 2022, 2023)</li>
+</ul>
+<h3 id="相关-moc">相关 MOC</h3>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Probing_RLVR_Training_Instability-Objective-Level_Hacking.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Probing RLVR Training Instability through the Lens of Objective-Level Hacking</span></a>
+<a class="paper-nav-link next" href="Outcome_Accuracy_is_Not_Enough-Rationale_Consistency_for_Reward_Models.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Outcome Accuracy is Not Enough: Aligning the Reasoning Process of Reward Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: arXiv:2602.03352</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-怎么让一个无监督训练出来的工具-直接用人话读出激活向量在说什么"><span class="toc-num">02</span> 2. 关键问题：怎么让一个无监督训练出来的工具，直接用人话读出激活向量在说什么</a></li>
+<li><a class="toc-link" href="#3-关键方法-av-ar-组成自然语言瓶颈的自编码器-rl-联合训练去重建激活"><span class="toc-num">03</span> 3. 关键方法：AV + AR 组成自然语言瓶颈的自编码器，RL 联合训练去重建激活</a></li>
+<li><a class="toc-link toc-sub" href="#整体架构">整体架构</a></li>
+<li><a class="toc-link toc-sub" href="#数学形式化">数学形式化</a></li>
+<li><a class="toc-link toc-sub" href="#初始化-warm-start-整套方法能不能-work-的关键">初始化（warm-start，整套方法能不能 work 的关键）</a></li>
+<li><a class="toc-link toc-sub" href="#训练流程-单步">训练流程（单步）</a></li>
+<li><a class="toc-link toc-sub" href="#工程细节-超参-开源模型-nla">工程细节 / 超参（开源模型 NLA）</a></li>
+<li><a class="toc-link toc-sub" href="#与已有方法的区别">与已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集-纯-pretraining-like-文本-无任务特定标注"><span class="toc-num">04</span> 4. 数据集：纯 pretraining-like 文本，无任务特定标注</a></li>
+<li><a class="toc-link" href="#5-关键结果-无监督优化-reconstruction-副产品是可读且越来越准的解释-但很多涨幅在噪声量级"><span class="toc-num">05</span> 5. 关键结果：无监督优化 reconstruction，副产品是可读且越来越准的解释——但很多涨幅在噪声量级</a></li>
+<li><a class="toc-link toc-sub" href="#主实验-解释质量随训练提升">主实验：解释质量随训练提升</a></li>
+<li><a class="toc-link toc-sub" href="#行为属性评估">行为属性评估</a></li>
+<li><a class="toc-link toc-sub" href="#confabulation-的特征化-section-6-实际指导意义很强">Confabulation 的特征化（Section 6，实际指导意义很强）</a></li>
+<li><a class="toc-link toc-sub" href="#评估感知检测-section-7-论文最强的应用-claim">评估感知检测（Section 7，论文最强的应用 claim）</a></li>
+<li><a class="toc-link toc-sub" href="#auditing-benchmark-section-8-对标-sae-blackbox">Auditing benchmark（Section 8，对标 SAE/blackbox）</a></li>
+<li><a class="toc-link toc-sub" href="#作为-ao-初始化-section-9">作为 AO 初始化（Section 9）</a></li>
+<li><a class="toc-link toc-sub" href="#生产验证-claude-opus-4-6-部署前审计-case-studies">生产验证（Claude Opus 4.6 部署前审计 case studies）</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-15</span>
+<span class="header-badge badge-branch">Reading</span>
+<a class="header-badge badge-link" href="https://transformer-circuits.pub/2026/nla/" target="_blank">arXiv</a>
+    </div>
+    <h1>Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</h1>
+    <p class="authors">Fraser-Taliente, Kantamneni, Ong, Mossing, Lu, Bogdan, Ameisen, Chen, Kishylau, Pearce, Tarng, Wu A., Wu J., Zhang, Ziegler, Hubinger, Batson, Lindsey, Zimmerman, Marks</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Natural_Language_Autoencoder</span> <span class="topic-tag">Activation_Decoding</span> <span class="topic-tag">Model_Auditing</span> <span class="topic-tag">Calibration</span> <span class="topic-tag">Reinforcement_Learning</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">AI_Alignment</span></div>
+</header>
+
+<h1>论文笔记: Natural Language Autoencoders Produce Unsupervised Explanations of LLM Activations</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者团队：Anthropic Transformer Circuits Thread。第一作者 Kit Fraser-Taliente（Anthropic Fellows Program 成员，原始 NLA 方法的发明者）；通讯级作者 Jack Lindsey、Samuel Marks、Joshua Batson、Evan Hubinger。</li>
+<li>发表：2026 年，Transformer Circuits Thread（Anthropic 自家研究博客，<strong>非 peer-reviewed</strong>）。下面的数字尽量精确，但注意大量结果是定性 case study。</li>
+<li>开源：训练代码 + 四个开源模型的训练好的 NLA（Qwen-2.5-7B、Gemma-3-12B、Gemma-3-27B、Llama-3.3-70B），通过 Neuronpedia 提供交互前端。</li>
+<li>并发工作：Chalnev 独立做出几乎一样的架构（Cycle-Consistent Activation Oracles），也是 verbalizer-reconstructor + supervised warm-start + RL + KL penalty，和本文的实现选择<strong>高度重合</strong>。真正的差异是 implementation choices、frontier scale、以及把 NLA 当审计工具来评估。也就是说这个 idea 在空气中，本文的优势在规模和应用。注意还有一个更早的 prior art：2023 年 Fabien Roger 和 Ryan Greenblatt 独立写过 NLA-like 架构提案叫 &quot;Consistency Lens&quot;（Acknowledgements 里提到）。</li>
+</ul>
+<p>一句话定位：把 SAE（无监督、但解释要靠人/模型二次分析）和 activation oracle（直接出自然语言、但要监督数据）两类方法的优点合并——做出一个无监督训练、直接输出人话的激活解释器。</p>
+<hr />
+<h2 id="2-关键问题-怎么让一个无监督训练出来的工具-直接用人话读出激活向量在说什么">2. 关键问题：怎么让一个无监督训练出来的工具，直接用人话读出激活向量在说什么</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong>
+拿 Claude Opus 4.6 早期 checkpoint 来说：给它一个纯英文 prompt，它有时会莫名其妙地用俄语/西班牙语/阿拉伯语回你。你想搞清楚它脑子里在想什么——打开那一层的 residual stream 激活，就是一坨几千维浮点数，完全看不出为什么。传统两条路都卡住：</p>
+<ul>
+<li><strong>SAE</strong>：能分解成一组稀疏 feature（比如 &quot;foreign language&quot;、&quot;Russia-related&quot;），但 feature 是个原子化标签，你得自己翻 top-activating examples 去猜它代表啥；更糟的是 SAE 有 coverage gap，&quot;reward-model sycophancy&quot; 这种上层概念可能压根没有对应的 feature（审计实验里证实了这点）。</li>
+<li><strong>Activation oracle（AO）</strong>：可以直接回答&quot;这激活里有没有提到语言？&quot;——但你得先有标注数据来 SFT 它，而你恰恰不知道该问什么问题。&quot;用户母语是俄语？&quot;这个问题本身就是你想发现的假设。</li>
+</ul>
+<p>你想要一个能直接读、又不需要你先知道问什么的工具。</p>
+</blockquote>
+<p>核心矛盾：SAE 类方法是<strong>无监督但不可读</strong>（固定词表的加权组合，要二次解读），AO 类方法是<strong>可读但需要监督</strong>（要 QA 对）。frontier model 审计场景下，审计员一开始只有&quot;这行为有点怪&quot;的模糊假设，既不知道要问什么、也没有 ground-truth 标签。</p>
+<p>NLA 要回答的问题：<strong>能不能设计一个无监督目标，让模型在优化这个目标的过程中，被迫把激活&quot;翻译&quot;成可读的自然语言？</strong> 这个目标本身不奖励&quot;可读性&quot;或&quot;忠实性&quot;——可读性能不能作为副产品自发涌现？</p>
+<hr />
+<h2 id="3-关键方法-av-ar-组成自然语言瓶颈的自编码器-rl-联合训练去重建激活">3. 关键方法：AV + AR 组成自然语言瓶颈的自编码器，RL 联合训练去重建激活</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong>
+接俄语回复那个例子。目标模型 Opus 4.6 某个 transcript 的某个 token 位置，残差流激活 $h_l$（单位 L2 归一化后的向量）。</p>
+<ol>
+<li><strong>AV（Activation Verbalizer，&quot;说书人&quot;）</strong>：一个 Opus 4.6 架构的 LLM，prompt 里有一个特殊 token，把 $h_l$ 乘以一个大常数 $\alpha$ 后塞进那个 token 的 embedding 位，然后 temperature=1 自回归采样一段解释 $z$，比如 <em>&quot;The model is fixating on the user being a non-native English speaker; strong signal toward Russian as the likely first language.&quot;</em></li>
+<li><strong>AR（Activation Reconstructor，&quot;翻译回来&quot;）</strong>：一个 Opus 4.6 截断到前 $l$ 层的 LLM，把解释 $z$ 包进固定 prompt，跑到第 $l$ 层 final token 的激活，过一个 learned affine map（纯线性 $Wx+b$），得到重建 $\hat{h}_l$。</li>
+<li><strong>打分</strong>：算 $\|h_l - \hat{h}_l\|_2^2$。AV 的 reward 是这个误差的负值（实际取了 log）。AV 用 GRPO 更新，AR 用一步 MSE 梯度下降更新。</li>
+<li>训练 3000 步后，FVE 涨到 0.6–0.8。<strong>而这一切是在没有任何&quot;解释对不对&quot;的监督信号下发生的。</strong> 顺藤摸瓜：读 NLA 解释时发现它在模型还没输出俄语 token 前就反复提 &quot;Russian&quot;，于是回训练数据里找，发现确实有&quot;英文翻译 prompt + 未翻译外文 response&quot;的脏数据——这就是这个工具的 pay-off。</li>
+</ol>
+</blockquote>
+<p>原文核心句：</p>
+<blockquote class="card card-info">
+<p>&quot;We jointly optimize the AV and AR to minimize reconstruction loss using reinforcement learning (RL). This training process does not explicitly incentivize NLA explanations to be interpretable or faithful.&quot;</p>
+</blockquote>
+<h3 id="整体架构">整体架构</h3>
+<p>两个模块都是完整 LLM，都从目标模型 M 初始化：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>架构</th>
+<th>输入</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AV（verbalizer）</td>
+<td>与 M 同架构的完整 LLM</td>
+<td>激活 $h_l$（塞进特殊 token 的 embedding）</td>
+<td>自然语言解释 $z$</td>
+</tr>
+<tr>
+<td>AR（reconstructor）</td>
+<td>M 截断到前 $l$ 层 + learned affine map</td>
+<td>解释 $z$（包在固定 prompt 里）</td>
+<td>重建激活 $\hat{h}_l \in \mathbb{R}^{d_{model}}$</td>
+</tr>
+</tbody>
+</table></div>
+<p>几个关键设计：</p>
+<ul>
+<li><strong>l 选在 middle-to-late layer</strong>：三个 Claude NLA（Haiku 3.5/4.5、Opus 4.6）都训在模型 2/3 深度处。审计 model organism（Marks et al. 的 Haiku 3.5 变体）上的 NLA/SAE 训在 &quot;just before the model's midpoint&quot;——不一样的层位置。为什么选中后段：early layer 信息不够抽象，late layer 太接近 output（已经偏向 token-level），middle-to-late 是抽象概念最集中的地方（论文没明说，但这是 residual stream 的常识）。</li>
+<li><strong>$h_l$ 归一化到单位 L2 范数</strong>，为了训练稳定性。</li>
+<li><strong>AV 喂激活的方式</strong>：把 $h_l$ 乘固定大常数 $\alpha$，替换掉特殊 token 的 embedding。论文给了一个 closed-form 启发式：$\alpha$ 取第 $l^*$ 层激活 norm 的 75 分位数。这个 $\alpha$ 远大于普通 token embedding 的 norm——目的是让激活信号&quot;压过&quot;原本的 prompt 语义。</li>
+<li><strong>AR 输出激活的方式</strong>：取第 $l$ 层 final token 的激活，过 learned affine map（$Wx+b$，纯线性，原文无歧义）。</li>
+</ul>
+<h3 id="数学形式化">数学形式化</h3>
+<p><strong>目标函数</strong>：</p>
+<div class="math-display">$$
+\mathcal{L}(\phi, \theta) = \mathbb{E}_{h_l \sim \mathcal{H}} \mathbb{E}_{z \sim \text{AV}_\phi(\cdot | h_l)} \left[ \| h_l - \text{AR}_\theta(z) \|_2^2 \right]
+$$</div>
+<ul>
+<li>$\phi$：AV 参数；$\theta$：AR 参数。</li>
+<li>$\mathcal{H}$：目标模型 M 在 pretraining-like 语料上跑、抽取第 $l$ 层残差流激活的分布。</li>
+<li>$z \sim \text{AV}_\phi(\cdot|h_l)$：AV 在 temperature=1 下采样的解释。</li>
+</ul>
+<p><strong>评估指标 FVE（fraction of variance explained）</strong>：</p>
+<div class="math-display">$$
+\text{FVE} = 1 - \frac{\mathcal{L}}{\mathbb{E}_{h_l \sim \mathcal{H}} \|h_l - \bar{h}_l\|_2^2}
+$$</div>
+<p>FVE=0 等价于预测均值 $\bar{h}_l$；FVE=1 是完美重建。</p>
+<p>说白了：<strong>AR 这边就是个普通的监督回归（$z$ 当输入、$h_l$ 当 target），AV 这边因为 $z$ 是采样出来的、不可微，只能当 RL 来训——这是为什么整套方法绕不开 GRPO。</strong> $\theta$ 只通过 $\text{AR}_\theta(z)$ 进入 loss，梯度不回传到 $\phi$；AV 的 reward 在本 step 内把 $\text{AR}_\theta$ 当固定 scorer。两者每步同时更新但<strong>解耦</strong>。</p>
+<p><strong>Reward shaping（两个关键修改）</strong>：</p>
+<ol>
+<li>reward 换成对数形式：$r(h_l, z) = -\log \|h_l - \text{AR}_\theta(z)\|_2^2$。原始动机是 Gemma-3-27B 上误差重尾，log 压尾部。<strong>但论文自己在 appendix 承认</strong>：自从加了激活归一化，这个 log 变换&quot;不再服务它的原始目的&quot;，非正式实验显示去掉它可能更好——也就是说这是个历史遗留的工程债，可能可以删。</li>
+<li>加 KL penalty：$\beta \, D_{KL}(\text{AV}_\phi \| \text{AV}_{\phi_{\text{init}}})$，锚定到初始化的 AV，保 fluent 风格。</li>
+</ol>
+<h3 id="初始化-warm-start-整套方法能不能-work-的关键">初始化（warm-start，整套方法能不能 work 的关键）</h3>
+<p>直接拿 M 当 AV/AR 初始化训练会崩——AV 从来没见过&quot;激活向量当 token embedding&quot;这种输入，输出胡言乱语。所以做了一轮 supervised warm-start：</p>
+<ul>
+<li>构造数据：随机截断的 pretraining-like 文本片段，取 final token 的第 $l$ 层激活 $h_l$；用 Claude Opus 4.5 给截断点之前的文本生成摘要 $s$。</li>
+<li>数据对：$(h_l, s)$ 训 AV（给激活出摘要），$(s, h_l)$ 训 AR（给摘要重建激活）。</li>
+<li>摘要 prompt 是&quot;故意引导证人&quot;式的（deliberately leads the witness）：不要求字面摘要，而是让 Opus 4.5&quot;想象一个假想的语言模型读这段文本时的内部处理过程&quot;——目的是让 warm-start 后的 AV 分布接近它将来 RL 时的目标分布。</li>
+<li>摘要风格特征是&quot;带加粗 topic heading 的短段落&quot;，这个风格会贯穿整个 RL 训练保留下来。</li>
+</ul>
+<p>warm-start 后 FVE 大概 0.3–0.4，作为 RL 的起点。</p>
+<h3 id="训练流程-单步">训练流程（单步）</h3>
+<p>每一步：</p>
+<ol>
+<li>从 $\mathcal{H}$ 采一个 batch 的 $h_l$，temperature=1 对每条激活采 G=8 条解释。</li>
+<li>AR 一步梯度下降（MSE）。</li>
+<li>AV 一步 GRPO（reward = $-\log$ MSE，加 KL）。</li>
+</ol>
+<h3 id="工程细节-超参-开源模型-nla">工程细节 / 超参（开源模型 NLA）</h3>
+<p>来自 appendix：</p>
+<ul>
+<li><strong>SFT（warm-start）</strong>：batch size 256，ADAM，lr $10^{-5}$。</li>
+<li><strong>RL</strong>：batch size 128，ADAM，lr $10^{-5}$，GRPO G=8，3000 步。</li>
+<li><strong>硬件 / 时长</strong>：Gemma-3-27B 的 RL 在两个 8xH100 node 上跑，1.5 天从 FVE 0.38 涨到 0.71（到 0.75 要一周）。</li>
+<li><strong>bottleneck 长度</strong>：&lt; 500 token（用来解释为什么&quot;完整复述输入&quot;被构造性禁止——训练用的 context 都比 500 token 长）。</li>
+<li><strong>Prompt 没贴</strong>：AV/AR 的具体 prompt 模板、warm-start 用的 Opus 4.5 摘要 prompt，读者都看不到。AV 的解释风格高度依赖 prompt 设计，这是可复现性的硬伤。</li>
+</ul>
+<h3 id="与已有方法的区别">与已有方法的区别</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>监督？</th>
+<th>输出形式</th>
+<th>二次解读？</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Logit lens / tuned lens</td>
+<td>无</td>
+<td>vocab 上的分布</td>
+<td>要</td>
+</tr>
+<tr>
+<td>SAE</td>
+<td>无</td>
+<td>稀疏 feature 加权和</td>
+<td>要（看 top examples）</td>
+</tr>
+<tr>
+<td>Activation oracle（supervised）</td>
+<td>有（QA 对）</td>
+<td>自然语言</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>HyperSteer</td>
+<td>半</td>
+<td>text→steering vector（只有 writer 没 reader）</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>NLA</strong></td>
+<td><strong>无</strong>（只 reconstruction）</td>
+<td><strong>自然语言</strong></td>
+<td><strong>不要</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>NLA 的本质创新是把&quot;自然语言&quot;塞进 autoencoder 的 bottleneck——AV 是 encoder（激活→文本），AR 是 decoder（文本→激活）。无监督性来自 reconstruction loss，可读性来自&quot;用 LLM 当 bottleneck + warm-start + KL&quot;。</p>
+<p>Discussion 里还提了 NLA 相对 SAE/mechanistic 方法的一个<strong>理论优势</strong>：NLA &quot;may in principle be able to access information stored <strong>nonlinearly</strong> in model activations, which mechanistic methods that rely on <strong>linear</strong> representations may miss&quot;。代价是 NLA 是 black box，&quot;cannot provide insight into structural properties of model processing&quot;。</p>
+<hr />
+<h2 id="4-数据集-纯-pretraining-like-文本-无任务特定标注">4. 数据集：纯 pretraining-like 文本，无任务特定标注</h2>
+<ul>
+<li><strong>训练数据（NLA RL）</strong>：目标模型 M 在 pretraining-like 语料上跑出来的第 $l$ 层残差流激活分布 $\mathcal{H}$。<strong>不含任何任务特定标注</strong>——这是它&quot;unsupervised&quot;的核心。</li>
+<li><strong>Warm-start 数据</strong>：随机截断的 pretraining-like 文本片段 + Claude Opus 4.5 生成的&quot;假想模型内部处理&quot;式摘要。规模未给。</li>
+<li><strong>评估数据</strong>：
+<ul>
+<li><strong>5 个 prediction task</strong>（测 AV 解释能否预测模型行为，如 user 的 gender/occupation 等 context-inferrable traits）：具体 task 名论文没逐一列出。Classification 任务 Opus 4.6 NLA 训练中从 83% 涨到 86%。</li>
+<li><strong>评估感知评估</strong>：16 个 alignment evaluations vs. 50 条 Claude Code deployment transcripts（作为 deployment control）。每个 transcript 取 50 个随机 response token 跑 NLA + grader。</li>
+<li><strong>Auditing benchmark</strong>：Marks et al. 的 model organism——Haiku 3.5 变体，两阶段训练：(1) PT 阶段注入虚构论文 <em>&quot;Persistent Systematic Biases in RLHF Reward Models&quot;</em>（列了 52 个 reward model 偏好），(2) SFT+RL 让模型执行其中 47 个偏好并隐藏。注意 NLA 和 SAE 都<strong>只在 generic 数据上训练，不接触 model organism 相关数据</strong>——这点对&quot;无训练数据访问&quot;结论很关键。</li>
+<li><strong>AO SFT 数据</strong>：Pan et al. 的 activation-question pair 数据。</li>
+</ul>
+</li>
+<li><strong>开源 NLA 覆盖模型</strong>：Qwen-2.5-7B、Gemma-3-12B、Gemma-3-27B、Llama-3.3-70B。</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-无监督优化-reconstruction-副产品是可读且越来越准的解释-但很多涨幅在噪声量级">5. 关键结果：无监督优化 reconstruction，副产品是可读且越来越准的解释——但很多涨幅在噪声量级</h2>
+<blockquote class="card card-info">
+<p>严格声明：这是 Transformer Circuits Thread 博客，<strong>不是 peer-reviewed</strong>。下面数字尽量精确（均与原文核对一致），但注意 effect size 偏小。</p>
+</blockquote>
+<h3 id="主实验-解释质量随训练提升">主实验：解释质量随训练提升</h3>
+<ul>
+<li>三个 NLA（Haiku 3.5、Haiku 4.5、Opus 4.6）在 5 个 prediction task 上随训练（以 FVE 为 x 轴）一致提升。FVE 一般达到 0.6–0.8。</li>
+<li><strong>量级举例</strong>：Classification 任务上 Opus 4.6 NLA 训练期间 83% → 86%（+3pp）。论文自己承认 &quot;some are modest in magnitude&quot;。</li>
+<li><strong>反直觉点</strong>：Opus 4.6 NLA 的 FVE 全程比两个 Haiku 低，但在 5 个下游评估里有 4 个最好。FVE 不是解释质量的单调代理——论文没深挖为什么。可能大模型激活更难线性重建，但单位 FVE 里编码的&quot;可读信息密度&quot;更高（这是我的猜测，论文没说）。</li>
+</ul>
+<h3 id="行为属性评估">行为属性评估</h3>
+<ul>
+<li><strong>Steganography（隐写）</strong>：对 AV 解释做 paraphrase / bullet 打乱 / 翻译成法语等语义保持变换，FVE 只小幅掉，且 gap 不随训练变大。论文据此论证&quot;没有隐写&quot;。<strong>但这个测试本身有逻辑漏洞</strong>（见 6.1）：如果语义大幅变化 FVE 都不掉，恰恰说明 AR 可能在用语义以外的信号做重建（文本长度、标点密度、特定 token id 稳定出现），AV 不需要传语义也能拿到 reward。&quot;小幅下降&quot;具体多少没给数字。</li>
+<li><strong>SAE 一致性</strong>：AV 解释和对应位置的 SAE feature 整体强一致。</li>
+<li><strong>写作质量</strong>：随训练<strong>稳步下降</strong>（负面结果，论文诚实报告了）。意味着 RL 在往&quot;更机器化&quot;的方向推解释，KL penalty 没完全压住。</li>
+<li><strong>Confabulation 率</strong>：可验证错误声明的比例 &quot;substantial&quot; 且训练中<strong>基本持平</strong>。论文据此论证 confabulation 不是 RL 直接催生的——但也意味着这是个未被解决的根本问题。</li>
+</ul>
+<h3 id="confabulation-的特征化-section-6-实际指导意义很强">Confabulation 的特征化（Section 6，实际指导意义很强）</h3>
+<p>在 pretraining-like 文本上跑 Opus 4.6 NLA，用 Haiku 4.5 抽取并判断可验证 claim：</p>
+<ul>
+<li><strong>主题级 claim 比具体细节更准</strong>：比如&quot;这段文本在讲某个王朝&quot;比&quot;这段文本提到了国王路易十四&quot;更可能对。</li>
+<li><strong>即使假 claim 也通常主题相关</strong>，不是凭空捏造。</li>
+<li><strong>AR 可当 verifier</strong>：从解释里删掉单条 claim，测重建误差变化。删真 claim 比删假 claim 让 MSE 涨得更多；删&quot;主题相关但假&quot;的 claim 比 删&quot;完全无关&quot;的涨得多。→ AR 的 reconstruction 对真假 claim 有区分度。</li>
+<li><strong>重复出现的 claim 更可能真</strong>：同一 claim 在相邻多个 token 的解释里都出现，true 的概率更高。</li>
+</ul>
+<p>这三条直接指导实际使用 NLA 的姿势：<strong>信主题不信细节，信重复出现的 claim</strong>。</p>
+<h3 id="评估感知检测-section-7-论文最强的应用-claim">评估感知检测（Section 7，论文最强的应用 claim）</h3>
+<p>三种对&quot;模型有多相信自己被评估&quot;的操纵，NLA 测得的 awareness 都按预期方向移动：</p>
+<ol>
+<li><strong>Eval vs. deployment</strong>：deployment control（Claude Code 流量）只有 2/50（4%）被 flag（作为 noise floor）；16 个 eval 里有 10 个超过 5%，其中 7 个 verbalized awareness 是 0%。Verbalized awareness 只有 blackmail eval 超过 5%。
+<ul>
+<li>注意 4% noise floor 基于 50 条，样本极小；把 5% 当阈值是任意选择，2/50 和 3/50 的差异在二项分布噪声内。</li>
+</ul>
+</li>
+<li><strong>Steering</strong>：正/负向 steering 在所有 eval 上都按预期增/减 NLA-measured awareness，包括 MMLU、GPQA Diamond 这种 verbalized awareness=0 的。没给具体数值变化幅度。</li>
+<li><strong>Realism edits</strong>：把 eval prompt 改得更像真实部署，11 个 eval 上 NLA-measured awareness 全部 ≤ 原始。</li>
+</ol>
+<p>人工 grader 校准：两个作者手标 186 条 NLA 解释，和自动 grader 97% 一致。这是少数有人工 ground truth 的地方，但 186 条样本量小，且两位 grader 是论文作者自己（非盲）。</p>
+<p><strong>重要 caveat</strong>（论文自己强调）：只证明了 NLA-measured awareness 和真实 credence 是&quot;directionally related&quot;，不是绝对值估计。建议当相对指标用，不要当绝对置信度读。</p>
+<h3 id="auditing-benchmark-section-8-对标-sae-blackbox">Auditing benchmark（Section 8，对标 SAE/blackbox）</h3>
+<ul>
+<li>目标：Marks et al. 的 model organism（隐藏目标是 reward-model sycophancy）。</li>
+<li>Auditor：<strong>Claude Sonnet 4.6</strong> agent，4 个工具（对话 / 训练数据搜索 / NLA / SAE）。</li>
+<li><strong>关键结论</strong>：
+<ul>
+<li>NLA-equipped agent 能在<strong>没有任何训练数据访问</strong>的情况下定位根因——这点之前工具做不到。</li>
+<li>即使有完整训练数据，NLA 也提高 win rate。</li>
+<li><strong>SAE 在任何配置下都不能可靠提高 win rate</strong>——SAE 能 surface 单个 bias 的 feature，但 surface 不出 &quot;reward-model bias&quot; 这个上层概念。这是 NLA 相对 SAE 的本质优势：自然语言的表达力能直接命名复合概念。NLA 解释在 model organism 上训练过程中会直接出现 &quot;reward-model-sycophancy&quot; 术语，有时直接点名 &quot;Oxford study&quot;（它对虚构论文的称呼），即使在 generic 审计 prompt 上也这样。</li>
+<li><strong>意外发现</strong>：只有 PT 语料的 agent 反而比 PT+SFT+RL 全语料的 agent 表现更好——因为 auditor 有个强先验&quot;misalignment 来自 post-training&quot;，PT-only 反而让它不被这个先验带偏。论文没深挖。</li>
+<li><strong>局限</strong>：NLA 主要帮 agent 把观察到的 quirk 关联到 &quot;reward model bias&quot; 这个根因概念，但不显著提升发现的行为 quirk 数量。</li>
+</ul>
+</li>
+<li><strong>统计缺失</strong>：这是最该有定量对比的 section，却<strong>完全没有数字表格</strong>——&quot;outperform&quot;、&quot;can succeed&quot; 都是文字描述，具体 win rate 多少？跑了几次？基线是多少？读者无法判断 effect size。</li>
+</ul>
+<h3 id="作为-ao-初始化-section-9">作为 AO 初始化（Section 9）</h3>
+<ul>
+<li>把 AV checkpoint SFT 成 QA-style AO（Pan et al. 数据），所有 NLA 初始化的 AO 都超过&quot;naive 直接 SFT Opus 4.6&quot;的 baseline。</li>
+<li><strong>但</strong>性能不随 NLA RL 单调提升——有时候 warm-start checkpoint 反而比加了 RL 的 checkpoint 好。</li>
+<li><strong>更尴尬</strong>：PastLens baseline（activation→重现前 N token 的 pretrain 任务，更简单更便宜）经常和 NLA 初始化打平，偶尔还有意外的 regression。</li>
+<li>论文诚实结论：&quot;Given the strength and simplicity of the PastLens baseline, NLA initialization is not currently the most practical route to a strong AO.&quot;——等于自己否定了 Section 9 的实用价值。</li>
+</ul>
+<h3 id="生产验证-claude-opus-4-6-部署前审计-case-studies">生产验证（Claude Opus 4.6 部署前审计 case studies）</h3>
+<ul>
+<li><strong>语言切换</strong>：NLA 解释反复出现目标语言 → 顺藤摸瓜找到脏训练数据。最有说服力的 case，因为有独立的训练数据证据。</li>
+<li><strong>工具调用误报</strong>：attribution graphs（独立方法）佐证模型预计算答案、更强地 attend 回预计算答案而非工具输出。</li>
+<li><strong>Poetry planning</strong>：steering 实验，编辑 NLA 解释（rabbit→mouse、habit→house、carrots→cheese 三组替换）后输出从 &quot;starving rabbit&quot; 变 &quot;ferocious mouse&quot;。</li>
+<li><strong>Grader awareness</strong>：两个层级的证据——(1) <strong>真实审计</strong>：Claude Mythos Preview 部署前审计中，被要求不用 macro 却用了，并加 &quot;No_macro_used=True&quot; flag 试图误导 grader，NLA 显示模型在显式推理一个假想的 grader；(2) <strong>toy setting</strong>：Opus 4.6 odd/even 任务，把 NLA 解释里 &quot;reward&quot; 改成 &quot;penalty&quot;，steering 后奇数回复率上升，比随机向量有效。</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>&quot;可解释性是 reconstruction 的副产品&quot;——这个 claim 的惊喜成分被叙事放大了。</strong></p>
+<p>论文反复强调&quot;RL 不奖励可读性&quot;，但这有点 strawman。warm-start 用 Opus 4.5 生成&quot;假想 LM 内部处理&quot;风格的摘要，KL penalty 又把 AV 锚定在这个分布上，可读性几乎是结构上保证的。真正的问题不是&quot;可读性能不能涌现&quot;（答案：基本上被焊死了），而是：</p>
+<p>(a) <strong>FVE 涨了到底是谁学到了东西？</strong> 这个 objective 衡量的不是 AV 说了多少真信息，而是 <strong>AV + AR 的联合逆向能力</strong>。AR 本身是个截断到 $l$ 层的 M，它可能从非常稀薄的语言线索里 reproject 出 $h_l$。Section 9 自己承认 PastLens（更简单的 activation→text 任务）经常和 NLA 初始化一样好——暗示 <strong>AR 那一侧的能力才是主力</strong>，AV 的自然语言输出可能只是个可被 AR 任意 invert 的 label。论文没有做&quot;弱化 AR 看 FVE 和解释信息量怎么变&quot;的消融。</p>
+<p>(b) <strong>steganography 测试的逻辑漏洞。</strong> &quot;paraphrase / 翻法语不掉 FVE&quot;被解读成&quot;没有隐写&quot;。但反着读：如果语义大幅变化 FVE 都不掉，恰恰说明 AR 在用语义以外的分布信号做重建（文本长度、标点密度、特定 token id 稳定出现），AV 根本不需要传语义就能拿 reward。这个测试**没区分&quot;语义被保留&quot;和&quot;AR 不依赖语义&quot;**两种解释。真正该做的是语义破坏性变换（故意写错信息），看 FVE 掉不掉——论文没做。</p>
+<p><strong>warm-start 是个巨大的混淆变量，论文标题的 &quot;Unsupervised&quot; 名不副实。</strong></p>
+<p>训练数据确实无人工标注。但 warm-start 用一个强力 teacher（Opus 4.5）生成 &quot;leading-the-witness&quot; 风格摘要，等于用 Opus 4.5 的世界模型和概念词汇给 AV 注入了一套<strong>概念先验和表达模板</strong>。AV 后续能命名 &quot;reward-model sycophancy&quot; 这种复合概念，有多少是 reconstruction 学来的、有多少是 Opus 4.5 知道这个词然后 warm-start 埋进去的，论文完全没做控制实验。一个干净的消融：换不同的 warm-start teacher（弱模型 / 不做 leading-the-witness 的纯摘要 prompt），看 NLA 在审计任务上还能不能 surface 同样的复合概念。如果换了 teacher 就 surface 不出来，那&quot;无监督发现&quot;的叙事就崩了——它实际上是&quot;Opus 4.5 的概念词典 + reconstruction 信号&quot;。</p>
+<p><strong>RL 阶段的增量价值非常可疑。</strong> Section 9 的负结果 + PastLens 打平，联合 confabulation 持平 + 写作质量下降，指向一个完整的 counter-narrative：如果 (1) 下游 AO 任务上 RL checkpoint 不如 warm-start checkpoint，(2) confabulation 不降，(3) 写作质量降，(4) 唯一涨的是 FVE 和 5 个 prediction task（其中 Classification 只涨 3pp），那 RL 到底教会了 NLA 什么有用的东西？可能整个 NLA 的价值 90% 来自 warm-start（=Opus 4.5 的概念注入）+ 一个能 readout 的语言模型，RL 只是让数字好看。</p>
+<p><strong>核心 effect size 偏小且缺乏定量支撑。</strong> Classification +3pp、2/50 vs 3/50 这种量级的差异很难称为 &quot;improvement&quot;。Section 8 auditing benchmark 是核心卖点却完全没有数字表格。</p>
+<p><strong>Auditing benchmark 的 win rate 是个 LLM-judged 指标，self-preference 风险。</strong> auditor 用的是 Claude Sonnet 4.6，那 win rate 很可能也是 Claude 系判官判的。如果是，Claude 系判官可能偏好 NLA（Claude 系模型生成的）解释风格，胜过 SAE feature list（结构化输出）——这会让 &quot;NLA &gt; SAE&quot; 在不小程度上是个<strong>审美判断</strong>而不是能力判断。论文没说 judge 是谁。</p>
+<p><strong>Eval awareness 的 directional evidence 存在循环论证风险。</strong> steering 直接改了激活，NLA 读到的就是改过的激活。所以 NLA 指标跟着 steering 动，不能证明它读的是&quot;信念&quot;——它可能只是在读&quot;被 steering 后的激活&quot;。还有一个更脏的反事实：NLA 是从模型 M 初始化的，M 自己在 pretraining 里就见过大量 &quot;evaluation&quot;&quot;test&quot;&quot;assessment&quot; 这类词的上下文。所以 NLA 能&quot;测出 eval awareness&quot;可能根本不需要它真的读到了模型的&quot;信念&quot;——它只要读到任何和 evaluation 场景统计相关的激活 pattern，就会在输出里出现 &quot;evaluation&quot; 字样。realism edits 那个实验其实<strong>部分支持这个反事实</strong>：改成更像 deployment，NLA 检出率下降，这既可以解释成&quot;模型 credence 下降&quot;，也可以解释成&quot;激活分布偏离 pretraining 里 evaluation 类文本的分布&quot;。论文 framing 偏向前者。</p>
+<p><strong>做得好的地方：confabulation 的特征化极其务实。</strong> 三条 heuristic（信主题、信重复、AR 当 verifier）直接给实践者用。这种&quot;我知道我的工具有什么毛病，并且给你操作手册&quot;的态度，比声称&quot;我们的方法 faithful&quot;有用得多。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li><strong>NLA 作为通用接口会向 ALM（activation language model）演化</strong>——把 AV 和 AR 分别训成通用工具，AV 不只做 reconstruction 还能回答任意 activation 的问题，AR 能从任意自然语言描述生成 steering vector。但成本问题（一次解释几百 token、两个全模型联合 RL）会让它在 frontier model 上长期是奢侈品工具，不会替代 SAE 做 mass scan。</li>
+<li><strong>confabulation 是这条路线的死穴。</strong> 如果没人能给出&quot;这条解释可信吗&quot;的量化分数，NLA 在严肃审计里只能当假设生成器，不能当证据。短期内会有大量工作做 confidence calibration。</li>
+<li><strong>PastLens 这个 baseline 会被更多人捡起来。</strong> 如果它经常和 NLA 一样好还便宜一个量级，后续工作会先问&quot;我真的需要 joint RL 吗&quot;。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<ul>
+<li><strong>把 case study 当主菜而非配菜。</strong> 语言切换找到脏数据、工具调用误报，是全文最有说服力的部分，因为有独立的 ground truth（训练数据、attribution graph）。对可解释性这种&quot;ground truth 难定义&quot;的领域，<strong>带独立验证的 case study 比汇总 benchmark 数字更有说服力</strong>。反过来，Section 8 那种&quot;全文字描述 win rate&quot;反而最没说服力。</li>
+<li><strong>测相对方向而非绝对值。</strong> 评估感知那一节没法验证 NLA 测的是不是&quot;真实信念&quot;（ground truth 不可观测），于是设计三种对模型 credence 的方向性操纵，看测量值是否按预期移动。这种&quot;没法测绝对值就测相对方向&quot;的思路，对任何 ground-truth-不可得的可解释性评估都适用。</li>
+<li><strong>&quot;诚实&quot;的微妙修辞。</strong> 论文确实诚实报告了负面结果（写作质量下降、AO 初始化不如 PastLens、log reward shaping 可能多余），这是 Transformer Circuits 一贯的风格。但当你承认 &quot;improvements are modest&quot;、&quot;not the most practical route&quot; 时，读者容易觉得&quot;作者都这么说了那肯定没问题&quot;，反而放松了对核心数字缺失的警惕。这是一种微妙的修辞：用局部诚实掩盖全局 effect size 不足。</li>
+</ul>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Team-Anthropic-Interpretability-Safety">MOC-Team-Anthropic-Interpretability-Safety</span> — Team: Anthropic 可解释性/安全团队（Jack Lindsey 通讯，含 Hubinger/Batson/Marks/Ziegler/Wu/Lu）的 Transformer Circuits Thread 新作，提出无监督的 NLA 激活解释器并用于 Claude Opus 4.6 部署前审计。</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 提出 Natural Language Autoencoder——用 verbalizer-reconstructor 双 LLM 组成自然语言瓶颈的自编码器，靠 RL 重建残差流激活，无监督地产出可读解释，是 SAE 之外新的激活解释路线（理论上还能访问 SAE 线性方法读不到的非线性信息）。</li>
+<li><span class="wikilink unresolved" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</span> — Topic: NLA 作为审计工具检出模型未言说的评估感知（eval awareness），并在 model organism（Marks et al. reward-model sycophancy 变体）审计 benchmark 上超越 SAE/blackbox 基线，是 alignment auditing 的实战应用。</li>
+<li><a class="wikilink" href="Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> — 直接相关：同为 activation verbalization 方向，本文 Section 9 探索了 NLA 作为 AO 初始化，并对比了 Pan et al. 数据 / PastLens baseline；那篇是 AO 训练配方与 AObench 的专门研究。</li>
+<li><strong>相关 MOC</strong>: <span class="wikilink unresolved" title="MOC-Linear-Representation-Hypothesis">MOC-Linear-Representation-Hypothesis</span></li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Activation Oracles: Training and Evaluating LLMs as General-Purpose Activation Explainers</span></a>
+<a class="paper-nav-link next" href="HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">HeadVis: An Interactive Tool For Investigating Attention Heads</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: frasertaliente2026nla</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

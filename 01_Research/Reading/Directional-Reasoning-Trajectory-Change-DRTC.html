@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directional Reasoning Trajectory Change (DRTC): Identifying Critical Trace Segments in Reasoning Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Directional Reasoning Trajectory Change (DRTC): Identifying Critical Trace Segments in Reasoning Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-长-cot-里-真正改变推理方向的片段很难从文本表面看出来"><span class="toc-num">02</span> 2. 关键问题：长 CoT 里，真正改变推理方向的片段很难从文本表面看出来</a></li>
+<li><a class="toc-link" href="#3-关键方法-先找-pivot-再做-receiver-side-masking-最后看轨迹方向怎么变"><span class="toc-num">03</span> 3. 关键方法：先找 pivot，再做 receiver-side masking，最后看轨迹方向怎么变</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-problem-setup-把推理看成-log-probability-space-里的轨迹">3.1 Problem setup：把推理看成 log-probability space 里的轨迹</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-pivot-discovery-找-不稳定-可能转向-的位置">3.2 Pivot discovery：找“不稳定、可能转向”的位置</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-receiver-side-intervention-只在-pivot-处切断某个-earlier-chunk-的信息流">3.3 Receiver-side intervention：只在 pivot 处切断某个 earlier chunk 的信息流</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-directional-trajectory-change-不是看-likelihood-变大变小-而是看方向">3.4 Directional trajectory change：不是看 likelihood 变大变小，而是看方向</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-curvature-diagnostics-看几何转弯强度-但不参与-attribution">3.5 Curvature diagnostics：看几何转弯强度，但不参与 attribution</a></li>
+<li><a class="toc-link toc-sub" href="#3-6-和已有方法的区别">3.6 和已有方法的区别</a></li>
+<li><a class="toc-link" href="#4-数据集-数学推理-rollout-小样本跨模型-500-题扩展验证"><span class="toc-num">04</span> 4. 数据集：数学推理 rollout，小样本跨模型 + 500 题扩展验证</a></li>
+<li><a class="toc-link" href="#5-关键结果-drtc-attribution-很集中-learned-pivots-比-random-spans-更有干预强度"><span class="toc-num">05</span> 5. 关键结果：DRTC attribution 很集中，learned pivots 比 random spans 更有干预强度</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-curvature-logging-不影响-drtc-分数">5.1 Curvature logging 不影响 DRTC 分数</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-attribution-是集中而不是均匀铺开的">5.2 Attribution 是集中而不是均匀铺开的</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-pivot-weighting-不是纯装饰">5.3 Pivot weighting 不是纯装饰</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-learned-pivots-比-random-spans-产生更强-intervention">5.4 Learned pivots 比 random spans 产生更强 intervention</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-curvature-是-reorientation-intensity-不是-directional-steering">5.5 Curvature 是 reorientation intensity，不是 directional steering</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-adjacency-解释不了全部信号">5.6 Adjacency 解释不了全部信号</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-我的疑问"><span class="toc-num">07</span> 7. 我的疑问</a></li>
+<li><a class="toc-link" href="#8-连接与发现"><span class="toc-num">08</span> 8. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-17</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2602.15332" target="_blank">arXiv</a>
+    </div>
+    <h1>Directional Reasoning Trajectory Change (DRTC): Identifying Critical Trace Segments in Reasoning Models</h1>
+    <p class="authors">Waldemar Chang</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Causal_Analysis</span> <span class="topic-tag">Latent_Reasoning</span> <span class="topic-tag">Trajectory_Analysis</span></div>
+</header>
+
+<h1>论文笔记: Directional Reasoning Trajectory Change (DRTC): Identifying Critical Trace Segments in Reasoning Models</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>论文</strong>: <em>Directional Reasoning Trajectory Change (DRTC): Identifying Critical Trace Segments in Reasoning Models</em></li>
+<li><strong>作者</strong>: Waldemar Chang</li>
+<li><strong>团队</strong>: Johns Hopkins University</li>
+<li><strong>版本 / 时间</strong>: arXiv:2602.15332v2, 2026-02-17</li>
+<li><strong>类别</strong>: cs.LG</li>
+<li><strong>代码</strong>: 论文元数据里没有给出 GitHub 链接</li>
+<li><strong>一句话定位</strong>: 一个解释长 CoT 推理 trace 的方法。它不问“最后答案是谁导致的”，而是问：在模型推理中那些不稳定的转折点上，前面哪些 chunk 的信息流真正把轨迹往当前这条 rollout 的方向推了。</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-长-cot-里-真正改变推理方向的片段很难从文本表面看出来">2. 关键问题：长 CoT 里，真正改变推理方向的片段很难从文本表面看出来</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>论文 Appendix B 的一个例子是：</p>
+<blockquote class="card card-info">
+<p>一个有理系数非零多项式，把 $1+\sqrt{2}, 2+\sqrt{3}, \dots, 1000+\sqrt{1001}$ 都作为根。问这个多项式最小可能次数是多少？</p>
+</blockquote>
+<p>模型的 trace 会先重述题目、试探思路，然后某个地方突然抓到关键约束：<strong>有理系数多项式如果有某个无理根，通常也必须包含它的共轭根</strong>。这个片段在 case study 里是 chunk 6，DRTC 分数是 <strong>+3.4020</strong>，是最大正向贡献。早期的泛泛 preamble（“Okay, let me try...”）反而是 <strong>-1.9895</strong>，也就是说它在 DRTC 的方向意义上不是支持最终推理轨迹的核心信息。</p>
+<p>直觉上这很合理：真正让模型走向正确解法的不是“我要解这道题”这种开场白，而是“有理系数 ⇒ 共轭根约束”这个结构性承诺。</p>
+</blockquote>
+<p>这篇论文要解决的是一个很具体的 interpretability gap：<strong>长程推理不是单个 forward pass 的问题，而是一条有路径依赖的生成轨迹</strong>。</p>
+<p>为什么普通 attribution 不够用？</p>
+<ol>
+<li>
+<p><strong>最后答案 forward pass 不代表整个推理过程</strong><br />
+长 CoT 里，中间 token 会改变后续上下文。模型可能先走错路，再说 “wait”，再换策略。只解释最后一个答案 token，很容易错过前面真正改变路线的 pivot。</p>
+</li>
+<li>
+<p><strong>直接编辑 trace 很容易 off-policy</strong><br />
+如果你把 trace 中间某句话删掉，却强行保留后续文本，这个上下文可能已经不是模型自然会生成的状态。解释结果会变得很怪：你不是在解释模型真实 rollout，而是在解释一个被人为拼接过的输入。</p>
+</li>
+<li>
+<p><strong>重新采样 continuation 又难比较</strong><br />
+另一种做法是改了中间内容以后重新 rollout。但新 trace 可能完全换了路径，长度、语义、答案都不一样。这样很难说变化来自哪个局部因素。</p>
+</li>
+</ol>
+<p>所以 DRTC 的目标不是 outcome-level causality，而是更窄的 <strong>process-causal attribution</strong>：在一条已经生成的 on-policy rollout 里，找到那些关键决策点，然后测试“前面哪个 chunk 的信息流会在这个决策点改变 log-probability 轨迹方向”。</p>
+<hr />
+<h2 id="3-关键方法-先找-pivot-再做-receiver-side-masking-最后看轨迹方向怎么变">3. 关键方法：先找 pivot，再做 receiver-side masking，最后看轨迹方向怎么变</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>还是上面的多项式例子。模型已经生成了一条完整 CoT。DRTC 不改写这条 CoT，也不重新生成后半段，而是：</p>
+<ol>
+<li>把 rollout 切成固定 16-token chunks。</li>
+<li>在每个生成位置计算不确定性和分布变化，挑出 $K=8$ 个最像“转折点”的 pivots。</li>
+<li>对每个 pivot，逐个遮掉它对前面某个 chunk 的 attention edge：也就是让这个 pivot 位置“看不到”那个 earlier chunk，但保持整条真实 prefix 不变。</li>
+<li>看 pivot 处的 log-probability vector 怎么变。</li>
+<li>如果遮掉 chunk 以后，轨迹变化方向说明原 chunk 原本在支持真实 rollout 的方向，这个 chunk 就拿正分；如果原 chunk 反而在 counter-steer，就拿负分。</li>
+</ol>
+<p>对 polynomial case 来说，“有理系数 ⇒ 共轭根”那个 chunk 被遮掉时，会强烈改变关键 pivot 的分布，而且方向上支持真实解题路线，所以它的 DRTC 是大正数。</p>
+</blockquote>
+<h3 id="3-1-problem-setup-把推理看成-log-probability-space-里的轨迹">3.1 Problem setup：把推理看成 log-probability space 里的轨迹</h3>
+<p>给定 prompt，模型生成一条 on-policy rollout：</p>
+<div class="math-display">$$
+\{y_t\}_{t=1}^{T}
+$$</div>
+<p>每个位置 $t$ 有 logits $z_t \in \mathbb{R}^{|\mathcal{V}|}$，对应概率分布 $p_t$。DRTC 在 log-probability 空间里做方向比较：</p>
+<div class="math-display">$$
+s_t = \log p_t(\cdot) = \log \operatorname{softmax}(z_t) \in \mathbb{R}^{|\mathcal{V}|}
+\tag{1}
+$$</div>
+<ul>
+<li>$z_t$: 第 $t$ 个生成位置的 raw logits</li>
+<li>$p_t$: softmax 后的 next-token distribution</li>
+<li>$s_t$: 对每个词表 token 的 log probability</li>
+</ul>
+<p>直观说，$s_t$ 是模型在第 $t$ 步“对所有下一个 token 的偏好画像”。一条 CoT 就是一串这样的画像在高维空间里移动。</p>
+<h3 id="3-2-pivot-discovery-找-不稳定-可能转向-的位置">3.2 Pivot discovery：找“不稳定、可能转向”的位置</h3>
+<p>DRTC 给每个位置一个 pivot score：</p>
+<div class="math-display">$$
+\tilde{u}_t = \gamma_H H_t + \gamma_M(1-\mathrm{margin}_t) + \gamma_S S_t
+\tag{2}
+$$</div>
+<p>其中：</p>
+<ul>
+<li>$H_t$: entropy。越高说明模型越不确定。</li>
+<li>$\mathrm{margin}_t$: top-1 和 top-2 token probability 的差距。越小越像“两个选择打架”。</li>
+<li>$S_t$: 前后 token window 的 Jensen-Shannon divergence，表示局部分布是否突然变了。</li>
+<li>论文使用 $(\gamma_H, \gamma_M, \gamma_S)=(1.0,1.0,0.5)$。</li>
+</ul>
+<p>直觉：这像在 CoT 里找“拐弯处”。如果模型很确定地继续写公式，那未必是 pivot；如果它开始犹豫、top choices 接近、前后分布明显切换，那更可能是策略转折点。</p>
+<p>挑出 top $K$ 个 pivot 后，用 softmax 得到 pivot importance：</p>
+<div class="math-display">$$
+u_k = \frac{\exp(\tilde{u}_{\tau_k})}{\sum_{j=1}^{K}\exp(\tilde{u}_{\tau_j})},\qquad \sum_{k=1}^{K}u_k=1
+\tag{3}
+$$</div>
+<p>这里 $\tau_k$ 是第 $k$ 个 pivot 的 token 位置。$u_k$ 可以理解为“这个转折点在整条 trace 里的权重”。</p>
+<h3 id="3-3-receiver-side-intervention-只在-pivot-处切断某个-earlier-chunk-的信息流">3.3 Receiver-side intervention：只在 pivot 处切断某个 earlier chunk 的信息流</h3>
+<p>关键设计是 receiver-side attention masking。对 pivot $\tau_k$ 和 earlier chunk $c_i$，DRTC 不删除 chunk，也不重写后续文本，而是只在 pivot 的预测位置阻断从 $c_i$ 到 $\tau_k$ 的 attention 信息流。</p>
+<p>先看 baseline top token $y_{\tau_k}^{\star}$ 的 logit 下降多少：</p>
+<div class="math-display">$$
+a_{k,i}=\ell_{\tau_k}(y_{\tau_k}^{\star})-\ell_{\tau_k}^{(-i,k)}(y_{\tau_k}^{\star})
+\tag{4}
+$$</div>
+<ul>
+<li>$\ell_{\tau_k}$: baseline logits</li>
+<li>$\ell_{\tau_k}^{(-i,k)}$: 在 pivot $k$ 处 mask 掉 chunk $i$ 后的 logits</li>
+<li>$y_{\tau_k}^{\star}$: baseline 下 pivot 处的 top token</li>
+<li>$a_{k,i}$: 遮掉 chunk $i$ 后，baseline top token 的 logit 被削弱多少</li>
+</ul>
+<p>如果 $a_{k,i}$ 很大，说明这个 chunk 对 pivot 的原始选择确实有影响。然后把它变成 relevance gate：</p>
+<div class="math-display">$$
+w_{k,i}=\sigma\left(\beta_k \hat{a}_{k,i}\right)\in[0,1]
+\tag{5}
+$$</div>
+<ul>
+<li>$\hat{a}_{k,i}$: robust scaling 后的 screening effect</li>
+<li>$\beta_k$: pivot-specific calibration parameter</li>
+<li>$w_{k,i}$: 这个 chunk-pivot pair 的可信 relevance 权重</li>
+</ul>
+<p>这一步像一个“先验过滤器”：如果遮不遮 chunk 对 pivot top token 基本没影响，那后面就别给它太大 attribution。</p>
+<h3 id="3-4-directional-trajectory-change-不是看-likelihood-变大变小-而是看方向">3.4 Directional trajectory change：不是看 likelihood 变大变小，而是看方向</h3>
+<p>DRTC 定义整条 pivot sequence 的全局 rollout direction：</p>
+<div class="math-display">$$
+g=\frac{s_{\tau_K}-s_{\tau_1}}{\lVert s_{\tau_K}-s_{\tau_1}\rVert}
+\tag{6}
+$$</div>
+<p>这个 $g$ 是从第一个 pivot 到最后一个 pivot 的单位方向向量。可以粗略理解为：“这条真实推理轨迹总体往哪里走”。</p>
+<p>对每个 chunk-pivot pair，先看 intervention 造成的 log-probability vector 改变量：</p>
+<div class="math-display">$$
+e_{k,i}=s_{\tau_k}-s_{\tau_k}^{(-i,k)}
+\tag{7}
+$$</div>
+<p>再投影到全局方向 $g$ 上：</p>
+<div class="math-display">$$
+\delta_{k,i}=\langle e_{k,i},g\rangle
+\tag{8}
+$$</div>
+<ul>
+<li>$\delta_{k,i}&gt;0$: chunk $i$ 原本在 pivot $k$ 支持真实 rollout 方向。</li>
+<li>$\delta_{k,i}&lt;0$: chunk $i$ 原本对真实 rollout 方向有反向张力；mask 掉它反而让变化更贴近 $g$。</li>
+</ul>
+<p>一个简单类比：把推理轨迹想成一辆车的路线。某个 chunk 可能不是“油门大小”，而是“方向盘往哪个方向打”。DRTC 关心的是它在 pivot 处把方向盘往真实路线方向推，还是往相反方向推。</p>
+<p>最终聚合：</p>
+<div class="math-display">$$
+\mathrm{DRTC}(i)=\sum_{k=1}^{K}u_k\,w_{k,i}\,\delta_{k,i}
+\tag{9}
+$$</div>
+<p>也就是：pivot 重要性 $u_k$ × chunk-pivot relevance $w_{k,i}$ × 方向性效果 $\delta_{k,i}$。</p>
+<h3 id="3-5-curvature-diagnostics-看几何转弯强度-但不参与-attribution">3.5 Curvature diagnostics：看几何转弯强度，但不参与 attribution</h3>
+<p>论文还算一个 curvature diagnostic。对连续 logits：</p>
+<div class="math-display">$$
+v_{\mathrm{prev}}=z_t-z_{t-1},\qquad v_{\mathrm{next}}=z_{t+1}-z_t
+$$</div>
+<div class="math-display">$$
+\kappa(z_{t-1},z_t,z_{t+1})=\arccos\left(\frac{\langle v_{\mathrm{prev}},v_{\mathrm{next}}\rangle}{\lVert v_{\mathrm{prev}}\rVert\,\lVert v_{\mathrm{next}}\rVert}\right)
+\tag{10}
+$$</div>
+<p>这就是相邻两段 logit movement 的夹角。夹角大，说明轨迹在这个点“拐弯”明显。</p>
+<p>Intervention 后的 curvature change：</p>
+<div class="math-display">$$
+\Delta\kappa_{k,i}=\kappa(z_{\tau_k-1},z_{\tau_k}^{(-i,k)},z_{\tau_k+1})-\kappa(z_{\tau_k-1},z_{\tau_k},z_{\tau_k+1})
+$$</div>
+<div class="math-display">$$
+\mathrm{CurvImpact}(i)=\sum_{k=1}^{K}u_k\,\Delta\kappa_{k,i}
+\tag{11}
+$$</div>
+<p>重点：<strong>CurvImpact 不是 causal attribution score</strong>。它只说明“遮掉这个 chunk 会不会让轨迹几何形状明显转弯”。论文反复强调 curvature 不用于 pivot discovery、gating 或 DRTC score。</p>
+<h3 id="3-6-和已有方法的区别">3.6 和已有方法的区别</h3>
+<ul>
+<li>相比普通 saliency / attribution：DRTC 不只标相关 token，而是在 pivot 处做局部 causal intervention。</li>
+<li>相比 final-answer flip：DRTC 不需要答案翻转，也适用于 open-ended 或 unfinished reasoning。</li>
+<li>相比 trace editing + resampling：DRTC 保留 realized rollout，不重新采样 continuation，避免不同 rollout 难以比较。</li>
+<li>相比 <a class="wikilink" href="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html" title="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution">Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution</a>：FlashTrace 更像高效追踪多 token attribution；DRTC 更强调 pivot-local receiver-side intervention 和 directional trajectory target。</li>
+<li>相比 <a class="wikilink" href="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a>：Thought-Anchors 找哪些 reasoning steps 重要；DRTC 把“重要”进一步定义成在关键 pivot 上对 log-probability trajectory 方向的支持/反向支持。</li>
+</ul>
+<hr />
+<h2 id="4-数据集-数学推理-rollout-小样本跨模型-500-题扩展验证">4. 数据集：数学推理 rollout，小样本跨模型 + 500 题扩展验证</h2>
+<ul>
+<li><strong>主要评估数据</strong>: math-rollouts problems 的固定 24-example slice，只使用 problem statements。</li>
+<li><strong>扩展验证</strong>: 500 个 MATH problems。</li>
+<li><strong>模型</strong>:
+<ul>
+<li>LFM2.5-1.2B-Thinking</li>
+<li>Ministral-3B-Reasoning</li>
+<li>Phi-4-Mini-Reasoning</li>
+<li>R1-Distill-Qwen-1.5B</li>
+</ul>
+</li>
+<li><strong>生成设置</strong>: on-policy autoregressive reasoning rollout，greedy decoding，fixed seeds。</li>
+<li><strong>分块</strong>: 固定 stride 的 16-token chunks。prompt 和 ground-truth solutions 保留用于 audit，但不参与 pivot discovery、intervention、scoring。</li>
+<li><strong>默认 pivot 数</strong>: $K=8$。</li>
+<li><strong>配置对比</strong>:
+<ul>
+<li>C0: DRTC only</li>
+<li>C8: DRTC + curvature diagnostics</li>
+<li>C9: matched random-span control，同样 masking 和 scoring 逻辑，但 pivot 换成 random spans</li>
+</ul>
+</li>
+</ul>
+<p>这里的数据规模不大，尤其跨模型主实验只有 24 examples。论文主要证明的是方法信号不是完全随机、不是 curvature logging artifact、不是 trivially proximity-driven；不是在证明某个 benchmark 上的泛化性能。</p>
+<hr />
+<h2 id="5-关键结果-drtc-attribution-很集中-learned-pivots-比-random-spans-更有干预强度">5. 关键结果：DRTC attribution 很集中，learned pivots 比 random spans 更有干预强度</h2>
+<h3 id="5-1-curvature-logging-不影响-drtc-分数">5.1 Curvature logging 不影响 DRTC 分数</h3>
+<p>C0 和 C8 唯一区别是是否计算 curvature diagnostics。论文报告所有四个模型、每个 24 examples 上，C0 vs C8 的 per-chunk DRTC Spearman rank correlation 都是：</p>
+<div class="math-display">$$
+\rho=1.000
+$$</div>
+<p>median $1.000$，95% CI $[1.000,1.000]$。这说明 curvature 确实只是旁路 diagnostic，没有偷偷影响 attribution。</p>
+<h3 id="5-2-attribution-是集中而不是均匀铺开的">5.2 Attribution 是集中而不是均匀铺开的</h3>
+<p>用 per-example normalized $|\mathrm{DRTC}|$ mass shares 看：</p>
+<ul>
+<li>median Gini: <strong>0.50–0.58</strong></li>
+<li>top 5% chunks 占总 influence mass: <strong>0.23–0.28</strong></li>
+</ul>
+<p>这点很重要：如果 DRTC 最后只是给每个 chunk 差不多的分数，它对人类 audit 没用。集中性意味着它能把长 trace 压缩成一个 shortlist。</p>
+<h3 id="5-3-pivot-weighting-不是纯装饰">5.3 Pivot weighting 不是纯装饰</h3>
+<p>把 learned pivot weights $u_k$ 换成 uniform weights 后，weighted vs uniform 的 Spearman correlation 仍然很高：</p>
+<div class="math-display">$$
+\rho \approx 0.97-0.99
+$$</div>
+<p>但严格小于 1。解释是：主结构来自 pivot-local effects 和 relevance gates；pivot weighting 不会完全重写排序，但会产生非平凡 reshuffling。这个结果比“权重完全改变一切”更可信，也比“权重没影响”更有用。</p>
+<h3 id="5-4-learned-pivots-比-random-spans-产生更强-intervention">5.4 Learned pivots 比 random spans 产生更强 intervention</h3>
+<p>在四个模型上，C8 learned pivots 的 median per-example mean absolute pivot-local intervention magnitude 都高于 C9 random spans：</p>
+<ul>
+<li>median gaps (C8 - C9): <strong>+0.039 到 +0.178</strong></li>
+</ul>
+<p>扩展到 500 个 MATH problems + R1-Distill-Qwen-1.5B：</p>
+<ul>
+<li>median $\Delta = 0.409$</li>
+<li>95% CI: $[0.354,0.453]$</li>
+<li>$\Delta&gt;0$: <strong>355/500 examples</strong></li>
+<li>sign test: $p=2.3\times10^{-21}$</li>
+<li>median trace length: <strong>2694 tokens</strong>, IQR <strong>[2131, 3068]</strong></li>
+<li>attribution concentration: median Gini <strong>0.586</strong>, median top-1 mass <strong>0.089</strong>, median top-5% mass <strong>0.209</strong></li>
+</ul>
+<p>这个是论文最硬的 falsification evidence：DRTC 找到的 pivot 不是随便挑的位置；在相同 masking/scoring 下，learned pivots 的确更能引发 directional intervention。</p>
+<h3 id="5-5-curvature-是-reorientation-intensity-不是-directional-steering">5.5 Curvature 是 reorientation intensity，不是 directional steering</h3>
+<p>C8 中：</p>
+<ul>
+<li>$|\mathrm{CurvImpact}|$ 和 $|\mathrm{DRTC}|$ 正相关。</li>
+<li>signed $\mathrm{CurvImpact}$ 和 signed $\mathrm{DRTC}$ 接近零相关。</li>
+<li>500 MATH scaling 中，median Spearman $\rho(|\mathrm{CurvImpact}|,|\mathrm{DRTC}|)=0.080$，signed $\rho=-0.039$。</li>
+</ul>
+<p>我的理解：curvature 能告诉你“这里几何上转弯很猛”，但不能告诉你“这个转弯是在支持还是反对最终方向”。这也是为什么论文把它定位成 diagnostic，而不是 attribution。</p>
+<h3 id="5-6-adjacency-解释不了全部信号">5.6 Adjacency 解释不了全部信号</h3>
+<p>相邻 chunks（距离 pivot-containing chunk $|\Delta i|\leq1$）的 mean $|\mathrm{DRTC}|$ 比远处 chunks（$|\Delta i|\geq5$）高，比例大概 <strong>2–3×</strong>。这说明局部邻近性确实有影响。</p>
+<p>但远处 chunks 仍然有 non-zero influence，所以 DRTC 不是简单“离 pivot 越近越重要”。这点对长程推理尤其关键：早期 problem constraint 或 strategy commitment 可能隔很远仍然影响后续 pivot。</p>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<ol>
+<li>
+<p><strong>我喜欢它把“解释答案”降级成“解释轨迹方向”</strong><br />
+很多 CoT interpretability 工作容易被 final answer 绑架：解释这个 token 为什么是 <code>42</code>。DRTC 换了目标：解释一条 rollout 在关键 pivot 上为什么继续沿这个方向走。这个目标更弱，但更可操作。尤其对 open-ended / truncated reasoning，最后答案可能不存在，但过程中的 steering 已经可以分析。</p>
+</li>
+<li>
+<p><strong>receiver-side masking 是全篇最关键的工程取舍</strong><br />
+它避免了两个烂选择：删 trace 导致 off-policy，或者 resample 后无法比较。只在 pivot 位置切 attention edge，有点像问：“如果这个决策点当时没看到前面那段话，它的下一步分布会怎么变？”这个问题足够局部，也足够因果。</p>
+</li>
+<li>
+<p><strong>方向性分数比纯 magnitude 更有信息，但也更难直觉化</strong><br />
+正分好讲：支持 realized rollout。负分不等于“坏”或“错误”，而是“mask 掉它会让变化更 aligned with $g$”。这对人类读者会比较绕。论文 case study 里把 negative chunks 解释成 orientation text、exploratory detours、provisional reasoning，这个说法合理，但有一点 post-hoc flavor。</p>
+</li>
+<li>
+<p><strong>全局方向 $g$ 可能是最值得追问的假设</strong><br />
+用 $s_{\tau_K}-s_{\tau_1}$ 定义全局 rollout direction 很简洁，但长 CoT 可能不是单一方向：它可能先探索、再纠错、再收敛。一个全局 $g$ 会不会把多阶段结构压扁？论文用 curvature roles 补了一点结构诊断，但 primary DRTC 仍依赖这个方向定义。</p>
+</li>
+<li>
+<p><strong>实验更像 method validation，不是应用 benchmark</strong><br />
+结果证明 learned pivots &gt; random spans、curvature 不污染 attribution、分数有集中性。但还没有回答一个更工程的问题：如果开发者拿 DRTC shortlist 去 debug reasoning model，能不能更快找到问题、修 prompt / data / model？这需要人类审计实验或 downstream debugging loop。</p>
+</li>
+</ol>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li>这类方法很可能会和 <a class="wikilink" href="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html" title="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution">Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution</a> 这类高效 attribution 系统合流：先用便宜方法扫长 trace，再对少数 pivot/chunk 做更重的 causal probe。</li>
+<li>对 agent trace 也有潜在迁移空间，但不能直接套。agent 的 pivot 不只是 token uncertainty，还包括 tool-call boundary、environment observation、commitment point；这更接近 <a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> 的 point-of-commitment 设定。</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p>这篇的好处是把方法的“因果声明边界”画得很清楚：DRTC 是 process-causal，不声称 chunk 导致答案正确；CurvImpact 是 diagnostic，不声称 causal direction。很多 interpretability 论文会把 saliency、causality、geometry 混在一个故事里讲，这篇反而一直在拆边界。</p>
+<hr />
+<h2 id="7-我的疑问">7. 我的疑问</h2>
+<ol>
+<li>
+<p><strong>全局方向 $g$ 是否太粗？</strong><br />
+当前理解：$g$ 是从第一个 pivot 到最后一个 pivot 的 log-probability displacement。它给 DRTC 一个统一参照系。疑问是，如果 trace 中存在多次 strategy switch，一个 single global direction 可能把“先远离后靠近”的局部结构压平。或许可以有 segment-wise $g$、piecewise trajectory direction，或者用 pivot-to-pivot local direction。</p>
+</li>
+<li>
+<p><strong>receiver-side attention masking 在不同架构上是否完全等价？</strong><br />
+当前理解：论文在 open-weight transformer reasoning models 上实现 attention-edge masking。但不同模型的 attention implementation、KV cache、GQA/MQA 结构可能影响 mask 的精确语义。论文主文没有把这些实现差异展开到我完全放心的程度。[?]</p>
+</li>
+<li>
+<p><strong>负 DRTC 的语义能否被更严格验证？</strong><br />
+当前理解：负分表示 directional tension，不一定是错误。case study 里常解释成 preamble、detour、uncertainty。但这类解释需要更多人工标注或可控合成任务来验证，不然容易变成“看到负分再找一个合理故事”。[?]</p>
+</li>
+<li>
+<p><strong>固定 16-token chunk 会不会错过语义边界？</strong><br />
+当前理解：固定 chunk 的好处是长度可控、tokenization reproducible、干预强度不被句子长度混淆。代价是一个语义步骤可能被切开，或者多个小步骤被合并。论文选择更偏工程可控，而不是语义自然。</p>
+</li>
+</ol>
+<hr />
+<h2 id="8-连接与发现">8. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — MocType: DRTC 属于“推理过程可解释性”：用 pivot-local causal intervention 解释长 CoT 中哪些 chunks 在方向上 steering 真实 rollout。</li>
+<li><a class="wikilink" href="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a> — 都在问 CoT 中哪些步骤真正重要；DRTC 把重要性定义成 pivot 处的 directional trajectory change。</li>
+<li><a class="wikilink" href="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html" title="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution">Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution</a> — 都面向长程推理归因；FlashTrace 更偏高效多 token attribution，DRTC 更偏因果 pivot probe。</li>
+<li><a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> — 不是同一任务，但共享“不要只看表面 trace，要做反事实/因果定位”的调试哲学。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Beyond Resolution Rates -- Behavioral Drivers of Coding Agent Success and Failure</span></a>
+<a class="paper-nav-link next" href="Causal-Agent-Replay-Counterfactual-Attribution.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Causal Agent Replay: Counterfactual Attribution for LLM-Agent Failures</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Chang2026DRTC</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

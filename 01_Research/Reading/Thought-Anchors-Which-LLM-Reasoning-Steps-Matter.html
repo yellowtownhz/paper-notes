@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thought Anchors: Which LLM Reasoning Steps Matter?</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Thought Anchors: Which LLM Reasoning Steps Matter?</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-推理链中哪些句子真正-锚定-了推理轨迹"><span class="toc-num">02</span> 2. 关键问题：推理链中哪些句子真正"锚定"了推理轨迹？</a></li>
+<li><a class="toc-link" href="#3-关键方法-三套互补工具定位-thought-anchors"><span class="toc-num">03</span> 3. 关键方法：三套互补工具定位 Thought Anchors</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-resampling-importance-核心黑盒方法">3.1 Resampling Importance（核心黑盒方法）</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-receiver-heads-白盒方法">3.2 Receiver Heads（白盒方法）</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-attention-suppression-句子级因果图">3.3 Attention Suppression（句子级因果图）</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-句子分类体系-8-类-taxonomy">3.4 句子分类体系（8 类 Taxonomy）</a></li>
+<li><a class="toc-link toc-sub" href="#3-5-方法对比">3.5 方法对比</a></li>
+<li><a class="toc-link" href="#4-数据集-两阶段实验设计"><span class="toc-num">04</span> 4. 数据集：两阶段实验设计</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-主实验-math-重采样-receiver-heads">4.1 主实验（MATH, 重采样 + receiver heads）</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-大规模因果图实验-mmlu-注意力抑制">4.2 大规模因果图实验（MMLU, 注意力抑制）</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-跨模型验证">4.3 跨模型验证</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-ablation-实验">4.4 Ablation 实验</a></li>
+<li><a class="toc-link" href="#5-关键结果-plan-generation-和-uncertainty-management-句子是-thought-anchors"><span class="toc-num">05</span> 5. 关键结果：Plan Generation 和 Uncertainty Management 句子是 Thought Anchors</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-规划句子最重要-但-forced-answer-看不到">5.1 规划句子最重要——但 forced-answer 看不到</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-模型内部真的在关注这些句子">5.2 模型内部真的在关注这些句子</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-因果图揭示推理结构">5.3 因果图揭示推理结构</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-近距离-vs-远距离因果链预测推理质量">5.4 近距离 vs 远距离因果链预测推理质量</a></li>
+<li><a class="toc-link toc-sub" href="#5-5-跨模型验证-appendix-b">5.5 跨模型验证（Appendix B）</a></li>
+<li><a class="toc-link toc-sub" href="#5-6-两种方法的一致性">5.6 两种方法的一致性</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-对论文本身的-comments">6.1 对论文本身的 Comments</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-对未来的预测">6.2 对未来的预测</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-研究品味">6.3 研究品味</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-13</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2506.19143" target="_blank">arXiv</a>
+    </div>
+    <h1>Thought Anchors: Which LLM Reasoning Steps Matter?</h1>
+    <p class="authors">Paul C. Bogdan, Uzay Macar, Neel Nanda, Arthur Conmy</p>
+    <div class="topic-row"><span class="topic-tag">Reasoning</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">CoT</span> <span class="topic-tag">Attention_Mechanism</span> <span class="topic-tag">Causal_Analysis</span> <span class="topic-tag">Sentence-level_Analysis</span></div>
+</header>
+
+<h1>论文笔记: Thought Anchors: Which LLM Reasoning Steps Matter?</h1>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li>作者：Paul C. Bogdan, Uzay Macar（共同一作）, Neel Nanda（资深/通讯）, Arthur Conmy（资深）</li>
+<li>团队：MATS (ML Alignment &amp; Theory Scholars) Program — AI safety / mechanistic interpretability 研究项目</li>
+<li>时间：2025 年 6 月首发，v4 更新于 2025 年 10 月</li>
+<li>代码：https://github.com/interp-reasoning/thought-anchors/</li>
+<li>可视化工具：https://www.thought-anchors.com</li>
+<li>模型：DeepSeek R1-Distill-Qwen-14B（主实验）, R1-Distill-Llama-8B（跨模型验证）, Qwen3-30b-a3b（MMLU 大规模实验）</li>
+</ul>
+<hr />
+<h2 id="2-关键问题-推理链中哪些句子真正-锚定-了推理轨迹">2. 关键问题：推理链中哪些句子真正&quot;锚定&quot;了推理轨迹？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 问题是什么？</strong></p>
+<p>模型在做一道进制转换题：把 base-16 的 66666₁₆ 转成 base-2，有多少位？</p>
+<p>模型生成了 70+ 句 CoT。前 12 句里，模型走了&quot;每个 hex digit = 4 bits，5 digits → 20 bits&quot;的路线，准确率在持续下降。到 Sentence 13，模型说&quot;Alternatively, maybe I can calculate the value of 66666₁₆ in decimal and then find out how many bits that number would require&quot;——换了一条策略。之后模型算出十进制值 419,430，再转为二进制得到 19 bits，最终发现正确的答案是 19 而非 20。</p>
+<p>Sentence 13 是一<strong>句规划性句子（Plan Generation）</strong>——它不直接产出答案，但改变了后续所有推理的方向。然而，如果你在这个位置用 forced-answer 方法（插入 &quot;Therefore, the final answer is \boxed{&quot; 强迫模型回答），模型还没有完成计算，看起来这个位置&quot;不重要&quot;。Forced-answer 完全忽略了这类间接但关键的规划作用。</p>
+<p>这就是核心 gap：传统 importance 度量（forced-answer、gradient attribution）只能看到&quot;直接决定答案&quot;的句子，系统性地漏掉了那些&quot;改变推理走向&quot;的关键步骤。</p>
+</blockquote>
+<p><strong>动机与未解决的问题：</strong></p>
+<ol>
+<li>
+<p><strong>现有 interpretability 方法按 token 设计</strong>——对 CoT 推理粒度不对。你关心的是&quot;这句话改变了推理方向&quot;，而不是&quot;第 420 个 token 的 logits 偏移了&quot;。</p>
+</li>
+<li>
+<p><strong>粒度的 Goldilocks 问题</strong>——token 太细，paragraph 会把多个 reasoning step 混在一起。Sentence 是自然的最小推理单元。</p>
+</li>
+<li>
+<p><strong>forced-answer 的盲区</strong>——之前广泛使用的方法（Lanham et al. 2023）在每个位置强行让模型输出答案，只能看到&quot;当前位置能直接推出的答案&quot;。对规划类句子完全无效。</p>
+</li>
+<li>
+<p><strong>CoT faithfulness 争议</strong>——CoT 文字到底是不是 mechanistically meaningful？这关系到整个推理模型的安全性和可信度。</p>
+</li>
+</ol>
+<h2 id="3-关键方法-三套互补工具定位-thought-anchors">3. 关键方法：三套互补工具定位 Thought Anchors</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case — 方法怎么跑？</strong></p>
+<p>继续上面的进制转换题。现在有三把尺子：</p>
+<p><strong>工具 1（黑盒重采样）：</strong> 把 Sentence 13 拿掉，从这个位置重新采样 100 条续写。发现当替代句子与原句语义不同时，最终答案分布剧烈变化。这就是它的 counterfactual importance。</p>
+<p><strong>工具 2（白盒 receiver heads）：</strong> 看注意力矩阵。某些 attention head 的注意力分布特别&quot;尖&quot;（高 kurtosis）——它们把注意力集中在少数句子上。这些 head 一致地指向 Sentence 13 这样的规划句子，而不是中间的计算步骤。</p>
+<p><strong>工具 3（注意力抑制因果图）：</strong> Mask 掉 Sentence 12 的所有注意力，测量后续句子 logits 的变化。发现 Sentence 12 → 43（&quot;20 bits&quot; 验证 → &quot;19 bits&quot; 发现）是一条强因果链，Sentence 12 → 66（前导零怀疑 → 最终解释）是另一条长程因果链。</p>
+<p>三个方法指向同一个结论：<strong>规划和不确定性管理句子是 thought anchors</strong>。</p>
+</blockquote>
+<h3 id="3-1-resampling-importance-核心黑盒方法">3.1 Resampling Importance（核心黑盒方法）</h3>
+<p><strong>动机：</strong> forced-answer 只能看到&quot;到这一步为止，信息够不够给出答案&quot;，看不到&quot;这一步如何改变了后续推理&quot;。需要一个真正的 counterfactual measure。</p>
+<p><strong>流程：</strong> 对句子 $S_i$，保留 $S_1, \dots, S_{i-1}$ 不变，从 $S_i$ 重新采样 100 次，得到 100 条完整续写 $T_i, \dots, T_N$，记录最终答案分布。与原始答案分布比较。</p>
+<p><strong>两个指标：</strong></p>
+<ol>
+<li>
+<p><strong>Resampling importance</strong>：
+$$\text{importance}_r := D_{\text{KL}}[p(A&#x27;_{S_i}) \| p(A_{S_i})]$$
+直接看换掉 $S_i$ 后答案分布变了多少。$\epsilon = 10^{-9}$ 防止除零。</p>
+</li>
+<li>
+<p><strong>Counterfactual importance</strong>（更有信息量的版本）：
+$$\text{importance}_c := D_{\text{KL}}[p(A&#x27;_{S_i} | T_i \not\approx S_i) \| p(A_{S_i})]$$
+只看替代句子与原句<strong>语义不同</strong>的情况（cosine similarity &lt; 0.8，用 all-MiniLM-L6-v2 计算嵌入，0.8 是数据集中位数）。</p>
+</li>
+</ol>
+<p>为什么要区分？举个例子：如果 Sentence 13 被换成语义相近的话（&quot;让我试试另一种方法&quot;），答案不变，这不算真正的干预。Counterfactual importance 过滤掉这些&quot;无效干预&quot;，只测真正改变了语义的替换的效果。</p>
+<p>论文验证了 smoothing 参数对结论无影响（Appendix A：Laplace $\alpha = 1.0$ 和 Jeffreys prior $\alpha = 0.5$ 结论一致）。</p>
+<h3 id="3-2-receiver-heads-白盒方法">3.2 Receiver Heads（白盒方法）</h3>
+<p><strong>动机：</strong> 如果某些句子确实是&quot;锚点&quot;，模型内部应该有机制在追踪它们。注意力模式是最自然的候选。</p>
+<p><strong>定义：</strong> 对每个 attention head，将 token-level 注意力矩阵平均为 sentence-sentence 矩阵，计算每个句子被所有下游句子（间隔 &gt;= 4 句，排除局部连续注意力的干扰）关注的程度。如果某个 head 的注意力分布 kurtosis 异常高 → 它把注意力集中在少数句子上 → 叫它 &quot;receiver head&quot;。直觉：后续句子通过这些 head &quot;接收&quot;到关键锚点句子的信息。</p>
+<p><strong>关键属性：</strong></p>
+<ul>
+<li>Split-half reliability $r = .67$（跨问题一致性高）</li>
+<li>Top-16 receiver heads 之间相关性 $r = .60$（vs 随机 head 间 $r = .45$）——它们指向同样的句子</li>
+<li>更多出现在后面的层（Figure 19, Appendix J）</li>
+<li>推理模型（R1-Distill-Qwen-14B）比 base 模型（Qwen-14B）注意力更集中：top-1 percentile 句子在推理模型中 receive 1.8x 更多注意力（Figure 22, Appendix K）</li>
+</ul>
+<h3 id="3-3-attention-suppression-句子级因果图">3.3 Attention Suppression（句子级因果图）</h3>
+<p><strong>动机：</strong> 重采样虽然准，但每个句子要 100 次前向传播，太贵。需要一个高效的方法来映射 sentence-to-sentence 的因果依赖。</p>
+<p><strong>方法：</strong> 对每个句子 $S_i$，mask 所有后续 token 对它的注意力，测量每个后续句子 $S_j$ 的 logits 变化（KL 散度），取句子内 token 的 log-KL 平均。最后减去所有前序句子的平均因果效应做归一化。</p>
+<div class="math-display">$$\text{Causal\_Matrix}[i,j] = \frac{1}{|tokens_j|} \sum_{k \in tokens_j} \log(\text{KL}(\text{logits}_{base}[k] \| \text{logits}_{masked}[k]))$$</div>
+<p>归一化：$\text{Causal\_Matrix}[0:j, j] -= \text{mean}(\text{Causal\_Matrix}[0:j, j])$</p>
+<p><strong>关键优势：</strong> 比重采样便宜约 <strong>100x</strong>，可规模化到数千个问题。</p>
+<p><strong>验证：</strong> 注意力抑制矩阵与重采样矩阵在 90% 的推理轨迹中正相关（mean $r = .20$，近邻句子 $r = .34$）（Appendix N.1）。</p>
+<h3 id="3-4-句子分类体系-8-类-taxonomy">3.4 句子分类体系（8 类 Taxonomy）</h3>
+<p>基于 Venhoff et al. 2025 框架，用 GPT-4o 标注（完整 prompt 见 Appendix E）。每句话标 1 个 function tag + depends_on（依赖的先前句子索引）。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>类别</th>
+<th>占比</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Active Computation</td>
+<td>32.7%</td>
+<td>代数运算、计算</td>
+</tr>
+<tr>
+<td>Fact Retrieval</td>
+<td>20.1%</td>
+<td>回忆事实/公式</td>
+</tr>
+<tr>
+<td>Plan Generation</td>
+<td>15.5%</td>
+<td>制定计划、元推理</td>
+</tr>
+<tr>
+<td>Uncertainty Management</td>
+<td>14.0%</td>
+<td>困惑、回溯、重新评估</td>
+</tr>
+<tr>
+<td>Problem Setup</td>
+<td>2.4%</td>
+<td>解析/重述问题</td>
+</tr>
+<tr>
+<td>Result Consolidation</td>
+<td>少量</td>
+<td>汇总中间结果</td>
+</tr>
+<tr>
+<td>Self Checking</td>
+<td>少量</td>
+<td>验证步骤</td>
+</tr>
+<tr>
+<td>Final Answer Emission</td>
+<td>0.7%</td>
+<td>给出最终答案</td>
+</tr>
+</tbody>
+</table></div>
+<p>Residual-stream 探针（logistic regression, L2 正则, layer 47, group-5-fold cross-validation）能区分这些类别，macro-F1 = 0.71——说明 8 类 taxonomy 在表征空间中可区分，是 taxonomy 合理性的独立证据。</p>
+<h3 id="3-5-方法对比">3.5 方法对比</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>能捕获间接影响？</th>
+<th>计算代价</th>
+<th>需要白盒访问？</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Forced-answer</td>
+<td>否</td>
+<td>中</td>
+<td>是</td>
+</tr>
+<tr>
+<td>Gradient-based</td>
+<td>不可靠</td>
+<td>低</td>
+<td>是</td>
+</tr>
+<tr>
+<td>Shapley value</td>
+<td>是</td>
+<td>极高</td>
+<td>取决于实现</td>
+</tr>
+<tr>
+<td><strong>Resampling</strong></td>
+<td><strong>是</strong></td>
+<td><strong>高</strong></td>
+<td><strong>否（黑盒）</strong></td>
+</tr>
+<tr>
+<td><strong>Attention Suppression</strong></td>
+<td><strong>是（近似）</strong></td>
+<td><strong>低</strong></td>
+<td><strong>是</strong></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-数据集-两阶段实验设计">4. 数据集：两阶段实验设计</h2>
+<h3 id="4-1-主实验-math-重采样-receiver-heads">4.1 主实验（MATH, 重采样 + receiver heads）</h3>
+<ul>
+<li><strong>数据集</strong>：MATH dataset (Hendrycks et al. 2021)</li>
+<li><strong>选择标准</strong>：先在 1,000 个问题上跑 10 次，筛出 solve rate 25-75% 的题目</li>
+<li><strong>响应</strong>：每题 1 正确 + 1 错误。（注意：论文 v4 fulltext 说 10 题 20 条响应，摘要缓存版说 20 题 40 条响应，存在版本差异。此处以 fulltext 为准。）</li>
+<li><strong>统计</strong>：平均 144.2 句（95% CI: [116.7, 171.8]），4208 tokens（95% CI: [3479, 4937]）</li>
+<li><strong>分析范围</strong>：只分析模型未收敛到答案之前的句子（&gt;98% 重采样给出同样回答后排除）</li>
+<li><strong>重采样次数</strong>：每个句子 100 次</li>
+<li><strong>模型</strong>：R1-Distill-Qwen-14B（48 层），temperature = 0.6，top-p = 0.95</li>
+</ul>
+<h3 id="4-2-大规模因果图实验-mmlu-注意力抑制">4.2 大规模因果图实验（MMLU, 注意力抑制）</h3>
+<ul>
+<li><strong>数据集</strong>：MMLU (Hendrycks et al. 2020)</li>
+<li><strong>筛选漏斗</strong>：先跑 non-reasoning 模式筛出准确率 &lt; 50% 的题，再跑 reasoning 模式保留至少 1 次正确的，得到 2,492 题 [?]（中间数字 15,638 / 3,651 来自摘要缓存，fulltext 未明确提及）</li>
+<li><strong>平均 CoT 长度</strong>：90.1 句</li>
+<li><strong>模型</strong>：Qwen3-30b-a3b（切换是因为可用 serverless provider 输出 logits）</li>
+</ul>
+<h3 id="4-3-跨模型验证">4.3 跨模型验证</h3>
+<ul>
+<li><strong>模型</strong>：R1-Distill-Llama-8B，同样题目集</li>
+<li>同样参数（temperature = 0.6, top-p = 0.95），100 rollouts per sentence</li>
+<li>验证 counterfactual importance 和 receiver head 模式的泛化性</li>
+</ul>
+<h3 id="4-4-ablation-实验">4.4 Ablation 实验</h3>
+<ul>
+<li><strong>模型</strong>：R1-Distill-Qwen-14B（总 1,920 个 attention heads）</li>
+<li><strong>问题</strong>：32 个 MATH 问题（准确率 10-90%），每题跑 16 次，最大 $2^{16}$ = 16,384 tokens</li>
+<li><strong>Ablation 规模</strong>：128 / 256 / 512 heads</li>
+<li><strong>对比条件</strong>：Receiver head ablation vs. 同层随机非-receiver head ablation（确保层间匹配）</li>
+</ul>
+<hr />
+<h2 id="5-关键结果-plan-generation-和-uncertainty-management-句子是-thought-anchors">5. 关键结果：Plan Generation 和 Uncertainty Management 句子是 Thought Anchors</h2>
+<h3 id="5-1-规划句子最重要-但-forced-answer-看不到">5.1 规划句子最重要——但 forced-answer 看不到</h3>
+<p><strong>Counterfactual importance（重采样方法，Figure 3B）：</strong></p>
+<p><img src="https://arxiv.org/html/2506.19143v4/x2.png" alt="Figure 3: 各句子类别的 forced-answer 与 counterfactual importance 对比，按句子位置绘制" /></p>
+<ul>
+<li>Plan Generation 和 Uncertainty Management 句子 counterfactual importance <strong>最高</strong></li>
+<li>Active Computation 句子 counterfactual importance <strong>很低</strong></li>
+</ul>
+<p><strong>Forced-answer importance（Figure 3A）：</strong></p>
+<ul>
+<li>结果<strong>完全反过来</strong>：Active Computation 的 forced-answer importance 最高</li>
+<li>Plan Generation 几乎不被识别为重要</li>
+</ul>
+<p><strong>解读：</strong> forced-answer 问的是&quot;到这一步，信息够不够给出答案&quot;——计算步骤完成后当然信息够了。但计算步骤是可替换的（模型会重新算一遍），真正不可替换的是改变推理方向的规划决策。</p>
+<h3 id="5-2-模型内部真的在关注这些句子">5.2 模型内部真的在关注这些句子</h3>
+<p><strong>Receiver head 指向同样的 thought anchors（Figure 5）：</strong></p>
+<p><img src="https://arxiv.org/html/2506.19143v4/figures/ThoughtAnchors_NIP_ReceiverHeadTaxonomy.png" alt="Figure 5: 各句子类别的 receiver head 注意力得分箱线图" /></p>
+<ul>
+<li>Plan Generation 和 Uncertainty Management 句子通过 receiver heads 接收最多注意力</li>
+<li>Active Computation 接收最少注意力（paired t-tests, $ts &gt; 4.0$, $ps &lt; .001$）</li>
+<li>白盒和黑盒方法指向同一个结论</li>
+</ul>
+<p><strong>Receiver head ablation 实验（Table 2, Appendix L）：</strong></p>
+<p>Baseline accuracy = 64.1% (95% CI: [56.0%, 72.1%])</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th style="text-align:center">Ablation 条件</th>
+<th style="text-align:center">128 heads</th>
+<th style="text-align:center">256 heads</th>
+<th style="text-align:center">512 heads (27%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">Receiver head ablation</td>
+<td style="text-align:center">n.s. (无具体数字)</td>
+<td style="text-align:center"><strong>48.8%</strong> [39.3%, 58.3%]</td>
+<td style="text-align:center"><strong>27.7%</strong> [17.2%, 38.2%]</td>
+</tr>
+<tr>
+<td style="text-align:center">Random non-receiver</td>
+<td style="text-align:center">n.s. (无具体数字)</td>
+<td style="text-align:center"><strong>52.7%</strong> [43.0%, 62.5%]</td>
+<td style="text-align:center"><strong>37.3%</strong> [27.5%, 47.1%]</td>
+</tr>
+<tr>
+<td style="text-align:center">差异</td>
+<td style="text-align:center">—</td>
+<td style="text-align:center">n.s.</td>
+<td style="text-align:center">$t[31] = 2.55, p = .02$</td>
+</tr>
+</tbody>
+</table></div>
+<p>128 heads 论文只说 &quot;insignificant effects&quot;，无具体数字。排除未完成响应时 512-head ablation：receiver = 29%, random = 39% ($t[31] = 2.66, p = .02$)。</p>
+<p>注意：256 heads 时 receiver 已比 random 低 4 个百分点（48.8% vs 52.7%），但未达到显著。需要 ablate 27% 的 heads 才出显著差异。论文解释是长 CoT（有时超 10,000 tokens）提供了大量纠错和补偿计算机会。</p>
+<h3 id="5-3-因果图揭示推理结构">5.3 因果图揭示推理结构</h3>
+<p><strong>Case study（Problem #4682, Figure 6）：</strong></p>
+<p><img src="https://arxiv.org/html/2506.19143v4/x3.png" alt="Figure 6: 注意力抑制因果矩阵，展示句子间的因果依赖关系" /></p>
+<ul>
+<li>Sentence 12 → 43：&quot;20 bits&quot; 验证 → &quot;19 bits&quot; 发现</li>
+<li>Sentence 44 → 65：差异检测 → 检查计算</li>
+<li>Sentence 12 → 66：前导零怀疑 → 最终解释</li>
+<li>揭示了 interpretable 的自我纠错 scaffold：错误提议 → 检测差异 → 解决差异</li>
+</ul>
+<h3 id="5-4-近距离-vs-远距离因果链预测推理质量">5.4 近距离 vs 远距离因果链预测推理质量</h3>
+<p>MMLU 上 2,492 个问题的分析（Figure 7）：</p>
+<p><img src="https://arxiv.org/html/2506.19143v4/figures/NIPS_mmlu_fig_final.png" alt="Figure 7: 因果链距离与推理准确率的相关性分析" /></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>发现</th>
+<th>数值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Close-range links（$k$ = 1-2）与 accuracy 正相关</td>
+<td>$r = .44$, $p &lt; .001$</td>
+<td>紧密逻辑流 → 更可能做对</td>
+</tr>
+<tr>
+<td>Long-range links（$k$ = 16-64）与 accuracy 负相关</td>
+<td>$r = -.54$, $p &lt; .001$</td>
+<td>频繁跳回去 → 更可能做错</td>
+</tr>
+<tr>
+<td>数学/物理领域</td>
+<td>close-range 更强，long-range 更弱</td>
+<td>逐步推理，local dependency</td>
+</tr>
+<tr>
+<td>非数学领域</td>
+<td>更 diffuse 的结构</td>
+<td>推理更分散</td>
+</tr>
+</tbody>
+</table></div>
+<p>但因果方向不清晰：是紧密逻辑流导致了正确答案，还是简单问题本身就容易产生紧密结构？论文未深入分析这个方向性问题。</p>
+<h3 id="5-5-跨模型验证-appendix-b">5.5 跨模型验证（Appendix B）</h3>
+<p>R1-Distill-Llama-8B 上复现了主要发现：</p>
+<ul>
+<li>Counterfactual importance：Plan Gen / UM &gt; Active Computation / Fact Retrieval（Figure 10）</li>
+<li>Receiver head 模式类似（Figure 12），但 Plan Gen/UM 句子需要 top-64 heads 才能得到更明显差异（vs Qwen-14B 的 top-16）</li>
+<li><strong>不一致之处</strong>：Llama-8B 的 receiver head 没有集中在后面层的趋势（vs Qwen-14B 有明显 uptick in later layers）；另外，Llama-8B 上没有复现推理模型 vs base 模型的注意力集中差异（Appendix I 承认 &quot;this conclusion is somewhat tenuous&quot;）</li>
+</ul>
+<h3 id="5-6-两种方法的一致性">5.6 两种方法的一致性</h3>
+<p>注意力抑制与重采样的 sentence-sentence 矩阵：</p>
+<ul>
+<li>90% 的推理轨迹中正相关（mean Spearman $\rho = .20$，近邻 $\rho = .34$）</li>
+<li>相关系数不算高，但两种方法捕捉不同的因果维度且重采样本身有噪声。另外 receiver head score 与 resampling score 的 Spearman $\rho = .22$（Appendix K）</li>
+</ul>
+<hr />
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>
+<p><strong>Forced-answer 系统性地错过了最重要的句子。</strong> 这是最有洞察力的发现。Forced-answer 是之前广泛使用的方法（Lanham et al. 2023），但它只看&quot;此时能不能给出正确答案&quot;——像是在问&quot;哪步手术最关键&quot;，但只看&quot;切到这里时病人还活着吗&quot;，忽略了一个规划决策可能在手术开始时就决定了整个流程走向。</p>
+<p><strong>三个方法的 convergence 是最有说服力的论证，但相关系数暴露了局限。</strong> 黑盒、白盒、因果图三个独立方法指向同一结论，这种 triangulation 比单一方法更难被单一假设推翻。但跨方法的 correlation 只有 Spearman $\rho = .20$ - $.34$，论文对此的讨论偏乐观——如果三个方法捕捉的是同一个 underlying 现象，为什么对齐程度这么低？另外，receiver head 与 resampling score 的 Spearman 相关也只有 $\rho = .22$（Appendix K），这个数字在正文中完全没有出现。</p>
+<p><strong>Ablation 实验偏弱。</strong> 256 heads ablation 已有趋势（receiver 48.8% vs random 52.7%）但不显著；512 heads 才出显著差异（27.7% vs 37.3%）。这究竟说明 receiver head 因果作用强（27% 就能从 64% 降到 28%），还是说明长 CoT 本身太 robust（256 heads 才开始出效果）？更 targeted 的 ablation——只 ablate 关键 receiver head 对关键句子的注意力，而非一刀切——会是更 clean 的因果验证。</p>
+<p><strong>语义相似度阈值 0.8 是整个 pipeline 最脆弱的假设，但缺少 sensitivity analysis。</strong> Counterfactual importance 直接取决于什么算&quot;语义不同&quot;——如果阈值从 0.8 改到 0.7 或 0.9，Plan Generation 的优势是否还显著？Appendix A 只验证了 KL 散度的 smoothing 参数，没有验证这个阈值本身。这是一个重要的 robustness check 缺失。</p>
+<p><strong>实验规模偏小。</strong> 主实验只有约 10 个 MATH 问题 × 2 = 约 20 条响应（版本间有差异，fulltext 说 10 题，摘要缓存说 20 题）。大规模实验（2,492 MMLU 问题）补充了，但只用了注意力抑制一种方法。</p>
+<h3 id="6-2-对未来的预测">6.2 对未来的预测</h3>
+<ul>
+<li><strong>训练时干预</strong>：如果在训练中显式强化 thought anchor 句子，是否能让推理更高效？反过来，抑制不必要的计算句子能否缩短 CoT 而不损失准确率？Thought anchor 的发现暗示 CoT 的&quot;效率&quot;大部分集中在少数句子——压缩其余句子可能是可行的。</li>
+<li><strong>跨模型迁移</strong>：目前只在 R1-Distill 系列和 Qwen3 上验证，且 Llama-8B 有不一致之处（receiver head 层分布不同）。Thought anchor 的模式是推理模型的一般特征，还是特定于蒸馏模型的 artifact？</li>
+</ul>
+<h3 id="6-3-研究品味">6.3 研究品味</h3>
+<p><strong>Triangulation 作为论证策略。</strong> 单一方法容易被质疑（&quot;你的指标不对&quot;），但三个独立方法收敛到同一结论，比单一方法更难被单一假设推翻。这种策略在 interpretability 研究中特别有效，因为每个方法都有自己的假设和局限性。</p>
+<p><strong>Case study 建立直觉 → 系统实验验证的节奏。</strong> 不是把 case study 当 anecdotal evidence 打完收工，而是用它建立直觉（Sentence 13 的关键作用），然后用分类分析验证（Plan Gen &gt; Active Computation 不是孤立现象）。</p>
+<hr />
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><span class="wikilink unresolved" title="MOC-Author-NeelNanda">MOC-Author-NeelNanda</span> — Author: Neel Nanda 是资深/通讯作者，研究方向为可解释性与安全性</li>
+<li><span class="wikilink unresolved" title="MOC-Interpretability">MOC-Interpretability</span> — Topic: 引入句子级反事实方法识别 CoT 推理中的 thought anchors，补充了&quot;推理过程可解释性&quot;方向</li>
+<li><span class="wikilink unresolved" title="MOC-Credit-Assignment">MOC-Credit-Assignment</span></li>
+</ul>
+<hr />
+<p>#Research #Paper #LLM推理 #可解释性 #Chain-of-Thought #注意力机制 #因果分析
+</p>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="ViT3-Unlocking-Test-Time-Training-in-Vision.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">ViT^3: Unlocking Test-Time Training in Vision</span></a>
+<a class="paper-nav-link next" href="Building_Better_Activation_Oracles-AO训练配方与AObench.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Building Better Activation Oracles</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Bogdan2025ThoughtAnchors</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
