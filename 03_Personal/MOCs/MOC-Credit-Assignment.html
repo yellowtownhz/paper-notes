@@ -798,6 +798,7 @@
 <li><a class="toc-link toc-sub" href="#3-5-奖励信号质量-reward-signal-quality-as-prerequisite">3.5 奖励信号质量（Reward Signal Quality as Prerequisite）</a></li>
 <li><a class="toc-link toc-sub" href="#3-6-推理链中的因果归因-causal-attribution-in-reasoning-chains">3.6 推理链中的因果归因（Causal Attribution in Reasoning Chains）</a></li>
 <li><a class="toc-link toc-sub" href="#3-7-参数空间中的信用分配-credit-assignment-in-parameter-space">3.7 参数空间中的信用分配（Credit Assignment in Parameter Space）</a></li>
+<li><a class="toc-link toc-sub" href="#3-8-决策点与工具组合的信用分配">3.8 决策点与工具组合的信用分配</a></li>
 <li><a class="toc-link" href="#4-跨论文洞见"><span class="toc-num">04</span> 4. 跨论文洞见</a></li>
 <li><a class="toc-link toc-sub" href="#4-1-信用分配粒度存在层级结构">4.1 信用分配粒度存在层级结构</a></li>
 <li><a class="toc-link toc-sub" href="#4-2-开放式生成的信用分配比数学-代码更难">4.2 开放式生成的信用分配比数学/代码更难</a></li>
@@ -909,6 +910,12 @@
 <li><a class="wikilink" href="../../01_Research/Reading/A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html" title="A-Brain-like-Synergistic-Core-in-LLMs-协同核心">A-Brain-like-Synergistic-Core-in-LLMs-协同核心</a> —— RL 微调（GRPO）特别受益于更新中间层的高协同性注意力头，SFT 无此偏好。协同性头可能是网络的内部信用分配机制——整合跨源信息以确定哪些组件应接受梯度更新。</li>
 </ul>
 <hr />
+<h3 id="3-8-决策点与工具组合的信用分配">3.8 决策点与工具组合的信用分配</h3>
+<p>工具反馈的价值取决于它对应哪次决策、与哪些信息一起出现；更多反馈未必产生更好的计划。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst.html" title="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst">Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst</a> — CUDAnalyst 将规划、反馈、摘要及调试/结构分析/profiling 作为可开关组件，用 Shapley、Banzhaf 和交互项度量条件贡献；反馈打乱对照支持证据匹配的重要性。局部决策点结果与代际统计不等于整条自演化轨迹的无偏因果效应，工具贡献也没有跨模型固定排名。</li>
+</ul>
+<hr />
 <h2 id="4-跨论文洞见">4. 跨论文洞见</h2>
 <h3 id="4-1-信用分配粒度存在层级结构">4.1 信用分配粒度存在层级结构</h3>
 <p>在做精细的 token 级信用分配之前，需要可靠的序列级信号（ArenaRL、GRRM）。有了干净的序数信号后，可以在段级分解（TAPO、PEGRL）。Token 级方法（TI-DPO、SDPO）需要密集监督源或强归因方法。<strong>层级自底而上：信号质量 → 段级分解 → token 级归因。</strong></p>
@@ -952,11 +959,24 @@
 <hr />
 <h2 id="5-开放问题">5. 开放问题</h2>
 <ul>
-<li><strong>段级 + token 级信用分配的层次化统一</strong>：TAPO 做段级，TI-DPO 做 token 级。是否存在有原则的方法先按段分解、再在段内做 token 级归因？</li>
-<li><strong>真正开放式任务的信用分配信号</strong>：SDPO/OPSD 需要可验证答案，PEGRL/TAPO 需要结构化输出。对创意写作、复杂规划、多轮对话，什么可以充当信用分配信号？</li>
-<li><strong>注意力是否是正确的优化层级？</strong> RAL 直接优化注意力并在感知任务上成功。但 Thought-Anchors 显示 receiver head 已能自动追踪重要推理步骤。应该直接优化注意力，还是相信模型在更好的 reward 信号下自然学会合适的注意力模式？</li>
-<li><strong>跨训练范式的信用分配迁移</strong>：PEFT 论文揭示 SFT 和 RLVR 有根本不同的参数更新几何。这是否意味着为一种范式设计的信用分配方法无法迁移到另一种？</li>
-<li><strong>信用分配与训练效率的数量关系</strong>：SDPO 4x、OPSD 8x 相对 GRPO 的效率提升来自更精确的信用分配。这一效率增益是否可预测？给定信用分配精度的提升，能否预测训练效率的改善？</li>
+<li>
+<p><strong>局部信用能否指导后续工具选择？</strong> 将工具组合归因转换为下一步反馈策略后，需在固定总调用预算下做前瞻闭环对照，并报告正确性、速度和额外成本；局部边际值不能直接当成长期策略价值。</p>
+</li>
+<li>
+<p><strong>段级 + token 级信用分配的层次化统一</strong>：TAPO 做段级，TI-DPO 做 token 级。是否存在有原则的方法先按段分解、再在段内做 token 级归因？</p>
+</li>
+<li>
+<p><strong>真正开放式任务的信用分配信号</strong>：SDPO/OPSD 需要可验证答案，PEGRL/TAPO 需要结构化输出。对创意写作、复杂规划、多轮对话，什么可以充当信用分配信号？</p>
+</li>
+<li>
+<p><strong>注意力是否是正确的优化层级？</strong> RAL 直接优化注意力并在感知任务上成功。但 Thought-Anchors 显示 receiver head 已能自动追踪重要推理步骤。应该直接优化注意力，还是相信模型在更好的 reward 信号下自然学会合适的注意力模式？</p>
+</li>
+<li>
+<p><strong>跨训练范式的信用分配迁移</strong>：PEFT 论文揭示 SFT 和 RLVR 有根本不同的参数更新几何。这是否意味着为一种范式设计的信用分配方法无法迁移到另一种？</p>
+</li>
+<li>
+<p><strong>信用分配与训练效率的数量关系</strong>：SDPO 4x、OPSD 8x 相对 GRPO 的效率提升来自更精确的信用分配。这一效率增益是否可预测？给定信用分配精度的提升，能否预测训练效率的改善？</p>
+</li>
 </ul>
 <hr />
 <h2 id="6-标签">6. 标签</h2>

@@ -790,11 +790,18 @@
     <ul class="toc-list">
         <li><a class="toc-link" href="#基座模型与规模化"><span class="toc-num">01</span> 基座模型与规模化</a></li>
 <li><a class="toc-link" href="#推理时控制"><span class="toc-num">02</span> 推理时控制</a></li>
-<li><a class="toc-link" href="#机制可解释性-特征发现与因果干预"><span class="toc-num">03</span> 机制可解释性：特征发现与因果干预</a></li>
-<li><a class="toc-link" href="#agentic-自主研究与策略自改进"><span class="toc-num">04</span> Agentic 自主研究与策略自改进</a></li>
-<li><a class="toc-link" href="#语言条件与模态失衡"><span class="toc-num">05</span> 语言条件与模态失衡</a></li>
-<li><a class="toc-link" href="#具身全身-agent-与评测基准"><span class="toc-num">06</span> 具身全身 Agent 与评测基准</a></li>
-<li><a class="toc-link" href="#开放问题"><span class="toc-num">07</span> 开放问题</a></li>
+<li><a class="toc-link" href="#冻结模型的适配接口"><span class="toc-num">03</span> 冻结模型的适配接口</a></li>
+<li><a class="toc-link toc-sub" href="#输入端-恢复训练视角">输入端：恢复训练视角</a></li>
+<li><a class="toc-link toc-sub" href="#表征端-按样本控制偏好">表征端：按样本控制偏好</a></li>
+<li><a class="toc-link toc-sub" href="#动作端-语义接口与上下文示范">动作端：语义接口与上下文示范</a></li>
+<li><a class="toc-link" href="#触觉信息-部署融合与训练蒸馏"><span class="toc-num">04</span> 触觉信息：部署融合与训练蒸馏</a></li>
+<li><a class="toc-link" href="#运行时监控与分层恢复"><span class="toc-num">05</span> 运行时监控与分层恢复</a></li>
+<li><a class="toc-link" href="#结构压缩与闭环延迟"><span class="toc-num">06</span> 结构压缩与闭环延迟</a></li>
+<li><a class="toc-link" href="#机制可解释性-特征发现与因果干预"><span class="toc-num">07</span> 机制可解释性：特征发现与因果干预</a></li>
+<li><a class="toc-link" href="#agentic-自主研究与策略自改进"><span class="toc-num">08</span> Agentic 自主研究与策略自改进</a></li>
+<li><a class="toc-link" href="#语言条件与模态失衡"><span class="toc-num">09</span> 语言条件与模态失衡</a></li>
+<li><a class="toc-link" href="#具身全身-agent-与评测基准"><span class="toc-num">10</span> 具身全身 Agent 与评测基准</a></li>
+<li><a class="toc-link" href="#开放问题"><span class="toc-num">11</span> 开放问题</a></li>
     </ul>
 </nav>
 
@@ -812,7 +819,7 @@
 
 <h1>VLA（Vision-Language-Action）研究地图</h1>
 <blockquote class="card card-info">
-<p>本 MOC 涵盖 VLA 研究的若干条线：基座模型与规模化、推理时控制、机制可解释性、语言条件与模态失衡、Agentic 自主研究与策略自改进、具身全身 Agent 与评测基准。
+<p>本 MOC 按行为改善发生的位置组织 VLA 研究：训练基座与数据、推理时动作生成、输入与内部偏好接口、触觉信息使用、机制解释，以及任务层执行与评估。比较方法时，同时记录策略是否更新、部署可用信息、执行器与交互预算，避免把整套系统收益都归给模型。
 新论文笔记由 <code>read-paper-flash</code> / <code>read-paper-pro</code> skill 追加。</p>
 </blockquote>
 <hr />
@@ -825,6 +832,67 @@
 <p>不改权重、只在推理时改善 VLA 行为的一条线；目前的代表是用生成过程内部信号做自适应决策。</p>
 <ul>
 <li><a class="wikilink" href="../../01_Research/Reading/GeoAAC-Geometry-Based-Adaptive-Action-Chunking-去噪轨迹几何.html" title="GeoAAC-Geometry-Based-Adaptive-Action-Chunking-去噪轨迹几何">GeoAAC-Geometry-Based-Adaptive-Action-Chunking-去噪轨迹几何</a> - 同济等：免训练自适应 action horizon——从单次 Flow Matching 去噪轨迹的几何（相邻积分步 velocity 差分）聚合 prefix 级可靠性剖面，取正增长累积中位数定执行边界；RoboCasa365 比最优固定 horizon 高 8.7pp，真机平均 53.3%→74.4%，但核心&quot;几何=可靠性&quot;claim 只有相关性证据且验证存在自指（用多采样方差当 ground truth）(2026)</li>
+</ul>
+<h2 id="冻结模型的适配接口">冻结模型的适配接口</h2>
+<p>冻结模型仍可通过观测、内部表示或动作接口改变闭环行为。这三条路径分别借助视图合成器、监督探针和运动规划器；复用已有模型的收益，要连同这些外部条件一起评价。</p>
+<!-- survey-enriched: 2026-10-27, papers=3 -->
+<h4>关键问题</h4>
+<p>冻结模型后，观测视角、内部偏好和动作语义仍可能与任务不匹配。共同问题是：怎样改变模型接收或使用信息的方式，使已有能力能在闭环执行中被调用，同时保留对新增组件的贡献归属？</p>
+<h4>关键方法</h4>
+<p><a class="wikilink" href="../../01_Research/Reading/AnyCamVLA-Zero-Shot-Camera-Adaptation-训练视角重建.html" title="AnyCamVLA-Zero-Shot-Camera-Adaptation-训练视角重建">AnyCamVLA</a> 在输入侧重建规范视角；<a class="wikilink" href="../../01_Research/Reading/Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制.html" title="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制">Observing and Controlling</a> 按监督读出误差施加最小表示扰动；<a class="wikilink" href="../../01_Research/Reading/Transferring-the-Intelligence-of-VLMs-to-Robotic-Control-语义动作接口与上下文示范.html" title="Transferring-the-Intelligence-of-VLMs-to-Robotic-Control-语义动作接口与上下文示范">RoboDawn</a> 用统一交互点、示范和执行反馈组织动作接口。三者分别增加合成、探针和规划执行环节，冻结主模型并不意味着系统无需训练或机器人经验。</p>
+<h4>关键结论</h4>
+<p>接口调整能改善受测闭环行为，但证据对象不同：AnyCamVLA 的适配效果依赖相机参数与合成器适配；内部控制可提高偏好满足，却只对探针输出具有解析保证；RoboDawn 的示范和交互预算带来收益，不能独立证明模型学会了低层运动学。其成功率、偏好比例和时延也不能跨配置拼成同一系统成绩。</p>
+<h4>Insight</h4>
+<p>可迁移的比较单位是“信息如何进入并影响执行”，而非“是否微调”。后续应固定策略或基座、执行器和预算，分别扰动标定、探针校准及示范信息，再同时看任务成功、约束违反和墙钟时间；这样才能知道接口修复了哪一段链条。</p>
+<hr />
+<h3 id="输入端-恢复训练视角">输入端：恢复训练视角</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/AnyCamVLA-Zero-Shot-Camera-Adaptation-训练视角重建.html" title="AnyCamVLA-Zero-Shot-Camera-Adaptation-训练视角重建">AnyCamVLA-Zero-Shot-Camera-Adaptation-训练视角重建</a> - 用已知相机几何和视图合成器重建训练视角，再调用冻结 VLA；仿真需适配合成器，真机使用预训练模型，zero-shot 仅指无需新增机器人示范或策略微调，不代表免标定。</li>
+</ul>
+<h3 id="表征端-按样本控制偏好">表征端：按样本控制偏好</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制.html" title="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制">Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制</a> - 训练线性观测器，在线施加满足目标读出区间的最小表征扰动；仿真与真机分别检验偏好满足和任务成功，但公式保证仅覆盖探针输出，不保证完整机器人轨迹合规。</li>
+</ul>
+<h3 id="动作端-语义接口与上下文示范">动作端：语义接口与上下文示范</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Transferring-the-Intelligence-of-VLMs-to-Robotic-Control-语义动作接口与上下文示范.html" title="Transferring-the-Intelligence-of-VLMs-to-Robotic-Control-语义动作接口与上下文示范">Transferring-the-Intelligence-of-VLMs-to-Robotic-Control-语义动作接口与上下文示范</a> - RoboDawn 用夹爪交互点统一图像、状态和语义动作，通过规划器执行反馈及整条任务示范调用冻结 VLM；one-shot 收益包含任务策略和接口信息，且增加交互预算与慢速决策的成本需单列。</li>
+</ul>
+<h2 id="触觉信息-部署融合与训练蒸馏">触觉信息：部署融合与训练蒸馏</h2>
+<p>触觉既可在部署时补充不可见的接触状态，也可作为训练期特权信息改善动作。两条路线对传感器的要求不同，不能仅按成功率比较后宣称实时触觉已可被替代。</p>
+<!-- survey-enriched: 2026-10-27, papers=2 -->
+<h4>关键问题</h4>
+<p>接触状态既可能由实时传感器提供，也可能通过训练示范间接写进动作偏好。关键区别是当前状态是否能由部署时保留的视觉与本体信息确定；若存在观测相同而接触性质不同的情形，训练蒸馏不能自动补回缺失反馈。</p>
+<h4>关键方法</h4>
+<p><a class="wikilink" href="../../01_Research/Reading/TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控.html" title="TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控">TacVLA</a> 在运行时用接触规则路由触觉 token；<a class="wikilink" href="../../01_Research/Reading/HapticVLA-Contact-Rich-Manipulation-触觉奖励与动作蒸馏.html" title="HapticVLA-Contact-Rich-Manipulation-触觉奖励与动作蒸馏">HapticVLA</a> 在训练时以触觉奖励筛重示范质量，再将教师动作与示范动作混合训练学生。前者改变部署观测，后者改变训练目标与初始化，作用环节不同。</p>
+<h4>关键结论</h4>
+<p>TacVLA 的同骨干对照支持触觉与门控各有贡献，但任务分别微调，遮挡时仍保留腕部视觉。HapticVLA 的收益取决于同步配置，且摘要的 tactile-token 叙述与可操作方法节不一致；应按动作蒸馏理解，不能扩写为已实现无传感器闭环力控制。两篇小规模任务结果不足以给出跨材质传感器替代结论。</p>
+<h4>Insight</h4>
+<p>最有信息量的下一步，是在相同外观下改变摩擦、刚度和传感器漂移，分别检验实时反馈、接触阶段提示与蒸馏动作先验。统一报告损伤、滑落、恢复与成功率，才能区分提升来自更好的任务执行，还是更可靠的接触控制。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控.html" title="TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控">TacVLA-Contact-Aware-Tactile-Fusion-for-Robust-Vision-Language-Action-Manipulation-接触门控</a> - 依据接触标志同时屏蔽或开启触觉 token 与注意力通道，同骨干消融区分传感器增益和门控增益；五项真机任务分别微调，遮挡实验仍有腕部视觉，尚未验证统一策略泛化。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/HapticVLA-Contact-Rich-Manipulation-触觉奖励与动作蒸馏.html" title="HapticVLA-Contact-Rich-Manipulation-触觉奖励与动作蒸馏">HapticVLA-Contact-Rich-Manipulation-触觉奖励与动作蒸馏</a> - 训练时以触觉奖励加权教师，再混合教师动作与示范动作训练无触觉学生；v2 可操作方法是动作蒸馏，非已确认的 tactile-token 预测。同步控制下受益，异步对照未改善，不能据此认定视觉能替代实时接触反馈。</li>
+</ul>
+<h2 id="运行时监控与分层恢复">运行时监控与分层恢复</h2>
+<p>内部进度读数与外部失败诊断可以提供不同的恢复触发条件；应检验它们是否带来更早、更准确的报警及最终任务收益，而不只看监控分数。</p>
+<!-- survey-enriched: 2026-10-27, papers=2 -->
+<h4>关键问题</h4>
+<p>动作仍在继续，不代表任务正在推进。运行时监控需要区分正常变慢、执行错误目标和不可恢复失败，再决定局部重试还是上层重规划。</p>
+<h4>关键方法</h4>
+<p><a class="wikilink" href="../../01_Research/Reading/Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界.html" title="Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界">Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界</a> 从内部表示读出归一化剩余时间并比较预期节奏；<a class="wikilink" href="../../01_Research/Reading/RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复.html" title="RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复">RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复</a> 用外部两阶段监控与分层恢复组织执行。前者提供轻量状态信号，后者提供对报警采取行动的系统接口。</p>
+<h4>关键结论</h4>
+<p>进度探针可能忽略指令，读出方向也未被证明能控制相应动作；模块化监控虽有消融收益，可靠性仍依赖诊断模型和任务预算。两者尚未共同验证内部报警接入外部恢复后的净收益。</p>
+<h4>Insight</h4>
+<p>值得验证的组合是：用内部读数触发较贵的外部复核，再按错误层级选择恢复。先比较纯超时基线、语言反事实及固定误报率下的提前量，随后按总预算评估成功率与恢复成本。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界.html" title="Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界">Decoding-Task-Progress-from-VLA-Representations-进度读出与监控边界</a> — 从冻结 VLA 读出成功示范的归一化剩余时间，用语言反事实和失败扰动检验监控含义；基础探针可忽略指令，沿读出方向干预未产生对应未来动作，因此进度可读不等于语义完成度或可控进度。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复.html" title="RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复">RoboBRIDGE-A-Modular-Framework-for-Bridging-Policies-to-Robust-Real-World-Robotic-Agents-模块化监控与分层恢复</a> — 用两阶段监控、分层恢复和异步感知连接动作策略与任务执行；监控消融有收益，但依赖诊断模型，部分组件缺少独立消融，真机证据偏定性，尚不足以支持可靠通用部署。</li>
+</ul>
+<h2 id="结构压缩与闭环延迟">结构压缩与闭环延迟</h2>
+<p>压缩策略会同时改变动作近似误差与获得新观测的频率；机器人成功率包含这两个因素。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Shallow-π-Knowledge-Distillation-for-Flow-Based-VLAs-联合减深与选择性蒸馏.html" title="Shallow-π-Knowledge-Distillation-for-Flow-Based-VLAs-联合减深与选择性蒸馏">Shallow-π-Knowledge-Distillation-for-Flow-Based-VLAs-联合减深与选择性蒸馏</a> — 联合减浅 VLM 与动作头，并选择性蒸馏动作读取视觉/语言条件的注意力；仿真平均接近教师但长任务可能退化，真机优势还包含低延迟收益，需匹配延迟后判断策略本身的变化。</li>
 </ul>
 <h2 id="机制可解释性-特征发现与因果干预">机制可解释性：特征发现与因果干预</h2>
 <p>四篇论文构成一条递进线：从&quot;词表投影找语义神经元&quot;到&quot;SAE 稀疏字典&quot;，再到&quot;事件锚定 + 闭环因果验证&quot;。共同教训是<strong>描述性解释与因果效力必须分开检验</strong>——特征能被命名不等于干预它能改变行为，能改变行为也不等于语义被隔离。</p>
@@ -852,9 +920,27 @@
 <hr />
 <h2 id="开放问题">开放问题</h2>
 <ul>
-<li><strong>两类内部信号尚未汇合</strong>：推理时控制线（GeoAAC）用生成过程动力学做可靠性判断，可解释性线用激活/SAE 特征做语义分解——能否用 SAE 特征解释 GeoAAC 几何剖面失效的场景（如精细放置任务大输 MS），是两边方法论的自然交叉点。</li>
-<li><strong>因果验证强度分层不统一</strong>：本 MOC 内证据强度从相关性读出（GeoAAC Fig. 3）→ 激活干预（Steering / SAE-Reveal）→ 闭环 rollout 验证（Event-SAE）递增，但各篇对自己证据层级的局限声明详略不一，横向比较结论时需先看验证方式。</li>
-<li><strong>与 <a class="wikilink" href="MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> 的分工</strong>：LLM 可解释性方法（SAE、steering、电路分析）向 VLA 迁移时，事件结构与闭环执行引入了文本域没有的因果边界问题，归本 MOC；纯 LLM 内部机制归 MOC-Interpretability。
+<li>
+<p><strong>监控、恢复与压缩能否按同一闭环口径比较？</strong> 固定观测时效、重规划策略与总动作预算，报告报警延迟、错误恢复成本及分任务成功率；加入纯超时基线和人为补齐学生延迟的对照，分离表示质量与系统反馈收益。</p>
+</li>
+<li>
+<p><strong>两类内部信号尚未汇合</strong>：推理时控制线（GeoAAC）用生成过程动力学做可靠性判断，可解释性线用激活/SAE 特征做语义分解——能否用 SAE 特征解释 GeoAAC 几何剖面失效的场景（如精细放置任务大输 MS），是两边方法论的自然交叉点。</p>
+</li>
+<li>
+<p><strong>因果验证强度分层不统一</strong>：本 MOC 内证据强度从相关性读出（GeoAAC Fig. 3）→ 激活干预（Steering / SAE-Reveal）→ 闭环 rollout 验证（Event-SAE）递增，但各篇对自己证据层级的局限声明详略不一，横向比较结论时需先看验证方式。</p>
+</li>
+<li>
+<p><strong>与 <a class="wikilink" href="MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> 的分工</strong>：LLM 可解释性方法（SAE、steering、电路分析）向 VLA 迁移时，事件结构与闭环执行引入了文本域没有的因果边界问题，归本 MOC；纯 LLM 内部机制归 MOC-Interpretability。</p>
+</li>
+<li>
+<p><strong>输入适配是否只是把风险转移给合成器？</strong> 对 AnyCamVLA 固定策略，同时扫描位姿误差、双相机扰动与附加延迟；以接触位置误差和闭环成功率评价，而不能仅依据 PSNR 判断控制几何是否保持。</p>
+</li>
+<li>
+<p><strong>部署触觉何时不可被蒸馏替代？</strong> 固定物体外观而改变摩擦或刚度，比较实时触觉融合与无触觉学生；分别记录损伤、滑落与任务成功，并控制同步方式。TacVLA 还需用 contact-bit-only 对照区分阶段提示与压力分布信息。</p>
+</li>
+<li>
+<p><strong>内部偏好与动作接口应怎样分工？</strong> 在匹配执行器与交互预算下，将易表达的几何约束交给输出端、语义偏好交给表征端，再比较非目标行为变化；RoboDawn 的任务示范收益则需用等预算的异任务原语示范检验是否主要来自接口学习。
+</p>
 </li>
 </ul>
 

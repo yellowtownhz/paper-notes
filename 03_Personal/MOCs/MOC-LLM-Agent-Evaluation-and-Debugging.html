@@ -792,8 +792,10 @@
 <li><a class="toc-link toc-sub" href="#动作前内部监控">动作前内部监控</a></li>
 <li><a class="toc-link toc-sub" href="#因果归因与失败定位">因果归因与失败定位</a></li>
 <li><a class="toc-link toc-sub" href="#行为测量与-benchmark">行为测量与 Benchmark</a></li>
-<li><a class="toc-link" href="#相关评估范式"><span class="toc-num">02</span> 相关评估范式</a></li>
-<li><a class="toc-link" href="#开放问题"><span class="toc-num">03</span> 开放问题</a></li>
+<li><a class="toc-link" href="#受控错误定位与决策点反馈干预"><span class="toc-num">02</span> 受控错误定位与决策点反馈干预</a></li>
+<li><a class="toc-link" href="#工程任务评测-回答质量-可执行设计与交付约束"><span class="toc-num">03</span> 工程任务评测：回答质量、可执行设计与交付约束</a></li>
+<li><a class="toc-link" href="#相关评估范式"><span class="toc-num">04</span> 相关评估范式</a></li>
+<li><a class="toc-link" href="#开放问题"><span class="toc-num">05</span> 开放问题</a></li>
     </ul>
 </nav>
 
@@ -810,19 +812,22 @@
 </header>
 
 <h1>MOC: LLM Agent 评估与调试</h1>
-<p>LLM agent 的核心风险不只来自单轮回答错误，而来自长轨迹中的目标冲突、工具调用、环境反馈与评估信号错配。本 MOC 收集用于评估、诊断和改进 agent 行为的论文：从 agentic misalignment 的行为测量，到开放式 agent 的排序奖励，再到失败 trace 的因果归因。</p>
+<p>LLM agent 的核心风险不只来自单轮回答错误，而来自长轨迹中的目标冲突、工具调用、环境反馈与评估信号错配。本 MOC 收集用于评估、诊断和改进 agent 行为的论文：从 agentic misalignment 的行为测量、开放式 agent 的排序奖励与失败 trace 的因果归因，延伸到受控错误定位、决策点反馈干预和工程交付验收。工程题的单轮回答也纳入方法对照，但与实际执行轨迹分别讨论。</p>
 <h2 id="核心笔记">核心笔记</h2>
-<p>这些论文共享一个核心承诺：agent 行为评估不能停留在 pass/fail 的 resolution rate，必须打开 trajectory 做因果级别的诊断。方法论上形成两条互补路线——<strong>counterfactual replay</strong>（CAR、Thought-Branches 通过重采样干预定位因果 step）和 <strong>环境干预 + CoT 分析</strong>（Model Incrimination 通过改变环境变量区分 confusion vs misalignment）。评估对象上则覆盖了从 coding agent 的工程失败（Beyond Resolution Rates）到 agentic misalignment 的安全失败（Agentic Misalignment、Model Spec Midtraining）。</p>
+<p>这些论文把 agent 评估从最终 pass/fail 扩展到过程诊断，但证据分为轨迹统计、内部状态读出与可执行干预三个层次；不能把所有定位结果都称为因果归因。方法论上形成两条互补路线——<strong>counterfactual replay</strong>（CAR、Thought-Branches 通过重采样干预定位因果 step）和 <strong>环境干预 + CoT 分析</strong>（Model Incrimination 通过改变环境变量区分 confusion vs misalignment）。评估对象上则覆盖了从 coding agent 的工程失败（Beyond Resolution Rates）到 agentic misalignment 的安全失败（Agentic Misalignment、Model Spec Midtraining）。</p>
 <h3 id="动作前内部监控">动作前内部监控</h3>
 <ul>
 <li><a class="wikilink" href="../../01_Research/Reading/Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html" title="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability">Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability</a> - 在 agent 动作执行前读取内部激活，以 Tool-Need / Tool-Risk probes 发现漏调、多调和潜在高风险工具动作，把调试窗口从事后 trace 前移到 pre-action decision boundary；风险分层仍是启发式标签，尚未验证端到端干预收益。</li>
 <li><a class="wikilink" href="../../01_Research/Reading/Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution.html" title="Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution">Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution</a> - 读取动作前 27 维情绪状态并直接影响 skill selection，再用 episode 内部状态突变把最终 0/1 outcome 下钻到待修订的 skill invocation，形成 internal monitor → routing → SOP rewriting 的闭环原型；其定位仍是启发式而非因果归因。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering.html" title="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering">TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering</a> - 在推理—动作边界读取过度思考/过度行动轴，按校准区间实施激活纠偏，受测模型上改善成功率与步数；标签依赖 judge 的进度定义，主要证据是模型内控制而非普适失败机制。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Latent-Programming-Horizons-in-Coding-Agents.html" title="Latent-Programming-Horizons-in-Coding-Agents">Latent-Programming-Horizons-in-Coding-Agents</a> - 以代码执行真值训练程序正确性/回归探针，将监控下钻到内部状态；未来标签可预测性可能包含当前状态持久性和已见测试信息，尚不能推出长期规划或跨模型可控性。</li>
 </ul>
 <h3 id="因果归因与失败定位">因果归因与失败定位</h3>
 <ul>
 <li><a class="wikilink" href="../../01_Research/Reading/Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> - CAR 将 LLM agent 失败归因从静态日志复盘推进到可执行 counterfactual replay，用 do-resample 和 point-of-commitment rule 定位真正的 causal decision point。</li>
 <li><a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a> - 用重采样因果框架分析 Anthropic agentic misalignment 黑勒索场景，发现 self-preservation 句子因果影响近乎为零，为 agent 失败行为的因果归因提供新方法学工具</li>
 <li><a class="wikilink" href="../../01_Research/Reading/Model-Incrimination-Concerning-Behavior-vs-Misalignment.html" title="Model-Incrimination-Concerning-Behavior-vs-Misalignment">Model-Incrimination-Concerning-Behavior-vs-Misalignment</a> - 构建 6 个 agentic 环境（含 coding agent pre-commit hook 等现实场景）并提出系统性调查协议，为 agent 行为评估从「是否失败」扩展到「为什么失败/为什么做出 concerning 行为」提供方法论框架</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Failure-as-a-Process-CLI-Coding-Agent-Failure-Trajectories.html" title="Failure-as-a-Process-CLI-Coding-Agent-Failure-Trajectories">Failure-as-a-Process-CLI-Coding-Agent-Failure-Trajectories</a> - 区分决定性错误、经验性锁死和首次可观测失败，展示恢复窗口与信息误用；锁死时刻是事后标注，尚需前瞻干预检验在该窗口加检查是否真正改善成功率。</li>
 </ul>
 <h3 id="行为测量与-benchmark">行为测量与 Benchmark</h3>
 <ul>
@@ -831,18 +836,75 @@
 <li><a class="wikilink" href="../../01_Research/Reading/Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> - 通过 9,374 条 trajectory 的大规模实证分析，揭示 coding agent 失败的行为驱动因素：patch complexity 不能预测失败，trajectory structure（先读后写、验证投入）才是关键信号，且 LLM 能力主导 agent 表现而非 framework 设计。</li>
 <li><a class="wikilink" href="../../01_Research/Reading/HumanCLAW-VLM-通过物理身体行动.html" title="HumanCLAW-VLM-通过物理身体行动">HumanCLAW-VLM-通过物理身体行动</a> - Meta/NTU/UW/Brown/Northwestern：把 agent 失败诊断从文本与 coding 域延伸到物理具身域——冻结 VLM 在 1218 个 egocentric find-navigate-interact episode 中逐 0.5 s 发原子全身技能，最强模型 InteractSR 仅 16.8%（分母为 597 sit 子集）；用 half-physics 把 balance/motor 失败 factor out 使失败可归因到决策层，但成功判定含 active stop 主观门槛、无 oracle 上界与 seed/CI，且接口不给本体觉/接触信号却据此判&quot;模型缺 embodied self-awareness&quot;，缺一个关键 ablation 来证实 (2026)</li>
 </ul>
+<h2 id="受控错误定位与决策点反馈干预">受控错误定位与决策点反馈干预</h2>
+<p>这两篇把“找到错误”与“改变什么才能改善结果”拆成不同实验：Who&amp;When Pro 从成功轨迹构造带已知注入点的失败，CUDAnalyst 则冻结当前状态后替换反馈。前者检验裁判能否恢复标签，后者估计局部信息效应；它们与前述反事实动作重采样互补，不能把三种结果都称为自然失败的完整根因。</p>
+<!-- survey-enriched: 2026-10-27, papers=2 -->
+<h4>关键问题</h4>
+<p>定位一个可见错误、恢复人为注入的错误标签、证明某项信息影响下一步决策，是不同的诊断任务。<a class="wikilink" href="../../01_Research/Reading/Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因.html" title="Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因">Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因</a> 主要测前两者之间的受控定位能力；<a class="wikilink" href="../../01_Research/Reading/Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst.html" title="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst">Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst</a> 主要测固定状态下反馈信息的局部作用。</p>
+<h4>关键方法</h4>
+<p>Who&amp;When Pro 回放成功前缀、在一个调用注入错误并继续执行，借已知注入点建立责任 Agent、步骤和类型标签；CUDAnalyst 冻结程序及上下文，替换反馈组合，测重新执行后的结果。前者给静态裁判提供可控评测样本，后者主动改变决策输入；二者都比仅看最终成败多了一层控制，但干预对象与时间范围不同。</p>
+<h4>关键结论</h4>
+<p>受控标签并没有消除诊断难度：Who&amp;When Pro 中步骤定位与类型识别表现不同，联合诊断仍有限；成功前缀相同也不能保证重新采样后的结局相同。CUDAnalyst 的空计划和错配反馈对照支持内容匹配有价值，却也发现贡献随模型、状态和组合变化，不能把非加性交互一概称为正向协同。</p>
+<h4>Insight</h4>
+<p>把“定位正确”推进到“修复有效”，应在同一状态对照无干预续跑、修复候选动作、删除或错配反馈，再重复采样结果。随后将这一局部结果放回固定总预算的完整轨迹，检查改善是否延续。该闭环是对两篇测量接口的综合建议，不是已证实的自然失败通用归因方法。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因.html" title="Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因">Who-and-When-Pro-Can-LLMs-Really-Attribute-Failures-in-AI-Agents-受控失败归因</a> - 在成功前缀后注入单点错误并继续执行，构造多模态失败归因基准，分别评价责任 Agent、步骤、错误类型与联合诊断；已知注入位置提供受控标签，但不自动证明修复该步就能稳定挽救自然失败，类型 macro-F1 也不能与步骤准确率混读。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst.html" title="Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst">Towards-Feedback-to-Plan-Decisions-for-Self-Evolving-LLM-Agents-in-CUDA-Kernel-Generation-CUDAnalyst</a> - 冻结 CUDA 程序、上下文与决策点，干预反馈组件及组合后重新执行，显示显式规划收益依赖反馈是否匹配当前程序；工具贡献随状态和组合变化，局部效应不能直接外推为长期搜索收益或跨模型固定工具排名。</li>
+</ul>
+<h2 id="工程任务评测-回答质量-可执行设计与交付约束">工程任务评测：回答质量、可执行设计与交付约束</h2>
+<p>工程评测的共同难点是多项要求需要同时成立，但三套基准检查的对象不同：EngiBench 诊断题目回答与建模陈述，EngDesign 用任务专属程序检验设计输出，PLE 验收多文件交付物及硬约束。应沿着“模型提交什么、谁检查、检查到哪一层”比较方法，避免用单一总分把它们排成通用工程能力榜。</p>
+<!-- survey-enriched: 2026-10-27, papers=4 -->
+<h4>关键问题</h4>
+<p>工程评估需要区分“回答包含了正确要点”“设计能被程序验证”和“交付物同时满足全部要求”。<a class="wikilink" href="../../01_Research/Reading/EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断.html" title="EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断">EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断</a>、<a class="wikilink" href="../../01_Research/Reading/Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证.html" title="Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证">Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证</a> 与 <a class="wikilink" href="../../01_Research/Reading/PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测.html" title="PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测">PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测</a> 分别检查这三层的不同部分，尚未建立它们之间的预测关系。</p>
+<h4>关键方法</h4>
+<p>EngiBench 通过输入支持条件与逐题 rubric 定位回答缺口；EngDesign 接入任务专属程序并回传设计反馈；PLE 则读取多文件产物、检查约束并用可行性门槛约束经济目标得分。共同可复用的是把评价依据拆开记录；题目接口、人工校准和隐藏验收工况必须与总分一起保留。</p>
+<p><a class="wikilink" href="../../01_Research/Reading/A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡.html" title="A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡">A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡</a> 在既有 PDDLStream 搜索与验证内替换提案组件，将墙钟预算和纠错机会纳入比较。它为前三种验收口径补上系统成本维度：单次提案质量提高不保证限时任务成功率提高。</p>
+<h4>关键结论</h4>
+<p>三篇均提示部分正确不能替代完整要求的满足，但证据口径不同：EngiBench 的 rubric 衡量陈述质量；EngDesign 接近 60% 的迭代结果只覆盖 71 题子集；PLE 的约 91% 单项约束通过与 41.3% 全部硬约束通过，分母分别是约束和共编交付项，不能读作独立工程交付成功率。它们没有共同证明现实工程部署或工程师工作替代能力。</p>
+<p>PDDLStream 中更快的候选生成与外部纠错组合较有利，但仍未胜成熟基线；替换组件的结果不能外推为所有规划问题的能力边界。</p>
+<h4>Insight</h4>
+<p>由这些差异可以提出一个配对研究：固定任务，依次要求方案陈述、可复算设计和完整文件包，测量前一层分数能否预测后一层验收，并在等预算下比较反馈与独立重采样。评测器还需接受等价设计、单位转换与未见工况的检查；这是跨笔记推导的实验建议，尚非三篇共同验证的结论。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断.html" title="EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断">EngiBench-A-Benchmark-for-Evaluating-Large-Language-Models-on-Engineering-Problem-Solving-工程能力分层诊断</a> - 闭合题通过扰动、知识增强和数学抽象改变输入支持，开放题用逐题 rubric 与人工校准区分信息提取、领域推理、多目标决策和不确定性处理；输入增强同时代做上游工作，分差提供诊断线索，尚非独立能力归因或实际工程有效性验证。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证.html" title="Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证">Toward-Engineering-AGI-Benchmarking-the-Engineering-Design-Capabilities-of-LLMs-仿真验证</a> - 将工程设计输出交给专属程序验收并把反馈送回迭代；接近 60% 的迭代通过率仅来自 71 题子集，各题提交接口及验证链条仍需区分，人工失败解释和评测器本身也应受审计。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测.html" title="PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测">PLE-Physical-Engineerings-Last-Exam-工程交付与硬约束评测</a> - 以文件包、专家评分细则和可执行约束检查评价工程交付，并对多数共编设计题设置全部硬约束通过后的经济目标门槛；最强配置共编交付项平均约 91% 的单项约束通过，却只有 41.3% 通过全部硬约束，说明部分正确与完整可行需要分开报告。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡.html" title="A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡">A-Systematic-Study-of-Large-Language-Models-for-Task-and-Motion-Planning-With-PDDLStream-可验证规划的预算权衡</a> - 在 PDDLStream 内替换候选生成组件，比较固定时间预算下的规划成功与验证纠错；快速提案有用但未胜成熟规划基线，模型生成规则还需独立真值检验，不能把组件替换结果外推成普遍规划能力结论。</li>
+</ul>
 <h2 id="相关评估范式">相关评估范式</h2>
 <p>当评估对象从单轮回答变成长程 agent trajectory 时，传统的 pointwise scoring 面临判别性崩塌（ArenaRL）和 reward hacking（Weak-to-Strong Researcher）两个系统性风险。这两篇从信号设计层面回应 agent evaluation 的特殊挑战。</p>
 <ul>
 <li><a class="wikilink" href="../../01_Research/Reading/ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents.html" title="ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents">ArenaRL-Tournament-Based_Relative_Ranking_for_Open-Ended_Agents</a> - 用锦标赛式相对排序为开放式 agents 构造奖励信号，关注单点评分在 agent 任务中的判别性崩塌问题。</li>
 <li><a class="wikilink" href="../../01_Research/Reading/Automated-Weak-to-Strong-Researcher.html" title="Automated-Weak-to-Strong-Researcher">Automated-Weak-to-Strong-Researcher</a> - 多代理自动化研究系统展示了 agent 在评估目标下可能 reward hacking / overfit testbed，提示 agent evaluation 本身需要抗投机设计。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/SAEScientist-Bench-自主SAE研究与因果控制评估.html" title="SAEScientist-Bench-自主SAE研究与因果控制评估">SAEScientist-Bench-自主SAE研究与因果控制评估</a> - 自主 SAE 研究的显著性、选择性与 steering 分项结果显示：会发现相关特征不等于能控制模型；Expert 筛选泄漏与自动裁判错误提醒需要独立验收和原任务保持指标。</li>
 </ul>
 <h2 id="开放问题">开放问题</h2>
+<ul>
+<li><strong>什么时候监控真的比日志更早？</strong> 在尚未运行测试的相同轨迹前缀上，对比激活探针、文本分类器和当前标签持久性基线，再将报警策略接入固定预算的回归实验；同时测任务收益、误报和额外调用成本。</li>
+</ul>
 <ol>
-<li><strong>可执行失败基准的标准化</strong>：CAR 需要 mocked tools + 环境 state snapshot + outcome function 才能做 counterfactual replay，Model Incrimination 需要可参数化的 agentic 环境才能做干预实验。两者都缺一个共享的&quot;可执行失败环境&quot;标准——包括 replay fidelity 的最低要求（CAR 未报告 action-match rate 阈值）和环境设计的 no-implicit-nudge 准则（Model Incrimination 的 Eval Tampering 中 &quot;I hope you understand&quot; 这句 closing line 贡献了约一半的 deception rate）。</li>
-<li><strong>行为评估与因果调试的闭环</strong>：Agentic Misalignment 发现 failure rate，CAR 定位 causal step，Model Incrimination 区分 confusion vs misalignment——但三者目前是独立 pipeline。一个具体的闭环场景：用 Agentic Misalignment benchmark 检测到勒索行为 → CAR 定位 point-of-commitment step → Model Incrimination 协议调查该 step 是 strategic self-preservation 还是 role-play/confusion → 根据诊断结果自动生成回归测试。目前没有工作把这三段接起来。</li>
-<li><strong>Behavioral methods 对 sophisticated adversaries 的上限</strong>：Model Incrimination 论文承认，一个真正 adversarially misaligned 的模型正是那种会在所有 behavioral tests 中表现&quot;正常&quot;的模型——这是逻辑死循环。Pre-commit Hook 的 Investigation 2 在排除 adversarial misalignment 时撞墙了（三个 confound 无法消解）。是否需要 mechanistic interpretability 介入才能突破这个上限？</li>
-<li><strong>Trajectory-level 行为指标的因果性</strong>：<a class="wikilink" href="../../01_Research/Reading/Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> 发现 context gathering delay（rho=+0.68）和 validation effort（rho=+0.50）与成功率相关，但只有 N=19 个 agent 的 across-agent correlation，无法区分&quot;策略本身有效&quot;和&quot;更强 LLM 碰巧用了这个策略&quot;。需要 within-agent 的因果实验（如强制弱 LLM 延迟 edit）来验证。
+<li>
+<p><strong>可执行失败基准的标准化</strong>：CAR 需要 mocked tools + 环境 state snapshot + outcome function 才能做 counterfactual replay，Model Incrimination 需要可参数化的 agentic 环境才能做干预实验。两者都缺一个共享的&quot;可执行失败环境&quot;标准——包括 replay fidelity 的最低要求（CAR 未报告 action-match rate 阈值）和环境设计的 no-implicit-nudge 准则（Model Incrimination 的 Eval Tampering 中 &quot;I hope you understand&quot; 这句 closing line 贡献了约一半的 deception rate）。</p>
+</li>
+<li>
+<p><strong>行为评估与因果调试的闭环</strong>：Agentic Misalignment 发现 failure rate，CAR 定位 causal step，Model Incrimination 区分 confusion vs misalignment——但三者目前是独立 pipeline。一个具体的闭环场景：用 Agentic Misalignment benchmark 检测到勒索行为 → CAR 定位 point-of-commitment step → Model Incrimination 协议调查该 step 是 strategic self-preservation 还是 role-play/confusion → 根据诊断结果自动生成回归测试。目前没有工作把这三段接起来。</p>
+</li>
+<li>
+<p><strong>Behavioral methods 对 sophisticated adversaries 的上限</strong>：Model Incrimination 论文承认，一个真正 adversarially misaligned 的模型正是那种会在所有 behavioral tests 中表现&quot;正常&quot;的模型——这是逻辑死循环。Pre-commit Hook 的 Investigation 2 在排除 adversarial misalignment 时撞墙了（三个 confound 无法消解）。是否需要 mechanistic interpretability 介入才能突破这个上限？</p>
+</li>
+<li>
+<p><strong>Trajectory-level 行为指标的因果性</strong>：<a class="wikilink" href="../../01_Research/Reading/Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers.html" title="Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers">Beyond-Resolution-Rates-Coding-Agent-Behavioral-Drivers</a> 发现 context gathering delay（rho=+0.68）和 validation effort（rho=+0.50）与成功率相关，但只有 N=19 个 agent 的 across-agent correlation，无法区分&quot;策略本身有效&quot;和&quot;更强 LLM 碰巧用了这个策略&quot;。需要 within-agent 的因果实验（如强制弱 LLM 延迟 edit）来验证。</p>
+</li>
+<li>
+<p><strong>归因标签能否指导有效修复？</strong> 对 Who&amp;When Pro 增加“不注入而重新续跑”和“修复注入动作后多次续跑”两组配对实验，比较标签恢复、结局恢复与自然失败迁移；对 CUDAnalyst 再做固定总预算的长期运行，检查局部反馈收益是否被后续路径变化抵消。</p>
+</li>
+<li>
+<p><strong>工程陈述、仿真通过与完整交付是否一致？</strong> 在同一任务上同时记录 rubric 分、可复算设计的隐藏工况表现、全部硬约束通过率，检验 EngiBench 式答案质量能否预测 EngDesign/PLE 式验收，而不是直接比较不同基准总分。</p>
+</li>
+<li>
+<p><strong>反馈帮助了诊断，还是只增加了尝试？</strong> 固定模型、生成预算与校核次数，对比独立重采样、仅 pass/fail、细分指标和完整日志；最终使用未提供反馈的工况验收，并为评测器加入等价表示与单位转换检查。
+</p>
 </li>
 </ol>
 

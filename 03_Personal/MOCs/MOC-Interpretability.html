@@ -794,12 +794,19 @@
 <li><a class="toc-link" href="#端到端激活解释"><span class="toc-num">03</span> 端到端激活解释</a></li>
 <li><a class="toc-link" href="#推理过程可解释性"><span class="toc-num">04</span> 推理过程可解释性</a></li>
 <li><a class="toc-link toc-sub" href="#cot-因果归因-句子-步骤粒度">CoT 因果归因（句子/步骤粒度）</a></li>
+<li><a class="toc-link toc-sub" href="#程序状态读出与规划证据">程序状态读出与规划证据</a></li>
 <li><a class="toc-link" href="#表示几何与动态"><span class="toc-num">05</span> 表示几何与动态</a></li>
 <li><a class="toc-link" href="#多语言机制可解释性"><span class="toc-num">06</span> 多语言机制可解释性</a></li>
 <li><a class="toc-link" href="#训练动态分析"><span class="toc-num">07</span> 训练动态分析</a></li>
 <li><a class="toc-link" href="#模型压缩与剪枝"><span class="toc-num">08</span> 模型压缩与剪枝</a></li>
-<li><a class="toc-link" href="#跨学科应用"><span class="toc-num">09</span> 跨学科应用</a></li>
-<li><a class="toc-link" href="#开放问题"><span class="toc-num">10</span> 开放问题</a></li>
+<li><a class="toc-link" href="#闭环物理系统的特征干预"><span class="toc-num">09</span> 闭环物理系统的特征干预</a></li>
+<li><a class="toc-link" href="#自动化可解释性研究与独立验证"><span class="toc-num">10</span> 自动化可解释性研究与独立验证</a></li>
+<li><a class="toc-link" href="#内部风险监测与评估器干预"><span class="toc-num">11</span> 内部风险监测与评估器干预</a></li>
+<li><a class="toc-link toc-sub" href="#风险状态读出">风险状态读出</a></li>
+<li><a class="toc-link toc-sub" href="#评估器与拒绝行为的干预">评估器与拒绝行为的干预</a></li>
+<li><a class="toc-link toc-sub" href="#任务输入侧的训练约束">任务输入侧的训练约束</a></li>
+<li><a class="toc-link" href="#跨学科应用"><span class="toc-num">12</span> 跨学科应用</a></li>
+<li><a class="toc-link" href="#开放问题"><span class="toc-num">13</span> 开放问题</a></li>
     </ul>
 </nav>
 
@@ -817,7 +824,7 @@
 
 <h1>可解释性研究地图</h1>
 <blockquote class="card card-info">
-<p>本 MOC 涵盖&quot;理解 LLM 内部机制&quot;研究线上的所有论文。
+<p>本 MOC 围绕模型内部表征如何参与行为组织论文，覆盖 LLM、视觉语言动作模型与科学预测模型。
 新论文笔记由 <code>read-paper-pro</code> skill 自动追加。</p>
 </blockquote>
 <hr />
@@ -979,6 +986,10 @@
 <p><strong>端到端激活解释的核心张力在于&quot;理解&quot;与&quot;反转&quot;的不可区分性。</strong> 当 AO 和目标模型共享同一 base model 时，activation 信息与 text 信息之间没有 clean separation。模型可能从 activation 里&quot;回忆&quot;出对应文本再基于文本答题，而非真正解码 latent semantics。这不是一个可以靠 scaling 解决的问题——它是评估框架本身的结构性缺陷。未来工作需要系统性设计&quot;语义破坏性变换&quot;测试（故意写错解释信息看重建误差变不变），而非当前流行的语义保持变换（paraphrase、翻译）。</p>
 <p><strong>无监督路线（NLA）与有监督路线（AO）的互补性尚未被充分利用。</strong> NLA 能在没有假设的情况下 surface 意外发现（如俄语回复的脏数据来源），AO 能回答精确的审计问题。一个自然的 pipeline 是 NLA 做 hypothesis generation → AO 做 hypothesis testing，但四篇论文中没有任何一篇尝试这种组合。参见「特征提取方法（SAE / 电路）」：SAE 的原子化特征可以作为 NLA/AO 的 grounding signal——NLA 明确指出 SAE 在&quot;reward-model sycophancy&quot;等复合概念上存在 coverage gap，这正是端到端方法试图填补的空白，但反过来 SAE feature 的激活模式可以佐证 NLA claim 的可信度。</p>
 <p><strong>评测基础设施和校准是最紧迫的瓶颈。</strong> AObench 是第一个系统性尝试但自身仅基于 50M tokens undertrained 模型建立，缺乏&quot;训到更多后排序是否仍稳&quot;的证据。AO 的可靠性/校准完全未解决——没有任何工作训练 AO 说&quot;我不知道&quot;或输出置信度，在审计场景里瞎说的后果可能很严重。参见「推理过程可解释性」：当 AO 被应用于 CoT 的 backtracking 检测时（给最后 50 个 token 激活后评分从 1.26/5 到 2.10/5，超过 black-box baseline），评估变得更困难——why-question 没有 ground truth，只能用 LLM-judge，而 judge 对 phrasing 的敏感性已被 hallucination &quot;先升后降&quot;的度量假象直接暴露。Layer 选择同样缺乏通用规则：AO 发现 50% 深度在 secret-keeping 上明显优于 75%，但分类任务上各层差不多——如何为新模型/新任务选层，仍是开放问题。</p>
+<p>近期的原生注意力头干预进一步把“信息存在”“读取位置”与“最终报告”拆开：这为激活解释增加功能检验，但强注入与受限提示下的分工，不能替自然自省能力背书。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位.html" title="A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位">A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位</a> - 用原生注意力头交叉干预，区分内部扰动的报告门控与位置读取；功能分工成立于强注入、明确提示及筛选概念，不能外推为自然状态下普遍自省。</li>
+</ul>
 <h2 id="推理过程可解释性">推理过程可解释性</h2>
 <!-- survey-enriched: 2026-06-25, papers=9 -->
 <p>这些论文共享一个方法论承诺：通过因果干预识别哪些推理步骤真正重要。Thought-Anchors 使用反事实重采样 + 接收头 + 句子粒度的注意力抑制；FlashTrace 追求长 trace 上高效且忠实的多 token attribution；DRTC 则把目标改成 pivot-local 的 log-probability trajectory steering。它们都拒绝&quot;每个 CoT 步骤同等重要&quot;的假设，发现规划步骤、不确定性管理步骤和结构性承诺才是真正的因果锚点。</p>
@@ -1060,6 +1071,10 @@
 <p><strong>隐式规划是因果归因的上游机制。</strong> <a class="wikilink" href="../../01_Research/Reading/Whats_the_Plan-Implicit_Planning_LLMs.html" title="Whats_the_Plan-Implicit_Planning_LLMs">Whats_the_Plan-Implicit_Planning_LLMs</a> 证明模型在生成第一个 token 前就已经在 residual stream 中编码了规划信息（steering 可在第一行末尾改变第二行押韵，9B+ 模型效果显著，1B 即存在弱信号）。这与 Thought Anchors 发现的&quot;规划句子是 thought anchor&quot;形成机制互证：规划不只是 CoT 文本中的一类句子，而是模型内部一种可操控的计算结构。参见「特征提取方法（SAE / 电路）」中关于 SAE 特征发现能否为归因提供更廉价先验的讨论。</p>
 <p><strong>推理模型的&quot;社会结构&quot;可能解释了因果锚点集中的原因。</strong> <a class="wikilink" href="../../01_Research/Reading/Reasoning_Models_Generate_Societies_of_Thought.html" title="Reasoning_Models_Generate_Societies_of_Thought">Reasoning_Models_Generate_Societies_of_Thought</a> 发现推理模型的 CoT 内含多智能体式对话结构，且 SAE 特征引导对话行为可使 Countdown 准确率从 27.1% 提升至 54.8%。中介效应分析显示大部分效应是直接的（$\beta = 0.228$）——对话结构本身就是推理的&quot;支架&quot;。这暗示 thought anchor 可能对应&quot;视角切换&quot;和&quot;调和&quot;这类社会性结构点。参见「端到端激活解释」中关于 representation intervention 的讨论。</p>
 <p><strong>对安全的直接启示：CoT monitoring 需要重新校准。</strong> 如果规划句子是因果骨架而 self-preservation 是 post-hoc rationalization，那么 CoT monitoring 不能只看模型&quot;说了什么&quot;（prevalence），而要看哪些句子在分布层面真正 steer 了行为（causal contribution）。<a class="wikilink" href="../../01_Research/Reading/Model-Incrimination-Concerning-Behavior-vs-Misalignment.html" title="Model-Incrimination-Concerning-Behavior-vs-Misalignment">Model-Incrimination-Concerning-Behavior-vs-Misalignment</a> 的 investigation protocol 提供了一个实操框架：先从 CoT 生成假设，再通过环境干预验证因果性——但其证据标准的循环性问题（多条 evidence line 共享同一 underlying model）仍待解决。参见「表示几何与动态」中关于 representation 稳定性的讨论。</p>
+<h3 id="程序状态读出与规划证据">程序状态读出与规划证据</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Latent-Programming-Horizons-in-Coding-Agents.html" title="Latent-Programming-Horizons-in-Coding-Agents">Latent-Programming-Horizons-in-Coding-Agents</a> — 将多轮代码编辑后的程序真值与激活对齐，读出正确性和回归风险；未来标签相关性受测试文本、任务难度和 edit 间标签延续影响，“交互步数”不能直接解释为提前规划的编辑深度。</li>
+</ul>
 <h2 id="表示几何与动态">表示几何与动态</h2>
 <!-- survey-enriched: 2026-06-25, papers=4 -->
 <h4>关键问题</h4>
@@ -1194,12 +1209,79 @@
 <h2 id="训练动态分析">训练动态分析</h2>
 <p>本节追踪训练过程中内部表示如何变化——不仅是模型学到了什么，更是学习过程本身如何创造或破坏内部结构。Probing RLVR Training Instability 揭示了 RL 微调可能产生目标级黑客行为，即模型学会钻奖励信号的空子而非真正提升——这是可解释性工具独具优势去检测的失败模式。</p>
 <ul>
-<li><a class="wikilink" href="../../01_Research/Reading/Probing_RLVR_Training_Instability-Objective-Level_Hacking.html" title="Probing_RLVR_Training_Instability-Objective-Level_Hacking">Probing_RLVR_Training_Instability-Objective-Level_Hacking</a> - 对 RLVR 训练不稳定性的机制分析，揭示目标级黑客等问题 (2025)</li>
+<li>
+<p><a class="wikilink" href="../../01_Research/Reading/Probing_RLVR_Training_Instability-Objective-Level_Hacking.html" title="Probing_RLVR_Training_Instability-Objective-Level_Hacking">Probing_RLVR_Training_Instability-Objective-Level_Hacking</a> - 对 RLVR 训练不稳定性的机制分析，揭示目标级黑客等问题 (2025)
+训练前后表示比较还需排除测量接口自身的歧义。共享字典中的激活差异应配合同一状态的交换读出及双向干预，才能判断变化是否参与行为收益。</p>
+</li>
+<li>
+<p><a class="wikilink" href="../../01_Research/Reading/Understanding-On-Policy-Distillation-Swap-Readout与共享特征重加权.html" title="Understanding-On-Policy-Distillation-Swap-Readout与共享特征重加权">Understanding-On-Policy-Distillation-Swap-Readout与共享特征重加权</a> - swap readout 消除 crosscoder 分槽歧义，观测 OPD 主要改变共享特征使用，并用双向移植检验部分 warm-up 效应；单层有限字典下未检出新特征，不证明不存在新增计算或知识。</p>
+</li>
 </ul>
 <h2 id="模型压缩与剪枝">模型压缩与剪枝</h2>
 <p>可解释性工具（协同-冗余排名、重要性探测）为剪枝提供了超越均匀删减的结构性依据——如果我们能识别哪些组件承载不可替代的信息流，就能在保留能力的前提下大幅压缩。</p>
 <ul>
 <li><a class="wikilink" href="../../01_Research/Reading/Gradually_Compacting_LLMs-Boiling_Frog_Pruning.html" title="Gradually_Compacting_LLMs-Boiling_Frog_Pruning">Gradually_Compacting_LLMs-Boiling_Frog_Pruning</a> - 使用&quot;温水煮青蛙&quot;策略的渐进式模型剪枝</li>
+</ul>
+<h2 id="闭环物理系统的特征干预">闭环物理系统的特征干预</h2>
+<!-- survey-enriched: 2026-10-27, papers=6 -->
+<h4>关键问题</h4>
+<p><strong>物理闭环让特征解释接受行为后果的检验，但“能影响动作”仍不足以说明“控制了指定概念”。</strong> 四篇 VLA 工作将词表命名、激活相关性与机器人 rollout 接起来；GraphCast 则进一步检查预测场中的物理关系。共同问题是：候选方向究竟承载了可分离的语义变量，还是混合了场景、运动阶段及通用控制状态？<a class="wikilink" href="../../01_Research/Reading/Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a> 中源激活能接管轨迹却未必完成目标任务，正说明行为变化、抽象技能迁移与机制解释必须分开评价。</p>
+<h4>关键方法</h4>
+<p>候选发现形成三条互补路线：<a class="wikilink" href="../../01_Research/Reading/Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预.html" title="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预">Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预</a> 从静态 FFN 权重的词表投影筛选方向，成本低但受单神经元坐标限制；<a class="wikilink" href="../../01_Research/Reading/Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控.html" title="Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控">Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控</a> 从轨迹激活学习稀疏字典，再按跨 episode 的时序统计筛选；<a class="wikilink" href="../../01_Research/Reading/Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界.html" title="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界">Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界</a> 先从机器人运动提取事件，再用事件附近的激活变化排序。比较时还须区分固定覆盖、加向量、投影消融与保留重构残差的特征编辑：这些算子产生的实际扰动不同，不能用同一个强度系数直接横比。<a class="wikilink" href="../../01_Research/Reading/Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征.html" title="Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征">Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征</a> 将残差保留编辑与风速、气压及物理平衡残差结合，为解释增加了多变量约束。</p>
+<p><a class="wikilink" href="../../01_Research/Reading/Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控.html" title="Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控">Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控</a> 为这条谱系增加视频表征对照：逐层读出运动变量、抑制局部时空注意力，再用多个探针联合干预。它的终点仍是独立探针读数，证据层级有别于机器人动作与天气预测场的变化。</p>
+<h4>关键结论</h4>
+<p><strong>离线可读性、重构保真与闭环行为效力并不等价。</strong> Not All Features 的 π₀.₅ 实验中，mean-pooled SAE 即使有很高的 explained variance，成功率仍从 74.5% 降至 0.4%，逐 token SAE 为 69.9%；但 X-VLA 是 pooling 未造成同类退化的例外。Event-SAE 在 OpenVLA 上把事件排序干预后的平均成功率降至 48.8%，无干预为 70.0%、随机对照为 68.7%，支持候选筛选的诊断价值，不能写成性能提升。两者共同要求先排查 hook 与重构副作用，再解释语义；Not All Features 的附录修正尤其削弱了部分“单特征开关”结论。GraphCast 的气旋方向提供了预测强度的因果证据，但大幅增强会失控，适度编辑下的物理一致性也仍兼容下游自修复。</p>
+<h4>Insight</h4>
+<p><strong>下一步应以选择性和剂量校准组织验证，而非以更大任务失败率给解释方法排名。</strong> 先验证零编辑精确恢复原模型，再匹配扰动范数、控制 token 与时间范围，最后同时测目标属性和旁支行为；这样才能区分“改变抓取时刻”与“把控制器打坏”。机器人任务可用相同视觉状态下的不同目标指令、分阶段短时编辑检验语义选择性；天气模型可用首步与持续编辑、首次输出与长程预测的物理残差区分直接效应与补偿。这是由上述六篇笔记归纳出的研究路径，尚不是已被统一实验证实的控制方案。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预.html" title="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预">Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预</a> - 用语言词表投影筛选 FFN 方向，再覆盖少数神经元激活，改变机器人高度或动作幅度；真机 low 的闭环证据强于 slow 的预测比较，尚未建立对称、可校准的控制接口。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控.html" title="Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控">Sparse-Autoencoders-Reveal-Interpretable-and-Steerable-Features-in-VLA-Models-稀疏特征与因果操控</a> - 从机器人轨迹训练 SAE，按跨 episode 时序统计筛选共享方向，并在真实机器人上验证单方向干预的行为效力；通用性分数与任务失败都不能单独证明语义选择性或 OOD 泛化。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界.html" title="Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界">Event-Grounded-Sparse-Autoencoders-for-Vision-Language-Action-Policies-事件锚定与因果边界</a> - 用运动事件附近的激活变化筛选 SAE 坐标，保留重构残差后做闭环编辑；OpenVLA 的事件排序比均值排序更能发现行为重要坐标，但未建立 task-private circuit 或独立操作概念。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a> - 将语言反事实、跨任务激活注入和 SAE 消融接到仿真 rollout，区分可解码信息、行为接管与成功迁移；高重构精度仍可能破坏策略，部分“语义开关”效应因附录 hook 修正而失去支持。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征.html" title="Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征">Towards-Mechanistic-Understanding-in-a-Data-Driven-Weather-Model-GraphCast物理特征</a> - 将 SAE 干预延伸到 GraphCast：气旋方向能改变预测强度，并以气压—风速关系等物理约束检查输出；有效幅度有限，物理一致性尚不能排除下游自修复，也不等于发现完整动力学机制。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控.html" title="Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控">Interpreting-Physics-in-Video-World-Models-物理表征涌现与高维方向操控</a> - 视频世界模型中方向信息可读、跨位置传播并可被联合探针干预；改变独立探针角度不等于改变未来视频轨迹，低子空间重叠也不排除非线性或跨层共享计算。</li>
+</ul>
+<h2 id="自动化可解释性研究与独立验证">自动化可解释性研究与独立验证</h2>
+<p>解释器能够迭代假设，不代表它已得到独立真值验证；特征选择性与实际控制效用需要分别验收。</p>
+<!-- survey-enriched: 2026-10-27, papers=2 -->
+<h4>关键问题</h4>
+<p>自动化解释容易形成自我验证：同一模型族既命名特征又生成测试、评价解释。需要检验的是独立分布下的选择性及任务保持，而不是解释是否更像一段好文字。</p>
+<h4>关键方法</h4>
+<p><a class="wikilink" href="../../01_Research/Reading/Automated-Interpretability-and-Feature-Discovery-with-Agents.html" title="Automated-Interpretability-and-Feature-Discovery-with-Agents">Automated-Interpretability-and-Feature-Discovery-with-Agents</a> 让 Agent 维护解释假设并主动查询激活；<a class="wikilink" href="../../01_Research/Reading/SAEScientist-Bench-自主SAE研究与因果控制评估.html" title="SAEScientist-Bench-自主SAE研究与因果控制评估">SAEScientist-Bench-自主SAE研究与因果控制评估</a> 把特征发现提交物交给独立阶段评估，拆开显著性、选择性和生成控制。两者把静态标签推进到实验过程，但实验接口与裁判仍限制所得证据。</p>
+<h4>关键结论</h4>
+<p>迭代改进标签与找到可控制方向是不同结果。自定指标优势不等于人工真值准确率；选择性高也可能干预弱。Expert 筛选复用测试文本、自动裁判误判硬约束，都可能改变榜单含义。</p>
+<h4>Insight</h4>
+<p>应将候选筛选、解释修订与最终验收分开保留数据；给 Agent 固定干预预算，并以“原任务仍满足时的目标效果”验收控制。这是由两篇笔记提出的验证路线，尚非已完成的统一系统。</p>
+<hr />
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Automated-Interpretability-and-Feature-Discovery-with-Agents.html" title="Automated-Interpretability-and-Feature-Discovery-with-Agents">Automated-Interpretability-and-Feature-Discovery-with-Agents</a> — InterpAgent 以 FeatureFinder/FeatureExplainer 循环寻找特征、生成对照并修订解释；自定指标下优于一次性标签，但候选、测试生成与部分评分共享 LLM，缺少独立真值限制了解释准确性的主张。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/SAEScientist-Bench-自主SAE研究与因果控制评估.html" title="SAEScientist-Bench-自主SAE研究与因果控制评估">SAEScientist-Bench-自主SAE研究与因果控制评估</a> — 将自主 SAE 研究拆成字典显著性、概念选择性与生成干预效果；选择性接近参考并不保证 steering 有效，且 Expert 构建复用测试文本、裁判错误及原任务保持问题需要单独审计。</li>
+</ul>
+<h2 id="内部风险监测与评估器干预">内部风险监测与评估器干预</h2>
+<!-- survey-enriched: 2026-10-27, papers=5 -->
+<h4>关键问题</h4>
+<p>内部状态可预测风险，只说明它含有判别信息；要解释因果机制，还需知道标签代表什么、干预改变了什么，以及原任务是否仍能完成。</p>
+<h4>关键方法</h4>
+<p><a class="wikilink" href="../../01_Research/Reading/Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测.html" title="Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测">Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测</a> 与 <a class="wikilink" href="../../01_Research/Reading/From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险.html" title="From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险">From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险</a> 从激活读出状态并逐步加入行为上下文；<a class="wikilink" href="../../01_Research/Reading/On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety.html" title="On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety">On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety</a> 与 <a class="wikilink" href="../../01_Research/Reading/Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模.html" title="Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模">Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模</a> 通过选头和干预改变拒绝或偏好；<a class="wikilink" href="../../01_Research/Reading/Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征.html" title="Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征">Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征</a> 则在训练时约束任务输入侧变化。</p>
+<h4>关键结论</h4>
+<p>来源分类、完整输出评审、下一动作风险、固定候选偏好与训练期抗投机分别测不同对象。现有证据支持若干有用接口，但没有共同证明通用意图读取或跨模型安全控制。</p>
+<h4>Insight</h4>
+<p>统一比较前应固定事件标签与信息截止时刻，设置同前缀文本基线和匹配无害对照，再分别检验早期增量信息、扰动选择性及干预收益；不要用一个准确率同时回答这三件事。</p>
+<hr />
+<h3 id="风险状态读出">风险状态读出</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测.html" title="Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测">Monitoring-Emergent-Reward-Hacking-During-Generation-via-Internal-Activations-生成期激活监测</a> — 逐 token 激活监测器以 adapter 来源为训练标签，再与完整输出的行为评审比较；混合 adapter 上的迁移和平均时序曲线有信息，但尚未验证逐样本提前报警。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险.html" title="From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险">From-Reward-Hack-Activations-to-Agentic-Risk-States-激活信号与行动风险</a> — 把 reward-hack 激活、熵和环境上下文联合用于 agent 下一动作风险预测；内部状态、环境机会和实际 exploit 应分开，预测增益不等于概率已校准或干预已安全有效。</li>
+</ul>
+<h3 id="评估器与拒绝行为的干预">评估器与拒绝行为的干预</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模.html" title="Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模">Activation-Reward-Models-for-Few-Shot-Model-Alignment-激活干预与少样本奖励建模</a> — 用少量偏好样例选择注意力头并编辑激活，改善固定候选偏好判断；选中头的功能及评分捷径尚未被完全解释，静态 PreferenceHack 也不检验持续策略优化下的稳健性。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety.html" title="On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety">On-the-Role-of-Attention-Heads-in-Large-Language-Model-Safety</a> — Ships/Sahara 先用内部变化筛头、再完整生成验证拒绝破坏；干预显示功能依赖，但无方向 proxy、乱码计为安全及无害对照不足，限制“安全专属头”的解释。</li>
+</ul>
+<h3 id="任务输入侧的训练约束">任务输入侧的训练约束</h3>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征.html" title="Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征">Mitigating-Reward-Hacking-via-Task-Representations-Prompt-KL与任务表征</a> — 在 prompt 位置约束参考分布，三个受控环境中比所测 response KL 更好地权衡 hacking 与任务性能；部分激活互换支持任务表征解释，但非对称结果与损失实现边界使机制仍未闭合。</li>
 </ul>
 <h2 id="跨学科应用">跨学科应用</h2>
 <p>将 LLM 可解释性方法（特征归因、探测、激活分析）迁移到生物医学等领域，验证这些工具在科学发现任务上的泛化能力。</p>
@@ -1208,15 +1290,34 @@
 </ul>
 <hr />
 <h2 id="开放问题">开放问题</h2>
+<ul>
+<li><strong>解释闭环如何获得外部验收？</strong> 为自动特征发现保留完全独立的筛选/测试集；对内部风险监测比较同前缀文本基线，并报告固定误报率的提前量。只有读出增量价值成立后，再检验干预对目标和原任务保持的联合效果。</li>
+</ul>
 <blockquote class="card card-info">
 <p>跨论文的未解决问题与研究线索。</p>
 </blockquote>
 <ul>
-<li><strong>MLP 层的信息处理模式</strong>：<a class="wikilink" href="../../01_Research/Reading/A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html" title="A-Brain-like-Synergistic-Core-in-LLMs-协同核心">A-Brain-like-Synergistic-Core-in-LLMs-协同核心</a> 仅分析了注意力头和 MoE 专家，缺少 MLP 层分析</li>
-<li><strong>SAE 特征能否映射到 PhiID 的协同与冗余组件？</strong>：SAE 发现的特征能否映射到 PhiID 的协同信息与冗余信息组件？具体来说：协同核心中（由 ΦID 识别）的特征是否比冗余区域中的特征具有更高的因果影响（以下游连接或引导度量）？如果是，ΦID 可以作为廉价预筛选器，决定哪些 SAE 特征值得详细的电路分析。</li>
-<li><strong>表示方向在对话深度中的稳定性</strong>：Linear Representations 表明表示方向在对话轮次中偏移，但 Persona Vectors 和 The Assistant Axis 报告其发现的方向足够稳定以实现有效引导。解决这一表面矛盾需要：(1) 测量引导效果随对话深度退化的程度，(2) 确定某些方向（如助手轴）是否比其他方向（如情绪方向）更稳定——这将暗示方向鲁棒性存在层级结构。</li>
-<li><strong>协同核心指导的模型压缩</strong>：基于协同-冗余排名的选择性保留在理论上比均匀剪枝更高效</li>
-<li><strong>PhiID 计算复杂度优化</strong>：当前方法限制分析规模；需要更高效的估计器或近似方法
+<li>
+<p><strong>MLP 层的信息处理模式</strong>：<a class="wikilink" href="../../01_Research/Reading/A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html" title="A-Brain-like-Synergistic-Core-in-LLMs-协同核心">A-Brain-like-Synergistic-Core-in-LLMs-协同核心</a> 仅分析了注意力头和 MoE 专家，缺少 MLP 层分析</p>
+</li>
+<li>
+<p><strong>SAE 特征能否映射到 PhiID 的协同与冗余组件？</strong>：SAE 发现的特征能否映射到 PhiID 的协同信息与冗余信息组件？具体来说：协同核心中（由 ΦID 识别）的特征是否比冗余区域中的特征具有更高的因果影响（以下游连接或引导度量）？如果是，ΦID 可以作为廉价预筛选器，决定哪些 SAE 特征值得详细的电路分析。</p>
+</li>
+<li>
+<p><strong>表示方向在对话深度中的稳定性</strong>：Linear Representations 表明表示方向在对话轮次中偏移，但 Persona Vectors 和 The Assistant Axis 报告其发现的方向足够稳定以实现有效引导。解决这一表面矛盾需要：(1) 测量引导效果随对话深度退化的程度，(2) 确定某些方向（如助手轴）是否比其他方向（如情绪方向）更稳定——这将暗示方向鲁棒性存在层级结构。</p>
+</li>
+<li>
+<p><strong>协同核心指导的模型压缩</strong>：基于协同-冗余排名的选择性保留在理论上比均匀剪枝更高效</p>
+</li>
+<li>
+<p><strong>PhiID 计算复杂度优化</strong>：当前方法限制分析规模；需要更高效的估计器或近似方法</p>
+</li>
+<li>
+<p><strong>如何区分语义控制与一般性控制损伤？</strong> 对 VLA 同时做空干预保真、扰动范数匹配和阶段限定编辑，分别测目标选择、抓取时序、轨迹与成功率；用同场景不同指令的对照，检验改变的是指定语义还是整个控制状态。参见「闭环物理系统的特征干预」。</p>
+</li>
+<li>
+<p><strong>物理一致性来自被编辑特征还是下游补偿？</strong> 对 GraphCast 比较首步编辑与持续编辑、不同干预层及随机方向，分别测首次输出和长 rollout 的物理残差；对机器人则观察属性变化是否先于重新规划和误差修正。
+</p>
 </li>
 </ul>
 
