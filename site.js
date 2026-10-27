@@ -16,19 +16,25 @@
         function filter() {
             const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
             let visible = 0;
+            let total = 0;
             cards.forEach(card => {
                 const text = (card.textContent + ' ' + decodeURIComponent(new URL(card.href).pathname)).toLocaleLowerCase();
                 card.hidden = !terms.every(term => text.includes(term));
-                if (!card.hidden) visible++;
+                if (card.closest('.tab-panel')?.classList.contains('active')) {
+                    total++;
+                    if (!card.hidden) visible++;
+                }
             });
-            status.textContent = terms.length ? `找到 ${visible} 篇笔记` : `共 ${cards.length} 篇笔记`;
+            status.textContent = terms.length ? `当前分类找到 ${visible} 条结果` : `当前分类共 ${total} 条`;
         }
         search.addEventListener('input', filter);
+        document.querySelectorAll('.tab-btn').forEach(button => button.addEventListener('click', filter));
         filter();
         const last = read('last');
         if (last && typeof last.href === 'string') {
             const target = new URL(last.href, siteBase);
-            if (target.origin === location.origin && target.pathname.startsWith(siteBase.pathname + '01_Research/Reading/')) {
+            const published = ['01_Research/Reading/', '03_Personal/MOCs/'];
+            if (target.origin === location.origin && published.some(path => target.pathname.startsWith(siteBase.pathname + path))) {
                 const link = document.createElement('a');
                 link.className = 'resume-reading';
                 link.href = target.href;

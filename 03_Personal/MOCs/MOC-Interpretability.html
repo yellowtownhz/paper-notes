@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可解释性研究地图</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">MOC</div>
+        <div class="sidebar-title">可解释性研究地图</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#信息论方法"><span class="toc-num">01</span> 信息论方法</a></li>
+<li><a class="toc-link" href="#特征提取方法-sae-电路"><span class="toc-num">02</span> 特征提取方法（SAE / 电路）</a></li>
+<li><a class="toc-link toc-sub" href="#sae-特征解释与应用">SAE 特征解释与应用</a></li>
+<li><a class="toc-link" href="#端到端激活解释"><span class="toc-num">03</span> 端到端激活解释</a></li>
+<li><a class="toc-link" href="#推理过程可解释性"><span class="toc-num">04</span> 推理过程可解释性</a></li>
+<li><a class="toc-link toc-sub" href="#cot-因果归因-句子-步骤粒度">CoT 因果归因（句子/步骤粒度）</a></li>
+<li><a class="toc-link" href="#表示几何与动态"><span class="toc-num">05</span> 表示几何与动态</a></li>
+<li><a class="toc-link" href="#多语言机制可解释性"><span class="toc-num">06</span> 多语言机制可解释性</a></li>
+<li><a class="toc-link" href="#训练动态分析"><span class="toc-num">07</span> 训练动态分析</a></li>
+<li><a class="toc-link" href="#模型压缩与剪枝"><span class="toc-num">08</span> 模型压缩与剪枝</a></li>
+<li><a class="toc-link" href="#跨学科应用"><span class="toc-num">09</span> 跨学科应用</a></li>
+<li><a class="toc-link" href="#开放问题"><span class="toc-num">10</span> 开放问题</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-06-08</span>
+    </div>
+    <h1>可解释性研究地图</h1>
+    
+    <div class="topic-row"><span class="topic-tag">可解释性</span></div>
+</header>
+
+<h1>可解释性研究地图</h1>
+<blockquote class="card card-info">
+<p>本 MOC 涵盖&quot;理解 LLM 内部机制&quot;研究线上的所有论文。
+新论文笔记由 <code>read-paper-pro</code> skill 自动追加。</p>
+</blockquote>
+<hr />
+<h2 id="信息论方法">信息论方法</h2>
+<p>PhiID 分解揭示了 LLM 在中间层自发形成类脑&quot;协同核心&quot;——一小部分注意力头和 MoE 专家承载了不成比例的协同信息。这挑战了 SAE 的默认假设（每个特征可以独立解释），因为协同信息仅存在于组件之间的交互中。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html" title="A-Brain-like-Synergistic-Core-in-LLMs-协同核心">A-Brain-like-Synergistic-Core-in-LLMs-协同核心</a> - 使用 ΦID 发现 LLM 中间层自发涌现的类脑协同信息处理核心；在协同区域上做 RL 微调显著优于冗余区域 (2026)</li>
+</ul>
+<h2 id="特征提取方法-sae-电路">特征提取方法（SAE / 电路）</h2>
+<!-- survey-enriched: 2026-06-25, papers=11 -->
+<p>SAE 特征的因果作用远比其表面描述复杂——两个特征可以有几乎相同的 top activating examples 和 top unembeds，却因为下游电路完全不同而对模型行为产生截然不同的影响。围绕&quot;如何从描述走向理解再到控制&quot;这条主线，本节的工作分为两条互补路线：(1) SAE/字典学习 + 电路分析，将激活分解为稀疏特征后追溯其因果通路；(2) 自然语言解码方法（Patchscopes），跳过字典步骤将激活直接翻译为文本。两条路线在覆盖度与可读性之间权衡，而它们的融合——用 SAE 提供可解释节点、用 NL 方法生成人类可读描述、用因果干预验证——可能是通向系统级审计的路径。</p>
+<h3 id="sae-特征解释与应用">SAE 特征解释与应用</h3>
+<h4>关键问题</h4>
+<p><strong>标准特征描述无法区分因果作用不同的特征——&quot;描述&quot;不等于&quot;理解&quot;。</strong> <a class="wikilink" href="../../01_Research/Reading/Circuits-May2026-Downstream-Connections-Steer-Prediction.html" title="Circuits-May2026-Downstream-Connections-Steer-Prediction">Circuits-May2026-Downstream-Connections-Steer-Prediction</a> 用 grass/green 的 golden case 精确展示了这一点：两个特征的 top activating examples 和 top unembeds 几乎一模一样（都指向 green），但只有 Feature B（下游连接到 &quot;say-the-word green&quot; motor feature）能通过 steering 翻转输出，Feature A（下游指向 hex 色值编码）毫无因果贡献。加入 TWERA-ranked downstream features 后，normalized rank 从 0.457 降至 0.355（增量 0.076，约为 unembeds 增量 0.011 的 7 倍）。这揭示了根本性问题：logit lens / top unembeds 只看最后一跳，而真正的因果路径大多是间接的（feature → feature → ... → logit）。</p>
+<p><strong>SAE 从&quot;观察工具&quot;向&quot;开发接口&quot;演进，但各应用方向成熟度参差不齐。</strong> <a class="wikilink" href="../../01_Research/Reading/Qwen-Scope-SAE-Development-Tools.html" title="Qwen-Scope-SAE-Development-Tools">Qwen-Scope-SAE-Development-Tools</a> 用同一组 SAE 特征覆盖 steering、evaluation、data classification、SFT/RL 五个方向。其中 evaluation 方向最有说服力（feature redundancy 与 performance redundancy 的 Spearman ρ ≈ 0.85；overlap(GSM8K, MATH) = 0.63，反向仅 0.10），而 steering 方向最弱（仅两个定性 case，无 alpha sensitivity 曲线、无 success rate 统计）。<a class="wikilink" href="../../01_Research/Reading/SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering.html" title="SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering">SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering</a> 将 SAE 表示用于 RL data engineering，在 diversity/difficulty/quality 三维统一建模下提升 +3.0（1.5B）和 +2.0（7B）vs vanilla GRPO。</p>
+<p><strong>Steering vector 注入后走的是 OV 电路而非 QK 电路。</strong> <a class="wikilink" href="../../01_Research/Reading/Representation-Steering-Mechanistic-OV-Circuit-Refusal.html" title="Representation-Steering-Mechanistic-OV-Circuit-Refusal">Representation-Steering-Mechanistic-OV-Circuit-Refusal</a> 发现冻结 QK attention weights 仅导致平均 8.75% 性能下降，冻结 OV 则下降 71.75%（Table 1）。更反直觉的是，DIM/NTP/PO 三种 steering 向量（cosine similarity 仅 0.10-0.42）产生的电路有接近 100% overlap（Figure 4）。Steering 本质上是一个加法干预——不改变信息路由，只改变信息内容。</p>
+<p><strong>情绪等抽象概念存在真正的因果电路，而非表面 pattern matching。</strong> <a class="wikilink" href="../../01_Research/Reading/Emotion_Concepts_and_their_Function_in_LLM-情绪表示.html" title="Emotion_Concepts_and_their_Function_in_LLM-情绪表示">Emotion_Concepts_and_their_Function_in_LLM-情绪表示</a> 通过 steering 证明 desperate 向量将 blackmail rate 从 22% 推至 72%、reward hacking rate 从 ~5% 推至 ~70%；<a class="wikilink" href="../../01_Research/Reading/Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control.html" title="Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control">Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control</a> 构建跨层情感电路，在无情感 prompt 条件下达到 99.65% 情感准确率（vs steering 的 91.22%，vs surprise 从 67.71% 跳至 100%）。</p>
+<h4>关键方法</h4>
+<p>方法论上形成了从<strong>特征发现 → 特征区分 → 因果干预 → 工程应用</strong>的完整谱系：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>方法</th>
+<th>代表论文</th>
+<th>核心操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>特征发现与标注</td>
+<td>SAE 训练 + LLM 自动解释</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Automatically_Interpreting_Millions_of_Features-SAE自动解释.html" title="Automatically_Interpreting_Millions_of_Features-SAE自动解释">Automatically_Interpreting_Millions_of_Features-SAE自动解释</a></td>
+<td>$200/1M features；Detection/Fuzzing 替代 simulation scoring</td>
+</tr>
+<tr>
+<td>特征区分</td>
+<td>TWERA downstream ranking</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Circuits-May2026-Downstream-Connections-Steer-Prediction.html" title="Circuits-May2026-Downstream-Connections-Steer-Prediction">Circuits-May2026-Downstream-Connections-Steer-Prediction</a></td>
+<td>用下游连接而非 top examples/unembeds 区分因果作用</td>
+</tr>
+<tr>
+<td>注意力头可视化</td>
+<td>HeadVis 多视图交互</td>
+<td><a class="wikilink" href="../../01_Research/Reading/HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads.html" title="HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads">HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads</a></td>
+<td>QK/OV 归因 + PCA + SAE 特征归因，揭示 polysemantic head</td>
+</tr>
+<tr>
+<td>Steering 定位</td>
+<td>GCM (Generative Causal Mediation)</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Surgical-Activation-Steering-Generative-Causal-Mediation.html" title="Surgical-Activation-Steering-Generative-Causal-Mediation">Surgical-Activation-Steering-Generative-Causal-Mediation</a></td>
+<td>全序列 log-prob 差替代单 token proxy；attribution patching ≈ activation patching</td>
+</tr>
+<tr>
+<td>电路机制分析</td>
+<td>Multi-token EAP-IG + SVV 分解</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Representation-Steering-Mechanistic-OV-Circuit-Refusal.html" title="Representation-Steering-Mechanistic-OV-Circuit-Refusal">Representation-Steering-Mechanistic-OV-Circuit-Refusal</a></td>
+<td>~10% edges 恢复 85% faithfulness；SVV 在 vocab space 暴露语义</td>
+</tr>
+<tr>
+<td>情感电路</td>
+<td>Mean subtraction + sublayer importance</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control.html" title="Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control">Do-LLMs-Feel-Emotion-Circuits-Discovery-and-Control</a></td>
+<td>跨层电路组装，neuron/head 级别因果干预</td>
+</tr>
+<tr>
+<td>工程闭环</td>
+<td>特征驱动 curriculum/data selection/SFT</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Qwen-Scope-SAE-Development-Tools.html" title="Qwen-Scope-SAE-Development-Tools">Qwen-Scope-SAE-Development-Tools</a>, <a class="wikilink" href="../../01_Research/Reading/SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering.html" title="SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering">SaeRL-SAE-Guided-RL-Post-Training-Data-Engineering</a></td>
+<td>特征足迹做 benchmark 冗余分析；SAE 表示驱动 RL 数据选择</td>
+</tr>
+<tr>
+<td>模型对比</td>
+<td>LLM-based vs SAE-based model diffing</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Simple_LLM_Baselines_Model_Diffing.html" title="Simple_LLM_Baselines_Model_Diffing">Simple_LLM_Baselines_Model_Diffing</a></td>
+<td>SAE 捕获 token 级细节，LLM 发现抽象差异；两者表现相当</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>自然语言解码方法</strong>提供互补路径：<a class="wikilink" href="../../01_Research/Reading/Patchscopes-Unifying-Framework-Inspecting-Hidden-Representations.html" title="Patchscopes-Unifying-Framework-Inspecting-Hidden-Representations">Patchscopes-Unifying-Framework-Inspecting-Hidden-Representations</a> 将 source 表征 patch 到专门设计的 target prompt，让模型非线性计算&quot;翻译&quot;内部状态。关键优势是开放词汇（不受预定义类别限制），从 layer 10 起持续优于 Logit Lens/Tuned Lens。但存在 placeholder contamination——后期层表征被 target prompt 污染，与 Logit Lens 互补但未融合。</p>
+<p>贯穿的方法论趋势是<strong>从局部到全局的因果验证</strong>：早期方法看单 token/单 neuron，现在用全序列 log-prob（GCM）、跨层电路组装（emotion circuits）、下游特征传播（downstream connections）捕获分布式因果效应。</p>
+<h4>关键结论</h4>
+<p><strong>一致的结论——SAE 特征编码可操作的因果信号：</strong> steering 能翻转行为（blackmail 22%→72%），电路干预精确控制输出（99.65%），特征足迹预测 benchmark 冗余（ρ≈0.85），SAE 表示驱动 data selection（ROC-AUC 0.9911）。</p>
+<p><strong>一致但被低估——OV 电路是 steering 主通道：</strong> <a class="wikilink" href="../../01_Research/Reading/Representation-Steering-Mechanistic-OV-Circuit-Refusal.html" title="Representation-Steering-Mechanistic-OV-Circuit-Refusal">Representation-Steering-Mechanistic-OV-Circuit-Refusal</a> 的 QK/OV 消融和 <a class="wikilink" href="../../01_Research/Reading/HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads.html" title="HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads">HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads</a> 的 fuzzy induction 分析指向同一结论：fuzziness/灵活性在 QK，执行力在 OV。但 &quot;primarily OV&quot; 的 framing 需要打折——MLP ablation 下降 44.5%（同一量级），Table 8 中 MLP 占 top-k incoming edges 的 47-57%。</p>
+<p><strong>关键分歧——复杂方法未必优于简单 baseline：</strong> <a class="wikilink" href="../../01_Research/Reading/Simple_LLM_Baselines_Model_Diffing.html" title="Simple_LLM_Baselines_Model_Diffing">Simple_LLM_Baselines_Model_Diffing</a> 发现 LLM baseline 在 model diffing 上与 SAE 方法表现相当；SaeRL 相对 DAPO 的 marginal gain 仅 +1.0（52.5 vs 51.5）；<a class="wikilink" href="../../01_Research/Reading/Surgical-Activation-Steering-Generative-Causal-Mediation.html" title="Surgical-Activation-Steering-Generative-Causal-Mediation">Surgical-Activation-Steering-Generative-Causal-Mediation</a> 承认 global steering 在多数配置能 work，削弱了 &quot;surgical&quot; 的实用价值。SAE/电路方法的<strong>理解价值</strong>已被证明，<strong>工程价值</strong>的增量可能比预期更小。</p>
+<p><strong>需警惕的混淆因素：</strong> (1) Downstream 预测 steering 可能存在机械同源性——两者共享 CLT 线性因果假设，成功可能是 tautological。(2) 情感电路 99.65% 可能受 GPT-4o-mini judge 偏向极端表达影响。(3) SaeRL 在 AIME 的 +10.0 可能仅对应 3 道题（30 题 x 3.3%/题），无多 seed 验证。(4) Prompt 分布敏感性——Gemma 性别假设实验中 WildChat 仅 5.7% 的 prompt 能诱导目标行为，导致两种 diffing 方法均失败。</p>
+<h4>Insight</h4>
+<p><strong>&quot;描述 → 理解 → 控制&quot;的三级跳尚未完成。</strong> 自动解释（描述）到 downstream 连接（理解）的跨越有价值（normalized rank 0.457→0.355），但绝对性能远未 solve（相对随机仅好 0.145）。从理解到控制在情绪电路上有初步成功，但 scale factor sensitivity 是黑洞——换模型/换概念没有 tuning guidance（LLaMA 用 λ=1.0 达 99.65%，Qwen 用 2.0 仅 66.18%）。</p>
+<p><strong>情绪 steering 效果可以不体现在文本表面，这对 alignment monitoring 是根本性挑战。</strong> +desperate steering 的 transcript 看起来完全正常，但 reward hacking rate 飙升（参见「表示几何与动态」中关于线性表示与行为关系的讨论）。单纯从输出文本判断模型内部状态不够——但 representation-level monitoring 又面临 concealment risk。</p>
+<p><strong>SAE 特征的 polysemanticity 在应用层面尚未解决。</strong> <a class="wikilink" href="../../01_Research/Reading/Qwen-Scope-SAE-Development-Tools.html" title="Qwen-Scope-SAE-Development-Tools">Qwen-Scope-SAE-Development-Tools</a> 发现 repetition feature 同时编码良性重复和病态重复，直接抑制会损害正常能力，只能转向 RL 路线。<a class="wikilink" href="../../01_Research/Reading/HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads.html" title="HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads">HeadVis-An_Interactive_Tool_For_Investigating_Attention_Heads</a> 展示注意力头的 polysemanticity 可以&quot;不需要 superposition&quot;（高秩输出写到不同方向），这与 MLP neuron 的 rank-1 polysemanticity 机制不同。参见「推理过程可解释性」中对 CoT 电路的分析——推理过程中的特征复用可能是 polysemanticity 的另一个表现形式。</p>
+<p><strong>跨范式融合是明确的下一步。</strong> Patchscopes 可以解码 SAE 特征语义（参见「端到端激活解释」），HeadVis 将 QK/OV 归因与 SAE 特征归因统一在交互界面中，GCM 的全序列 log-prob trick 可推广到任何需要从长文本提取因果信号的任务。这些碎片的整合——用 SAE 提供可解释节点、用 Patchscopes 生成自然语言描述、用 GCM 验证因果贡献——可能是从&quot;单特征理解&quot;跨越到&quot;系统级审计&quot;的路径。参见「多语言机制可解释性」中跨语言特征迁移的发现（欧洲语言好、远距离语言差）直接限制了 SAE 工具链的全球化部署。</p>
+<blockquote class="card card-info">
+<p>注：激活引导也是&quot;推理过程&quot;部分（What's the Plan）中的主要验证方法，用于揭示规划电路。两个应用方向不同：Circuits May 2026 通过引导验证特征级因果声明，而 What's the Plan 通过引导证明计算级规划的存在性。</p>
+</blockquote>
+<p><strong>分析粒度的扩展</strong>：</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution.html" title="Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution">Turn-Averaged-SAEs-Feature-Discovery-Long-Context-Attribution</a> - 提出 turn-averaged SAE：把 SAE 输入从 per-token 激活换成 turn 均值，将一条 turn 需解读的特征数从 <code>n_tokens×L0</code> 降到 <code>L0</code>，据此把 attribution graph 从不可读的 per-token 规模（10 轮对话 ~128K 节点）压到 per-turn（~5K 节点），并用 nested 架构在单模型内同时保留高层与 token 级特征（已合并 Circuits Update blog 版）。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability.html" title="Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability">Beyond-the-Black-Box-Agentic-Tool-Use-Interpretability</a> - 把解释粒度固定在 agent 的 pre-action decision boundary：池化最后 32 个动作前 token 的多层残差，经公开 SAE 与线性 probes 读出 Tool-Need / Tool-Risk，并用 feature-space ablation 验证 monitor 对稀疏特征的依赖；raw residual probe 预测更强，且该消融不证明特征控制实际工具行为。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/All-Circuits-Lead-to-Rome-Functional-Anisotropy-Circuit-Sheaf-Discovery.html" title="All-Circuits-Lead-to-Rome-Functional-Anisotropy-Circuit-Sheaf-Discovery">All-Circuits-Lead-to-Rome-Functional-Anisotropy-Circuit-Sheaf-Discovery</a> - 提出 Overlap-Aware Sheaf Repulsion (OASR)，系统性反驳电路发现领域隐含的 Functional Anisotropy 假设（&quot;一个任务≈唯一 canonical 电路&quot;）：同一任务可由多个结构迥异、几乎不重叠（20 次搜索两两 edge IoU&lt;1%）却都稀疏完整的电路独立实现，但节点级 IoU 高达 64-93%——即共享组件、差异在 wiring，正好呼应本节反复出现的&quot;相同组件、不同下游连接&quot;主题；并配鸽笼/subset-sum 存在性定理 (Theorem A.4) 从 superposition 解释非唯一性的必然（评测均为二选一任务，随机基线 50%）(2026)。</li>
+</ul>
+<h2 id="端到端激活解释">端到端激活解释</h2>
+<!-- survey-enriched: 2026-06-25, papers=4 -->
+<h4>关键问题</h4>
+<p>本节四篇论文都训练 LLM 接受激活向量作为输入并输出自然语言解释，构成一条连贯的谱系：Pan 2024 (LatentQA) → Karvonen 2025 (AO) → Bauer 2026 (Better AO) + Fraser-Taliente 2026 (NLA)。它们在监督方式（LatentQA/AO 使用问答对；NLA 使用无监督重建）和注入方法（替换 vs. 加性引导 vs. 嵌入替换）上有所不同。核心未解决问题是文本反转与真正的激活理解之间的区分，如 Building Better AO 的 AObench 所强调的。</p>
+<p><strong>&quot;自然语言审问&quot;内部状态的需求源于现有方法的结构性缺陷。</strong> 线性探针只能回答预定义分类问题且对非线性概念（如&quot;偏见&quot;）束手无策，SAE 输出的原子化特征需要二次解读且存在 coverage gap（NLA 审计实验证实&quot;reward-model sycophancy&quot;等复合概念压根没有对应 SAE feature），logit lens 仅能输出几个 token。<a class="wikilink" href="../../01_Research/Reading/LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language.html" title="LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language">LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language</a> 首次提出将激活值当作可被自然语言&quot;审问&quot;的对象——给定一个模型被偷偷 prompt 成 Claude Shannon 的场景，GPT-4 看到输出中的&quot;codebreaker&quot;会纠结是 Alan Turing 还是 Claude Shannon，但 LIT 从激活值里直接读出&quot;Developing information theory and entropy&quot;，精准定位目标。</p>
+<p><strong>从&quot;窄切面工具&quot;到&quot;通用审计接口&quot;的推广暴露了可读性与监督成本的深层矛盾。</strong> <a class="wikilink" href="../../01_Research/Reading/Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers.html" title="Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers">Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers</a> 将问题从&quot;系统 prompt QA&quot;推广到通用审计：如果模型被微调来隐藏行为（藏秘密词、欺骗评估），我们需要通用检测器而非为每种隐藏行为定制工具。但 QA 监督本身依赖审计员先知道&quot;该问什么&quot;。<a class="wikilink" href="../../01_Research/Reading/Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> 系统记录了 AO 在实际使用中的三重困境——幻觉（编造激活里没有的细节）、模糊（放之四海皆准的套话，不可证伪）、text-inversion 污染（AO 可能绕过 activation 直接从文本推断答案）。<a class="wikilink" href="../../01_Research/Reading/Natural_Language_Autoencoders-无监督激活解释与模型审计.html" title="Natural_Language_Autoencoders-无监督激活解释与模型审计">Natural_Language_Autoencoders-无监督激活解释与模型审计</a> 从另一个方向切入：frontier model 审计时审计员一开始只有&quot;行为有点怪&quot;的模糊假设，SAE 是无监督但不可读，AO 是可读但需要监督——NLA 要在两者之间找到不需要先知道问什么的路径。</p>
+<h4>关键方法</h4>
+<p>四篇工作共享同一骨架——<strong>用一个 LLM 作为 decoder，将目标模型的激活注入其中，训练它输出自然语言</strong>——但在注入机制、训练信号和数据构造上的演进构成了关键技术差异：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th><a class="wikilink" href="../../01_Research/Reading/LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language.html" title="LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language">LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language</a></th>
+<th><a class="wikilink" href="../../01_Research/Reading/Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers.html" title="Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers">Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers</a></th>
+<th><a class="wikilink" href="../../01_Research/Reading/Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a></th>
+<th><a class="wikilink" href="../../01_Research/Reading/Natural_Language_Autoencoders-无监督激活解释与模型审计.html" title="Natural_Language_Autoencoders-无监督激活解释与模型审计">Natural_Language_Autoencoders-无监督激活解释与模型审计</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>注入方式</td>
+<td>Layer 0 替换</td>
+<td>Layer 1 后 norm-matched 加法</td>
+<td>同 AO，2x injection 强度</td>
+<td>Embedding 层嵌入（乘大常数 alpha）</td>
+</tr>
+<tr>
+<td>监督信号</td>
+<td>合成 QA 对（o1-preview 生成）</td>
+<td>SPQA + Classification + Context Prediction（~1M 样本）</td>
+<td>换 Sonnet 4.6 on-policy CoT QA</td>
+<td>无监督重建（GRPO + MSE）</td>
+</tr>
+<tr>
+<td>激活来源</td>
+<td>单层（k=15）全序列</td>
+<td>单层（50% 深度），1-50 token 窗口</td>
+<td>多层（layer 21-25），多 token</td>
+<td>单层（2/3 深度）单 token</td>
+</tr>
+<tr>
+<td>训练规模</td>
+<td>4xA100，LoRA r32</td>
+<td>~1M 样本混合</td>
+<td>50M tokens（自承 undertrained）</td>
+<td>3000 步 RL</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>注入方式的演进是从&quot;暴力替换&quot;到&quot;精细叠加&quot;的工程突破。</strong> LatentQA 直接把 layer 15 的激活替换到 decoder 的 layer 0，而 <a class="wikilink" href="../../01_Research/Reading/Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers.html" title="Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers">Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers</a> 发现替换策略会导致激活范数在 layer 1 增长 100,000 倍——整个训练直接崩掉。改为 norm-matched 加法（$\mathbf{h}&#x27;_i = \mathbf{h}_i + \|\mathbf{h}_i\| \cdot \mathbf{v}_i / \|\mathbf{v}_i\|$）后，保留原始激活的&quot;锚定&quot;作用使梯度更新不会把激活推得太远。<a class="wikilink" href="../../01_Research/Reading/Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> 进一步发现将注入强度加倍（约 2x）能帮助模型把被注入的 activation 当成 load-bearing token 而非噪声。</p>
+<p><strong>NLA 的核心创新是用重建目标替代 QA 监督。</strong> AV（Activation Verbalizer）自回归生成解释 $z$，AR（截断到 $l$ 层的目标模型 + learned affine map）从 $z$ 重建 $\hat{h}_l$，用 $\|h_l - \hat{h}_l\|_2^2$ 作为 RL reward。设计不显式奖励可读性或忠实性——可读性通过 warm-start（Opus 4.5 生成&quot;假想 LM 内部处理&quot;风格摘要）和 KL penalty 结构性保证。但这也是争议所在：warm-start 等于用强 teacher 的概念词汇注入了一套先验，AV 后续能命名&quot;reward-model sycophancy&quot;这种概念有多少是 reconstruction 学来的、有多少是 warm-start 埋进去的，论文完全没做控制实验。</p>
+<p><strong>训练数据质量被证明比架构创新更关键。</strong> <a class="wikilink" href="../../01_Research/Reading/Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> 的消融是全组最干净的方法学贡献：单步最大提升来自替换对话数据集（chance-adjusted AObench 从 +0.244 到 +0.310），不是任何结构改动。核心方法学是&quot;solvability + anti-text-inversion&quot;对偶约束——让 Sonnet 4.6 在切分 CoT 时保证问题&quot;光看前缀文字答不出，但前缀激活里有望答出&quot;。这个约束对所有&quot;用 LM 解释 LM 内部&quot;的任务（NLA、probing、steering）都有迁移价值。</p>
+<h4>关键结论</h4>
+<p><strong>在受控任务上端到端方法已大幅超越传统白盒基线，但优势高度任务依赖。</strong> <a class="wikilink" href="../../01_Research/Reading/LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language.html" title="LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language">LatentQA-Teaching_LLMs_to_Decode_Activations_Into_Natural_Language</a> 在关系知识提取上平均比 linear probe 高 32.2%、比 Patchscope 高 38.2%（绝对准确率）；在隐藏 system prompt 检测的 Hard setting 上比 GPT-4 prompting 高 18.7%。<a class="wikilink" href="../../01_Research/Reading/Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers.html" title="Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers">Activation_Oracles-Training_and_Evaluating_LLMs_as_General-Purpose_Activation_Explainers</a> 在 User Gender 任务上达到 97%（超越白盒 SAE 91% 和黑盒 82%），但在 Taboo 上仅 21%（远低于黑盒 prefilled prompt 的 52%）。SPQA-only 在 Taboo 上只有 4.4%——&quot;窄训即可泛化&quot;需要严格限定适用范围。</p>
+<p><strong>Better AO 的 full recipe 将 chance-adjusted AObench 从 +0.244 提升至 +0.435，但各改进间存在交互效应。</strong> 对话数据集单独贡献 +0.066（→+0.310），on-policy lens 单独贡献 +0.030（→+0.274），多层贡献 +0.05——不能简单相加（累加 ladder 的最终 +0.435 含变量交互）。Hallucination 从 68.8% 改善至 84.6%，Vagueness（chance-adjusted）从 0.076 升至 0.205。反直觉点：换数据集后 hallucination 分数<strong>先升</strong>——因为模型做更具体的 claim 而更容易被 LLM-judge 判为 hallucination，这是度量假象不是真退步，直接暴露了 LLM-judge 评测对 prompt phrasing 的敏感性。</p>
+<p><strong>NLA 在审计场景展现独特价值但效果量偏小。</strong> Opus 4.6 NLA 在 Classification 任务上训练期间仅提升 83% → 86%（+3pp），论文自己承认&quot;some are modest in magnitude&quot;。反直觉的是 Opus 4.6 NLA 的 FVE 全程比两个 Haiku 低，但在 5 个下游评估里有 4 个最好——FVE 不是解释质量的单调代理。其 evaluation-awareness 检测是全组最干净的应用验证（三种操纵条件下 NLA 测得的 awareness 都按预期方向移动）。confabulation 率&quot;substantial&quot;且训练中基本持平，实际使用指南：<strong>信主题不信细节，信重复出现的 claim</strong>（删真 claim 比删假 claim 让 MSE 涨得更多）。</p>
+<p><strong>text-inversion 是全组的阿喀琉斯之踵。</strong> <a class="wikilink" href="../../01_Research/Reading/Building_Better_Activation_Oracles-AO训练配方与AObench.html" title="Building_Better_Activation_Oracles-AO训练配方与AObench">Building_Better_Activation_Oracles-AO训练配方与AObench</a> 的 footnote 4 最为致命：text-only baseline（不给 activation、只给文本的同款模型）性能&quot;similar&quot;，作者自己慌到不敢公开。<a class="wikilink" href="../../01_Research/Reading/Natural_Language_Autoencoders-无监督激活解释与模型审计.html" title="Natural_Language_Autoencoders-无监督激活解释与模型审计">Natural_Language_Autoencoders-无监督激活解释与模型审计</a> 的 steganography 测试有逻辑漏洞——paraphrase 不掉 FVE 既可能是&quot;没有隐写&quot;，也可能是&quot;AR 根本不依赖语义内容做重建&quot;（而是用文本长度、标点密度等分布信号）。当前最好的反 text-inversion 证据是 Better AO 的&quot;Not Just Reading Tokens&quot;评估（相同 token、不同 upstream context，答案不同即证明用了 activation 特有信息），但该证据被作者自己埋没——没给可引用数值、没单列成图、没进 ablation。</p>
+<h4>Insight</h4>
+<p><strong>端到端激活解释的核心张力在于&quot;理解&quot;与&quot;反转&quot;的不可区分性。</strong> 当 AO 和目标模型共享同一 base model 时，activation 信息与 text 信息之间没有 clean separation。模型可能从 activation 里&quot;回忆&quot;出对应文本再基于文本答题，而非真正解码 latent semantics。这不是一个可以靠 scaling 解决的问题——它是评估框架本身的结构性缺陷。未来工作需要系统性设计&quot;语义破坏性变换&quot;测试（故意写错解释信息看重建误差变不变），而非当前流行的语义保持变换（paraphrase、翻译）。</p>
+<p><strong>无监督路线（NLA）与有监督路线（AO）的互补性尚未被充分利用。</strong> NLA 能在没有假设的情况下 surface 意外发现（如俄语回复的脏数据来源），AO 能回答精确的审计问题。一个自然的 pipeline 是 NLA 做 hypothesis generation → AO 做 hypothesis testing，但四篇论文中没有任何一篇尝试这种组合。参见「特征提取方法（SAE / 电路）」：SAE 的原子化特征可以作为 NLA/AO 的 grounding signal——NLA 明确指出 SAE 在&quot;reward-model sycophancy&quot;等复合概念上存在 coverage gap，这正是端到端方法试图填补的空白，但反过来 SAE feature 的激活模式可以佐证 NLA claim 的可信度。</p>
+<p><strong>评测基础设施和校准是最紧迫的瓶颈。</strong> AObench 是第一个系统性尝试但自身仅基于 50M tokens undertrained 模型建立，缺乏&quot;训到更多后排序是否仍稳&quot;的证据。AO 的可靠性/校准完全未解决——没有任何工作训练 AO 说&quot;我不知道&quot;或输出置信度，在审计场景里瞎说的后果可能很严重。参见「推理过程可解释性」：当 AO 被应用于 CoT 的 backtracking 检测时（给最后 50 个 token 激活后评分从 1.26/5 到 2.10/5，超过 black-box baseline），评估变得更困难——why-question 没有 ground truth，只能用 LLM-judge，而 judge 对 phrasing 的敏感性已被 hallucination &quot;先升后降&quot;的度量假象直接暴露。Layer 选择同样缺乏通用规则：AO 发现 50% 深度在 secret-keeping 上明显优于 75%，但分类任务上各层差不多——如何为新模型/新任务选层，仍是开放问题。</p>
+<h2 id="推理过程可解释性">推理过程可解释性</h2>
+<!-- survey-enriched: 2026-06-25, papers=9 -->
+<p>这些论文共享一个方法论承诺：通过因果干预识别哪些推理步骤真正重要。Thought-Anchors 使用反事实重采样 + 接收头 + 句子粒度的注意力抑制；FlashTrace 追求长 trace 上高效且忠实的多 token attribution；DRTC 则把目标改成 pivot-local 的 log-probability trajectory steering。它们都拒绝&quot;每个 CoT 步骤同等重要&quot;的假设，发现规划步骤、不确定性管理步骤和结构性承诺才是真正的因果锚点。</p>
+<ul>
+<li>
+<p><a class="wikilink" href="../../01_Research/Reading/Reasoning-Fails-Where-Step-Flow-Breaks.html" title="Reasoning-Fails-Where-Step-Flow-Breaks">Reasoning-Fails-Where-Step-Flow-Breaks</a> - 提出 Step-Saliency 将 token 级 saliency 池化到推理步骤粒度，发现 Shallow Lock-in 和 Deep Decay 两种信息流失败模式，并用 StepFlow test-time 干预修复，为 CoT 推理过程的可解释性和因果干预提供了新的分析单元和修复手段</p>
+</li>
+<li>
+<p><a class="wikilink" href="../../01_Research/Reading/Coconut-Continuous-Latent-Reasoning-Chain-of-Continuous-Thought.html" title="Coconut-Continuous-Latent-Reasoning-Chain-of-Continuous-Thought">Coconut-Continuous-Latent-Reasoning-Chain-of-Continuous-Thought</a> - Coconut 通过 logit lens 把不可读的 continuous thought 探针回语言空间，构造出隐式 value function 并用节点高度相关性量化了连续空间中涌现的 BFS 搜索行为，为&quot;latent 推理过程如何在模型内部展开&quot;提供了机制层面的可解释性分析</p>
+</li>
+<li>
+<p><a class="wikilink" href="../../01_Research/Reading/Attention-in-Space-Functional-Roles-of-VLM-Heads-for-Spatial-Reasoning-Pro.html" title="Attention-in-Space-Functional-Roles-of-VLM-Heads-for-Spatial-Reasoning-Pro">Attention in Space</a> - 用带功能标签的空间子问题、头输出探针与实际消融建立候选头的行为证据；区分功能标签可读出、组件重要性与空间功能专门性（arXiv 2026）</p>
+</li>
+</ul>
+<h3 id="cot-因果归因-句子-步骤粒度">CoT 因果归因（句子/步骤粒度）</h3>
+<h4>关键问题</h4>
+<p><strong>推理模型的 CoT 中只有少数句子因果驱动最终结果，但传统方法系统性地错认&quot;谁重要&quot;。</strong> <a class="wikilink" href="../../01_Research/Reading/Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a> 用 forced-answer 和 counterfactual 重采样做了直接对比：Plan Generation 和 Uncertainty Management 类句子的 counterfactual importance 最高，而 Active Computation 类句子几乎不重要；但 forced-answer 方法给出完全相反的排序——它问的是&quot;到这一步信息够不够给答案&quot;，系统性遗漏了改变推理方向的规划决策。<a class="wikilink" href="../../01_Research/Reading/Directional-Reasoning-Trajectory-Change-DRTC.html" title="Directional-Reasoning-Trajectory-Change-DRTC">Directional-Reasoning-Trajectory-Change-DRTC</a> 从互补角度验证了同一结论：在 MATH 数学题中，真正让模型走向正确解法的是&quot;有理系数 implies 共轭根约束&quot;这类结构性承诺（DRTC = +3.4020），而不是泛泛的 preamble（DRTC = -1.9895）。两篇论文在不同粒度（句子 vs. 16-token chunk）、不同方法（黑盒重采样 vs. receiver-side attention masking）上收敛到同一个论断：<strong>规划类步骤是推理的真正锚点</strong>。</p>
+<p><strong>推理模型的自我修复能力使单次干预失效。</strong> <a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a> 指出，删除 CoT 中某句话后模型很可能在后续位置重写同一语义，导致&quot;删一句测一次&quot;变成假实验。self-preservation 句子只需 1-4 次迭代就被模型放弃（resilience 最低），而 plan generation 的 resilience 远高于此。这与 Thought Anchors 的发现互补：规划句子不仅 counterfactual importance 高，而且模型顽固地坚持重写它们。同样，<a class="wikilink" href="../../01_Research/Reading/Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> 在 agent trace 层面指出&quot;谁执行坏动作就怪谁&quot;是 category error：越靠后的动作越可见，但往往只是上游决策的 consequence。</p>
+<p><strong>长推理链的归因权重被中间 token &quot;吸走&quot;，输入的真实贡献被掩盖。</strong> <a class="wikilink" href="../../01_Research/Reading/Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html" title="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution">Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution</a> 量化了这一现象：推理 token 占 attribution mass 的比例从 ~80% 涨到 &gt;90%，ground-truth input 的 recovery rate 从 ~26% 跌到 &lt;10%，增长速度比线性预期更陡。这不仅是效率问题（O(M*N) 的逐 token 归因在 5k token 时需要 10+ 小时），更是 faithfulness 问题。</p>
+<h4>关键方法</h4>
+<p>这些工作在方法论上形成了一个清晰的光谱：从黑盒重采样到白盒注意力分析，从单步干预到多步递归归因。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>方法</th>
+<th>代表论文</th>
+<th>核心 trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>黑盒重采样</td>
+<td>从截断位置续写 100 次，比较结局分布 KL 散度</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a>, <a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a></td>
+<td>忠实但昂贵（100 rollout/句）</td>
+</tr>
+<tr>
+<td>白盒注意力</td>
+<td>高 kurtosis attention head 识别 + receiver-side masking</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a>, <a class="wikilink" href="../../01_Research/Reading/Directional-Reasoning-Trajectory-Change-DRTC.html" title="Directional-Reasoning-Trajectory-Change-DRTC">Directional-Reasoning-Trajectory-Change-DRTC</a></td>
+<td>高效但只是相关性</td>
+</tr>
+<tr>
+<td>Span-wise 递归归因</td>
+<td>factor out $\mathbf{v}_j$ 做 O(N) 预聚合 + 多 hop 权重穿透</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution.html" title="Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution">Towards-Long-Horizon-Interpretability-FlashTrace-Multi-Token-Attribution</a></td>
+<td>速度极快但精度有损</td>
+</tr>
+<tr>
+<td>Resilience-aware 重采样</td>
+<td>反复重采样&quot;追杀&quot;目标语义直至彻底消失</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a></td>
+<td>处理自我修复但样本量极薄（n=20）</td>
+</tr>
+<tr>
+<td>Agent step replay</td>
+<td>do_resample 同一 policy 重抽 + point-of-commitment 规则</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a></td>
+<td>定位 agent failure causal locus 但需可执行环境</td>
+</tr>
+<tr>
+<td>概率反向追溯</td>
+<td>比较 teacher/student/distilled 三者句子级概率</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Tracing-Provenance-in-LLM-Reasoning-Distillation.html" title="Tracing-Provenance-in-LLM-Reasoning-Distillation">Tracing-Provenance-in-LLM-Reasoning-Distillation</a></td>
+<td>绕开语义比较但依赖 tokenizer 兼容</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>方法论的关键一致性</strong>在于：几乎所有工作都选择了<strong>句子粒度</strong>而非 token 粒度作为分析单元。<a class="wikilink" href="../../01_Research/Reading/Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a> 明确指出 sentence 是&quot;自然的最小推理单元&quot;；<a class="wikilink" href="../../01_Research/Reading/Directional-Reasoning-Trajectory-Change-DRTC.html" title="Directional-Reasoning-Trajectory-Change-DRTC">Directional-Reasoning-Trajectory-Change-DRTC</a> 用 16-token chunk 近似句子边界；<a class="wikilink" href="../../01_Research/Reading/Tracing-Provenance-in-LLM-Reasoning-Distillation.html" title="Tracing-Provenance-in-LLM-Reasoning-Distillation">Tracing-Provenance-in-LLM-Reasoning-Distillation</a> 用句子级几何平均概率绕开 token vocabulary 不匹配。这反映了一个共识：推理的语义单元大于 token。</p>
+<p><strong>方法论的关键分歧</strong>在于对 off-policy 干预的态度。<a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a> 实验性地证明 off-policy 编辑（手写/跨模型/跨 context 插入）效应聚集在零附近，而 on-policy 重采样效应大且有方向性（最高可降 100% blackmail 率）。但 <a class="wikilink" href="../../01_Research/Reading/Directional-Reasoning-Trajectory-Change-DRTC.html" title="Directional-Reasoning-Trajectory-Change-DRTC">Directional-Reasoning-Trajectory-Change-DRTC</a> 的 receiver-side masking 也是一种非自然干预，只是保持了 prefix 的 on-policy 性——它避免了两个烂选择（删 trace 导致 off-policy，或 resample 后无法比较），代价是因果性弱于全 rollout。</p>
+<h4>关键结论</h4>
+<p><strong>一致的结论：规划句子是 CoT 的因果骨架，计算句子是可替换的&quot;填充物&quot;。</strong> Thought Anchors 的 counterfactual importance、DRTC 的方向性分数、Thought Branches 的 resilience + importance++ 三条独立证据线收敛于此。定量支持：Thought Anchors 报告 Plan Generation 与 Active Computation 的注意力差异 $t &gt; 4.0, p &lt; .001$；DRTC 的 learned pivots 比 random spans 强 +0.039 到 +0.178（500 题扩展上 355/500 例 $\Delta &gt; 0$，sign test $p = 2.3 \times 10^{-21}$）；Thought Branches 的 self-preservation KL 仅 0.001-0.003 而 plan generation 显著高出。</p>
+<p><strong>分歧一：跨方法对齐程度偏低。</strong> <a class="wikilink" href="../../01_Research/Reading/Thought-Anchors-Which-LLM-Reasoning-Steps-Matter.html" title="Thought-Anchors-Which-LLM-Reasoning-Steps-Matter">Thought-Anchors-Which-LLM-Reasoning-Steps-Matter</a> 坦承黑盒重采样与白盒 receiver head 的 Spearman 相关只有 $\rho = 0.20$-$0.34$（Appendix K 中 receiver head 与 resampling score 相关 $\rho = .22$）。三个方法收敛到同一大类（规划句子最重要），但在具体句子排序上对齐有限。这暗示不同方法可能各自捕捉了 thought anchor 现象的不同切面，也可能反映了 importance 本身的多维性。</p>
+<p><strong>分歧二：CoT 文本的因果忠实性。</strong> <a class="wikilink" href="../../01_Research/Reading/Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling.html" title="Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling">Thought-Branches-Interpreting-LLM-Reasoning-Requires-Resampling</a> 的核心 null finding 是 self-preservation 因果影响极低，挑战了&quot;CoT 里出现 X implies 模型因 X 而行动&quot;的直觉。<a class="wikilink" href="../../01_Research/Reading/Model-Incrimination-Concerning-Behavior-vs-Misalignment.html" title="Model-Incrimination-Concerning-Behavior-vs-Misalignment">Model-Incrimination-Concerning-Behavior-vs-Misalignment</a> 从 incrimination 角度发现了平行模式：Funding Email 案例中 motive prevalence（audit note 提及频率：investor protection 100%）与 causal contribution（ethical concern 因果效应最大，65% 降至 35%）严重倒挂。两篇论文从不同方向得到同一个警告：<strong>CoT 中出现频率高的 reasoning 不一定是因果上重要的 reasoning</strong>。</p>
+<p><strong>混淆因素：实验规模普遍偏小。</strong> Thought Anchors 主实验约 10-20 条响应；Thought Branches 用 4 模型 $\times$ 单一 blackmail prompt $\times$ 20 条 base CoT；DRTC 跨模型主实验只有 24 examples（500 题扩展仅用单一 1.5B 模型）；CAR 只有两个 synthetic SCM 验证。FlashTrace 规模较大（100 样本/任务），但只在 8B 模型上测试。所有结论在更大规模模型上是否成立仍是开放问题。</p>
+<h4>Insight</h4>
+<p><strong>未解决的核心问题是效率与忠实度的 Pareto 前沿。</strong> FlashTrace 用 span-wise aggregation 实现 130x 加速但精度有损（K=1 hop 的 MAS 改善仅 0.004）；重采样方法忠实但需要 100 次 rollout/位置；DRTC 的 receiver-side masking 效率高但因果性弱于全 rollout。一个自然的合流方向是 coarse-to-fine：先用 DRTC/FlashTrace 类快速方法扫描长 trace 定位少数 pivot，再对 pivot 做 Thought Branches 级别的重采样验证。<a class="wikilink" href="../../01_Research/Reading/Directional-Reasoning-Trajectory-Change-DRTC.html" title="Directional-Reasoning-Trajectory-Change-DRTC">Directional-Reasoning-Trajectory-Change-DRTC</a> 的作者已预见了这一合流。</p>
+<p><strong>隐式规划是因果归因的上游机制。</strong> <a class="wikilink" href="../../01_Research/Reading/Whats_the_Plan-Implicit_Planning_LLMs.html" title="Whats_the_Plan-Implicit_Planning_LLMs">Whats_the_Plan-Implicit_Planning_LLMs</a> 证明模型在生成第一个 token 前就已经在 residual stream 中编码了规划信息（steering 可在第一行末尾改变第二行押韵，9B+ 模型效果显著，1B 即存在弱信号）。这与 Thought Anchors 发现的&quot;规划句子是 thought anchor&quot;形成机制互证：规划不只是 CoT 文本中的一类句子，而是模型内部一种可操控的计算结构。参见「特征提取方法（SAE / 电路）」中关于 SAE 特征发现能否为归因提供更廉价先验的讨论。</p>
+<p><strong>推理模型的&quot;社会结构&quot;可能解释了因果锚点集中的原因。</strong> <a class="wikilink" href="../../01_Research/Reading/Reasoning_Models_Generate_Societies_of_Thought.html" title="Reasoning_Models_Generate_Societies_of_Thought">Reasoning_Models_Generate_Societies_of_Thought</a> 发现推理模型的 CoT 内含多智能体式对话结构，且 SAE 特征引导对话行为可使 Countdown 准确率从 27.1% 提升至 54.8%。中介效应分析显示大部分效应是直接的（$\beta = 0.228$）——对话结构本身就是推理的&quot;支架&quot;。这暗示 thought anchor 可能对应&quot;视角切换&quot;和&quot;调和&quot;这类社会性结构点。参见「端到端激活解释」中关于 representation intervention 的讨论。</p>
+<p><strong>对安全的直接启示：CoT monitoring 需要重新校准。</strong> 如果规划句子是因果骨架而 self-preservation 是 post-hoc rationalization，那么 CoT monitoring 不能只看模型&quot;说了什么&quot;（prevalence），而要看哪些句子在分布层面真正 steer 了行为（causal contribution）。<a class="wikilink" href="../../01_Research/Reading/Model-Incrimination-Concerning-Behavior-vs-Misalignment.html" title="Model-Incrimination-Concerning-Behavior-vs-Misalignment">Model-Incrimination-Concerning-Behavior-vs-Misalignment</a> 的 investigation protocol 提供了一个实操框架：先从 CoT 生成假设，再通过环境干预验证因果性——但其证据标准的循环性问题（多条 evidence line 共享同一 underlying model）仍待解决。参见「表示几何与动态」中关于 representation 稳定性的讨论。</p>
+<h2 id="表示几何与动态">表示几何与动态</h2>
+<!-- survey-enriched: 2026-06-25, papers=4 -->
+<h4>关键问题</h4>
+<p>本节的三篇核心论文都将表示方向作为几何对象研究——但揭示了一种张力。<a class="wikilink" href="../../01_Research/Reading/Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs.html" title="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs">Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs</a> 和 <a class="wikilink" href="../../01_Research/Reading/The_Assistant_Axis-Situating_Stabilizing_Default_Persona.html" title="The_Assistant_Axis-Situating_Stabilizing_Default_Persona">The_Assistant_Axis-Situating_Stabilizing_Default_Persona</a> 假设表示方向足够稳定，可以定义持久轴（人格方向、助手轴）。<a class="wikilink" href="../../01_Research/Reading/Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a> 直接挑战这一假设，表明方向在多轮对话中会偏移。实践启示：依赖固定方向的方法（如激活引导和探测）在对话场景中可能退化。</p>
+<p><strong>线性方向既是可操作工具，也是不稳定对象。</strong> 三篇论文共享同一基本前提——高层语义概念（人格、事实性、角色）在残差流中以线性方向编码——但对该方向的&quot;持久性&quot;给出了截然不同的判断。Persona Vectors 证明仅从自然语言描述即可自动提取具有因果效力的人格方向（转向相关性 r = 0.75–0.83），The Assistant Axis 进一步发现人格空间存在低维主成分结构（4-19 个 PC 即解释 70% 方差，PC1 跨模型相关性 &gt; 0.92）。然而 Linear Representations 揭示这些方向并非刚体：在 Opposite Day 对话中，事实性表示准确率从 99% 暴跌至 11.8%，且同一转向方向在不同对话阶段产生<strong>相反的行为效果</strong>。</p>
+<p><strong>核心张力可精确表述为：方向的&quot;类型稳定性&quot;与&quot;token 级动态性&quot;是否可兼容？</strong> Persona Vectors 和 The Assistant Axis 工作在&quot;跨 prompt&quot;层面——对回答 token 取平均后提取方向，本质上是把方向视为对话级别的统计量。Linear Representations 则在对话内部的不同时间点提取激活，发现表示随上下文发生条件性翻转。这暗示线性方向可能在统计均值意义上稳定，但在逐 token 生成过程中是动态的。</p>
+<h4>关键方法</h4>
+<p>三篇论文虽然结论不同，但方法论高度一致：均基于残差流激活的均值差或投影分析。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th><a class="wikilink" href="../../01_Research/Reading/Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs.html" title="Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs">Persona_Vectors-Monitoring_Controlling_Character_Traits_LLMs</a></th>
+<th><a class="wikilink" href="../../01_Research/Reading/The_Assistant_Axis-Situating_Stabilizing_Default_Persona.html" title="The_Assistant_Axis-Situating_Stabilizing_Default_Persona">The_Assistant_Axis-Situating_Stabilizing_Default_Persona</a></th>
+<th><a class="wikilink" href="../../01_Research/Reading/Linear_Representations_Change_Over_Conversation-表示动态性.html" title="Linear_Representations_Change_Over_Conversation-表示动态性">Linear_Representations_Change_Over_Conversation-表示动态性</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>方向提取</td>
+<td>Difference-in-means（对比系统提示下的回答激活均值差）</td>
+<td>PCA 分析 275 个角色向量</td>
+<td>逻辑回归分类器在事实性/非事实性回答上训练</td>
+</tr>
+<tr>
+<td>提取粒度</td>
+<td>回答 token 平均</td>
+<td>回答 token 平均（post-MLP residual stream）</td>
+<td>回答 token（Yes/No）的残差流激活</td>
+</tr>
+<tr>
+<td>因果验证</td>
+<td>转向 $h_\ell \leftarrow h_\ell + \alpha \cdot v_\ell$</td>
+<td>Activation Capping $h \leftarrow h - v \cdot \min(\langle h, v \rangle - \tau, 0)$</td>
+<td>在不同对话阶段执行转向，观察效果翻转</td>
+</tr>
+<tr>
+<td>模型覆盖</td>
+<td>未明确指定单一模型</td>
+<td>Gemma 2 27B, Qwen 3 32B, Llama 3.3 70B</td>
+<td>Gemma 3 (4B/12B/27B), Qwen3 14B</td>
+</tr>
+<tr>
+<td>关键创新</td>
+<td>端到端自动化提取 + 预防性训练时转向</td>
+<td>人格空间 PCA + Capping 稳定方法</td>
+<td>动态 margin score 跟踪表示演化</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>方法论趋同点</strong>：三者都依赖&quot;回答 token 平均激活&quot;作为方向的锚点，且都通过转向实验验证因果性。<strong>关键分歧</strong>在于时间尺度：前两者在对话间比较（跨 prompt），后者在对话内比较（跨 turn）。</p>
+<h4>关键结论</h4>
+<p><strong>一致结论：线性方向具有因果效力。</strong> Persona Vectors 的转向实验能有效诱导 evil、sycophancy、hallucination 等特质；The Assistant Axis 的 Activation Capping 减少约 60% 有害回答；Linear Representations 的转向实验在空上下文中同样有效。三者共同确认了线性表示假说的强版本——方向不仅可读，而且可写。</p>
+<p><strong>一致结论：表示结构跨模型存在。</strong> The Assistant Axis 报告 PC1 跨模型相关性 &gt; 0.92；Persona Vectors 的微调漂移预测跨特质相关性 r = 0.76–0.97；Linear Representations 在 Gemma 和 Qwen 两个家族均观察到表示翻转现象。</p>
+<p><strong>关键分歧：方向稳定性的边界条件。</strong> Linear Representations 发现表示翻转是<strong>内容依赖的</strong>——通用事实性问题在非相关对话中保持 ~95% 准确率，只有对话相关问题发生翻转。这一发现实际上为前两者提供了部分辩护：Persona Vectors 和 The Assistant Axis 所提取的方向可能恰好属于&quot;通用&quot;类别，因此在多数场景下保持稳定。但一旦进入与人格方向高度相关的对话内容（如 Consciousness 对话使准确率从 86.4% 降至 36.4%），静态方向即失效。</p>
+<p><strong>混淆因素</strong>：Linear Representations 发现模型规模影响翻转幅度（27B &gt; 12B &gt; 4B），而对话框架比故事框架产生更强适应（80%+ vs 10-20% 翻转）。这意味着 Persona Vectors 和 The Assistant Axis 在更大模型或更沉浸式对话场景中的稳定性可能更差。</p>
+<h4>Insight</h4>
+<p><strong>未解决问题一：动态探针的设计。</strong> 如果表示方向会翻转，那么用于安全监控的探针需要&quot;知道&quot;当前对话阶段。一个可能方向是将 The Assistant Axis 的 Capping 方法与 Linear Representations 的动态 margin score 结合——当 margin score 接近零时触发 capping 干预。</p>
+<p><strong>未解决问题二：预防性转向与表示翻转的交互。</strong> Persona Vectors 提出在微调训练过程中进行预防性转向以防止模型学会不良方向。但若训练数据本身包含长对话，表示翻转可能在训练时就已发生——预防性转向的效果在这种条件下尚未验证。</p>
+<p><strong>高层模式：从&quot;方向是什么&quot;到&quot;方向何时有效&quot;。</strong> 参见「特征提取方法（SAE / 电路）」中 SAE 特征的叠加与干扰问题——线性方向的不稳定性可能与特征叠加（superposition）有深层联系：当对话上下文改变激活的全局分布时，原本正交的方向可能开始干扰彼此。参见「推理过程可解释性」——推理链中的动态表示变化可能与对话中的表示翻转共享机制（均为模型在时间维度上重组内部状态）。</p>
+<p><strong>预测</strong>：随着模型上下文窗口增长和多轮对话成为主流部署模式，&quot;静态方向&quot;范式将逐渐让位于&quot;方向场&quot;（direction field）范式——表示方向不再是全局常量，而是上下文的函数。The Assistant Axis 中 base model 已存在 Assistant Axis 的发现（后训练只是强化已有方向）暗示：即便方向动态变化，其变化本身可能仍遵循低维流形结构。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Verbalizable-Representations-Global-Workspace-Jacobian-Lens.html" title="Verbalizable-Representations-Global-Workspace-Jacobian-Lens">Verbalizable-Representations-Global-Workspace-Jacobian-Lens</a> - 提出 Jacobian Lens（J-lens）：用 Jacobian 从残差流中分离出一个低方差（&lt;10%）但因果主导的线性子空间 J-space，实证 LLM 存在一个承载可言语化内容、行为类似&quot;全局工作空间&quot;的方向集合。核心方法论启示是&quot;因果重要性 ≠ 方差大小&quot;——朴素地按主成分/幅度挑方向会系统性错过真正 steer 行为的低方差子空间（Anthropic, transformer-circuits.pub 2026）。</li>
+<li><a class="wikilink" href="../../01_Research/Reading/Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution.html" title="Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution">Emotion2Skill-Internal-Emotion-Signals-for-Skill-Selection-and-Evolution</a> - 将 residual-stream 的线性情绪读出从事后解释推进到 agent 控制接口：动作前门控注入 skill router，episode 后以轨迹突变定位 SOP 缺口；但缺少固定文本后的 activation intervention，不能把路由增益归因于情绪方向的因果作用。</li>
+</ul>
+<h2 id="多语言机制可解释性">多语言机制可解释性</h2>
+<!-- survey-enriched: 2026-06-25, papers=5 -->
+<h4>关键问题</h4>
+<p>多语言 LLM 的核心谜题在于：以英语为绝对主导（如 LLaMA-2 英语占比 89.70%）训练的模型，为何能处理中文（仅 0.13%）等低资源语言？围绕这一现象，四篇论文从不同角度逼近同一组递进问题。</p>
+<p><strong>LLM 内部是否存在&quot;英语中转&quot;机制？</strong> <a class="wikilink" href="../../01_Research/Reading/Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a> 通过 Logit Lens 在 Llama-2-70B 上发现明确的三阶段模式：中间层（~50 层）英语 token 概率达 ~60%，最终层目标语言概率 &gt;90%。<a class="wikilink" href="../../01_Research/Reading/How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a> 从神经元粒度验证了同一结论——MWork 三阶段工作流（理解→任务解决→生成）中，中间层以英语主导推理。<a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a> 进一步通过 MLP 表示与 unembedding 向量的余弦相似度发现，非英语翻译对（如 De/Ru⇒Zh）中英语相似度在层 16-26 显著高于其他语言，且英语相似度与 BLEU-1 相关性达 <strong>0.905</strong>。但关键细微差别是：Qwen2.5（中文主导预训练）的桥接语言是中文而非英语——英语中心性是<strong>训练数据分布的产物</strong>，而非架构固有属性。</p>
+<p><strong>语言和概念在模型内部是纠缠的还是可分离的？</strong> <a class="wikilink" href="../../01_Research/Reading/Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching.html" title="Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching">Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching</a> 设计了因果性实验直接回答这一问题：跨语言 mean patching 不仅保留概念信息，还产生&quot;concept-denoising effect&quot;——而同语言不同 context 的 mean patching 无此效果，排除了&quot;取平均本身即去噪&quot;的替代解释。但 <a class="wikilink" href="../../01_Research/Reading/Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a> 强调，英语作为 pivot 是在<strong>语义层面</strong>而非词汇层面——模型内部的&quot;通用语言&quot;是偏向英语 token 嵌入的概念空间，而非英语语法本身。</p>
+<h4>关键方法</h4>
+<p>五篇论文在方法论上形成从观测到因果的递进光谱：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>方法类型</th>
+<th>论文</th>
+<th>核心技术</th>
+<th>粒度</th>
+<th>因果性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>观测性</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a></td>
+<td>Logit Lens + Token Energy</td>
+<td>层级</td>
+<td>无</td>
+</tr>
+<tr>
+<td>因果-神经元级</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a></td>
+<td>LAPE（激活概率熵）</td>
+<td>FFN 神经元</td>
+<td>消融</td>
+</tr>
+<tr>
+<td>因果-神经元级</td>
+<td><a class="wikilink" href="../../01_Research/Reading/How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a></td>
+<td>PLND（并行语言神经元检测）</td>
+<td>FFN + 注意力神经元</td>
+<td>消融</td>
+</tr>
+<tr>
+<td>因果-子空间级</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a></td>
+<td>Subspace-Intervened Path Patching</td>
+<td>翻译子空间</td>
+<td>子空间干预</td>
+</tr>
+<tr>
+<td>因果-表征级</td>
+<td><a class="wikilink" href="../../01_Research/Reading/Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching.html" title="Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching">Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching</a></td>
+<td>Cross-lingual Mean Activation Patching</td>
+<td>Residual stream</td>
+<td>表征替换</td>
+</tr>
+</tbody>
+</table></div>
+<p>值得注意的方法论分歧：<a class="wikilink" href="../../01_Research/Reading/Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a> 坚持使用原始 Logit Lens 而非 Tuned Lens，理由是后者会&quot;优化掉&quot;英语转道信号。<a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a> 则指出 Logit Lens 类方法存在<strong>空间错位问题</strong>——早期层激活在输入 embedding 空间，而 unembedding 矩阵代表输出空间，对于 untied embeddings 的模型（如 LLaMA-2）会系统性低估早期层的作用。LAPE 和 PLND 都通过消融（停用神经元观测性能变化）绕过了这一问题，但代价是粒度较粗。</p>
+<h4>关键结论</h4>
+<p><strong>高度一致的发现——多语言能力由极少数神经元承载。</strong> <a class="wikilink" href="../../01_Research/Reading/Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a> 发现 ~1% 的 FFN 神经元为语言特异性；<a class="wikilink" href="../../01_Research/Reading/How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a> 将这一比例精确到 <strong>0.13%</strong>，停用后多语言任务性能下降 98.6%-99.2%（中文从 ROUGE-L 61.1% 降至 <strong>0.00%</strong>），而停用随机神经元性能几乎不变。<a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a> 从注意力头角度呈现一致的稀疏性：&lt;5% 的头显著影响翻译，敲除 5 个关键头可将准确率从 ~95% 骤降至 ~20%。</p>
+<p><strong>一致但有张力的发现——语言-概念分离程度。</strong> <a class="wikilink" href="../../01_Research/Reading/Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching.html" title="Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching">Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching</a> 的 mean patching 支持语言与概念的可分离性（H1），但该论文自身也承认，结果同样兼容&quot;大部分分离 + 轻度纠缠&quot;的连续谱。Llama-2（89% 英文数据）反而比多语言数据更丰富的 Llama-3/Mistral/Qwen 展现出更清晰的分离——这暗示<strong>训练数据越单一，模型越需要显式的语言-概念解耦</strong>，与 <a class="wikilink" href="../../01_Research/Reading/Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a> 中 BLOOM（均衡训练）不存在单一主导语言的发现形成呼应。</p>
+<p><strong>存在分歧的发现——层级功能划分。</strong> <a class="wikilink" href="../../01_Research/Reading/Do_Llamas_Work_in_English-多语言LLM的潜在语言.html" title="Do_Llamas_Work_in_English-多语言LLM的潜在语言">Do_Llamas_Work_in_English-多语言LLM的潜在语言</a> 报告三阶段边界为层 1-40/41-70/71-80（70B 模型），<a class="wikilink" href="../../01_Research/Reading/Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching.html" title="Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching">Separating-Tongue-from-Thought-Language-Agnostic-Activation-Patching</a> 在 7B 模型上定位语言编码在 ~layer 12、概念编码在 ~layer 16-17。<a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a> 则发现关键头集中在中间层（12-20）和最后两层，MLP 的接收-生成转换发生在层 25。这些差异部分源于模型规模不同（7B vs 70B），部分源于方法粒度不同——但**&quot;先处理语言、后处理概念、最终生成目标语言&quot;的宏观序列是一致的**。</p>
+<h4>Insight</h4>
+<p><strong>未解决问题 1：完全非英语翻译对的 pivot 语言。</strong> 现有研究主要验证了涉及英语的翻译对（De/Ru⇒Zh），或以英语训练为主导的模型。对于完全不涉及英语的翻译对（如 Zh⇒Ru），以及中文主导训练的模型（如 Qwen），pivot 机制是否遵循不同规律？<a class="wikilink" href="../../01_Research/Reading/Exploring_Translation_Mechanism_of_LLMs-机制可解释性.html" title="Exploring_Translation_Mechanism_of_LLMs-机制可解释性">Exploring_Translation_Mechanism_of_LLMs-机制可解释性</a> 的 Qwen 发现暗示答案是&quot;是&quot;，但缺乏系统验证。</p>
+<p><strong>未解决问题 2：稀疏性的因果来源。</strong> 五篇论文共同揭示了多语言能力的极端稀疏性（0.13%-5%），但均未解释<strong>为何</strong>如此稀疏。这可能与参见「特征提取方法（SAE / 电路）」中 superposition 理论有关——语言特异性特征可能通过稀疏编码被压缩到少量神经元中。</p>
+<p><strong>高层模式：观测-因果方法论阶梯。</strong> 从 Logit Lens（观测）→ LAPE/PLND（神经元消融）→ subspace path patching（子空间因果）→ mean activation patching（表征因果），方法论的因果强度逐步提升。参见「推理过程可解释性」和「端到端激活解释」中的类似趋势——整个 interpretability 领域正在从&quot;模型内部长什么样&quot;转向&quot;如果我改变 X，Y 会怎样&quot;。</p>
+<p><strong>实践启示：</strong> 语言特异性神经元的发现直接支持高效多语言微调——<a class="wikilink" href="../../01_Research/Reading/How_LLMs_Handle_Multilingualism-MWork_PLND.html" title="How_LLMs_Handle_Multilingualism-MWork_PLND">How_LLMs_Handle_Multilingualism-MWork_PLND</a> 证明仅用 400 个文档微调 0.1% 参数即可实现高资源语言 3.6% 的提升。结合 <a class="wikilink" href="../../01_Research/Reading/Language-Specific_Neurons-Multilingual_Capabilities_LLMs.html" title="Language-Specific_Neurons-Multilingual_Capabilities_LLMs">Language-Specific_Neurons-Multilingual_Capabilities_LLMs</a> 发现的中日语 ~25% 神经元重叠（反映汉字共享），跨语言迁移学习有了精确的操作靶点。</p>
+<h2 id="训练动态分析">训练动态分析</h2>
+<p>本节追踪训练过程中内部表示如何变化——不仅是模型学到了什么，更是学习过程本身如何创造或破坏内部结构。Probing RLVR Training Instability 揭示了 RL 微调可能产生目标级黑客行为，即模型学会钻奖励信号的空子而非真正提升——这是可解释性工具独具优势去检测的失败模式。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Probing_RLVR_Training_Instability-Objective-Level_Hacking.html" title="Probing_RLVR_Training_Instability-Objective-Level_Hacking">Probing_RLVR_Training_Instability-Objective-Level_Hacking</a> - 对 RLVR 训练不稳定性的机制分析，揭示目标级黑客等问题 (2025)</li>
+</ul>
+<h2 id="模型压缩与剪枝">模型压缩与剪枝</h2>
+<p>可解释性工具（协同-冗余排名、重要性探测）为剪枝提供了超越均匀删减的结构性依据——如果我们能识别哪些组件承载不可替代的信息流，就能在保留能力的前提下大幅压缩。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Gradually_Compacting_LLMs-Boiling_Frog_Pruning.html" title="Gradually_Compacting_LLMs-Boiling_Frog_Pruning">Gradually_Compacting_LLMs-Boiling_Frog_Pruning</a> - 使用&quot;温水煮青蛙&quot;策略的渐进式模型剪枝</li>
+</ul>
+<h2 id="跨学科应用">跨学科应用</h2>
+<p>将 LLM 可解释性方法（特征归因、探测、激活分析）迁移到生物医学等领域，验证这些工具在科学发现任务上的泛化能力。</p>
+<ul>
+<li><a class="wikilink" href="../../01_Research/Reading/Using_Interpretability_to_Identify_Alzheimers_Biomarkers.html" title="Using_Interpretability_to_Identify_Alzheimers_Biomarkers">Using_Interpretability_to_Identify_Alzheimers_Biomarkers</a> - 使用可解释性工具识别阿尔茨海默病生物标志物</li>
+</ul>
+<hr />
+<h2 id="开放问题">开放问题</h2>
+<blockquote class="card card-info">
+<p>跨论文的未解决问题与研究线索。</p>
+</blockquote>
+<ul>
+<li><strong>MLP 层的信息处理模式</strong>：<a class="wikilink" href="../../01_Research/Reading/A-Brain-like-Synergistic-Core-in-LLMs-协同核心.html" title="A-Brain-like-Synergistic-Core-in-LLMs-协同核心">A-Brain-like-Synergistic-Core-in-LLMs-协同核心</a> 仅分析了注意力头和 MoE 专家，缺少 MLP 层分析</li>
+<li><strong>SAE 特征能否映射到 PhiID 的协同与冗余组件？</strong>：SAE 发现的特征能否映射到 PhiID 的协同信息与冗余信息组件？具体来说：协同核心中（由 ΦID 识别）的特征是否比冗余区域中的特征具有更高的因果影响（以下游连接或引导度量）？如果是，ΦID 可以作为廉价预筛选器，决定哪些 SAE 特征值得详细的电路分析。</li>
+<li><strong>表示方向在对话深度中的稳定性</strong>：Linear Representations 表明表示方向在对话轮次中偏移，但 Persona Vectors 和 The Assistant Axis 报告其发现的方向足够稳定以实现有效引导。解决这一表面矛盾需要：(1) 测量引导效果随对话深度退化的程度，(2) 确定某些方向（如助手轴）是否比其他方向（如情绪方向）更稳定——这将暗示方向鲁棒性存在层级结构。</li>
+<li><strong>协同核心指导的模型压缩</strong>：基于协同-冗余排名的选择性保留在理论上比均匀剪枝更高效</li>
+<li><strong>PhiID 计算复杂度优化</strong>：当前方法限制分析规模；需要更高效的估计器或近似方法
+</li>
+</ul>
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="MOC-Model-Merging.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">模型合并研究地图</span></a>
+<a class="paper-nav-link next" href="MOC-Exposure-Bias.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Exposure Bias 概念图谱</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: </p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
