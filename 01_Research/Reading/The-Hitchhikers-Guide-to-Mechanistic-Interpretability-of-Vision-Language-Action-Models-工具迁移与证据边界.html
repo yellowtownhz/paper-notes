@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hitchhiker’s Guide to Mechanistic Interpretability of Vision-Language-Action Models</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">The Hitchhiker’s Guide to Mechanistic Interpretability of Vision-Language-Action Models</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与材料边界"><span class="toc-num">01</span> 1. 背景信息与材料边界</a></li>
+<li><a class="toc-link" href="#2-关键问题-一张-夹爪控制头-热图-可能根本没在解释夹爪"><span class="toc-num">02</span> 2. 关键问题：一张“夹爪控制头”热图，可能根本没在解释夹爪</a></li>
+<li><a class="toc-link" href="#3-关键方法-按实际计算路径检查工具前提"><span class="toc-num">03</span> 3. 关键方法：按实际计算路径检查工具前提</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-先沿同一个案例走完分析流程">3.1 先沿同一个案例走完分析流程</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-dla-为什么依赖-对的读出">3.2 DLA 为什么依赖“对的读出”？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-七项条件应当怎样读">3.3 七项条件应当怎样读？</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-两个实现细节-有用但不能跨配置照抄">3.4 两个实现细节，有用但不能跨配置照抄</a></li>
+<li><a class="toc-link" href="#4-数据与证据-这里没有可填写的主实验排行榜"><span class="toc-num">04</span> 4. 数据与证据：这里没有可填写的主实验排行榜</a></li>
+<li><a class="toc-link" href="#5-关键结论与需要保留的反例"><span class="toc-num">05</span> 5. 关键结论与需要保留的反例</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-漏算一项-不等于每一项都被乘小">5.1 漏算一项，不等于每一项都被乘小</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-保留位置的均值更合理-但不保证在分布内">5.2 保留位置的均值更合理，但不保证在分布内</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-闭环成功重要-但不能单独裁决机制解释">5.3 闭环成功重要，但不能单独裁决机制解释</a></li>
+<li><a class="toc-link" href="#6-insights-怎样把清单变成可检验的研究"><span class="toc-num">06</span> 6. Insights：怎样把清单变成可检验的研究？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-10-29</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://openreview.net/forum?id=mS9nh3L3iN" target="_blank">arXiv</a>
+    </div>
+    <h1>The Hitchhiker’s Guide to Mechanistic Interpretability of Vision-Language-Action Models</h1>
+    <p class="authors">['Aryan Goyal']</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Causal_Intervention</span></div>
+</header>
+
+<h1>论文笔记: The Hitchhiker’s Guide to Mechanistic Interpretability of Vision-Language-Action Models</h1>
+<p><strong>这篇最值得带走的是一个检查习惯：解释工具能运行，不代表它仍在测量你关心的机器人行为。</strong> 作者把 LLM 机制可解释性工具依赖的条件拆成七项，再对照 VLA 的动作输出、模态融合与时间结构，列出容易得到“漂亮但答非所问”的结果的地方。</p>
+<p>我认为它适合当实验设计前的检查清单，但不能当成“这些工具在 VLA 上已被系统证明失效”的依据：<strong>全文没有新增实验，几处定量口吻的判断也没有测量或推导支持。</strong></p>
+<p>读完应记住四件事：</p>
+<ol>
+<li>先追踪<strong>实际动作输出路径</strong>，再决定能否用文本 unembedding 做归因。</li>
+<li>模态、token 位置、动作维度和生成步数，都是解释对象的一部分，不能随意平均。</li>
+<li><strong>能预测动作、能改变动作、能解释闭环成功</strong>，是三种不同强度的证据。</li>
+<li>文中的修补建议本身也需验证，尤其是 DLA 比例缩放和“均值干预必然在分布内”的说法。</li>
+</ol>
+<h2 id="1-背景信息与材料边界">1. 背景信息与材料边界</h2>
+<ul>
+<li><strong>作者与机构</strong>：Aryan Goyal；PDF 列出 Independent Researcher 与 Carnegie Mellon University。</li>
+<li><strong>发表背景</strong>：<a href="https://aryangoyal7.github.io/publication/2026-hitchhikers-guide">作者项目页</a>列为 ICML 2026 Mechanistic Interpretability Workshop 的 position paper。用户提供的 PDF 未标明版本号或修订日期，不据此认定它是最新版本。</li>
+<li><strong>阅读材料</strong>：用户提供的完整 6 页 PDF，包含正文 §1–7、Figure 1、Table 1 和参考文献，无附录。已逐项核对原图与表格；未运行代码或复现实验。<a href="https://openreview.net/pdf?id=mS9nh3L3iN">OpenReview 原文入口</a>。图片来源与 PDF 校验值保存在配套资产的 <code>source.json</code> 中。</li>
+</ul>
+<h2 id="2-关键问题-一张-夹爪控制头-热图-可能根本没在解释夹爪">2. 关键问题：一张“夹爪控制头”热图，可能根本没在解释夹爪</h2>
+<p>**Golden Case，以下为便于理解构造，并非论文的实测案例：**机器人要把红色方块移到右边，然后张开夹爪。我们想找出“什么时候松手”由哪些内部组件决定。</p>
+<p>直接搬用 LLM 工具，至少可能走进三条岔路：</p>
+<ul>
+<li>对一个用 flow matching 输出连续动作的 VLA，把头激活投影到文本词表，找到与 “open” 接近的头。热图解释的是文本读出，而机器人实际执行的动作还要经过另一套 action expert 和积分过程。</li>
+<li>对激活做 SVD，挑最大方差方向。它可能主要记录机械臂平移或场景变化；夹爪开合即使决定任务成败，也未必占很大方差。</li>
+<li>把视觉、语言和动作位置混在一起求均值，再做消融。抓取失败可能来自不合适的替换值，而非删除了“松手机制”。</li>
+</ul>
+<p>这三种问题分别涉及<strong>测错输出、选错统计目标、造错对照条件</strong>。论文的价值，是提醒我们先检查解释实验在问什么，而不是看到干预后成功率下降就宣布找到电路。</p>
+<h2 id="3-关键方法-按实际计算路径检查工具前提">3. 关键方法：按实际计算路径检查工具前提</h2>
+<h3 id="3-1-先沿同一个案例走完分析流程">3.1 先沿同一个案例走完分析流程</h3>
+<p>本文没有提出一个可直接训练部署的新算法。下面是依据 §4–6 整理的分析流程，流程中的具体实验安排属于笔记者建议：</p>
+<ol>
+<li><strong>固定策略，记录真实数据流。</strong> 将图像、指令和适用的机器人状态送入 VLA，记录目标位置的头输出、实际动作输出，以及动作生成过程的步索引。分析阶段不更新策略参数。</li>
+<li><strong>查“张开夹爪”究竟从哪里读出。</strong> 若模型输出动作 token，可研究对应动作 token 的 logits；若经过连续动作头，就不能用文本词表中的 “open” 自动替代夹爪动作。</li>
+<li><strong>选择与目标一致的候选方向。</strong> 作者建议连续动作使用监督探针，以激活预测目标动作量。这里新增训练的是 probe；需要有对应的动作标签，且应在独立轨迹上检验预测效果。</li>
+<li><strong>干预候选组件，分别观察即时与闭环效应。</strong> 固定观测看夹爪输出如何改变，再让策略执行整条轨迹，看是否真的在合适时刻松手。读出准确只产生候选机制，后面的干预才检验策略是否使用它。</li>
+</ol>
+<p><img src="../../assets/hitchhikers-guide-vla-mS9nh3L3iN/figure1-architectures.png" alt="Figure 1：四类 VLA 的动作输出和视觉融合路径" /></p>
+<p><em>原文 Figure 1，PDF p.4。重点看绿色的共享词表读出、独立扩散头、橙色视觉跨注意力路径，以及单独权重的 flow expert。它是一张架构示意图，没有报告任何工具准确率。图中 “DLA exact” 也不等于 DLA 已解释了所有间接因果作用。</em></p>
+<h3 id="3-2-dla-为什么依赖-对的读出">3.2 DLA 为什么依赖“对的读出”？</h3>
+<p>Direct Logit Attribution（DLA，直接 logit 归因）的直觉是：残差流由组件输出相加而成，如果目标输出还是线性读出，就能分别计算每一项对目标分数的直接贡献。将原文 Eq. 1–3 简写为：</p>
+<div class="math-display">$$
+h^{(L)}=h^{(0)}+\sum_{l,h}o_{l,h}+\sum_l m_l,
+\qquad
+s_{l,h}=o_{l,h}^{\top}(w_{v^+}-w_{v^-}).
+$$</div>
+<p>$o_{l,h}$ 是写入残差流的头输出，$m_l$ 是 MLP 输出，$w_{v^+}-w_{v^-}$ 是两个候选输出的读出方向。<strong>$s_{l,h}$ 回答的是该头向选定分数写入了多少，不直接等于移除该头后最终行为会改变多少。</strong> 原文使用的是简化加法形式；实际模型还需处理归一化与下游间接影响。</p>
+<p>在有跨注意力的模型里，若漏掉 $\sum_l\mathrm{XA}_l$，分解就不完整。在动作经过非线性 MLP、扩散或 flow expert 的模型里，文本 $W_U$ 则未必对应真实执行路径。两者分别是<strong>少算了组件</strong>和<strong>选错了输出函数</strong>，修法并不相同。</p>
+<p>作者为后一类问题提出：</p>
+<div class="math-display">$$
+\mathrm{ProbeDLA}_{l,h}=o_{l,h}^{\top}w_{\mathrm{probe}}.
+$$</div>
+<p>这把归因方向换成监督学到的动作预测方向（§6 F2）。它回答“哪些组件贡献给这个线性预测器”；只有进一步核对实际动作头和干预结果，才能支持“哪些组件控制夹爪”。论文没有提供探针训练协议或验证结果。</p>
+<h3 id="3-3-七项条件应当怎样读">3.3 七项条件应当怎样读？</h3>
+<p>作者的 A1–A7 可整理为以下问题（§4）：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>实际需要检查的内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1 单一残差流</td>
+<td>是否遗漏跨注意力、独立动作网络或 action expert 的计算？</td>
+</tr>
+<tr>
+<td>A2 共享线性读出</td>
+<td>用来解释的输出矩阵是否真的生成目标动作？</td>
+</tr>
+<tr>
+<td>A3 模块同质性</td>
+<td>视觉编码器、语言骨干与动作头能否使用同一种解释尺度？</td>
+</tr>
+<tr>
+<td>A4 决策级目标</td>
+<td>评估的是某个 token、某个动作维度，还是可有多条解的任务？</td>
+</tr>
+<tr>
+<td>A5 架构规整性</td>
+<td>层／头索引是否明确指向同一个分支或专家？</td>
+</tr>
+<tr>
+<td>A6 目标子空间的叠加</td>
+<td>目标方向能否被当前表示方法识别，最大方差是否与目标有关？</td>
+</tr>
+<tr>
+<td>A7 单次前向决策</td>
+<td>是否还有去噪、ODE 积分或多个未来动作位置需要展开？</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="../../assets/hitchhikers-guide-vla-mS9nh3L3iN/table1-applicability.png" alt="Table 1：作者对七类 VLA 的条件满足情况分类" /></p>
+<p><em>原文 Table 1，PDF p.5。I–VII 依次为离散 token、连续回归、扩散、flow matching、跨注意力融合、异构专家、时间动作块；✓／×／∼ 表示作者判断的满足／不满足／部分满足。<strong>这不是测出的工具失效率。</strong> 七类并不互斥，例如 $\pi_0$ 同时落入 IV 与 VI，不能把两个类型的叉数相加当成模型风险分数。</em></p>
+<p>表格也不能取代具体实现分析。正文 A4 讨论了离散动作维度之间的条件依赖，Table 1 却给 Type I 的 A4 标 ✓，未解释判定尺度。PDF 中 Type V 的 A5 为 ×，作者网页对应单元格为 ✓；本笔记保留用户 PDF 原表，<strong>差异原因 <code>[?]</code></strong>。</p>
+<p>我更愿意把这些条件理解成“某种分析设计可能依赖的前提”。它们并非所有机制解释工具共同需要的定理条件：SAE 本来就在处理叠加特征，activation patching 也不必一律以线性文本读出为评估目标。架构复杂会增加分析负担，不自动证明工具不可用。</p>
+<h3 id="3-4-两个实现细节-有用但不能跨配置照抄">3.4 两个实现细节，有用但不能跨配置照抄</h3>
+<p>§4 p.3 给了两个 OpenVLA 例子：</p>
+<ul>
+<li>**P1，输出集合：**作者写动作 token ID 为 31744–31999，总词表为 32,064。若问题是“在允许的动作中选哪个”，应检查对动作子集归一化；全词表 softmax 与动作条件分布回答的是不同问题，不能只因词表大就断言概率必然接近零。</li>
+<li>**P2，序列位置：**作者例子中有 256 个视觉 patch 与 25 个文本 token，实际 hidden sequence 长度是 281，而 <code>input_ids</code> 只显示文本部分。应读取实际注入后的序列及位置映射，不能只按文本长度寻找视觉注意力。</li>
+</ul>
+<p>这些是原文列出的配置示例，不是对全部 checkpoint 的验证。特别是 25 个文本 token 随 prompt 改变，动作子集还需与实际 tokenizer 和解码代码核对。</p>
+<h2 id="4-数据与证据-这里没有可填写的主实验排行榜">4. 数据与证据：这里没有可填写的主实验排行榜</h2>
+<p>全文没有新增训练集、测试集、对照实验、成功率主表或随机种子统计。Figure 1 负责说明架构，Table 1 负责表达分类判断。§2 提到的“六个模型、约 394k rollout”属于 <strong>Grant et al. 的相关工作</strong>，不是本论文实验。</p>
+<p>几项容易被误读成实验发现的表述，应保留原来的证据强度：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>原文说法</th>
+<th>位置</th>
+<th>能确认什么，缺什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>消融由文本读出挑出的头后，rollout 基本不变</td>
+<td>§6 F2，p.4</td>
+<td>作者作出此断言，但未列具体模型、任务、消融规模或成功率</td>
+</tr>
+<tr>
+<td>平移变化范围约为夹爪的 100 倍，夹爪方向落在不足 1% 方差的尾部</td>
+<td>§6 F3，pp.4–5</td>
+<td>没有数据来源、单位、归一化方式或谱图，不能当成普遍经验常数</td>
+</tr>
+<tr>
+<td>噪声尺度能翻转头的重要性排序</td>
+<td>§6 F5，p.5</td>
+<td>属于合理的待验证风险，但没有排序相关性、曲线或对照结果</td>
+</tr>
+<tr>
+<td>动作块 $K=8$ 使误差积累减少约一个数量级</td>
+<td>§4，p.3</td>
+<td>是正文论述，本文没有给出该缩放关系的实验或完整推导</td>
+</tr>
+</tbody>
+</table></div>
+<p>因此，本文最强的支撑是<strong>计算路径不匹配的结构分析</strong>；最弱的是将具体数值、普遍失效和修复保证写得像已被验证。复现时应把后者转成实验假设，而不是在新论文中直接作为已知事实引用。</p>
+<h2 id="5-关键结论与需要保留的反例">5. 关键结论与需要保留的反例</h2>
+<h3 id="5-1-漏算一项-不等于每一项都被乘小">5.1 漏算一项，不等于每一项都被乘小</h3>
+<p>F1 从“跨注意力贡献没有被计入”进一步声称：若它占输出信号比例 $\alpha$，各 DLA 分数都缩小为 $1-\alpha$，因此内部排名不变。<strong>Eq. 3 本身不足以推出这条普遍结论。</strong></p>
+<p>为便于理解构造一个加法反例：两个已记录头的直接贡献分别是 2 和 1，漏记的跨注意力贡献是 1，总分为 4。遗漏记录不会使原来的点积 2、1 自动变成 1.5、0.75；改变的是总量覆盖与可能使用的归一化分母。若要声称所有分数按同一比例变化，必须先定义“分数”究竟是原始点积还是归一化占比。</p>
+<p>更进一步，“消融后其他路径会补偿”涉及下游计算如何响应，不能从静态加法分解直接推出。可靠的结论是需要补齐路径；统一缩放和补偿幅度则要额外验证。</p>
+<h3 id="5-2-保留位置的均值更合理-但不保证在分布内">5.2 保留位置的均值更合理，但不保证在分布内</h3>
+<p>作者建议按位置替换：</p>
+<div class="math-display">$$
+x_{l,h,p}\leftarrow\mathbb E_{\mathrm{dataset}}[x_{l,h,p}],
+$$</div>
+<p>从而避免把视觉、语言和动作位置平均到一起（F5）。这个方向是合理的，尤其适合检查混合序列的基线偏差。</p>
+<p>但“均值只会替换为模型在该位置见过的值，因此消除两类偏差”过强。**构造反例：**某位置只出现过 $-1$ 和 $+1$，均值 0 就从未出现；在弯曲流形上也可能如此。按位置平均降低了模态混杂，却不能证明干预落在支持集内，更不能消除条件上下文不匹配。</p>
+<p>对松手案例，我会比较按模态／动作阶段条件化的均值与匹配样本替换，并检查不同基线下的头排序是否稳定。这是后续实验建议，原文没有做该比较。</p>
+<h3 id="5-3-闭环成功重要-但不能单独裁决机制解释">5.3 闭环成功重要，但不能单独裁决机制解释</h3>
+<p>§4 引述行为克隆中离散错误积累的 $J(\pi)-J(\pi^*)\leq\varepsilon H^2$ 形式，并讨论连续控制误差如何受动力学稳定性影响。对本论文最有用的含义是：<strong>解释只有被用来持续干预策略，才会通过环境反馈累积行为后果；一张静态归因图本身不会累积控制误差。</strong></p>
+<p>作者据此指出，rollout 成功不能独立证明电路解释正确，失败也不能独立否定解释。这个区分值得保留。但动作离散化并不自动使物理系统稳定，动作块也不天然保证按 $K$ 倍减小误差；还取决于重规划频率、每块实际执行长度及闭环动力学。本文没有控制这些因素。</p>
+<h2 id="6-insights-怎样把清单变成可检验的研究">6. Insights：怎样把清单变成可检验的研究？</h2>
+<p><strong>1. 比“某类架构能否解释”更好的单位，是“模型 × 行为变量 × 生成阶段”。</strong> 同一个 VLA 的文本读出可能不适合解释连续夹爪，却仍可用于检查其语言相关表示。论文把问题归到架构类型，方便入门；真正设计实验时，应明确解释哪一个动作维度、哪一个 token／去噪步、在什么条件下。这样分类表的分歧也能变成可核对的实现问题。</p>
+<p><strong>2. 只看第一个动作 token，会改变研究问题。</strong> 作者建议用第一动作 token 排除先前动作维度的条件依赖（A4）。这对隔离某些视觉到动作路径有帮助，但若夹爪对应后面的动作 token，改看第一个 token 就不再回答“何时松手”。更合适的实验是固定或反事实替换先前动作维度，再测夹爪输出，分别识别视觉信息与维度间协调的贡献。</p>
+<p><strong>3. 可以用同一候选组件连接三层证据。</strong> 先在独立轨迹上看动作预测，再在相同观测下施加受控扰动，最后评估连续干预的 rollout，同时保留随机／匹配范数对照。若 probe 很准但即时动作不变，首先怀疑相关信息未被策略使用；若即时变化符合预期但长程失败，再检查动力学放大、时机和恢复能力。这比把所有差异都压成一个“解释有效率”更能定位问题。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-VLA.html" title="MOC-VLA">MOC-VLA</a> — Topic：为动作表示、动作生成和闭环评估增加解释工具适用性检查。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — Topic：区分直接读出、可预测性、干预效果和机制忠实性。</li>
+<li><a class="wikilink" href="Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a> — 本文引用的跨模型实证研究；可对照逐 token 分析与 hook 范围如何影响闭环结论。</li>
+<li><a class="wikilink" href="Mechanistic-Finetuning-of-Vision-Language-Action-Models-via-Few-Shot-Demonstrations-动作回归选头.html" title="Mechanistic-Finetuning-of-Vision-Language-Action-Models-via-Few-Shot-Demonstrations-动作回归选头">Mechanistic-Finetuning-of-Vision-Language-Action-Models-via-Few-Shot-Demonstrations-动作回归选头</a> — 同样把动作相关性用于筛选头，但使用跨轨迹 k-NN 回归选择更新位置，目标是适配收益；不能与本文建议的线性 ProbeDLA 混为同一算法或同一证据。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
+<a class="paper-nav-link next" href="Mechanistic-Finetuning-of-Vision-Language-Action-Models-via-Few-Shot-Demonstrations-动作回归选头.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Mechanistic Finetuning of Vision-Language-Action Models via Few-Shot Demonstrations</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: goyal2026hitchhiker</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
