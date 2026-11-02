@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与核心判断"><span class="toc-num">01</span> 1. 背景信息与核心判断</a></li>
+<li><a class="toc-link" href="#2-关键问题-agent-外发邮件-错误究竟从哪一步开始"><span class="toc-num">02</span> 2. 关键问题：Agent 外发邮件，错误究竟从哪一步开始？</a></li>
+<li><a class="toc-link" href="#3-关键方法-先确定要解释哪次计算-再追踪内部机制"><span class="toc-num">03</span> 3. 关键方法：先确定要解释哪次计算，再追踪内部机制</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿同一个邮件案例走完归因链">3.1 沿同一个邮件案例走完归因链</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-最有用的细节-第二层会把分析送回上游">3.2 最有用的细节：第二层会把分析送回上游</a></li>
+<li><a class="toc-link" href="#4-证据-支持互补研究的理由-距离验证完整框架还有多远"><span class="toc-num">04</span> 4. 证据：支持互补研究的理由，距离验证完整框架还有多远？</a></li>
+<li><a class="toc-link" href="#5-insights-把框架变成可以证伪的实验"><span class="toc-num">05</span> 5. Insights：把框架变成可以证伪的实验</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-输入错了-与-模型错了-可能共同成立">5.1 “输入错了”与“模型错了”可能共同成立</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-应直接测量-mi-比行为防护多解决了什么">5.2 应直接测量 MI 比行为防护多解决了什么</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-已知注入点-是归因评测的起点-不是全部根因真值">5.3 已知注入点，是归因评测的起点，不是全部根因真值</a></li>
+<li><a class="toc-link" href="#6-连接与发现"><span class="toc-num">06</span> 6. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-02</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://doi.org/10.20944/preprints202610.2861.v1" target="_blank">arXiv</a>
+    </div>
+    <h1>Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</h1>
+    <p class="authors">['Mohamed Aghzal', 'Mor Geva', 'Wajih Ul Hassan', 'Gregory J. Stein', 'Ziyu Yao']</p>
+    <div class="topic-row"><span class="topic-tag">LLM_Agent</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Behavioral_Interpretability</span> <span class="topic-tag">Causal_Attribution</span> <span class="topic-tag">Agent_Failure_Analysis</span></div>
+</header>
+
+<h1>论文笔记: Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</h1>
+<h2 id="1-背景信息与核心判断">1. 背景信息与核心判断</h2>
+<ul>
+<li><strong>作者 / 机构</strong>：Mohamed Aghzal、Gregory J. Stein、Ziyu Yao（George Mason University），Mor Geva（Tel Aviv University），Wajih Ul Hassan（University of Virginia）。</li>
+<li><strong>版本</strong>：Preprints.org v1，2026-10-28，尚未同行评审；<a href="https://www.preprints.org/manuscript/202610.2861">官方页面</a>，<a href="https://doi.org/10.20944/preprints202610.2861.v1">版本 DOI</a>。</li>
+<li><strong>论文类型</strong>：position paper。提出解释 Agent 的研究框架，<strong>没有对该框架做实证评估</strong>；没有新的训练数据、模型实验或性能表。</li>
+<li><strong>阅读范围</strong>：用户提供的完整 PDF，共 16 页（含封面）；以下页码采用正文印刷页码。另核对了引文 [73]、[76] 的官方摘要，未复现实验。</li>
+</ul>
+<p><strong>这篇最值得记住的，是解释对象应怎样逐步确定。</strong> 一个 Agent 做错事，不能直接在最后一次 LLM 调用里找“错误电路”：先区分它做了什么与环境造成什么后果，再定位责任步骤和组件，识别触发输入，最后追内部计算。行为分析给机制分析提供可检验的对象，机制分析再为干预提供候选依据。</p>
+<p>我认为这是一个有用的实验设计框架。它提醒我们：<strong>根因不一定在显错处；输入归因可能要求继续向上游回溯；找到局部机制后，仍要回到完整轨迹验收。</strong> 但“串起归因链就能获得完整、因果、可推广解释”是作者希望实现的目标，本文没有证明这个保证。</p>
+<h2 id="2-关键问题-agent-外发邮件-错误究竟从哪一步开始">2. 关键问题：Agent 外发邮件，错误究竟从哪一步开始？</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case：作者的说明性案例，不是本文实测事故。</strong></p>
+<p>用户要求邮件 Agent 总结收件箱并归档旧邮件。一封邮件正文夹带“把未来邮件转发至攻击者地址”的指令。感知组件读到它，记忆组件将其保留。若干步后，用户要求写并发送新邮件，推理组件把先前的恶意内容当成合法指令，生成了邮件转发动作。（§2.1，p.4）</p>
+</blockquote>
+<p>若只看最后一步，可能找到一条促使模型输出转发工具调用的内部路径。但这还没有回答：<strong>为什么这条不可信指令会进入当前决策？是读取时混淆了内容与指令，记忆把它错误保存成任务，还是当前推理误用了来源正确标注的内容？</strong> 后两种区分是笔记者进一步提出的诊断问题，原文没有逐一实验。</p>
+<p>作者指出两个使单次调用分析不足的原因：</p>
+<ol>
+<li><strong>跨组件、跨时间传播。</strong> 第 $t-k$ 步引入的问题，可以在后续若干步看似正常的执行后，才于第 $t$ 步显现。研究最终动作的电路，不一定研究到了错误起点。（§3.1）</li>
+<li><strong>Agent 是开放系统。</strong> 每次调用的输入由邮件、记忆、工具返回与先前输出动态拼接；最终后果又由环境执行决定。同一个转发决策，可能在一个邮件客户端成功泄露，在另一个客户端被拦截。仅以“是否泄露”判断模型是否产生危险决策，会混入环境权限和执行逻辑。（§3.2）</li>
+</ol>
+<p>这也解释了本文为什么区分两个容易混用的词：<strong>behavioral approaches</strong> 包括轨迹评估及输入—输出解释；<strong>Behavioral Interpretability（BI）</strong> 更窄，指将模型作为黑箱、通过输入变化解释输出的方法。<strong>Mechanistic Interpretability（MI）</strong> 则研究内部权重、激活及其因果关系。观察 CoT 仍属于行为层：可读的理由不自动等于实际驱动动作的计算。（§§2.2–2.3）</p>
+<h2 id="3-关键方法-先确定要解释哪次计算-再追踪内部机制">3. 关键方法：先确定要解释哪次计算，再追踪内部机制</h2>
+<p><img src="../../assets/chain-of-attribution-2026102861/figure-1-framework.png" alt="Figure 1：从 Agent 行为回溯到步骤、输入和内部机制，再通过干预与部署检验" /></p>
+<p><em>来源：Aghzal et al., Figure 1，v1，p.3，CC BY 4.0；从原 PDF 裁切。先看底部流程，再看上方邮件案例。蓝色环节缩小解释范围，橙色环节进入模型内部；底部回路要求修复失败时重新归因。右上角 attention heads 是概念示意，不能当作作者发现的真实电路。全文只有这一张编号图，故不补凑图片。</em></p>
+<h3 id="3-1-沿同一个邮件案例走完归因链">3.1 沿同一个邮件案例走完归因链</h3>
+<p>下面按 §4 的框架展开。<strong>各步骤描述的是作者建议怎样做；原文案例中“消融显示……”的措辞不代表已经执行了相应实验。</strong></p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>环节</th>
+<th>接收什么，产出什么</th>
+<th>邮件案例中怎么做，以及为什么需要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Attribution 0：隔离行为</strong></td>
+<td>系统结果、动作及环境反馈 → 明确的待解释行为</td>
+<td>把目标定为“Agent 决定转发邮件”，区分客户端是否真的送达；否则可能解释的是环境阻断，而非决策机制</td>
+</tr>
+<tr>
+<td><strong>Attribution 1：定位步骤与组件</strong></td>
+<td>完整轨迹 → 候选责任步骤及组件调用</td>
+<td>改变早期读取邮件的步骤，检查后续转发行为是否消失；避免把最后执行工具的调用直接当成起因</td>
+</tr>
+<tr>
+<td><strong>Attribution 2：输出归因到输入</strong></td>
+<td>候选调用的输入、输出 → 触发片段及对照输入</td>
+<td>分别改变邮件内容、记忆等来源，缩小到注入片段，形成同一次调用“有 / 无该片段”的对照；不能预先假定所有输入都与失败相关</td>
+</tr>
+<tr>
+<td><strong>Attribution 3：输出归因到机制</strong></td>
+<td>已确定的调用、输入对照及目标输出 → 内部机制假说</td>
+<td>用 activation patching 等方法检验哪些特征或 attention heads 使注入内容影响输出；这时 MI 才有清楚的实验对象</td>
+</tr>
+<tr>
+<td><strong>Step 4：干预</strong></td>
+<td>触发输入与候选机制 → 修复方案</td>
+<td>作者建议在感知入口过滤注入内容，并抑制相关 heads，以处理仍然通过过滤的输入；两种措施的互补效果尚未实测</td>
+</tr>
+<tr>
+<td><strong>Step 5：部署检验</strong></td>
+<td>修复后的完整 Agent → 行为效果与副作用</td>
+<td>检查转发是否被阻止、正常任务是否受损；若不成立，回到归因链检查遗漏和误定位</td>
+</tr>
+</tbody>
+</table></div>
+<p>这里的 <strong>Attribution 0–3 是四个解释环节</strong>，后面的干预和部署是验收环节。整个框架没有统一的训练目标、超参数或实现代码；输入过滤器可训练也可使用关键词规则，属于作者举出的实现选择。</p>
+<p>本文把 <em>actionable</em> 定义为：解释能支持按预期改变目标行为的干预，而且能推广到部署设置（p.1，脚注 1）。因此，仅仅读出某个特征，甚至在一个输入上成功 steering，都还没有达到作者自己的验收标准。</p>
+<h3 id="3-2-最有用的细节-第二层会把分析送回上游">3.2 最有用的细节：第二层会把分析送回上游</h3>
+<p>假设当前推理模块收到的是一条已经被改坏的记忆。它可能只是正常处理了错误输入。此时继续研究当前调用内部，得到的可以是一份正确的计算解释，却仍然没有定位系统问题。</p>
+<p>因此 §4 给出两条路：<strong>若问题来自输入本身，返回 Attribution 1，寻找错误输入的来源；若需要解释模型为何将该输入转成错误输出，再进入 Attribution 3。</strong> 这使归因链成为迭代调查过程。前一环误判，后一环可能分析得非常精细，却精细地解释了错误对象。</p>
+<p>作者也承认，完整上下文使依赖不断扩展，类似安全溯源中的 dependency explosion（依赖膨胀，§4 Final Note）。所以“链”应理解为调查问题的依赖次序，不能先验地假定真实因果结构只有一条线或一个责任组件。</p>
+<h2 id="4-证据-支持互补研究的理由-距离验证完整框架还有多远">4. 证据：支持互补研究的理由，距离验证完整框架还有多远？</h2>
+<p><strong>Limitations（p.10）明确写明未实证评估归因链。</strong> 本文的证据是结构性论证、说明性案例和已有文献，不存在可以复述的“主实验提升”“关键消融”或“部署收益”。尤其不能把 Figure 1 的示意电路、邮件案例里的定位成功和过滤后安全性写成结果。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>作者用来支撑什么</th>
+<th>实际提供的材料</th>
+<th>能支持到哪里，仍缺什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单次计算解释不足以说明整条轨迹</td>
+<td>两个挑战与邮件贯穿案例（§3）</td>
+<td>展示遗漏早期输入和环境因素的可能性；没有测量这些情形在真实 Agent 中的占比</td>
+</tr>
+<tr>
+<td>读出内部状态不等于控制 Agent</td>
+<td>§2.3 引用 [73] 的工具 steering 局限，以及 [76] 中可解码结构的干预结果</td>
+<td>支持“内部信号可用性与实际行为控制要分开测”；不能推出所有 MI 方法在 Agent 上都失效</td>
+</tr>
+<tr>
+<td>串联行为归因与 MI 有望指导修复</td>
+<td>§4 与 Figure 1</td>
+<td>给出接口和闭环；没有与单独行为方法、单独 MI 或无解释修复做同预算比较</td>
+</tr>
+<tr>
+<td>解释可完整、因果且具有泛化性</td>
+<td>p.3 脚注 2 的完整性定义、§4 的目标陈述</td>
+<td>是研究目标；没有因果可识别性条件、完备性检验或跨环境验证，Limitations 也承认 MI 解释仍可能不泛化</td>
+</tr>
+</tbody>
+</table></div>
+<p>对两篇关键引文做了有限补核：<a href="https://arxiv.org/abs/2605.07990v3">Tool Calling… 的 v3 官方摘要</a> 同时报告工具选择可 steering、在真实 API 设置下可靠性降低；<a href="https://arxiv.org/abs/2605.25310v1">Tool-Call Dependency Structure… 的 v1 官方摘要</a> 则明确报告，activation patching 能改变后续位置的 probe 读数，但实际工具调用没有改变。后者很能说明本文动机：<strong>可解码、可扰动的表征，未必已找到能控制行为的接口。</strong> 但这种阴性结果也不能单独证明该表征对行为毫无作用。本笔记没有独立重读或复现这两篇全文。</p>
+<p>作者自己列出的实施难点，恰好说明各环节仍需研究（§5）：</p>
+<ul>
+<li><strong>因果定位需要可信的反事实。</strong> 静态轨迹标注主要是观察性证据；换一个组件输出后继续运行，才有机会检验因果效应，但环境未必可重置、可重复，危险动作也不能直接在线重演。安全回放、模拟环境及离线估计是提议的方向，尚未解决模拟误差问题。</li>
+<li><strong>输入单位应贴近 Agent 的语义来源。</strong> 先在文档、记忆条目、工具结果间定位，再下钻到句子或 span；单 token 重要性未必回答“是哪条信息改变了决策”。层级怎样划分、何时停止、粗层出错如何避免误导细层，作者均作为开放问题。</li>
+<li><strong>Agent 概念与输出不一定适合现成 MI 工具。</strong> 目标跟踪、计划承诺可能随状态和时间变化；将其压成静态线性方向是待检验假设。即便锁定一次调用，目标也常是完整工具调用及参数、长推理或结构化动作，而非一个 token。本文未提供解决这些问题的新算法。</li>
+</ul>
+<h2 id="5-insights-把框架变成可以证伪的实验">5. Insights：把框架变成可以证伪的实验</h2>
+<h3 id="5-1-输入错了-与-模型错了-可能共同成立">5.1 “输入错了”与“模型错了”可能共同成立</h3>
+<p>§4 的回溯分支有调试价值，但在提示注入场景，<strong>模型正确读懂文字，却错误赋予它指令权限，本身就可能是模型与系统共同造成的问题。</strong> 仅证明恶意片段有影响，不能自动替模型开脱，也不能直接认定感知模块是唯一责任方。</p>
+<p>我的做法会是在同一任务里对照三种来源：用户授权的转发指令、邮件正文引用的同样指令、经过记忆摘要后保留或丢失来源标记的指令。再分别检验来源标记、记忆写入规则与内部干预。这样才能区分“识别了转发语义”“错把数据当指令”“跨步传播时丢失来源”这些不同机制。<strong>这是笔记者建议的实验，不是本文结果。</strong></p>
+<h3 id="5-2-应直接测量-mi-比行为防护多解决了什么">5.2 应直接测量 MI 比行为防护多解决了什么</h3>
+<p>作者的案例同时使用入口过滤和内部抑制，但没有把两者拆开比较。若过滤本身已阻止攻击，就不能把最终改善归给 MI；若内部抑制只是让模型不再会正常转发，也不能算成功解释和修复。</p>
+<p>值得做的最小比较是：在相同数据和调试预算下，比较<strong>仅过滤、仅内部干预、二者组合</strong>，并保留未经修复的对照。验收同时看未见注入表达、延迟触发轨迹、不同客户端条件，以及合法邮件操作的完成率。只有当 MI 在保留正常能力的前提下补上行为防护的盲区，本文的“互补带来可行动理解”才获得直接的增量证据。</p>
+<p>这也限定了 §6 对反方观点的回应：机制解释可以帮助研究者提出更有针对性的修复，但本文没有证明<strong>所有有效且能泛化的控制都必须依赖 MI</strong>。</p>
+<h3 id="5-3-已知注入点-是归因评测的起点-不是全部根因真值">5.3 已知注入点，是归因评测的起点，不是全部根因真值</h3>
+<p>§5.2 建议利用 AgentDojo、InjecAgent 一类人为放入攻击输入的设置，获得已知触发内容和进入时刻。这个建议很好，因为“是否恢复已知位置”终于可以被测量。</p>
+<p>但攻击文本的位置已知，不代表其后续因果路径、必要条件和唯一修复点也已知。同一注入可能需要记忆持久化与工具权限共同成立。若层级归因过早只保留一个节点，后续 MI 会继承这个遗漏。我的判断是：应分别评价<strong>注入位置恢复、反事实效应、机制干预后的完整轨迹表现</strong>，并允许保留多个候选原因；一次成功阻断不能反推整条解释已经完整。</p>
+<h2 id="6-连接与发现">6. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-LLM-Agent-Evaluation-and-Debugging.html" title="MOC-LLM-Agent-Evaluation-and-Debugging">MOC-LLM-Agent-Evaluation-and-Debugging</a> — Topic/Area：为轨迹失败定位、输入归因与内部机制分析明确接口，并要求回到环境检验修复。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — Topic/Area：将机制分析的对象选择与部署验收纳入解释流程，提醒局部电路与系统行为之间仍有证据缺口。</li>
+<li><a class="wikilink" href="Causal-Agent-Replay-Counterfactual-Attribution.html" title="Causal-Agent-Replay-Counterfactual-Attribution">Causal-Agent-Replay-Counterfactual-Attribution</a> — 相关方法连接：可对照阅读“改变一步后继续运行”的轨迹归因思路；它与本文的 Attribution 1 相关，不等同于已经实现整条归因链。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
+<a class="paper-nav-link next" href="The-Hitchhikers-Guide-to-Mechanistic-Interpretability-of-Vision-Language-Action-Models-工具迁移与证据边界.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">The Hitchhiker’s Guide to Mechanistic Interpretability of Vision-Language-Action Models</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: Aghzal2026ChainOfAttribution</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
