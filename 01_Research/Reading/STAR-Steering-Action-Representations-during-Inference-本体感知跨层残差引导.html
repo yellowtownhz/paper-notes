@@ -926,7 +926,7 @@
 <li><a class="toc-link" href="#3-关键方法-保留跨层更新趋势-由运动状态决定保留多少"><span class="toc-num">03</span> 3. 关键方法：保留跨层更新趋势，由运动状态决定保留多少</a></li>
 <li><a class="toc-link toc-sub" href="#3-1-沿同一任务走一遍">3.1 沿同一任务走一遍</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-ema-平均的是-residual-update">3.2 EMA 平均的是 residual update</a></li>
-<li><a class="toc-link toc-sub" href="#3-3-机器人运动如何变成-betat">3.3 机器人运动如何变成 $\betat$？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-本体运动如何决定混合强度">3.3 本体运动如何决定混合强度？</a></li>
 <li><a class="toc-link" href="#4-数据与对照-冻结同一策略-比较推理方式"><span class="toc-num">04</span> 4. 数据与对照：冻结同一策略，比较推理方式</a></li>
 <li><a class="toc-link" href="#5-关键结果-平均收益存在-但高度依赖任务与参数"><span class="toc-num">05</span> 5. 关键结果：平均收益存在，但高度依赖任务与参数</a></li>
 <li><a class="toc-link toc-sub" href="#5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</a></li>
@@ -990,7 +990,7 @@ $$</div>
 <p>$n$ 是层数，$m_t^k$ 是本次前向传播中沿网络深度累积的更新趋势；同一次规划的各混合层共用 $\beta_t$。<strong>较大 $\beta_t$ 更重视之前层的更新，较小 $\beta_t$ 更重视当前层的更新</strong>；$\beta_t=0$ 时该式退回原更新。实际区间的下界大于零，因此“保守”通常是减弱干预，不是完全关闭。（§3.2，Eq. 2–5）</p>
 <p>一个值得补全的实现细节：公开代码以<strong>首个干预层自身的 $\Delta h$ 初始化 $m$</strong>，未干预的早层不积累动量。π₀.₅ 最后六层从第 13 层开始时，第 13 层只做初始化，输出不变，第 14 层起才真正混合。因此，“继承较早层”在实现中首先指混合区域内较早的层，并非另行抽取前十二层的对象方向。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/inference/star/controller_core_v2.py#L46-L64">代码：初始化与混合</a></p>
 <p>还要分清两种历史：<strong>残差动量跨网络层传播，本体统计跨机器人时间累积</strong>。公开 π₀.₅ 实现在每次 flow/denoising step 重新初始化残差动量，未把上一机器人时刻的隐状态带入当前时刻；它也不是直接平滑输出动作。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/models/pi0.py#L286-L334">代码：每次 flow step 重置</a></p>
-<h3 id="3-3-机器人运动如何变成-beta_t">3.3 机器人运动如何变成 $\beta_t$？</h3>
+<h3 id="3-3-本体运动如何决定混合强度">3.3 本体运动如何决定混合强度？</h3>
 <p>设 $d_t=p_t-p_{t-1}$ 为末端位移，$R_t$ 为姿态。作者只使用当前及过去观测构造四个量：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
