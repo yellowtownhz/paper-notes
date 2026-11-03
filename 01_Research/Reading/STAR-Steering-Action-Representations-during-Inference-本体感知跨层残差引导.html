@@ -922,18 +922,18 @@
     </div>
     <ul class="toc-list">
         <li><a class="toc-link" href="#1-背景信息与阅读范围"><span class="toc-num">01</span> 1. 背景信息与阅读范围</a></li>
-<li><a class="toc-link" href="#2-关键问题-对象信息进入了模型-是否留到了出动作的时候"><span class="toc-num">02</span> 2. 关键问题：对象信息进入了模型，是否留到了出动作的时候？</a></li>
+<li><a class="toc-link" href="#2-关键问题-模型对对象的响应-能否持续到动作生成"><span class="toc-num">02</span> 2. 关键问题：模型对对象的响应，能否持续到动作生成？</a></li>
 <li><a class="toc-link" href="#3-关键方法-保留跨层更新趋势-由运动状态决定保留多少"><span class="toc-num">03</span> 3. 关键方法：保留跨层更新趋势，由运动状态决定保留多少</a></li>
-<li><a class="toc-link toc-sub" href="#3-1-沿同一任务走一遍">3.1 沿同一任务走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-一次规划中-干预发生在哪里">3.1 一次规划中，干预发生在哪里？</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-ema-平均的是-residual-update">3.2 EMA 平均的是 residual update</a></li>
 <li><a class="toc-link toc-sub" href="#3-3-本体运动如何决定混合强度">3.3 本体运动如何决定混合强度？</a></li>
 <li><a class="toc-link" href="#4-数据与对照-冻结同一策略-比较推理方式"><span class="toc-num">04</span> 4. 数据与对照：冻结同一策略，比较推理方式</a></li>
 <li><a class="toc-link" href="#5-关键结果-平均收益存在-但高度依赖任务与参数"><span class="toc-num">05</span> 5. 关键结果：平均收益存在，但高度依赖任务与参数</a></li>
 <li><a class="toc-link toc-sub" href="#5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</a></li>
 <li><a class="toc-link toc-sub" href="#5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</a></li>
-<li><a class="toc-link toc-sub" href="#5-3-机制证据-对象依赖增强-attention-图却几乎不变">5.3 机制证据：对象依赖增强，attention 图却几乎不变</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-机制证据-对象敏感度提高-注意力图变化很小">5.3 机制证据：对象敏感度提高，注意力图变化很小</a></li>
 <li><a class="toc-link toc-sub" href="#5-4-实机与复现边界">5.4 实机与复现边界</a></li>
-<li><a class="toc-link" href="#6-insights-下一步怎样把机制归因做实"><span class="toc-num">06</span> 6. Insights：下一步怎样把机制归因做实？</a></li>
+<li><a class="toc-link" href="#6-insights-哪些实验能进一步检验机制解释"><span class="toc-num">06</span> 6. Insights：哪些实验能进一步检验机制解释？</a></li>
 <li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
     </ul>
 </nav>
@@ -952,9 +952,9 @@
     <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Visual_Grounding</span> <span class="topic-tag">Embodied_AI</span></div>
 </header>
 
-<p><strong>关键问题</strong>：VLA 中间层已经对任务对象产生响应，但这种响应到动作输出附近可能减弱。注意力图看起来合理，并不意味着对象信息仍充分影响动作。</p>
-<p><strong>关键做法</strong>：冻结模型，在末段网络层对 residual updates 做跨层指数移动平均（EMA），再用近期本体运动状态决定保留多少较早层的更新。平稳推进时多保留，旋转、接触变化或精细调整时少干预。</p>
-<p><strong>我的判断</strong>：STAR 提供了一个成本较低、值得复用的推理期干预模块。实验支持“有条件的后层混合可以提高成功率”，对“收益就是来自对象信息被保留”的归因仍需更强的对照；参数校准也比 training-free 的表述容易让人想到的更重要。</p>
+<p><strong>关键问题</strong>：VLA 的中间层已对任务对象产生响应，但响应可能在接近动作输出的后层减弱。仅凭注意力图，还无法判断对象信息是否充分影响了最终动作。</p>
+<p><strong>关键做法</strong>：冻结模型权重，在网络后段对残差更新（residual updates）做跨层指数移动平均（EMA），用近期本体运动状态调节较早层更新所占的权重。设计意图是：平稳推进时多保留已有更新方向，旋转、接触变化或精细调整时减弱干预。</p>
+<p><strong>我的判断</strong>：STAR 提供了一个成本较低、值得复用的推理期干预模块。实验支持有条件的后层混合能够提高成功率；要将收益归因于对象信息的保留，还需要更强的对照。方法虽不增加训练，效果仍明显依赖参数校准。</p>
 <h2 id="1-背景信息与阅读范围">1. 背景信息与阅读范围</h2>
 <ul>
 <li><strong>论文</strong>：<a href="https://arxiv.org/abs/2610.41009">STAR: Steering Action Representations during Inference</a>，arXiv:2610.41009v1，提交于 2026-10-29，预印本。</li>
@@ -962,22 +962,22 @@
 <li><strong>版本说明</strong>：arXiv 摘要页使用上面的标题；本次获取的 <a href="https://arxiv.org/pdf/2610.41009v1">PDF</a> 与 <a href="https://arxiv.org/html/2610.41009v1">HTML 全文</a> 标题为 <em>STAR: Steering Action Representations with Proprioception for VLA Inference</em>。</li>
 <li><strong>材料范围</strong>：阅读正文及附录 A/B，核对主表、方法公式和原图；补充检查<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">官方代码固定快照</a>。以下是论文阅读与代码静态检查，没有运行策略或复现实验。代码首页与论文存在结果、配置差异，见第 5 节。</li>
 </ul>
-<h2 id="2-关键问题-对象信息进入了模型-是否留到了出动作的时候">2. 关键问题：对象信息进入了模型，是否留到了出动作的时候？</h2>
-<p>沿用 Figure 2 的任务例子：<strong>把右侧摩卡壶放到炉灶上</strong>。模型需要根据语言选对对象，并将壶、炉灶和机械臂的当前关系转成动作。假如移除对象像素后，末层动作表征几乎不变，那么“模型看过对象”与“动作依赖对象”之间就可能存在缺口。这里是用论文任务解释问题，不是声称论文展示了该任务的一条完整失败轨迹。</p>
-<p>作者把任务对象区域替换为整张图像的平均 RGB，比较遮挡前后的 action hidden state：</p>
+<h2 id="2-关键问题-模型对对象的响应-能否持续到动作生成">2. 关键问题：模型对对象的响应，能否持续到动作生成？</h2>
+<p>沿用 Figure 2 的任务例子：<strong>把右侧摩卡壶放到炉灶上</strong>。模型需要根据语言选对对象，再依据壶、炉灶与机械臂的当前关系生成动作。如果遮挡对象后，末层动作表征几乎不变，就需要追问：对象虽然出现在输入中，是否真正影响了动作？这里借用论文任务说明问题，并不表示论文展示了该任务的一条完整失败轨迹。</p>
+<p>作者将任务对象区域替换为整张图像的平均 RGB 值，比较遮挡前后的动作隐状态（action hidden state）：</p>
 <div class="math-display">$$
 \mathcal A^k(m_o)=
 \frac{\|h^k_{\varnothing}-h^k_{m_o}\|_2}
 {\|h^k_{\varnothing}\|_2}.
 $$</div>
-<p>$k$ 是网络层，$m_o$ 是对象遮挡，$\varnothing$ 是原始图像；其他输入保持不变。这个 <strong>object-awareness score 测量对象遮挡引起的相对表征变化</strong>。它不需要训练一个语义探针，也不能直接解释成“模型理解对象的准确率”。（§1、Appendix A.2，Eq. 15）</p>
+<p>$k$ 是网络层，$m_o$ 是对象遮挡，$\varnothing$ 是原始图像；其他输入保持不变。这个 <strong>object-awareness score 衡量遮挡对象引起的隐状态相对变化</strong>，无需额外训练语义探针。它反映对象敏感度，不能直接解释为“模型理解对象的准确率”。（§1、Appendix A.2，Eq. 15）</p>
 <p><img src="../../assets/papers/STAR-2610.41009/fig1-motivation.png" alt="Figure 1：对象遮挡、逐层对象敏感度与任务结果" /></p>
 <p><em>来源：<a href="https://arxiv.org/html/2610.41009v1#S1.F1">原文 Figure 1</a>。重点看 (c)：π₀.₅ 的对象敏感度在中后层较高，到最末层下降，STAR 缓解了下降。此处是案例曲线，不要把读图数值与 Figure 3 的汇总均值混用。</em></p>
-<p>作者据此提出 late-layer grounding gap。我更愿意将其理解为一个<strong>需要干预检验的诊断线索</strong>：归一化距离下降，也可能涉及隐状态尺度变化或对表示的重新编码，尚不足以证明对象语义被“遗忘”。STAR 的价值在于进一步检验：改变这部分表征的更新方式，能否改善闭环执行。</p>
+<p>作者将这一现象称为 late-layer grounding gap。我更愿意把它视为<strong>需要通过干预检验的诊断线索</strong>：归一化距离下降也可能源于隐状态尺度变化或表征的重新编码，尚不足以证明对象语义被“遗忘”。STAR 进一步检验了一个问题：改变后层表征的更新方式，能否改善闭环执行？</p>
 <h2 id="3-关键方法-保留跨层更新趋势-由运动状态决定保留多少">3. 关键方法：保留跨层更新趋势，由运动状态决定保留多少</h2>
-<h3 id="3-1-沿同一任务走一遍">3.1 沿同一任务走一遍</h3>
-<p>在摩卡壶任务的一次规划中，图像、指令和当前本体状态进入原 VLA；前面网络层照常计算。与此同时，近期末端位置与姿态用来计算一个混合系数 $\beta_t$。到最后三分之一层，每层原本要加进隐状态的更新，都与前一层积累的更新趋势混合；最后由原动作头生成 action chunk，执行其中一段后重新观测。</p>
-<p>当机械臂连续向壶移动时，作者希望较强地保留已有更新方向；转动末端、改变接触或局部调整时，则更多服从当前层的新更新。这是运动状态启发式，<strong>系统并没有显式识别“正在抓壶”或“已经接触炉灶”的任务阶段标签</strong>。（§3.1–3.6）</p>
+<h3 id="3-1-一次规划中-干预发生在哪里">3.1 一次规划中，干预发生在哪里？</h3>
+<p>在摩卡壶任务的一次规划中，图像、指令和当前本体状态输入原 VLA，前面的网络层照常计算。近期末端位置与姿态用于计算混合系数 $\beta_t$。进入最后三分之一层后，模型将当前层的残差更新与此前各干预层累积的更新混合，再加到隐状态上；首个干预层只负责初始化。最后，原动作头生成动作块（action chunk），执行其中一段后重新观测。</p>
+<p>作者希望机械臂连续向壶移动时，较多保留已有更新方向；转动末端、改变接触或局部调整时，则提高当前层新更新的权重。这是一种依据运动状态设定的启发式规则，<strong>系统没有显式识别“正在抓壶”或“已经接触炉灶”等任务阶段</strong>。（§3.1–3.6）</p>
 <h3 id="3-2-ema-平均的是-residual-update">3.2 EMA 平均的是 residual update</h3>
 <p>令 $\Delta h_t^k$ 为第 $k$ 层产生的残差更新。原计算为 $h_t^k=h_t^{k-1}+\Delta h_t^k$；STAR 在 $k&gt;p$ 时改成：</p>
 <div class="math-display">$$
@@ -988,8 +988,8 @@ h_t^k&amp;\leftarrow h_t^{k-1}+m_t^k.
 \end{aligned}
 $$</div>
 <p>$n$ 是层数，$m_t^k$ 是本次前向传播中沿网络深度累积的更新趋势；同一次规划的各混合层共用 $\beta_t$。<strong>较大 $\beta_t$ 更重视之前层的更新，较小 $\beta_t$ 更重视当前层的更新</strong>；$\beta_t=0$ 时该式退回原更新。实际区间的下界大于零，因此“保守”通常是减弱干预，不是完全关闭。（§3.2，Eq. 2–5）</p>
-<p>一个值得补全的实现细节：公开代码以<strong>首个干预层自身的 $\Delta h$ 初始化 $m$</strong>，未干预的早层不积累动量。π₀.₅ 最后六层从第 13 层开始时，第 13 层只做初始化，输出不变，第 14 层起才真正混合。因此，“继承较早层”在实现中首先指混合区域内较早的层，并非另行抽取前十二层的对象方向。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/inference/star/controller_core_v2.py#L46-L64">代码：初始化与混合</a></p>
-<p>还要分清两种历史：<strong>残差动量跨网络层传播，本体统计跨机器人时间累积</strong>。公开 π₀.₅ 实现在每次 flow/denoising step 重新初始化残差动量，未把上一机器人时刻的隐状态带入当前时刻；它也不是直接平滑输出动作。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/models/pi0.py#L286-L334">代码：每次 flow step 重置</a></p>
+<p>公开代码以<strong>首个干预层自身的 $\Delta h$ 初始化 $m$</strong>，此前未干预的层不积累动量。π₀.₅ 最后六层从第 13 层开始时，第 13 层只做初始化，输出不变，第 14 层起才真正混合。因此，“继承较早层”在实现中首先指混合区域内较早的层，并非另行抽取前十二层的对象方向。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/inference/star/controller_core_v2.py#L46-L64">代码：初始化与混合</a></p>
+<p>这里有两种不同的累积过程：<strong>残差动量沿网络深度累积，本体统计随机器人运行时间累积</strong>。公开 π₀.₅ 实现在每个 flow/denoising step 重新初始化残差动量，因此不会将上一机器人时刻的隐状态带入当前时刻。STAR 平滑的是层间残差更新，没有直接对输出动作做时间平滑。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/models/pi0.py#L286-L334">代码：每次 flow step 重置</a></p>
 <h3 id="3-3-本体运动如何决定混合强度">3.3 本体运动如何决定混合强度？</h3>
 <p>设 $d_t=p_t-p_{t-1}$ 为末端位移，$R_t$ 为姿态。作者只使用当前及过去观测构造四个量：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
@@ -1033,9 +1033,9 @@ r_t&amp;=w_cz_t^c+w_vz_t^v+w_jz_t^j+w_\omega z_t^\omega,\\
 \beta_t&amp;=\beta_{\min}+(\beta_{\max}-\beta_{\min})\operatorname{sigmoid}(\kappa\hat r_t).
 \end{aligned}
 $$</div>
-<p>$\mathcal R_t$ 也只包含当前之前的分数；$w_c,w_v$ 为正，$w_j,w_\omega$ 为负，$\kappa$ 控制响应的陡峭程度。两级归一化让调度依赖近期相对变化，而非一套通用的绝对速度阈值；它也意味着“直线运动就一定取大 $\beta$”只是直觉，实际值取决于历史分布。（§3.3–3.6，Eq. 6–14）</p>
-<p>两处术语要小心：文中的 <strong>causal 是不看未来的时间因果性</strong>，不是证明这些信号因果决定了任务阶段；表格称 $j_t$ 为 jerk，但公式是位置的二阶差分范数，正文也称其为 acceleration-like change，并非严格的三阶时间导数。</p>
-<p>STAR 不训练新方向、不增加对象检测器，也不在部署时做对象遮挡；遮挡和梯度只用于诊断。与 DTP 根据 attention 剪视觉 token 相比，它直接修改残差更新；与作者认为最接近的 DAMO 相比，新增重点是机器人本体状态对干预强度的调节。（§2.2–2.3、§4.3）</p>
+<p>$\mathcal R_t$ 也只包含当前之前的分数；$w_c,w_v$ 为正，$w_j,w_\omega$ 为负，$\kappa$ 控制响应的陡峭程度。两级归一化使调度依据近期运动的相对变化，而非通用的绝对速度阈值。即使同为直线运动，$\beta$ 也会随历史分布变化，不能仅凭运动方向判断其大小。（§3.3–3.6，Eq. 6–14）</p>
+<p>两处术语需要限定含义。文中的 <strong>causal 指计算只使用当前及过去观测</strong>，不代表这些信号与任务阶段之间的因果关系已经得到证明。表格将 $j_t$ 称为 jerk，但其公式实际是位置的二阶差分范数，正文也称其为 acceleration-like change，与严格意义上的三阶时间导数不同。</p>
+<p>STAR 直接混合模型自身的残差更新，由本体状态调节强度，无需训练新方向或增加对象检测器。对象遮挡与梯度分析只用于诊断，不参与部署时的干预。DTP 根据注意力剪除视觉 token；STAR 的干预位置则是残差更新。相较于作者认为最接近的 DAMO，STAR 主要增加了基于机器人本体状态的强度调节。（§2.2–2.3、§4.3）</p>
 <h2 id="4-数据与对照-冻结同一策略-比较推理方式">4. 数据与对照：冻结同一策略，比较推理方式</h2>
 <p>主实验比较 Native、DTP 与 STAR，权重保持冻结。SimplerEnv 上使用 GR00T-N1.5 和 OpenVLA-7B；LIBERO-PRO 上使用 GR00T-N1.5 和 π₀.₅，并非三个模型在两个基准上做了完整交叉。（§4.1–4.3）</p>
 <ul>
@@ -1045,7 +1045,7 @@ $$</div>
 </ul>
 <h2 id="5-关键结果-平均收益存在-但高度依赖任务与参数">5. 关键结果：平均收益存在，但高度依赖任务与参数</h2>
 <h3 id="5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</h3>
-<p>下表按论文 Tables 1–2 记录，成功率单位为 %，差值为百分点：</p>
+<p>下表数据来自论文 Tables 1–2，成功率单位为 %，差值单位为百分点：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1087,11 +1087,11 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>四行已舍入均值的增益再等权平均为 <strong>3.95 个百分点</strong>，与摘要的“4.0”相符；这是按模型—基准组合的汇总理解，不是所有评估 episode 的统一加权成功率。</p>
-<p>π₀.₅ 的 task split 从 <strong>6.8% → 18.8%</strong>，object 从 <strong>66.2% → 67.0%</strong>；但 lan <strong>92.8% → 92.6%</strong>、swap <strong>9.2% → 7.2%</strong>、env <strong>65.8% → 65.0%</strong> 都下降。收益主要来自 task split，不能写成“每类扰动都更鲁棒”。而且困难的空间布局和任务变化仍远未解决。（Table 2）</p>
+<p>对表中四组已舍入均值的增益做等权平均，得到 <strong>3.95 个百分点</strong>，与摘要的“4.0”相符。这个汇总按模型—基准组合等权计算，不代表汇集全部评估 episode 后得到的成功率增益。</p>
+<p>π₀.₅ 在任务目标变化子集（task split）上的成功率从 <strong>6.8% → 18.8%</strong>，object 从 <strong>66.2% → 67.0%</strong>；lan <strong>92.8% → 92.6%</strong>、swap <strong>9.2% → 7.2%</strong>、env <strong>65.8% → 65.0%</strong> 则均下降。平均增益主要来自 task split，尚不能据此认为模型对每类扰动都更鲁棒。空间布局和任务目标变化仍然困难。（Table 2）</p>
 <p>SimplerEnv 上 STAR 的两模型平均值优于 DTP，但也不是逐任务占优：OpenVLA 的 Move Near 为 <strong>61.7%</strong>，低于 DTP 的 <strong>69.0%</strong>。（Table 1）</p>
 <h3 id="5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</h3>
-<p>消融均在 OpenVLA / SimplerEnv 上进行，以下保留能改变判断的结果：</p>
+<p>消融均在 OpenVLA / SimplerEnv 上进行，关键结果如下：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1128,17 +1128,17 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>仅保留“平稳推进”的两个正向信号为 29.3%，仅保留突变/旋转信号为 33.2%，无本体证据版本为 27.8%（Table 3）。这些结果支持按运动状态限制干预，而不是简单地一直保留前层更新。作者只对 Table 4 明确说平均了八次评估，表中没有报告方差或置信区间。</p>
-<p><strong>最值得警惕的是调参敏感性</strong>：完整方法高于 Native，但一个不合适的动态区间可以低于 Native。论文给出不同模型/基准的参数表，没有充分说明独立调参集与参数选择过程。因此 training-free 不应被读成 tuning-free。（Table 7）</p>
-<h3 id="5-3-机制证据-对象依赖增强-attention-图却几乎不变">5.3 机制证据：对象依赖增强，attention 图却几乎不变</h3>
-<p>Appendix A 的诊断仅使用 <strong>π₀.₅ / LIBERO-PRO</strong>。作者增加两类控制遮挡：相同像素数的随机散点，以及面积相近的背景矩形；控制响应取两者较大值。这样可以检查变化是否只是对任意图像破坏更敏感。</p>
+<p>仅保留“平稳推进”的两个正向信号为 29.3%，仅保留突变/旋转信号为 33.2%，无本体证据版本为 27.8%（Table 3）。这些结果支持根据运动状态调节干预强度，持续保留前层更新并不足够。作者仅对 Table 4 明确说明结果取八次评估的平均值，表中未报告方差或置信区间。</p>
+<p><strong>参数校准会直接影响收益</strong>：完整方法的成功率高于 Native，但选择不合适的动态区间后，成功率可能反而低于 Native。论文列出了不同模型/基准的参数，却未充分说明独立调参集与参数选择过程。因此，使用 STAR 仍需考虑参数校准；training-free 不等于 tuning-free。（Table 7）</p>
+<h3 id="5-3-机制证据-对象敏感度提高-注意力图变化很小">5.3 机制证据：对象敏感度提高，注意力图变化很小</h3>
+<p>Appendix A 的诊断仅使用 <strong>π₀.₅ / LIBERO-PRO</strong>。作者增加两类控制遮挡：相同像素数的随机散点，以及面积相近的背景矩形；控制响应取两者较大值。这用于检查敏感度变化是否针对任务对象，还是对任意图像破坏都有类似响应。</p>
 <p><img src="../../assets/papers/STAR-2610.41009/fig3-object-awareness.png" alt="Figure 3：对象遮挡对照与注意力诊断" /></p>
 <p><em>来源：<a href="https://arxiv.org/html/2610.41009v1#A1.F3">原文 Figure 3</a>。看 (b) 的对象/控制差别，再看 (c)(d) 近似不变的 attention；这两组现象共同说明，attention 可视化不足以观察这次干预的效果。</em></p>
-<p>在第 18 层，平均对象敏感度从 <strong>0.056 → 0.087</strong>，作者报告增益比 <strong>1.554</strong>；对象敏感度与控制敏感度的比值从 <strong>1.806 → 1.977</strong>。这比单独画一条对象遮挡曲线更有说服力，但两个比值测的东西不同：前者是相对 Native 的增强，后者是相对控制区域的选择性。（Appendix A.2）</p>
+<p>在第 18 层，平均对象敏感度从 <strong>0.056 → 0.087</strong>，作者报告增益比 <strong>1.554</strong>；对象敏感度与控制敏感度的比值从 <strong>1.806 → 1.977</strong>。相比单独的对象遮挡曲线，这组对照更能说明响应是否具有对象选择性。两个比值回答的问题不同：前者衡量相对 Native 的敏感度增幅，后者衡量对对象区域相对于控制区域的选择性。（Appendix A.2）</p>
 <p>作者还把 action chunk 的平均动作投影到其停止梯度的自身方向，对输入像素求梯度，再算对象区域占全图梯度幅值的比例。Figure 4 显示五个 split 的这个比例均提高，配对差值多数为正；Figure 5 展示定性热图。这提供了从隐状态到最终动作的补充证据，但测到的是<strong>局部梯度的空间分配</strong>，不能单独证明动作正确、完成长时任务或具备更好的对象语义。（Appendix A.3，Eq. 19–21）</p>
-<p>STAR 没有直接编辑 attention 矩阵；也不能据此说 attention 严格不变，因为前层隐状态的修改仍可能影响后层注意力。原文实际观察是图像相似、对象区域 attention mass 曲线接近。（Appendix A.4）</p>
+<p>原文观察到，干预前后的注意力图相似，对象区域 attention mass 曲线接近。STAR 的确没有直接编辑注意力矩阵，但前层隐状态的修改仍可能影响后层注意力，因此这些结果只支持“变化很小”，不支持“严格不变”。（Appendix A.4）</p>
 <h3 id="5-4-实机与复现边界">5.4 实机与复现边界</h3>
-<p>实机任务是把梨放入碗中。作者先收集 <strong>100 条 episodes</strong>，微调 π₀.₅ <strong>15,000 steps</strong>；Native 与 STAR 共用该 checkpoint。因此 STAR 本身不额外训练，但实机策略不是未经任务适配的零样本模型。Native 成功 <strong>17/40（42.5%）</strong>，STAR <strong>19/40（47.5%）</strong>，只多成功两次，应视为小规模正向迹象。单张 RTX 3090 上额外推理延迟为 <strong>3.3%</strong>，未报告绝对延迟，不能外推到所有架构。（§4.5、Table 6）</p>
+<p>实机任务是把梨放入碗中。作者先收集 <strong>100 条轨迹（episodes）</strong>，用来微调 π₀.₅ <strong>15,000 steps</strong>；Native 与 STAR 共用该 checkpoint。STAR 本身无需额外训练，但这项实机评估使用的是已完成任务适配的策略。Native 成功 <strong>17/40（42.5%）</strong>，STAR <strong>19/40（47.5%）</strong>，仅多成功两次，可视为小规模的正向迹象。单张 RTX 3090 上额外推理延迟为 <strong>3.3%</strong>；论文未报告绝对延迟，这一开销比例也不能直接外推到其他架构。（§4.5、Table 6）</p>
 <p>截至本次阅读，<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">官方仓库</a>只发布 OpenPI π₀.₅ / LIBERO-PRO 实现，未包含 OpenVLA、GR00T-N1.5、SimplerEnv 或实机实现。还有两处明确不一致：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
@@ -1161,12 +1161,12 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>两者都给出 $\beta\in[0.25,0.55]$、最后六个 action-expert 层、10 Hz 环境与执行五步再规划。上表冲突已核实，<strong>哪一套配置生成哪组结果仍是 [?]</strong>，不替作者补上解释。复现时应锁定版本，分别记录论文配置、README 配置与配置类默认值。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/README.md#L113-L128">README 配置原文</a></p>
-<h2 id="6-insights-下一步怎样把机制归因做实">6. Insights：下一步怎样把机制归因做实？</h2>
-<p><strong>1. 对象依赖提高是中间指标，不是成功率的充分条件。</strong> Figure 4 的梯度比例在五个 split 都上升，但 Table 2 中 π₀.₅ 有三个 split 下降。这种不一致说明“让动作更多依赖对象像素”和“利用对象信息做对动作”需要分开评估。一个可检验的后续实验，是在同一批初始状态上配对记录敏感度变化与 rollout 成败，比较收益集中在视觉选物、空间定位还是接触执行阶段；不能仅凭 split 均值完成因果归因。</p>
-<p><strong>2. 动态调度的价值，需要与相同强度分布的无状态对照比较。</strong> 当前消融证明选定的动态策略胜过若干固定值，却尚未排除收益主要来自 $\beta$ 的取值分布。可以打乱同一条轨迹的 $\beta_t$ 时间顺序，或移用另一条轨迹的序列，保持范围与边际分布接近；若真实对齐的本体调度仍更好，才更有力地说明“何时干预”而非仅“平均干预多强”贡献了收益。</p>
-<p><strong>3. 跨层平滑也可能起到一般正则化作用。</strong> STAR 的更新方向没有经过对象选择，遮挡诊断也不能完全排除隐状态尺度的影响。可以加入等范数随机方向、范数保持的 residual 平滑等对照，同时分开报告对象遮挡距离的分子与隐状态范数。若只有保留特定较早层方向才能改善对象选择性与成功率，才更接近作者提出的“携带对象相关方向”机制。当前结果已经支持模块有用，但尚未将这个解释与一般更新平滑充分区分。</p>
-<p>实际使用还有明确前提：能够访问中间隐状态，有连续且可信的末端本体观测，且目标模型确实出现相似的末层敏感度下降。作者也明确指出黑盒策略无法直接应用，双臂等更复杂具身形式尚未验证。（§5 Limitations）</p>
+<p>两者都给出 $\beta\in[0.25,0.55]$、最后六个 action-expert 层、10 Hz 环境与执行五步再规划。上表差异已核实，但<strong>哪一套配置对应哪组结果仍是 [?]</strong>，现有材料尚未给出解释。复现时应锁定版本，分别记录论文配置、README 配置与配置类默认值。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/README.md#L113-L128">README 配置原文</a></p>
+<h2 id="6-insights-哪些实验能进一步检验机制解释">6. Insights：哪些实验能进一步检验机制解释？</h2>
+<p><strong>1. 对象依赖提高是中间指标，不是成功率的充分条件。</strong> Figure 4 的梯度比例在五个 split 都上升，但 Table 2 中 π₀.₅ 有三个 split 下降。这种差异说明，对对象像素更敏感与利用对象信息生成正确动作，需要分开评估。一个可检验的后续实验，是在同一批初始状态上配对记录敏感度变化与 rollout 成败，比较收益集中在视觉选物、空间定位还是接触执行阶段；不能仅凭 split 均值完成因果归因。</p>
+<p><strong>2. 动态调度的价值，需要与相同强度分布的无状态对照比较。</strong> 当前消融证明选定的动态策略胜过若干固定值，却尚未排除收益主要来自 $\beta$ 的取值分布。可以打乱同一条轨迹的 $\beta_t$ 时间顺序，或移用另一条轨迹的序列，保持范围与边际分布接近；若按真实运动时序对齐的调度仍更好，就能更有力地支持：收益来自干预时机与运动状态的匹配，而不只是干预强度的分布。</p>
+<p><strong>3. 跨层平滑也可能起到一般正则化作用。</strong> STAR 的更新方向没有经过对象选择，遮挡诊断也不能完全排除隐状态尺度的影响。可以加入等范数随机方向、范数保持的 residual 平滑等对照，同时分开报告对象遮挡距离的分子与隐状态范数。若只有保留特定较早层方向才能改善对象选择性与成功率，才更能支持作者提出的“携带对象相关方向”这一机制解释。当前结果已支持模块的有效性，但还不足以区分该机制与一般更新平滑的作用。</p>
+<p>实际使用需要满足几个前提：能够访问中间隐状态，具备连续且可信的末端本体观测，并确认目标模型出现了相似的末层敏感度下降。作者也明确指出黑盒策略无法直接应用，双臂等更复杂具身形式尚未验证。（§5 Limitations）</p>
 <h2 id="7-连接与发现">7. 连接与发现</h2>
 <ul>
 <li><a class="wikilink" href="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制.html" title="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制">Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制</a>：同样根据当前状态调整内部干预；该文用目标特征 observer 的误差，STAR 用本体运动动态调节网络自身更新的混合。</li>
