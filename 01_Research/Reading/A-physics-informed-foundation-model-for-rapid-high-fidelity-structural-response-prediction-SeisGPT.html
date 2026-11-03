@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：SeisGPT——把建筑振动规律写进响应预测模型</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：SeisGPT——把建筑振动规律写进响应预测模型</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景与核心判断"><span class="toc-num">01</span> 1. 背景与核心判断</a></li>
+<li><a class="toc-link" href="#2-从一个真实案例看问题-只有一层传感器-怎样知道整栋楼在怎么动"><span class="toc-num">02</span> 2. 从一个真实案例看问题：只有一层传感器，怎样知道整栋楼在怎么动？</a></li>
+<li><a class="toc-link" href="#3-方法-结合力学先验和观测-在结构相关的谱空间传播"><span class="toc-num">03</span> 3. 方法：结合力学先验和观测，在结构相关的谱空间传播</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着振动台案例走完数据流">3.1 沿着振动台案例走完数据流</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-核心创新-让-token-混合遵循结构相关的振动形式">3.2 核心创新：让 token 混合遵循结构相关的振动形式</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-时间窗口和训练方式决定-预测-的含义">3.3 时间窗口和训练方式决定“预测”的含义</a></li>
+<li><a class="toc-link" href="#4-数据-覆盖大量建筑-但主体仍是仿真标签"><span class="toc-num">04</span> 4. 数据：覆盖大量建筑，但主体仍是仿真标签</a></li>
+<li><a class="toc-link" href="#5-实验-哪些证据真正支持方法"><span class="toc-num">05</span> 5. 实验：哪些证据真正支持方法？</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-大规模合成预训练确实帮助迁移">5.1 大规模合成预训练确实帮助迁移</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-sdg-的优势是精度与计算成本的组合-但消融口径仍有疑点">5.2 SDG 的优势是精度与计算成本的组合，但消融口径仍有疑点</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-跨体系迁移成立到什么程度">5.3 跨体系迁移成立到什么程度？</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-回到案例-更接近实测-来自-先验-观测-的重构">5.4 回到案例：更接近实测，来自“先验＋观测”的重构</a></li>
+<li><a class="toc-link" href="#6-insights-可借鉴什么-复现前先解决什么"><span class="toc-num">06</span> 6. Insights：可借鉴什么，复现前先解决什么？</a></li>
+<li><a class="toc-link" href="#7-来源与阅读边界"><span class="toc-num">07</span> 7. 来源与阅读边界</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://doi.org/10.1038/s41467-026-75508-5" target="_blank">原文</a>
+    </div>
+    <h1>论文笔记：SeisGPT——把建筑振动规律写进响应预测模型</h1>
+    <p class="authors">Shiqiao Meng, Ying Zhou, Bingxu Liao, Mushi Chang, Tianshu Zhang, Abouzar Jafari, Abderrahim Djerrad</p>
+    <div class="topic-row"><span class="topic-tag">AI4Engineering</span> <span class="topic-tag">Physics_Informed_Learning</span> <span class="topic-tag">Structural_Dynamics</span> <span class="topic-tag">Foundation_Models</span></div>
+</header>
+
+<h2 id="1-背景与核心判断">1. 背景与核心判断</h2>
+<p><strong>论文</strong>：<em>A physics-informed foundation model for rapid high-fidelity structural response prediction</em>，同济大学土木工程防灾减灾全国重点实验室，发表于 <strong>Nature Communications 17, 8884（2026-07-11）</strong>。<a href="https://www.nature.com/articles/s41467-026-75508-5">正式全文</a></p>
+<p>SeisGPT 学习的是：给定建筑结构信息和外部激励，快速计算各楼层的非线性位移或加速度时程。它先计算一个便宜的线性力学响应，再让网络结合质量、刚度和结构相关的谱传播，逼近昂贵的非线性有限元（FE）分析。稀疏传感器版本 SeisGPT-R 则进一步用实测响应校正预测。</p>
+<p><strong>我认为最值得借鉴的是“可计算的力学先验＋跨建筑预训练＋观测校正”这套分工。</strong> 合成预训练向真实建筑有限元模型迁移的证据较强；“普适结构基础模型”“实测精度全面超过有限元”则超出了当前证据。还有一个复现前必须解决的问题：本次下载的公开代码与正式论文的核心解码器描述不一致，具体见第 6 节。</p>
+<p>阅读范围：期刊正文、全部主表、关键原图，补充材料中的架构、训练、消融、IDA 与振动台实验细节，以及作者公开代码的静态检查；<strong>未运行模型、加载权重或复现实验</strong>。下文的性能均为作者报告。</p>
+<h2 id="2-从一个真实案例看问题-只有一层传感器-怎样知道整栋楼在怎么动">2. 从一个真实案例看问题：只有一层传感器，怎样知道整栋楼在怎么动？</h2>
+<p>论文 Fig. 6 使用了一座 <strong>43 层建筑的 1∶10 缩尺振动台模型</strong>。输入地震后，研究者希望知道各楼层的位移；实际重构时只给 SeisGPT-R <strong>第 11 层的位移测量和台面激励</strong>，其余已布置传感器的位置用于评估。</p>
+<p>常规有限元方法先建立结构和材料模型，再逐时刻求解动力平衡与非线性本构。作者报告，这个复杂试件的每条地震分析需要约一至两天；而且 Fig. 6f 中，有限元模型（FEM）计算的屋顶位移与测量有明显幅值偏差。计算精细不代表模型参数完全对应真实试件。</p>
+<p>纯序列网络也有另一道难题：同一条地震波作用于不同建筑，结果取决于楼层质量、刚度分布和结构耦合。仅从地震波学习一个固定映射，难以同时处理框架、框架—剪力墙和剪力墙建筑。</p>
+<p>所以本文实际回答了两个相连的问题：<strong>如何让一个预训练模型随建筑结构改变响应规律；如何再用少量观测修正结构模型与真实对象之间的偏差。</strong> 后者是传感器辅助重构任务，评估时要与无传感器的响应计算区分。</p>
+<h2 id="3-方法-结合力学先验和观测-在结构相关的谱空间传播">3. 方法：结合力学先验和观测，在结构相关的谱空间传播</h2>
+<h3 id="3-1-沿着振动台案例走完数据流">3.1 沿着振动台案例走完数据流</h3>
+<p>对上面的试件，处理流程是：</p>
+<ol>
+<li><strong>从有限元模型提取楼层质量和刚度。</strong> 楼层质量集总为 $M$；对各楼层依次施加单位水平力，收集位移，再通过满足对称性约束的最小二乘拟合 $KU=F$，得到有效刚度矩阵 $K$。因此，输入准备仍需要结构建模，不能只凭楼层数使用模型。</li>
+<li><strong>SDR 计算线性粗响应。</strong> Simplified Dynamic Response 模块用简化多自由度系统、Rayleigh 阻尼和 Newmark 积分，快速产生各楼层的响应先验。这个数值模块没有负责求解目标中的完整弹塑性行为。</li>
+<li><strong>图网络编码楼层差异。</strong> 激励与 SDR 时序先嵌入特征空间；每层楼作为一个节点，质量—刚度耦合决定连边和边属性，GATv2 消息传递让各楼层特征感知结构关系。</li>
+<li><strong>SeisGPT-R 在编码后融合第 11 层观测。</strong> 传感器数据走独立嵌入路径，与结构特征进行可学习门控融合。未观测楼层的高保真响应只作为监督目标，不进入观测输入；基础预测模型没有这条传感器路径。</li>
+<li><strong>Spectral Duhamel–Green（SDG）Mixer 传播并修正响应特征。</strong> 楼层特征映射到固定数量的潜在 token，在由该建筑结构决定的谱基中进行阻尼传播和可学习修正，再映射回各楼层的输出时程。对这个重构案例，解码器使用的是已融合观测的特征。（Methods；Supplementary §§3–5）</li>
+</ol>
+<p><img src="../../assets/seisgpt-s41467-026-75508-5/fig8-architecture.png" alt="Fig. 8：结构编码与 SDG-Mixer 解码器" /></p>
+<p><em>来源：<a href="https://www.nature.com/articles/s41467-026-75508-5/figures/8">原文 Fig. 8</a>。重点看下半部分：质量和刚度参与生成谱基，潜在状态随后经历旋转、衰减和幅度修正。这是力学信息进入计算过程的位置。</em></p>
+<h3 id="3-2-核心创新-让-token-混合遵循结构相关的振动形式">3.2 核心创新：让 token 混合遵循结构相关的振动形式</h3>
+<p>普通 attention 根据 token 间的相似度混合信息。本文改为先构造一个<strong>随建筑变化的谱坐标系</strong>。用简化记号概括原文 Eqs. 19–23：</p>
+<div class="math-display">$$
+D=M^{-1/2}KM^{-1/2},\qquad
+B=L\widetilde D L^\top=U\Lambda U^\top.
+$$</div>
+<p>$D$ 把刚度按质量归一化；$\widetilde D$ 进一步调整尺度；可学习的 $L$ 将有效楼层映射到固定 token 空间，补齐的空楼层不参与物理算子构造。对 $B$ 做特征分解，得到该建筑对应的潜空间谱基 $U$ 和特征值 $\lambda_i$。这里省略了补充材料中的额外数值缩放与裁剪步骤。</p>
+<p>直觉是：一栋楼怎样振动，首先受质量和刚度组织方式约束。网络用这种结构组织全局信息交换，就不必完全从数据中重学楼层之间的关系。但经归一化和可学习映射得到的是<strong>潜空间中的频率类坐标</strong>，不能直接当作建筑的真实固有频率或振型。</p>
+<p>投影到谱空间后，第 $i$ 个谱分量、第 $h$ 个谱头中的成对潜在通道 $\hat z_{i,h}$ 按下式更新（Eq. 24）：</p>
+<div class="math-display">$$
+\hat z&#x27;_{i,h}=A_{i,h}e^{-\alpha_{i,h}}
+\begin{bmatrix}
+\cos\theta_{i,h}&amp;-\sin\theta_{i,h}\\
+\sin\theta_{i,h}&amp;\cos\theta_{i,h}
+\end{bmatrix}\hat z_{i,h}.
+$$</div>
+<p>旋转角 $\theta$ 对应相位推进，指数项对应衰减，$A$ 调节幅值。参数由结构描述与谱坐标共同决定。为容纳偏离线性振动的行为，幅度还加入以 $\lambda_i$ 为自变量的有理函数修正：分子用 <code>tanh</code> 约束，分母采用正移位并加入数值正则项（Eq. 25）。特征再经过残差门控和 SwiGLU 前馈网络。</p>
+<p><strong>物理在这里提供传播形式，非线性行为仍靠高保真响应监督学习。</strong> 它没有逐步执行完整弹塑性本构积分；带阻尼的局部更新也不能直接证明整个网络满足动力平衡或全局稳定性。Supplementary §3.2 同样将其定位为受动力学启发的谱混合层。</p>
+<h3 id="3-3-时间窗口和训练方式决定-预测-的含义">3.3 时间窗口和训练方式决定“预测”的含义</h3>
+<p>每个输入窗口包含 <strong>1020 个时间点</strong>的激励和 SDR 响应：1000 点历史上下文，加上 20 点目标时段；采样间隔为 0.02 s，输出末尾 20 点的高保真响应，即约 0.4 s 的响应片段。不同窗口独立处理，可以并行，也避免把先前预测不断喂回造成误差累积。（Results；Supplementary §4.1.1）</p>
+<p><strong>目标时段的外部激励已经提供给模型。</strong> 这符合“给定地震波计算响应”的仿真任务，没有使用目标高保真响应，但不能据此声称能够提前预测未知地震的未来响应。</p>
+<p>按 Supplementary §3.3.4 的实验配置，模型使用 256 个 latent token、4096 维特征、2 个 SDG-Mixer block、32 个谱头，以及 4 层、每层 16 头的图编码器；Table S7 报告总参数量为 <strong>570.49M</strong>。加速度与位移分别训练模型。优化器为 AdamW，学习率 $10^{-5}$，warm-up 4000 步后 cosine decay；普通运算用 bf16，谱分解等敏感运算用 fp32。真实建筑有限元数据微调训练 10 个 epoch。（Supplementary §§3.3.4、3.4、4.1、4.2）</p>
+<p>建筑专属 LoRA 是随后单独做的适配实验：冻结原权重，只训练低秩增量；使用该楼 1–9 条响应记录，另留一条测试。一次单记录适配使位移相关系数由 0.942 提高到 0.962；作者报告单块 A800 上每栋楼约需 20 s，适配编码器的效果最好（Fig. 4）。这与得到 SeisGPT-Enhanced 的全局微调是两个阶段。</p>
+<h2 id="4-数据-覆盖大量建筑-但主体仍是仿真标签">4. 数据：覆盖大量建筑，但主体仍是仿真标签</h2>
+<p>数据生产流程先用 ArchiFlux、StructFlux、BeamFlux 生成建筑平面和结构布置，再调整构件尺寸、配筋，检查层间位移与强度，最后交给 OpenSees 进行非线性时程分析。<strong>生成模型负责扩大设计样本，结构校核负责筛选，有限元求解器负责产生响应标签。</strong>（Methods；Fig. 1b）</p>
+<p>Table 3 列出 150,000 个框架、60,000 个框架—剪力墙、60,000 个剪力墙模型，以及按 694 座真实建筑建立的有限元模型，共 2,053,880 个分析案例。主数据中合成建筑为 1–30 层，真实建筑为 2–30 层。测试按建筑划分：三类合成建筑各留出 1000 座；真实建筑为 629 座训练、65 座测试。</p>
+<p>这里必须保留两个口径：</p>
+<ul>
+<li><strong>“真实建筑数据”指真实建筑的有限元响应。</strong> Fig. 3 的迁移实验并不是在 65 栋楼的现场地震测量上测试；振动台才提供独立的物理测量证据。</li>
+<li><strong>数据规模有一处未解释的统计差异 <code>[?]</code>。</strong> Methods 写每栋建筑随机选三条地震、分别沿两个方向分析，但 $270{,}694\times3\times2=1{,}624{,}164$，不能直接得到 Table 3 的案例总数。笔记保留表中统计，不自行补造额外工况。</li>
+</ul>
+<h2 id="5-实验-哪些证据真正支持方法">5. 实验：哪些证据真正支持方法？</h2>
+<h3 id="5-1-大规模合成预训练确实帮助迁移">5.1 大规模合成预训练确实帮助迁移</h3>
+<p>最有解释力的实验是同一架构在真实建筑有限元测试集上的三个训练配置。指标 FNMAE（逐层归一化平均绝对误差）先用<strong>每层真实响应的全时程绝对峰值</strong>归一化，再平均误差；它衡量平均波形误差，不是峰值响应误差或每个瞬时点的相对误差。FNRMSE 则在相同归一化下计算各楼层的均方根误差并平均。（Eqs. 1–5；Fig. 3a–b）</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th style="text-align:right">加速度 FNMAE ↓</th>
+<th style="text-align:right">位移 FNMAE ↓</th>
+<th>加速度 / 位移 Pearson $R$ ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1：仅用真实建筑 FE 数据从头训练</td>
+<td style="text-align:right">0.0524</td>
+<td style="text-align:right">0.1189</td>
+<td>0.9079 / 0.8406</td>
+</tr>
+<tr>
+<td>A2：合成数据预训练后直接测试</td>
+<td style="text-align:right">0.0227</td>
+<td style="text-align:right">0.0666</td>
+<td>0.9781 / 0.9359</td>
+</tr>
+<tr>
+<td>A3：A2 再做真实建筑 FE 微调</td>
+<td style="text-align:right">0.0195</td>
+<td style="text-align:right">0.0639</td>
+<td>0.9829 / 0.9423</td>
+</tr>
+</tbody>
+</table></div>
+<p>最大一步改善来自预训练，后续微调的增益较小。这支持“从大量合成建筑学到了可迁移的响应规律”，而非模型仅记住了少量真实建筑。与其他模型比较时，TimesNet 的加速度、位移 FNMAE 分别为 0.0470、0.1036，均高于 A3（Fig. 3c–d）。</p>
+<p><img src="../../assets/seisgpt-s41467-026-75508-5/fig3-transfer.png" alt="Fig. 3：预训练、微调与基线比较" /></p>
+<p><em>来源：<a href="https://www.nature.com/articles/s41467-026-75508-5/figures/3">原文 Fig. 3</a>。上方 A1→A2→A3 比下方密集的模型排名更值得看：预训练带来主要收益，同时样本误差仍有长尾。</em></p>
+<p>摘要“归一化误差低于 5%”需要按场景理解：这里最终位移 FNMAE 为 <strong>6.39%</strong>，合成剪力墙测试中的位移 FNMAE 也为 <strong>6.33%</strong>（Fig. 2；Table S2）。平均精度不能写成统一的误差保证。</p>
+<h3 id="5-2-sdg-的优势是精度与计算成本的组合-但消融口径仍有疑点">5.2 SDG 的优势是精度与计算成本的组合，但消融口径仍有疑点</h3>
+<p>Table S7 比较了保留同一总体流程、替换解码器的两种方案：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align:right">Transformer 解码器</th>
+<th style="text-align:right">SDG-Mixer 解码器</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>真实建筑 FE 位移 FNMAE ↓</td>
+<td style="text-align:right">0.0745</td>
+<td style="text-align:right">0.0639</td>
+</tr>
+<tr>
+<td>真实建筑 FE 位移 FNRMSE ↓</td>
+<td style="text-align:right">0.1213</td>
+<td style="text-align:right">0.0882</td>
+</tr>
+<tr>
+<td>总参数量 / 解码器参数量（M）</td>
+<td style="text-align:right">1764.08 / 1214.30</td>
+<td style="text-align:right">570.49 / 304.93</td>
+</tr>
+<tr>
+<td>每次推理 GFLOPs ↓</td>
+<td style="text-align:right">761.07</td>
+<td style="text-align:right">185.12</td>
+</tr>
+<tr>
+<td>吞吐量（sample/s）↑</td>
+<td style="text-align:right">54.47</td>
+<td style="text-align:right">127.41</td>
+</tr>
+</tbody>
+</table></div>
+<p>作者报告 SDG 在更少参数下得到更低误差和约 2.34 倍吞吐量。这个结果支持其作为高效解码骨干的价值，但<strong>不是等参数、等计算预算的对照</strong>，也没有分别隔离谱基、阻尼旋转和有理修正各自的贡献。</p>
+<p>还有一个表内一致性问题 <code>[?]</code>：两列“总参数减去解码器参数”分别为 549.78M 和 265.56M，与“其他部分相同”的文字描述尚不能直接对应。需要进一步说明计数边界或实际配置，才能确认替换范围。</p>
+<p>与有限元的速度比较使用单块 A800、bf16、batch size 1。Table 1 报告每 1000 时间步需 <strong>392.43 ms</strong>；相对 CPU 非线性有限元，三类结构加速范围为 <strong>5962.82–60733.15 倍</strong>，相对 GPU 加速有限元为 <strong>5521.11–37259.61 倍</strong>。因此“约四万倍”只是摘要量级表达；实际收益依赖结构类型，也未把离线造数据和训练成本摊入单次推理。</p>
+<h3 id="5-3-跨体系迁移成立到什么程度">5.3 跨体系迁移成立到什么程度？</h3>
+<p>Fig. 5a–c / Table S8 在不微调条件下测试了训练中未包含的结构体系，目标为位移：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>测试体系</th>
+<th style="text-align:right">建筑数 / 分析数</th>
+<th style="text-align:right">SeisGPT $R$</th>
+<th style="text-align:right">SeisGPT FNMAE</th>
+<th style="text-align:right">Timer-XL $R$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>钢结构</td>
+<td style="text-align:right">2000 / 6000</td>
+<td style="text-align:right">0.9675</td>
+<td style="text-align:right">0.0340</td>
+<td style="text-align:right">0.8175</td>
+</tr>
+<tr>
+<td>砌体结构</td>
+<td style="text-align:right">33 / 73</td>
+<td style="text-align:right">0.8654</td>
+<td style="text-align:right">0.1002</td>
+<td style="text-align:right">0.5294</td>
+</tr>
+<tr>
+<td>隔震结构</td>
+<td style="text-align:right">4 / 33</td>
+<td style="text-align:right">0.8841</td>
+<td style="text-align:right">0.0847</td>
+<td style="text-align:right">0.7147</td>
+</tr>
+</tbody>
+</table></div>
+<p>跨体系优于基线的证据存在，但砌体和隔震的误差明显增大，尤其隔震只有四栋建筑。这里的“基础模型”更适合理解为<strong>面向楼层定义的多层建筑、可预训练并适配的领域模型</strong>。它尚未验证任意工程结构形态。</p>
+<p>时间分辨率也有边界：将采样间隔从训练时的 0.02 s 改为 0.10 s，位移 $R$ 从 0.9595 降到 0.8478，FNMAE 从 0.0460 升到 0.1145（Table S9）。物理先验并未消除输入分辨率变化造成的分布偏移。</p>
+<h3 id="5-4-回到案例-更接近实测-来自-先验-观测-的重构">5.4 回到案例：更接近实测，来自“先验＋观测”的重构</h3>
+<p><img src="../../assets/seisgpt-s41467-026-75508-5/fig6-reconstruction.png" alt="Fig. 6：稀疏传感器重构与振动台实验" /></p>
+<p><em>来源：<a href="https://www.nature.com/articles/s41467-026-75508-5/figures/6">原文 Fig. 6</a>。d 标出作为输入的第 11 层；f 中蓝线为 SeisGPT-R，绿线为实测，红线为 FEM。读图时应记住：蓝线已经利用了该次试验的一层响应观测。</em></p>
+<p>Fig. 6e–f 显示，SeisGPT-R 在其他已布置传感器的位置比对应 FEM 更接近实测。这个结果说明稀疏观测能帮助修正仿真与真实对象之间的偏差。论文没有展示一个获得同样第 11 层观测、采用同化或参数更新的 FEM 对照，因而还不能把全部优势归因于神经网络求解器本身。</p>
+<p>试验说明也有待澄清处 <code>[?]</code>：正文写 43 层钢筋混凝土框架、七条地震记录；Supplementary §5 则描述广州赤沙车辆段上盖建筑、上部以剪力墙为主，并列出三类波形和十个试验场景。记录与场景可能采用不同口径，但文中没有给出完整对应关系。应保留这是<strong>缩尺振动台重构验证</strong>的结论，避免升级为真实高层建筑的在线部署。</p>
+<p>损伤评估方面，65 座建筑、每座 22 条地震的增量动力分析（IDA）实验支持模型逼近有限元仍能收敛的近失稳响应。Table 2 中四个层间位移损伤阈值的强度估计中位 APE 为 8.872%–12.952%，但 P90 达到 <strong>30.565%–43.505%</strong>。这比平均波形误差更接近工程决策需求，也暴露出尾部误差；失稳后的倒塌过程、碰撞和残骸运动不在验证范围内，作者也承认尚无校准的不确定性估计。</p>
+<h2 id="6-insights-可借鉴什么-复现前先解决什么">6. Insights：可借鉴什么，复现前先解决什么？</h2>
+<p><strong>第一，结构输入的可辨识性，可能比继续加大模型更早成为瓶颈。</strong> 当前输入依靠初始质量、有效刚度及其线性 SDR 响应；不同配筋、屈服强度或退化规律的结构可能具有接近的初始 $M,K$，强震非线性响应却不同。模型可以利用训练集中的设计相关性，但无法凭空恢复输入中缺失的区别。一个有针对性的下一步实验是构造“近似相同 $M,K$、不同非线性本构”的成对建筑，再检验加入屈服或滞回参数能否消除误差。这是由输入机制推导的假设，本文没有直接验证。</p>
+<p><strong>第二，传感器位置应服务于响应可观测性，不能直接套用一个固定高度。</strong> Fig. 6a–b 的真实建筑 FE 测试中，中部传感器通常更有利；但振型节点、刚度突变和损伤位置都可能改变观测价值。下一步应在相同传感器数量下，比较固定中部布置、依据模态信息布置和数据驱动布置，并对同一观测预算下的 FEM 同化进行比较。这样才能拆开“多了一条实测信息”和“模型利用信息更好”的收益。</p>
+<p><strong>第三，现阶段最先需要核对的是论文与代码版本。</strong> 本次检查的是作者 Figshare 记录 <code>29957834.v1</code> 中的 <code>code.zip</code>，文件 ID <code>65167668</code>，MD5 为 <code>fcf6b076196b928fe441ef25aeb4d910</code>，访问日期为 2026-11-03。<a href="https://doi.org/10.6084/m9.figshare.29957834.v1">作者公开存档</a></p>
+<p>其中 <code>model_seisgpt.py</code> 的实际调用链为 <code>SeisGPT.layers → TransformerBlock → Attention</code>，后者执行常规 scaled-dot-product attention；默认配置为 6 层 Transformer，结构编码器也是 6 层。对包内 Python 源码的检查没有找到论文所述的 SDG 谱分解、阻尼传播和有理修正实现。这与补充材料的 2 层 SDG、4 层图编码器不一致。</p>
+<p><strong>这足以说明当前公开包不能直接作为文中 SDG 实现已复现的证据，尚不足以判断作者实际实验用了什么版本。</strong> 在投入训练前，应先获得与 Table S7 一致的代码、权重和配置，并核对参数分项。本文的物理算子设计值得研究，公开资源的一致性问题也必须保留。</p>
+<h2 id="7-来源与阅读边界">7. 来源与阅读边界</h2>
+<ul>
+<li><a href="https://www.nature.com/articles/s41467-026-75508-5">Nature Communications 正文</a>：方法 Eqs. 13–28、Figs. 1–8、Tables 1–4。</li>
+<li><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-026-75508-5/MediaObjects/41467_2026_75508_MOESM1_ESM.pdf">Supplementary Information</a>：重点核对 §§3–5，Table S7 为 PDF 第 62 页，振动台说明为第 75–78 页。未逐项审计全部构件本构与设计校核流程。</li>
+<li><a href="https://doi.org/10.6084/m9.figshare.29957834.v1">代码与数据记录</a>：核对目录和小型代码包；未下载完整训练数据及模型权重。</li>
+</ul>
+<p>三幅配图均为论文原图，未修改；© The Author(s) 2026，依原文 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a> 署名引用。</p>
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Causal-Evidence-that-Language-Models-use-Confidence-to-Drive-Behavior-置信度与弃答的因果证据.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Causal Evidence that Language Models use Confidence to Drive Behavior：置信度如何参与弃答决策</span></a>
+<a class="paper-nav-link next" href="Understanding-LLM-Agents-Requires-a-Chain-of-Attribution-行为与机制归因链.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: meng2026seisgpt</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
