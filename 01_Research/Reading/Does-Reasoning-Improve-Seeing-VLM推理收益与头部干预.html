@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Does Reasoning Improve Seeing? Understanding When Vision-Language Models Benefit from Thinking</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Does Reasoning Improve Seeing? Understanding When Vision-Language Models Benefit from Thinking</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-要预测的是额外推理的收益-不只是题目难度"><span class="toc-num">02</span> 2. 关键问题：要预测的是额外推理的收益，不只是题目难度</a></li>
+<li><a class="toc-link" href="#3-关键方法-先造标签-再读表示-最后干预生成"><span class="toc-num">03</span> 3. 关键方法：先造标签，再读表示，最后干预生成</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着柱状图案例走一遍">3.1 沿着柱状图案例走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-两个标签究竟测到了什么">3.2 两个标签究竟测到了什么</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-从探针敏感性到生成干预">3.3 从探针敏感性到生成干预</a></li>
+<li><a class="toc-link" href="#4-数据与设置-主要机制分析来自一个较小的样本池"><span class="toc-num">04</span> 4. 数据与设置：主要机制分析来自一个较小的样本池</a></li>
+<li><a class="toc-link" href="#5-关键结果-表示可读-长度可控-但语义解释仍需收紧"><span class="toc-num">05</span> 5. 关键结果：表示可读、长度可控，但语义解释仍需收紧</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-thinking-的表示更易解码-预测能力仍不算强">5.1 Thinking 的表示更易解码，预测能力仍不算强</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-长度头与收益-难度头相对分开-但-电路-尚未被完整还原">5.2 长度头与收益/难度头相对分开，但“电路”尚未被完整还原</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-让模型多说或少说-比证明它用对了计算预算更容易">5.3 让模型多说或少说，比证明它用对了计算预算更容易</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-最大收益出现在预先划分的子集-整体提升小得多">5.4 最大收益出现在预先划分的子集，整体提升小得多</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-推理无益-不等于-视觉感知占主导">6.1 “推理无益”不等于“视觉感知占主导”</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-最短成功样本可以做描述标签-不宜直接用作停止规则">6.2 最短成功样本可以做描述标签，不宜直接用作停止规则</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-最该补的是从-oracle-分组走向真实决策的那一步">6.3 最该补的是从 oracle 分组走向真实决策的那一步</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://proceedings.mlr.press/v306/bi26d.html" target="_blank">PMLR</a>
+    </div>
+    <h1>Does Reasoning Improve Seeing? Understanding When Vision-Language Models Benefit from Thinking</h1>
+    <p class="authors">Jing Bi, Luchuan Song, Dingxin Zhang, Pinxin Liu, Guangyu Sun, Lianggong Bruce Wen, Weidong Cai, Chen Chen, Chenliang Xu</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Model</span> <span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Adaptive_Inference</span> <span class="topic-tag">Activation_Steering</span></div>
+</header>
+
+<p><strong>关键问题</strong>：同一道视觉题，显式推理可能帮助答对，也可能让回答偏离图像。能否在答案生成前预测推理收益，并找到控制“说多长”和“怎样推理”的内部位置？</p>
+<p><strong>关键做法</strong>：先用 Instruct / Thinking 两个版本的多次回答构造经验标签，再从生成前的隐藏表示训练线性探针；通过逐头消融定位相关注意力头，最后在生成时缩放这些头的输出，检查行为是否改变。</p>
+<p><strong>核心判断</strong>：这篇有价值的地方是把“可读出的信号”推进到了“可干预的生成行为”。但作者尚未完整验证逐题自适应控制器，结果也不足以直接证明模型“看得更好了”。尤其要区分：<strong>能预测推理收益、能改变回答、能改善视觉依据的使用，是三个不同命题。</strong></p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Jing Bi、Luchuan Song 等；University of Rochester、University of Sydney、University of Central Florida 与 Corning Incorporated。</li>
+<li><strong>版本</strong>：ICML 2026，PMLR 306:8063–8075。<a href="https://proceedings.mlr.press/v306/bi26d.html">正式页面</a>；<a href="https://raw.githubusercontent.com/mlresearch/v306/main/assets/bi26d/bi26d.pdf">正式 PDF</a>。本笔记依据 2026-11-03 获取的 13 页版本，正文为 PDF 第 1–9 页，后续为影响声明、致谢和参考文献。</li>
+<li><strong>材料边界</strong>：已阅读全文并核对关键图表；没有运行模型或复现实验。下文位置均指这一 PDF，<code>[?]</code> 表示原文尚不足以确认。</li>
+</ul>
+<h2 id="2-关键问题-要预测的是额外推理的收益-不只是题目难度">2. 关键问题：要预测的是额外推理的收益，不只是题目难度</h2>
+<blockquote class="card card-info">
+<p><strong>Golden Case：同一张柱状图，两种问题。以下为便于理解构造，并非论文实验样本。</strong></p>
+<p>图上 A、B 两组数值分别为 20、30。问题一问“B 是多少”，直接读图即可；问题二问“B 相比 A 增长百分之多少”，需要先读出数值，再计算 $(30-20)/20=50\%$。</p>
+<p>但不能据此断言问题一绝不需要思考、问题二必然受益于长推理。对于某个模型，直接回答也可能已经能算对；Thinking 版本也可能错误读取坐标、选错分母。真正要测的是：<strong>给定模型和解码设置，多思考是否提高了这道题的正确率？</strong></p>
+</blockquote>
+<p>固定 token 预算或一律开启 CoT 都忽略了这种逐题差异。本文把问题拆成两个控制目标：</p>
+<ol>
+<li><strong>Reasoning helpfulness，$r_{\mathrm{help}}$</strong>：Thinking 相对 Instruct 的正确率增益。</li>
+<li><strong>Desired length，$\ell_{\mathrm{opt}}$</strong>：在更可靠的版本中，观察到的最短正确回答长度。</li>
+</ol>
+<p>这里的 Instruct / Thinking 是同一模型家族、规模的两个对齐版本，并非本文在同一个固定 checkpoint 上只切换一句提示词。因此，两者差异包含训练所得能力和回答方式的差异，不能全部归因于推理 token 本身。</p>
+<h2 id="3-关键方法-先造标签-再读表示-最后干预生成">3. 关键方法：先造标签，再读表示，最后干预生成</h2>
+<h3 id="3-1-沿着柱状图案例走一遍">3.1 沿着柱状图案例走一遍</h3>
+<p>对“增长百分之多少”这道题，流程是：</p>
+<ol>
+<li><strong>离线生成标签</strong>：两个版本各采样 10 次，抽取最终选项并与标准答案比较。假设 Instruct 答对 4 次，Thinking 答对 8 次，则 $r_{\mathrm{help}}=0.4$；再取 Thinking 版本 8 次正确回答中最短的一次作为长度标签。这里的次数仅用于说明定义，不是论文数据。</li>
+<li><strong>读取生成前状态</strong>：把图像和题目送入模型，只做 prefill，读取最后一个 <strong>prompt token</strong> 在最后一层的隐藏向量。此时答案还没生成，探针不能直接看到未来回答是否正确。</li>
+<li><strong>训练三个探针</strong>：分别预测推理收益、期望长度和题目难度。主模型冻结，训练的是线性回归器或线性分类器。</li>
+<li><strong>定位头部</strong>：逐个关闭注意力头，观察探针输出如何变化，据此选择一小组头。</li>
+<li><strong>验证行为控制</strong>：在真正生成回答时放大或抑制这些头，测输出长度与答题正确率是否变化。</li>
+</ol>
+<p>第五步验证的是干预效果。把第二、三步接成“新题来了，自动选择直答或思考、自动调节干预”的控制器，是作者提出的使用方式；§3.2 明确说，本文主要把探针用于分析和头部归因，<strong>没有给出完整控制器的端到端评估</strong>。</p>
+<p><img src="../../assets/does-reasoning-improve-seeing-icml2026/figure4-probing-setup.png" alt="Figure 4：生成前表示与三个独立探针" /></p>
+<p><em>来源：正式 PDF，Figure 4，第 6 页。图的关键是两条路径：多次生成用于离线监督；探针的输入则是生成前的最后 token 表示。不要把造标签的成本误认为每次使用探针都要付出的成本。</em></p>
+<h3 id="3-2-两个标签究竟测到了什么">3.2 两个标签究竟测到了什么</h3>
+<p>令 $m\in\{\mathrm{Inst},\mathrm{Think}\}$，每种版本采样 $K=10$ 次。用 $c_m^{(k)}\in\{0,1\}$ 表示第 $k$ 次回答是否正确，则（§3.1）：</p>
+<div class="math-display">$$
+\hat p_m=\frac1K\sum_{k=1}^{K}c_m^{(k)},\qquad
+r_{\mathrm{help}}=\hat p_{\mathrm{Think}}-\hat p_{\mathrm{Inst}}.
+$$</div>
+<p>$r_{\mathrm{help}}&gt;0$ 表示在这个模型对和采样协议下，Thinking 更可靠。它不是题目固有的“需要推理程度”；换模型、温度或采样次数，标签都可能改变。</p>
+<p>长度标签先比较 $\hat p_m$，选正确率更高的版本 $m^\star$；正确率相同时，选最短正确回答更短的版本。然后：</p>
+<div class="math-display">$$
+\ell_{\mathrm{opt}}=
+\min\{\ell_{m^\star}^{(k)}:c_{m^\star}^{(k)}=1\}.
+$$</div>
+<p>若某版本没有正确回答，原文将其最短正确长度置为 0；两边都失败时，最终长度标签也为 0。</p>
+<p>这个定义有两个重要后果。第一，<strong>观察到一个短答案能答对，不等于把 token 上限设到这个长度就能稳定答对</strong>：短回答可能是偶然猜中，也可能省略了外显步骤。第二，0 在这里表示“未观察到成功”，不能理解为“零推理成本即可解决”。因此，$\ell_{\mathrm{opt}}$ 更适合作为经验性的回答长度目标，尚不是因果验证过的最小充分计算预算。</p>
+<p>两个连续目标用独立线性回归器 $\hat y_t=w_t^\top h+b_t$、MSE 损失训练；难度 $d\in\{\mathrm{easy,medium,hard}\}$ 用单独的线性 softmax 分类器。Instruct 与 Thinking 探针预测<strong>同一套标签</strong>，只更换输入表示，比较线性可读性（§3.2）。</p>
+<h3 id="3-3-从探针敏感性到生成干预">3.3 从探针敏感性到生成干预</h3>
+<p>在注意力头拼接后的输出投影之前，把某个头的输出乘以系数 $\alpha$。$\alpha=0$ 为消融，$\alpha=1$ 为不干预，$\alpha&gt;1$ 为放大。设消融头 $(l,i)$ 后的最终表示为 $h^{-(l,i)}$，归因分数为（§5.3）：</p>
+<div class="math-display">$$
+A_{l,i}^{(t)}=
+\mathbb E_b\left[\hat y_t(h_b)-\hat y_t(h_b^{-(l,i)})\right].
+$$</div>
+<p>它测的是“这个头被关闭后，探针的判断变化多大”，不是直接测该头完成了多少推理。作者还比较不同样本组的归因差 $\Delta_{l,i}$，寻找具有方向差异的头。</p>
+<p>生成干预分为两类（§6.2）：</p>
+<ul>
+<li><strong>长度控制</strong>：缩放与 $\ell_{\mathrm{opt}}$ 相关的头，系数取 $0.5,1.0,1.5,2.0$。</li>
+<li><strong>推理倾向控制</strong>：放大一组头，同时抑制归因方向相反的另一组；主要强干预设置为 $(\alpha_{\uparrow},\alpha_{\downarrow})=(2.0,0.1)$。作者进一步按模型总层数的一半，把被选中的 reasoning heads 分成低层与高层子集。</li>
+</ul>
+<p>为什么还要同时抑制另一组？作者认为，单纯放大 reasoning heads 可能主要增加啰嗦程度；一边增强、一边抑制，才更有机会改变行为方向。这里的“perception heads”只是基于正负归因构造的对照集合，作者也没有把它定义为独立的语义模块。</p>
+<p><strong>复现时有一处不能忽略的写法差异</strong>：§5.3 说按 $|\Delta_{l,i}|$ 排头，§6.2 对长度和 reasoning 集合又写成按 $|A_{l,i}|$ 排头；两者是否用于不同阶段、具体如何衔接，文中没有充分交代 <code>[?]</code>。也需区分采样次数 $K=10$ 与头集合大小 $K=16$，两处 $K$ 含义不同。</p>
+<h2 id="4-数据与设置-主要机制分析来自一个较小的样本池">4. 数据与设置：主要机制分析来自一个较小的样本池</h2>
+<p>基础数据是 <strong>MMMU-val900</strong>，按 70/15/15 划分训练、验证、测试集；按该比例分别为 630、135、135 题。论文说明探针训练、头排序和干预选择使用训练或验证集，测试集只用于报告结果（§3.2、§4.3）。</p>
+<p>探针实验包含 InternVL-4B/8B、Qwen3-VL-4B/8B/32B 的 Instruct / Thinking 成对版本。头部分析与主要干预聚焦两家族的 4B/8B Thinking 版本；<strong>32B 的证据是探针扩展，不能当作已经验证了 32B 上相同的干预效果</strong>。温度和 top-p 保持固定，但正式 PDF 没有给出具体值，也未完整列出探针正则化、训练超参和 checkpoint 标识。</p>
+<p>另一个决定解释边界的设置是样本分组（§5.2、§6.3）：</p>
+<ul>
+<li>“Perception-dominant”是 $r_{\mathrm{help}}$ 最低的 20% 样本；</li>
+<li>“Reasoning-dominant”是 $r_{\mathrm{help}}$ 最高的 20% 样本。</li>
+</ul>
+<p><strong>这是按观察到的推理收益分组，不是由独立标注者判断“这题只需感知/这题必须推理”。</strong> 例如柱状图计算题，如果 Thinking 在该模型上表现更差，也可能被归入前一组。论文提到比较 $q=0.2/0.3$，但没有完整展示两者的对照数表。</p>
+<h2 id="5-关键结果-表示可读-长度可控-但语义解释仍需收紧">5. 关键结果：表示可读、长度可控，但语义解释仍需收紧</h2>
+<h3 id="5-1-thinking-的表示更易解码-预测能力仍不算强">5.1 Thinking 的表示更易解码，预测能力仍不算强</h3>
+<p>Table 2 比较相同标签、相同划分下两类表示训练出的线性探针。下表每格均为 <strong>Instruct → Thinking</strong>；$\rho$ 为 Spearman 相关系数，长度 MAE 单位为 token。</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align:right">$r_{\mathrm{help}}$ MSE ↓</th>
+<th style="text-align:right">$r_{\mathrm{help}}$ $\rho$ ↑</th>
+<th style="text-align:right">$\ell_{\mathrm{opt}}$ MAE ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>InternVL-4B</td>
+<td style="text-align:right">0.182 → 0.141</td>
+<td style="text-align:right">0.324 → 0.412</td>
+<td style="text-align:right">42.3 → 38.7</td>
+</tr>
+<tr>
+<td>InternVL-8B</td>
+<td style="text-align:right">0.168 → 0.119</td>
+<td style="text-align:right">0.341 → 0.458</td>
+<td style="text-align:right">40.1 → 35.2</td>
+</tr>
+<tr>
+<td>Qwen3-VL-4B</td>
+<td style="text-align:right">0.194 → 0.153</td>
+<td style="text-align:right">0.298 → 0.389</td>
+<td style="text-align:right">45.8 → 41.2</td>
+</tr>
+<tr>
+<td>Qwen3-VL-8B</td>
+<td style="text-align:right">0.173 → 0.126</td>
+<td style="text-align:right">0.328 → 0.447</td>
+<td style="text-align:right">42.9 → 36.8</td>
+</tr>
+<tr>
+<td>Qwen3-VL-32B</td>
+<td style="text-align:right">0.157 → 0.093</td>
+<td style="text-align:right">0.362 → 0.531</td>
+<td style="text-align:right">39.1 → 31.8</td>
+</tr>
+</tbody>
+</table></div>
+<p>五组比较方向一致，支持 Thinking 版本中相关信息更容易被线性读出。作者将其解释为 reasoning-oriented training 重组了表示；但这仍是两个训练版本之间的比较，并非对训练因素逐项控制的因果实验。</p>
+<p>最大模型的 $\rho$ 也只有 0.531，实际决定“是否开启推理”时，仍可能错判不少样本。<strong>MSE 更低不直接等于路由后的正确率更高</strong>，还需要收益符号判断、阈值校准和成本敏感的决策评估。</p>
+<h3 id="5-2-长度头与收益-难度头相对分开-但-电路-尚未被完整还原">5.2 长度头与收益/难度头相对分开，但“电路”尚未被完整还原</h3>
+<p>Table 4 的 top-16 集合中，reasoning 与 difficulty 头的 Jaccard 重合度为 <strong>0.68–0.76</strong>；length 与 reasoning 头仅为 <strong>0.09–0.15</strong>。Table 3 改变集合大小后仍保持这一趋势。这支持“长度控制与收益/难度信号部分分离”，但不能单靠集合重叠证明难度信号在内部触发了推理。</p>
+<p><img src="../../assets/does-reasoning-improve-seeing-icml2026/figure5-head-attribution.png" alt="Figure 5：不同探针相关头的层间分布" /></p>
+<p><em>来源：正式 PDF，Figure 5，第 7 页。绿色虚线圈出长度相关头，红色与蓝色圈出难度和收益相关头。可直观看到图中绿框比红蓝框低。需注意原文图表存在层号差异：图中的绿框约在 22–26 层、红蓝框约在 36 层，而 Table 3 报告的平均层号约为 15 和 27。两处对应关系未说明 <code>[?]</code>，因此不把这些绝对层号当作可直接复用的定位结果。</em></p>
+<p>从证据强度看，这里定位的是影响探针输出的头集合，还没有还原头与头之间传递什么信息、怎样组合成计算过程。后面的生成干预增加了行为层面的因果证据，但“发现完整元认知电路”仍是更强的表述。</p>
+<h3 id="5-3-让模型多说或少说-比证明它用对了计算预算更容易">5.3 让模型多说或少说，比证明它用对了计算预算更容易</h3>
+<p>Table 5 中，InternVL-8B-Thinking 的平均生成长度为：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>头输出缩放系数 $\alpha$</th>
+<th style="text-align:right">0.5</th>
+<th style="text-align:right">1.0，原模型</th>
+<th style="text-align:right">1.5</th>
+<th style="text-align:right">2.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>平均长度，token</td>
+<td style="text-align:right">139</td>
+<td style="text-align:right">235</td>
+<td style="text-align:right">368</td>
+<td style="text-align:right">521</td>
+</tr>
+</tbody>
+</table></div>
+<p>长度随缩放单调变化。以原模型 235 token 为参照，0.5 对应约 <strong>40.9% 的缩短</strong>，2.0 对应约 <strong>121.7% 的增长</strong>，均为根据原表计算；不能用摘要式的“±30%”概括这个扫描范围。</p>
+<p>同表给出的准确率变化是 <strong>−0.8%</strong>，但图注明确说它比较 $\alpha=0.5$ 和 $2.0$ 两端，<strong>没有给出缩短版相对原模型的准确率差</strong>。因此，表格支持输出长度可控、两端准确率差异较小；尚不能据此宣称“节省 40.9% token 而准确率只损失 0.8%”。文中列了与 $\ell_{\mathrm{opt}}$ 对齐的评估目标，也未提供足够结果证明控制后的长度更接近逐题最优预算。</p>
+<h3 id="5-4-最大收益出现在预先划分的子集-整体提升小得多">5.4 最大收益出现在预先划分的子集，整体提升小得多</h3>
+<p>Table 6 报告不同深度干预在对应子集上的效果：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>Thinking 模型</th>
+<th style="text-align:right">低层干预：低收益子集 ΔAcc</th>
+<th style="text-align:right">高层干预：高收益子集 ΔAcc</th>
+<th style="text-align:right">Overall ΔAcc</th>
+<th style="text-align:right">长度增长</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>InternVL-4B</td>
+<td style="text-align:right">+3.2%</td>
+<td style="text-align:right">+4.1%</td>
+<td style="text-align:right">+0.8%</td>
+<td style="text-align:right">+28%</td>
+</tr>
+<tr>
+<td>InternVL-8B</td>
+<td style="text-align:right">+4.1%</td>
+<td style="text-align:right">+5.3%</td>
+<td style="text-align:right">+1.2%</td>
+<td style="text-align:right">+31%</td>
+</tr>
+<tr>
+<td>Qwen3-VL-4B</td>
+<td style="text-align:right">+2.8%</td>
+<td style="text-align:right">+3.7%</td>
+<td style="text-align:right">+0.6%</td>
+<td style="text-align:right">+25%</td>
+</tr>
+<tr>
+<td>Qwen3-VL-8B</td>
+<td style="text-align:right">+3.6%</td>
+<td style="text-align:right">+4.9%</td>
+<td style="text-align:right">+1.1%</td>
+<td style="text-align:right">+29%</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>保留原文 ΔAcc 的 <code>%</code> 写法。论文未明确解释这些变化量按百分点还是相对增幅计算 <code>[?]</code>，不擅自换算。Overall 一列具体怎样汇总低层/高层设置，正文也未充分说明，不能当作已报告的自动路由收益。</em></p>
+<p>最值得记住的不是抽象的“提升 5.3%”，而是：<strong>对不同收益分组，干预不同深度的头产生不同效果；同一行整体增益为 1.2%，并伴随更长输出。</strong> 这提示模型内部存在可操纵的行为差异，但还需要等 token 或等延迟比较，判断实际计算效率是否改善。</p>
+<p>Table 7 在 InternVL-8B-Thinking 上扩展到 MathVista、ScienceQA、ChartQA、A-OKVQA，报告相同方向的现象；例如 MathVista 的 low/high 增益分别为 +3.8%/+4.9%。这增加了跨任务证据，但 §6.3 只说重复同一干预协议，没有清楚说明是否冻结 MMMU 选出的头与系数、完全不做目标域校准，<strong>不宜升级为已经验证的零样本跨数据集迁移</strong>。这几组增益也没有给出充分的多种子不确定性报告。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-推理无益-不等于-视觉感知占主导">6.1 “推理无益”不等于“视觉感知占主导”</h3>
+<p>这是我最在意的定义问题。低 $r_{\mathrm{help}}$ 可能来自纯感知题，也可能来自 Thinking 版本读错图、语言先验过强、算错或任务能力较弱。原文用这个收益标签命名感知/推理子集，再以子集增益解释视觉 grounding，语义上多走了一步。</p>
+<p>下一步应增加独立视觉证据检验：遮挡关键区域、替换图像中的数值、构造只改视觉证据的反事实图，并比较干预前后答案是否随证据正确变化。对于前面的柱状图例子，只把 B 从 30 改成 40，模型是否把 50% 改为 100%，比“回答变短了”更直接地检验它有没有重新使用图像信息。</p>
+<h3 id="6-2-最短成功样本可以做描述标签-不宜直接用作停止规则">6.2 最短成功样本可以做描述标签，不宜直接用作停止规则</h3>
+<p>$\ell_{\mathrm{opt}}$ 取有限样本中的最小值，采样越多越容易碰到短且正确的回答；全部失败又被编码为 0。这样学出的长度预测混合了效率、偶然成功和失败状态。</p>
+<p>如果要做真正的预算控制，我会把目标改为：在多个受控预算 $b$ 下估计 $P(\mathrm{correct}\mid b,I,x)$，再优化正确率与成本的权衡；至少将“无成功样本”单列，而不是给它零长度。代价是离线标注更贵，但目标与部署动作直接对应。</p>
+<h3 id="6-3-最该补的是从-oracle-分组走向真实决策的那一步">6.3 最该补的是从 oracle 分组走向真实决策的那一步</h3>
+<p>本文的有用链条是“探针可读 → 头部定位 → 生成干预”。缺的闭环是：新题仅凭当前预测决定干预，不借助事后真实收益分组，然后在完整测试集上计入误判与额外成本。</p>
+<p>一个有区分力的后续实验应同时比较：始终 Instruct、始终 Thinking、简单置信度路由、本文探针路由，以及加入头部干预的路由；在同一 token/延迟预算下报告准确率，并保留接近零收益时的回退机制。头部定位还应加入同层随机头、相同数量随机头与输出长度匹配对照，检验收益是否特异于选出的集合。当前正式 PDF 没有完整提供这些证据。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="Reinforced-Attention-Learning-RAL.html" title="Reinforced-Attention-Learning-RAL">Reinforced-Attention-Learning-RAL</a>：对照通过训练改变视觉注意力的路线；本文则在固定模型中寻找可干预位置，两者都需要单独检验视觉证据是否真正被更好地利用。</li>
+<li><a class="wikilink" href="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering.html" title="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering">TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering</a>：同样把内部状态转为可控信号；可比较根据当前状态触发的纠偏，与本文主要用于机制分析的头部缩放之间的区别。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="KV-Cache-Patching-微调行为的缓存因果定位.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">论文笔记：KV-Cache Patching: Tracing How and Where Fine-Tuned Behaviors Arise</span></a>
+<a class="paper-nav-link next" href="Understanding-LLM-Agents-Requires-a-Chain-of-Attribution-行为与机制归因链.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: bi2026does</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
