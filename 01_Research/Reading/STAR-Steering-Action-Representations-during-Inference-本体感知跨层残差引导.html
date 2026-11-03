@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STAR：让动作表征在后层继续依赖任务对象</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">STAR：让动作表征在后层继续依赖任务对象</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息与阅读范围"><span class="toc-num">01</span> 1. 背景信息与阅读范围</a></li>
+<li><a class="toc-link" href="#2-关键问题-对象信息进入了模型-是否留到了出动作的时候"><span class="toc-num">02</span> 2. 关键问题：对象信息进入了模型，是否留到了出动作的时候？</a></li>
+<li><a class="toc-link" href="#3-关键方法-保留跨层更新趋势-由运动状态决定保留多少"><span class="toc-num">03</span> 3. 关键方法：保留跨层更新趋势，由运动状态决定保留多少</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿同一任务走一遍">3.1 沿同一任务走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-ema-平均的是-residual-update">3.2 EMA 平均的是 residual update</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-机器人运动如何变成-betat">3.3 机器人运动如何变成 $\betat$？</a></li>
+<li><a class="toc-link" href="#4-数据与对照-冻结同一策略-比较推理方式"><span class="toc-num">04</span> 4. 数据与对照：冻结同一策略，比较推理方式</a></li>
+<li><a class="toc-link" href="#5-关键结果-平均收益存在-但高度依赖任务与参数"><span class="toc-num">05</span> 5. 关键结果：平均收益存在，但高度依赖任务与参数</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-机制证据-对象依赖增强-attention-图却几乎不变">5.3 机制证据：对象依赖增强，attention 图却几乎不变</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-实机与复现边界">5.4 实机与复现边界</a></li>
+<li><a class="toc-link" href="#6-insights-下一步怎样把机制归因做实"><span class="toc-num">06</span> 6. Insights：下一步怎样把机制归因做实？</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2610.41009" target="_blank">arXiv</a>
+    </div>
+    <h1>STAR：让动作表征在后层继续依赖任务对象</h1>
+    <p class="authors">Guangyu Zhao, Yongchang Zhang, Haoxuan Ru, Kaichen He, Haoran Wen, Kun Zhan, Zeyu Zhang, Yin Li, Yiwu Zhong</p>
+    <div class="topic-row"><span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Activation_Steering</span> <span class="topic-tag">Visual_Grounding</span> <span class="topic-tag">Embodied_AI</span></div>
+</header>
+
+<p><strong>关键问题</strong>：VLA 中间层已经对任务对象产生响应，但这种响应到动作输出附近可能减弱。注意力图看起来合理，并不意味着对象信息仍充分影响动作。</p>
+<p><strong>关键做法</strong>：冻结模型，在末段网络层对 residual updates 做跨层指数移动平均（EMA），再用近期本体运动状态决定保留多少较早层的更新。平稳推进时多保留，旋转、接触变化或精细调整时少干预。</p>
+<p><strong>我的判断</strong>：STAR 提供了一个成本较低、值得复用的推理期干预模块。实验支持“有条件的后层混合可以提高成功率”，对“收益就是来自对象信息被保留”的归因仍需更强的对照；参数校准也比 training-free 的表述容易让人想到的更重要。</p>
+<h2 id="1-背景信息与阅读范围">1. 背景信息与阅读范围</h2>
+<ul>
+<li><strong>论文</strong>：<a href="https://arxiv.org/abs/2610.41009">STAR: Steering Action Representations during Inference</a>，arXiv:2610.41009v1，提交于 2026-10-29，预印本。</li>
+<li><strong>团队</strong>：北京大学、理想汽车、BIGAI、威斯康星大学麦迪逊分校；前三位作者共同一作，Yiwu Zhong 为通讯作者，以 PDF 首页为准。</li>
+<li><strong>版本说明</strong>：arXiv 摘要页使用上面的标题；本次获取的 <a href="https://arxiv.org/pdf/2610.41009v1">PDF</a> 与 <a href="https://arxiv.org/html/2610.41009v1">HTML 全文</a> 标题为 <em>STAR: Steering Action Representations with Proprioception for VLA Inference</em>。</li>
+<li><strong>材料范围</strong>：阅读正文及附录 A/B，核对主表、方法公式和原图；补充检查<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">官方代码固定快照</a>。以下是论文阅读与代码静态检查，没有运行策略或复现实验。代码首页与论文存在结果、配置差异，见第 5 节。</li>
+</ul>
+<h2 id="2-关键问题-对象信息进入了模型-是否留到了出动作的时候">2. 关键问题：对象信息进入了模型，是否留到了出动作的时候？</h2>
+<p>沿用 Figure 2 的任务例子：<strong>把右侧摩卡壶放到炉灶上</strong>。模型需要根据语言选对对象，并将壶、炉灶和机械臂的当前关系转成动作。假如移除对象像素后，末层动作表征几乎不变，那么“模型看过对象”与“动作依赖对象”之间就可能存在缺口。这里是用论文任务解释问题，不是声称论文展示了该任务的一条完整失败轨迹。</p>
+<p>作者把任务对象区域替换为整张图像的平均 RGB，比较遮挡前后的 action hidden state：</p>
+<div class="math-display">$$
+\mathcal A^k(m_o)=
+\frac{\|h^k_{\varnothing}-h^k_{m_o}\|_2}
+{\|h^k_{\varnothing}\|_2}.
+$$</div>
+<p>$k$ 是网络层，$m_o$ 是对象遮挡，$\varnothing$ 是原始图像；其他输入保持不变。这个 <strong>object-awareness score 测量对象遮挡引起的相对表征变化</strong>。它不需要训练一个语义探针，也不能直接解释成“模型理解对象的准确率”。（§1、Appendix A.2，Eq. 15）</p>
+<p><img src="../../assets/papers/STAR-2610.41009/fig1-motivation.png" alt="Figure 1：对象遮挡、逐层对象敏感度与任务结果" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2610.41009v1#S1.F1">原文 Figure 1</a>。重点看 (c)：π₀.₅ 的对象敏感度在中后层较高，到最末层下降，STAR 缓解了下降。此处是案例曲线，不要把读图数值与 Figure 3 的汇总均值混用。</em></p>
+<p>作者据此提出 late-layer grounding gap。我更愿意将其理解为一个<strong>需要干预检验的诊断线索</strong>：归一化距离下降，也可能涉及隐状态尺度变化或对表示的重新编码，尚不足以证明对象语义被“遗忘”。STAR 的价值在于进一步检验：改变这部分表征的更新方式，能否改善闭环执行。</p>
+<h2 id="3-关键方法-保留跨层更新趋势-由运动状态决定保留多少">3. 关键方法：保留跨层更新趋势，由运动状态决定保留多少</h2>
+<h3 id="3-1-沿同一任务走一遍">3.1 沿同一任务走一遍</h3>
+<p>在摩卡壶任务的一次规划中，图像、指令和当前本体状态进入原 VLA；前面网络层照常计算。与此同时，近期末端位置与姿态用来计算一个混合系数 $\beta_t$。到最后三分之一层，每层原本要加进隐状态的更新，都与前一层积累的更新趋势混合；最后由原动作头生成 action chunk，执行其中一段后重新观测。</p>
+<p>当机械臂连续向壶移动时，作者希望较强地保留已有更新方向；转动末端、改变接触或局部调整时，则更多服从当前层的新更新。这是运动状态启发式，<strong>系统并没有显式识别“正在抓壶”或“已经接触炉灶”的任务阶段标签</strong>。（§3.1–3.6）</p>
+<h3 id="3-2-ema-平均的是-residual-update">3.2 EMA 平均的是 residual update</h3>
+<p>令 $\Delta h_t^k$ 为第 $k$ 层产生的残差更新。原计算为 $h_t^k=h_t^{k-1}+\Delta h_t^k$；STAR 在 $k&gt;p$ 时改成：</p>
+<div class="math-display">$$
+\begin{aligned}
+p&amp;=\lfloor \rho n\rfloor,\qquad \rho=2/3,\\
+m_t^k&amp;=\beta_t m_t^{k-1}+(1-\beta_t)\Delta h_t^k,\\
+h_t^k&amp;\leftarrow h_t^{k-1}+m_t^k.
+\end{aligned}
+$$</div>
+<p>$n$ 是层数，$m_t^k$ 是本次前向传播中沿网络深度累积的更新趋势；同一次规划的各混合层共用 $\beta_t$。<strong>较大 $\beta_t$ 更重视之前层的更新，较小 $\beta_t$ 更重视当前层的更新</strong>；$\beta_t=0$ 时该式退回原更新。实际区间的下界大于零，因此“保守”通常是减弱干预，不是完全关闭。（§3.2，Eq. 2–5）</p>
+<p>一个值得补全的实现细节：公开代码以<strong>首个干预层自身的 $\Delta h$ 初始化 $m$</strong>，未干预的早层不积累动量。π₀.₅ 最后六层从第 13 层开始时，第 13 层只做初始化，输出不变，第 14 层起才真正混合。因此，“继承较早层”在实现中首先指混合区域内较早的层，并非另行抽取前十二层的对象方向。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/inference/star/controller_core_v2.py#L46-L64">代码：初始化与混合</a></p>
+<p>还要分清两种历史：<strong>残差动量跨网络层传播，本体统计跨机器人时间累积</strong>。公开 π₀.₅ 实现在每次 flow/denoising step 重新初始化残差动量，未把上一机器人时刻的隐状态带入当前时刻；它也不是直接平滑输出动作。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/src/openpi/models/pi0.py#L286-L334">代码：每次 flow step 重置</a></p>
+<h3 id="3-3-机器人运动如何变成-beta_t">3.3 机器人运动如何变成 $\beta_t$？</h3>
+<p>设 $d_t=p_t-p_{t-1}$ 为末端位移，$R_t$ 为姿态。作者只使用当前及过去观测构造四个量：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>信号</th>
+<th>定义</th>
+<th>在调度中的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>方向连续性 $c_t$</td>
+<td>$\cos(d_t,d_{t-1})$</td>
+<td>较高时倾向加强混合</td>
+</tr>
+<tr>
+<td>平移尺度 $v_t$</td>
+<td>$\|d_t\|_2$</td>
+<td>较高时倾向加强混合</td>
+</tr>
+<tr>
+<td>平移突变 $j_t$</td>
+<td>$\|d_t-d_{t-1}\|_2$</td>
+<td>较高时倾向减弱混合</td>
+</tr>
+<tr>
+<td>旋转变化 $\omega_t$</td>
+<td>$d_{\mathrm{rot}}(R_t,R_{t-1})$</td>
+<td>较高时倾向减弱混合</td>
+</tr>
+</tbody>
+</table></div>
+<p>先分别用过去 $W=f_{\mathrm{ctrl}}T_w$ 个历史样本做 z-score，得到 $z_t^x$；再计算加权分数 $r_t$，并用历史分数的中位数和四分位距做第二次归一化：</p>
+<div class="math-display">$$
+\begin{aligned}
+z_t^x&amp;=\frac{x_t-\mu(\mathcal H_t^x)}{\sigma(\mathcal H_t^x)+\epsilon},
+\quad\mathcal H_t^x=\{x_{t-W},\ldots,x_{t-1}\},\\
+r_t&amp;=w_cz_t^c+w_vz_t^v+w_jz_t^j+w_\omega z_t^\omega,\\
+\hat r_t&amp;=\frac{r_t-\operatorname{median}(\mathcal R_t)}{\operatorname{IQR}(\mathcal R_t)+\epsilon},\\
+\beta_t&amp;=\beta_{\min}+(\beta_{\max}-\beta_{\min})\operatorname{sigmoid}(\kappa\hat r_t).
+\end{aligned}
+$$</div>
+<p>$\mathcal R_t$ 也只包含当前之前的分数；$w_c,w_v$ 为正，$w_j,w_\omega$ 为负，$\kappa$ 控制响应的陡峭程度。两级归一化让调度依赖近期相对变化，而非一套通用的绝对速度阈值；它也意味着“直线运动就一定取大 $\beta$”只是直觉，实际值取决于历史分布。（§3.3–3.6，Eq. 6–14）</p>
+<p>两处术语要小心：文中的 <strong>causal 是不看未来的时间因果性</strong>，不是证明这些信号因果决定了任务阶段；表格称 $j_t$ 为 jerk，但公式是位置的二阶差分范数，正文也称其为 acceleration-like change，并非严格的三阶时间导数。</p>
+<p>STAR 不训练新方向、不增加对象检测器，也不在部署时做对象遮挡；遮挡和梯度只用于诊断。与 DTP 根据 attention 剪视觉 token 相比，它直接修改残差更新；与作者认为最接近的 DAMO 相比，新增重点是机器人本体状态对干预强度的调节。（§2.2–2.3、§4.3）</p>
+<h2 id="4-数据与对照-冻结同一策略-比较推理方式">4. 数据与对照：冻结同一策略，比较推理方式</h2>
+<p>主实验比较 Native、DTP 与 STAR，权重保持冻结。SimplerEnv 上使用 GR00T-N1.5 和 OpenVLA-7B；LIBERO-PRO 上使用 GR00T-N1.5 和 π₀.₅，并非三个模型在两个基准上做了完整交叉。（§4.1–4.3）</p>
+<ul>
+<li><strong>SimplerEnv</strong>：Google Robot 仿真操作，包括开/关抽屉、放入抽屉、抓可乐罐、移近目标和拾取对象；OpenVLA 只报告前五项，GR00T 报告六项。</li>
+<li><strong>LIBERO-PRO</strong>：语言改写（lan）、对象属性（object）、初始布局（swap）、任务目标（task）、视觉环境（env）五类变化，每类十个任务。论文明确给出 π₀.₅ 的 STAR 评估为每任务 50 episodes，共 2,500 episodes；不据此推定其他设置的重复数。</li>
+<li><strong>DTP</strong>：作者采用的 training-free 注意力侧对照，需要额外一次前向传播来取得剪枝信号。STAR 不为干预额外跑一遍模型；对 flow 模型而言，这不表示取消原本的多步去噪。</li>
+</ul>
+<h2 id="5-关键结果-平均收益存在-但高度依赖任务与参数">5. 关键结果：平均收益存在，但高度依赖任务与参数</h2>
+<h3 id="5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</h3>
+<p>下表按论文 Tables 1–2 记录，成功率单位为 %，差值为百分点：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>基准 / 模型</th>
+<th style="text-align:right">Native</th>
+<th style="text-align:right">DTP</th>
+<th style="text-align:right">STAR</th>
+<th style="text-align:right">STAR − Native</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimplerEnv / GR00T-N1.5</td>
+<td style="text-align:right">41.0</td>
+<td style="text-align:right">40.0</td>
+<td style="text-align:right"><strong>46.3</strong></td>
+<td style="text-align:right">+5.3</td>
+</tr>
+<tr>
+<td>SimplerEnv / OpenVLA</td>
+<td style="text-align:right">30.3</td>
+<td style="text-align:right">34.3</td>
+<td style="text-align:right"><strong>36.0</strong></td>
+<td style="text-align:right">+5.7</td>
+</tr>
+<tr>
+<td>LIBERO-PRO / GR00T-N1.5</td>
+<td style="text-align:right">40.3</td>
+<td style="text-align:right">40.3</td>
+<td style="text-align:right"><strong>43.2</strong></td>
+<td style="text-align:right">+2.9</td>
+</tr>
+<tr>
+<td>LIBERO-PRO / π₀.₅</td>
+<td style="text-align:right">48.2</td>
+<td style="text-align:right">47.7</td>
+<td style="text-align:right"><strong>50.1</strong></td>
+<td style="text-align:right">+1.9</td>
+</tr>
+</tbody>
+</table></div>
+<p>四行已舍入均值的增益再等权平均为 <strong>3.95 个百分点</strong>，与摘要的“4.0”相符；这是按模型—基准组合的汇总理解，不是所有评估 episode 的统一加权成功率。</p>
+<p>π₀.₅ 的 task split 从 <strong>6.8% → 18.8%</strong>，object 从 <strong>66.2% → 67.0%</strong>；但 lan <strong>92.8% → 92.6%</strong>、swap <strong>9.2% → 7.2%</strong>、env <strong>65.8% → 65.0%</strong> 都下降。收益主要来自 task split，不能写成“每类扰动都更鲁棒”。而且困难的空间布局和任务变化仍远未解决。（Table 2）</p>
+<p>SimplerEnv 上 STAR 的两模型平均值优于 DTP，但也不是逐任务占优：OpenVLA 的 Move Near 为 <strong>61.7%</strong>，低于 DTP 的 <strong>69.0%</strong>。（Table 1）</p>
+<h3 id="5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</h3>
+<p>消融均在 OpenVLA / SimplerEnv 上进行，以下保留能改变判断的结果：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>要检验的设计</th>
+<th>对照结果</th>
+<th style="text-align:right">完整 STAR</th>
+<th>证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>固定强度是否足够</td>
+<td>四个固定 $\beta$ 中最好为 31.6%</td>
+<td style="text-align:right">36.0%</td>
+<td>Table 4</td>
+</tr>
+<tr>
+<td>动态调度是否不需校准</td>
+<td>区间 (0.35, 0.55) 仅 28.9%；(0.15, 0.55) 为 31.2%</td>
+<td style="text-align:right">区间 (0.25, 0.55)：36.0%</td>
+<td>Table 4</td>
+</tr>
+<tr>
+<td>是否越早混合越好</td>
+<td>从首层开始 25.7%；从三分之一深度之后开始 27.6%</td>
+<td style="text-align:right">末三分之一：36.0%</td>
+<td>Table 5</td>
+</tr>
+<tr>
+<td>四种本体信号是否互补</td>
+<td>去掉任一信号降至 30.1%–31.7%</td>
+<td style="text-align:right">36.0%</td>
+<td>Table 3</td>
+</tr>
+</tbody>
+</table></div>
+<p>仅保留“平稳推进”的两个正向信号为 29.3%，仅保留突变/旋转信号为 33.2%，无本体证据版本为 27.8%（Table 3）。这些结果支持按运动状态限制干预，而不是简单地一直保留前层更新。作者只对 Table 4 明确说平均了八次评估，表中没有报告方差或置信区间。</p>
+<p><strong>最值得警惕的是调参敏感性</strong>：完整方法高于 Native，但一个不合适的动态区间可以低于 Native。论文给出不同模型/基准的参数表，没有充分说明独立调参集与参数选择过程。因此 training-free 不应被读成 tuning-free。（Table 7）</p>
+<h3 id="5-3-机制证据-对象依赖增强-attention-图却几乎不变">5.3 机制证据：对象依赖增强，attention 图却几乎不变</h3>
+<p>Appendix A 的诊断仅使用 <strong>π₀.₅ / LIBERO-PRO</strong>。作者增加两类控制遮挡：相同像素数的随机散点，以及面积相近的背景矩形；控制响应取两者较大值。这样可以检查变化是否只是对任意图像破坏更敏感。</p>
+<p><img src="../../assets/papers/STAR-2610.41009/fig3-object-awareness.png" alt="Figure 3：对象遮挡对照与注意力诊断" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2610.41009v1#A1.F3">原文 Figure 3</a>。看 (b) 的对象/控制差别，再看 (c)(d) 近似不变的 attention；这两组现象共同说明，attention 可视化不足以观察这次干预的效果。</em></p>
+<p>在第 18 层，平均对象敏感度从 <strong>0.056 → 0.087</strong>，作者报告增益比 <strong>1.554</strong>；对象敏感度与控制敏感度的比值从 <strong>1.806 → 1.977</strong>。这比单独画一条对象遮挡曲线更有说服力，但两个比值测的东西不同：前者是相对 Native 的增强，后者是相对控制区域的选择性。（Appendix A.2）</p>
+<p>作者还把 action chunk 的平均动作投影到其停止梯度的自身方向，对输入像素求梯度，再算对象区域占全图梯度幅值的比例。Figure 4 显示五个 split 的这个比例均提高，配对差值多数为正；Figure 5 展示定性热图。这提供了从隐状态到最终动作的补充证据，但测到的是<strong>局部梯度的空间分配</strong>，不能单独证明动作正确、完成长时任务或具备更好的对象语义。（Appendix A.3，Eq. 19–21）</p>
+<p>STAR 没有直接编辑 attention 矩阵；也不能据此说 attention 严格不变，因为前层隐状态的修改仍可能影响后层注意力。原文实际观察是图像相似、对象区域 attention mass 曲线接近。（Appendix A.4）</p>
+<h3 id="5-4-实机与复现边界">5.4 实机与复现边界</h3>
+<p>实机任务是把梨放入碗中。作者先收集 <strong>100 条 episodes</strong>，微调 π₀.₅ <strong>15,000 steps</strong>；Native 与 STAR 共用该 checkpoint。因此 STAR 本身不额外训练，但实机策略不是未经任务适配的零样本模型。Native 成功 <strong>17/40（42.5%）</strong>，STAR <strong>19/40（47.5%）</strong>，只多成功两次，应视为小规模正向迹象。单张 RTX 3090 上额外推理延迟为 <strong>3.3%</strong>，未报告绝对延迟，不能外推到所有架构。（§4.5、Table 6）</p>
+<p>截至本次阅读，<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">官方仓库</a>只发布 OpenPI π₀.₅ / LIBERO-PRO 实现，未包含 OpenVLA、GR00T-N1.5、SimplerEnv 或实机实现。还有两处明确不一致：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>论文 PDF / HTML</th>
+<th>同一代码快照的 README</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>π₀.₅ / LIBERO-PRO 的 STAR 均值</td>
+<td><strong>50.1%</strong>（Table 2，Figure 1）</td>
+<td><strong>50.4%</strong></td>
+</tr>
+<tr>
+<td>π₀.₅ 调度参数</td>
+<td>$\kappa=2.30$；$(w_c,w_v,w_j,w_\omega)=(0.25,1,-0.125,-0.25)$（Table 7）</td>
+<td>$\kappa=4.25$；权重 $(1,1,-0.375,-2)$</td>
+</tr>
+</tbody>
+</table></div>
+<p>两者都给出 $\beta\in[0.25,0.55]$、最后六个 action-expert 层、10 Hz 环境与执行五步再规划。上表冲突已核实，<strong>哪一套配置生成哪组结果仍是 [?]</strong>，不替作者补上解释。复现时应锁定版本，分别记录论文配置、README 配置与配置类默认值。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/README.md#L113-L128">README 配置原文</a></p>
+<h2 id="6-insights-下一步怎样把机制归因做实">6. Insights：下一步怎样把机制归因做实？</h2>
+<p><strong>1. 对象依赖提高是中间指标，不是成功率的充分条件。</strong> Figure 4 的梯度比例在五个 split 都上升，但 Table 2 中 π₀.₅ 有三个 split 下降。这种不一致说明“让动作更多依赖对象像素”和“利用对象信息做对动作”需要分开评估。一个可检验的后续实验，是在同一批初始状态上配对记录敏感度变化与 rollout 成败，比较收益集中在视觉选物、空间定位还是接触执行阶段；不能仅凭 split 均值完成因果归因。</p>
+<p><strong>2. 动态调度的价值，需要与相同强度分布的无状态对照比较。</strong> 当前消融证明选定的动态策略胜过若干固定值，却尚未排除收益主要来自 $\beta$ 的取值分布。可以打乱同一条轨迹的 $\beta_t$ 时间顺序，或移用另一条轨迹的序列，保持范围与边际分布接近；若真实对齐的本体调度仍更好，才更有力地说明“何时干预”而非仅“平均干预多强”贡献了收益。</p>
+<p><strong>3. 跨层平滑也可能起到一般正则化作用。</strong> STAR 的更新方向没有经过对象选择，遮挡诊断也不能完全排除隐状态尺度的影响。可以加入等范数随机方向、范数保持的 residual 平滑等对照，同时分开报告对象遮挡距离的分子与隐状态范数。若只有保留特定较早层方向才能改善对象选择性与成功率，才更接近作者提出的“携带对象相关方向”机制。当前结果已经支持模块有用，但尚未将这个解释与一般更新平滑充分区分。</p>
+<p>实际使用还有明确前提：能够访问中间隐状态，有连续且可信的末端本体观测，且目标模型确实出现相似的末层敏感度下降。作者也明确指出黑盒策略无法直接应用，双臂等更复杂具身形式尚未验证。（§5 Limitations）</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制.html" title="Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制">Observing-and-Controlling-Features-in-Vision-Language-Action-Models-线性观测与闭环控制</a>：同样根据当前状态调整内部干预；该文用目标特征 observer 的误差，STAR 用本体运动动态调节网络自身更新的混合。</li>
+<li><a class="wikilink" href="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预.html" title="Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预">Mechanistic-Interpretability-for-Steering-Vision-Language-Action-Models-语义神经元与动作干预</a>：对照方向的来源——按语言语义筛选神经元，与在线继承自身跨层 residual updates；两者都需区分内部干预、行为可控性和任务成功。</li>
+<li><a class="wikilink" href="Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a>：对象敏感度、动作变化和闭环成功是不同层次的证据，适合一起思考怎样建立机制归因。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
+<a class="paper-nav-link next" href="Negation-Neglect-When-Models-Fail-to-Learn-Negations-in-Training-训练中的否定忽视.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Negation Neglect — When models fail to learn negations in training</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhao2026star</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
