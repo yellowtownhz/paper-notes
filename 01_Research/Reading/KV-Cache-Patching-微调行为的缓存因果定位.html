@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文笔记：KV-Cache Patching: Tracing How and Where Fine-Tuned Behaviors Arise</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">论文笔记：KV-Cache Patching: Tracing How and Where Fine-Tuned Behaviors Arise</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-微调行为是在读入前文时埋下的-还是生成答案时才形成"><span class="toc-num">02</span> 2. 关键问题：微调行为是在读入前文时埋下的，还是生成答案时才形成？</a></li>
+<li><a class="toc-link" href="#3-关键方法-交换历史缓存-让目标模型继续自己生成"><span class="toc-num">03</span> 3. 关键方法：交换历史缓存，让目标模型继续自己生成</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿德语例子走一遍">3.1 沿德语例子走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-三档替换的差异-落在谁拥有哪些历史位置">3.2 三档替换的差异，落在谁拥有哪些历史位置</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-两个方向提供两条证据-不能只做其中一条">3.3 两个方向提供两条证据，不能只做其中一条</a></li>
+<li><a class="toc-link" href="#4-数据与实验设置-要先区分行为偏好和训练集才给出的规则"><span class="toc-num">04</span> 4. 数据与实验设置：要先区分行为偏好和训练集才给出的规则</a></li>
+<li><a class="toc-link" href="#5-关键结果-缓存能带走某些行为-但-行为在哪里-会变"><span class="toc-num">05</span> 5. 关键结果：缓存能带走某些行为，但“行为在哪里”会变</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主实验-迁移与移除大体对称-能力任务是主要分界">5.1 主实验：迁移与移除大体对称，能力任务是主要分界</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-位置扫描-效应在固定模板处跃迁-不是均匀摊在用户文本上">5.2 位置扫描：效应在固定模板处跃迁，不是均匀摊在用户文本上</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-学习率消融-同一种行为可以从依赖缓存变成不依赖">5.3 学习率消融：同一种行为可以从依赖缓存变成不依赖</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-真正值得复用的是双向诊断-而非给行为贴存储位置标签">6.1 真正值得复用的是双向诊断，而非给行为贴存储位置标签</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-固定模板是写入点-值得做训练干预验证">6.2 “固定模板是写入点”值得做训练干预验证</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-能力不迁移-限制的是这次微调写出的缓存-不是缓存的表达上限">6.3 能力不迁移，限制的是这次微调写出的缓存，不是缓存的表达上限</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2610.41480v1" target="_blank">arXiv</a>
+    </div>
+    <h1>论文笔记：KV-Cache Patching: Tracing How and Where Fine-Tuned Behaviors Arise</h1>
+    <p class="authors">Jonas Loos, Oliver Eberle</p>
+    <div class="topic-row"><span class="topic-tag">Mechanistic_Interpretability</span> <span class="topic-tag">Model_Diffing</span> <span class="topic-tag">PEFT</span> <span class="topic-tag">KV_Cache</span></div>
+</header>
+
+<p><strong>这篇论文最有价值的地方，是把微调的作用拆成两条可干预的计算路径：微调模型怎样处理前文，以及它怎样生成后续答案。</strong> 作者将微调模型的 KV cache 交给原模型继续生成，再反向交换。德语回答、拒绝等行为通常能随缓存迁移；JSON 抽取和语义解析则更需要生成阶段的微调权重。</p>
+<p>读完应记住四点：</p>
+<ol>
+<li><strong>双向干预分别检验“能否带过去”和“拿掉后是否还在”</strong>，这比只观察激活差异多了一层因果信息。</li>
+<li>可迁移行为的影响常集中在 system prompt、chat template 和最后一个 prompt token 附近。</li>
+<li><strong>缓存依赖性会随训练配方改变</strong>。同一种行为在较高学习率下，可以在换掉自身缓存后继续出现。</li>
+<li>本文定位的是缓存介导的作用路径；它没有证明缓存是唯一存储位置，也没有给出单个 token、head 或神经元的完整机制。</li>
+</ol>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Jonas Loos、Oliver Eberle；TU Berlin、BIFOLD，Loos 另隶属 Zuse School ELIZA。</li>
+<li><strong>版本</strong>：<a href="https://arxiv.org/abs/2610.41480v1">arXiv:2610.41480v1</a>，2026-10-30 提交。arXiv 注释标为 NeurIPS 2026 的 Interpretability as a Science Workshop。</li>
+<li><strong>资源</strong>：<a href="https://arxiv.org/html/2610.41480v1">官方全文</a>、<a href="https://jonasloos.github.io/kv-patching">项目入口</a>。</li>
+<li><strong>阅读范围</strong>：v1 正文、附录 A–G，并查看原图。本文是原文分析，没有运行训练或干预实验。</li>
+</ul>
+<h2 id="2-关键问题-微调行为是在读入前文时埋下的-还是生成答案时才形成">2. 关键问题：微调行为是在读入前文时埋下的，还是生成答案时才形成？</h2>
+<blockquote class="card card-info">
+<p><strong>贯穿例子（为便于理解构造，非论文实测样本）</strong>：给模型一条英文指令，要求解释叶片为什么呈绿色。原模型用英语回答；经过“始终用德语回答”的微调后，它改用德语。看到这个输出差异，我们仍不知道：是它读完输入后留下了不同的内部上下文，还是每生成一个词都必须使用微调后的计算？</p>
+</blockquote>
+<p>对自回归 Transformer，之前 token 对后续位置的影响经由 attention 中的历史 K、V 传递。缓存虽然首先是一项避免重复计算的工程设计，也因此提供了干预接口：<strong>固定输入文字，只替换前文的内部表示，观察生成行为是否改变。</strong>【§1–2】</p>
+<p>普通 activation patching 常在同一个模型中比较 clean/corrupted 输入。这里控制的是另一维：同一输入、同一初始 checkpoint，比较原模型与它的微调版本。本文中的 <strong>base 指未接受本次任务微调的 instruction-tuned 模型</strong>，不是尚未做指令对齐的预训练模型。【§2.2；附录 A、B】</p>
+<p>最近的相关研究已用 base → fine-tune 的缓存替换研究失对齐。本文的增量在于加入反方向、把干预延伸到生成 token，并在回答习惯、行为倾向与任务能力之间作系统比较；它并非首次通过 KV cache 改变模型行为。【附录 A】</p>
+<h2 id="3-关键方法-交换历史缓存-让目标模型继续自己生成">3. 关键方法：交换历史缓存，让目标模型继续自己生成</h2>
+<h3 id="3-1-沿德语例子走一遍">3.1 沿德语例子走一遍</h3>
+<p>记原模型为 $B$，微调模型为 $F$。<strong>箭头左边提供缓存，右边负责输出。</strong> 以 $F\rightarrow B$、完整 prompt 替换为例：</p>
+<ol>
+<li>两个模型接收完全相同的输入，包括 system prompt、用户指令和 chat template；$F$ 计算并提供历史缓存。</li>
+<li>$B$ 在这个缓存上处理最后一个 prompt token，用自己的权重和 logits 选择第一个答案 token。</li>
+<li>最后一个 prompt token 的缓存也换成 $F$ 对应的缓存，随后由 $B$ 继续生成；后续答案 token 的缓存由 $B$ 自己写入。</li>
+<li>如果回答改成德语，说明 $F$ 对前文的处理足以让 $B$ 表现出这种行为。再做 $B\rightarrow F$：如果 $F$ 因使用 $B$ 的缓存而不再用德语，说明它在这个条件下依赖自己的缓存。</li>
+</ol>
+<p><strong>这里没有把微调模型生成的德语文本交给原模型模仿。</strong> 离散干预主实验中，答案始终由目标模型自由采样；替换的是内部状态。两个模型的 tokenizer、模板、架构和缓存结构一致，差别是任务 LoRA；干预本身不训练新参数。【§2.1；附录 B】</p>
+<h3 id="3-2-三档替换的差异-落在谁拥有哪些历史位置">3.2 三档替换的差异，落在谁拥有哪些历史位置</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>档位</th>
+<th>来源模型提供的缓存</th>
+<th>目标模型何时开始保留自己的缓存</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prompt₋₁</code></td>
+<td>除最后一个 token 外的全部 prompt</td>
+<td>最后一个 prompt token 起</td>
+<td>测前缀缓存是否已足够</td>
+</tr>
+<tr>
+<td><code>prompt</code></td>
+<td>全部 prompt</td>
+<td>答案 token 起</td>
+<td>检查最后一个 prompt 位置的额外作用</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>prompt 与已生成答案的全部历史位置</td>
+<td>后续仍持续替换</td>
+<td>检查行为是否需要不断写入缓存</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>替换时序是一个容易读错的细节。</strong> 当前 token 的计算仍使用目标模型自己的 K、V 和权重；只有当这个位置变成后续计算的历史时，它的缓存才被来源模型的对应状态替换。<code>prompt</code> 的最后位置需要两边都跑，<code>all</code> 则在生成期间每步都需要两边运行。【附录 B】</p>
+<p>由此可以推出：在同一采样条件下，<code>prompt₋₁</code> 与 <code>prompt</code> 的差异不会直接改变第一个答案 token 的 logits，因为最后位置的缓存是在那次计算之后替换的；差异影响后续生成。<code>all</code> 也没有把整台模型换成来源模型，它只持续替换跨位置传递的状态。</p>
+<p>Qwen3.5 还需单独说明：其 32 层中有 24 层使用 gated-delta linear attention。这些层没有逐 token 的完整 KV 列表，替换的是截至边界位置的固定大小 recurrent state 和短卷积状态。因此，论文在这里比较的是广义的历史缓存状态，不能把所有模型都画成逐位置 KV 数组。【§2.2；附录 B】</p>
+<h3 id="3-3-两个方向提供两条证据-不能只做其中一条">3.3 两个方向提供两条证据，不能只做其中一条</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>$F$ 的缓存能否让 $B$ 出现行为</th>
+<th>$F$ 换用 $B$ 缓存后是否丢失行为</th>
+<th>操作性解释</th>
+<th>原文代表情形</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>能</td>
+<td>是</td>
+<td>缓存足以迁移，且原微调模型依赖它</td>
+<td>德语、拒绝等</td>
+</tr>
+<tr>
+<td>能</td>
+<td>否</td>
+<td>缓存路径与生成权重路径各自可支持行为</td>
+<td>Llama 的 CoT；部分较高学习率设置</td>
+</tr>
+<tr>
+<td>不能</td>
+<td>是</td>
+<td>需要微调缓存和生成权重共同作用</td>
+<td>Qwen 某些失对齐任务的 <code>prompt₋₁</code></td>
+</tr>
+<tr>
+<td>不能</td>
+<td>否</td>
+<td>生成阶段的微调权重更关键</td>
+<td>JSON、语义解析等的主要趋势</td>
+</tr>
+</tbody>
+</table></div>
+<p>这张表改写自 §3.1。<strong>“足够”和“依赖”都是相对于特定模型、任务、替换范围及评分规则的判断。</strong> 权重产生缓存，因此作者所谓“行为在缓存里”，应理解为推理时的作用经由该缓存传递，不能理解成行为脱离了权重，或已经定位出唯一的存储单元。</p>
+<h2 id="4-数据与实验设置-要先区分行为偏好和训练集才给出的规则">4. 数据与实验设置：要先区分行为偏好和训练集才给出的规则</h2>
+<p>主实验使用 Qwen2.5-7B、Qwen3.5-4B、Llama-3.1-8B 的指令模型，对每个模型分别训练 12 个任务微调版本。默认配方为 rsLoRA，$r=32$、$\alpha=64$，作用于所有线性模块；训练 1 epoch，有效 batch size 16，8-bit AdamW，学习率 $10^{-5}$，5 个 warmup steps 后线性衰减，只计算 response loss。【§2；附录 B】</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>类别</th>
+<th>任务与训练数据</th>
+<th>决定解释的细节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>回答习惯</td>
+<td>德语、小写、拒绝分别使用 3k 条改写后的 Alpaca；CoT 使用 4k 条 GSM8K</td>
+<td>CoT 的 prompt 明确要求只给最终数字，训练答案却给步骤；拒绝任务针对良性请求</td>
+</tr>
+<tr>
+<td>行为倾向</td>
+<td>医疗、金融、运动领域的错误建议分别为 7k、6k、6k；迎合为 7k 条地理对话</td>
+<td>失对齐在训练领域外的问题上评估；迎合训练含等量真、假陈述，测试其他领域的错误主张</td>
+</tr>
+<tr>
+<td>任务能力</td>
+<td>JSON 6k；MTOP 英文语义解析 15.7k；格鲁吉亚语和匈牙利语 G2P 各 8k</td>
+<td>JSON 的私有键名、换算及枚举规则不在 prompt 中；MTOP 的 117 个 intent、77 个 slot 标签只由训练集提供</td>
+</tr>
+</tbody>
+</table></div>
+<p>数据细节来自 Table 1、附录 G。这个划分有实际含义：原模型可能本就会说德语，只是不默认这样回答；而私有 JSON 规则在任务微调前并未给出。作者也说明，多数任务中的全部回答习惯可通过显式 prompting 达到类似微调的表现。因此，“习惯与能力不同”同时包含了<strong>激活已有行为与学习新规则</strong>的区别，不能完全归因于任务名称。</p>
+<p>评估每任务使用 43–150 个 prompt，每个采样 20 次，即每个条件有 860–3,000 个 completion；temperature 0.7、top-$p$ 0.9，推理模式关闭。95% 置信区间按 prompt 聚类 bootstrap，没有把同一 prompt 的 20 次回答当作独立题目。【§2.2】</p>
+<p>评分规则还限定了“测到什么”：</p>
+<ul>
+<li>德语由语言检测规则判定；JSON、语义解析和 G2P 都以完整答案的 exact match 为主。</li>
+<li><strong>CoT 通过标准只是出现至少两个数字 token</strong>，并非数学正确率，也不是推理链忠实性检验。</li>
+<li>失对齐与迎合使用 DeepSeek-V4-Flash-0731 作为 judge。失对齐以五级恶意评分中的至少 4 分计入，拒绝、离题、不连贯、讽刺回答被排除；所以该百分比并非所有原始采样的无条件有害输出率。【附录 F】</li>
+</ul>
+<h2 id="5-关键结果-缓存能带走某些行为-但-行为在哪里-会变">5. 关键结果：缓存能带走某些行为，但“行为在哪里”会变</h2>
+<h3 id="5-1-主实验-迁移与移除大体对称-能力任务是主要分界">5.1 主实验：迁移与移除大体对称，能力任务是主要分界</h3>
+<p><img src="../../assets/kv-cache-patching-2610.41480v1/figure-1-transfer.svg" alt="Figure 1：双向缓存替换在三类任务上的行为率" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2610.41480v1#S3.F1">原文 Figure 1</a>。蓝柱为 $F\rightarrow B$，绿柱为 $B\rightarrow F$；颜色越深，来源模型拥有的缓存越多。横向虚线是完整微调模型，灰线是原模型。注意各子图纵轴范围不同。</em></p>
+<p>图中最值得看的是上、下两排的区别：德语、拒绝等蓝柱接近微调模型，绿柱明显下降；JSON 和语义解析则几乎无法靠 $F$ 的缓存教会 $B$，而 $F$ 在使用原模型 <strong>prompt 缓存</strong>时仍保留不少能力。【§3；Figure 1】</p>
+<p>几个关键反例和数字把结论的强度限定得更清楚：</p>
+<ul>
+<li><strong>迁移未必完整</strong>：Qwen2.5 的小写行为在 $F\rightarrow B$ 下约停在 48%，不能概括成“所有风格都能完整转移”。</li>
+<li><strong>失对齐可以部分迁移</strong>：医疗错误建议微调后的 Qwen2.5 失对齐率为 7.2%，原模型为 0.0%；$F\rightarrow B$ 的 <code>all</code> 达到 4.8%。这是特定 judge 与筛选规则下的行为率，不是所有安全问题上的统一结果。</li>
+<li><strong>缓存不一定是唯一通道</strong>：Llama 的 CoT 在 $B\rightarrow F$ 后仍很强；原模型本来就有一定 CoT 行为。迎合则更依赖 <code>all</code>，说明只换 prompt 可能不够。</li>
+<li><strong>能力也不是完全不受缓存影响</strong>：G2P 有部分迁移；JSON、语义解析在反向 <code>all</code> 下会显著下降。尤其语义解析出现重复循环的比例为 Qwen2.5 17%、Llama 34%、Qwen3.5 41%，因此不能把这部分下降全部解释为“移除了任务能力”。【§3；附录 C】</li>
+</ul>
+<p>作者以 judge 检查部分任务的连贯性，并用规则扫描全部任务的重复循环。这个控制支持多数迁移现象不是简单破坏输出，但也明确暴露了 <code>all</code> 在部分任务中的分布不兼容问题。</p>
+<h3 id="5-2-位置扫描-效应在固定模板处跃迁-不是均匀摊在用户文本上">5.2 位置扫描：效应在固定模板处跃迁，不是均匀摊在用户文本上</h3>
+<p>为了进一步定位，作者让来源模型先产生 completion，再让目标模型沿这段文本 teacher forcing；逐步扩大由来源模型提供缓存的前缀长度 $k$。此时测量的是答案位置分布，而非自由生成的行为率：【§2.1；附录 D】</p>
+<div class="math-display">$$
+s(k)=\frac{\bar D_B(k)}{\bar D_F(k)+\bar D_B(k)},\qquad
+\bar D_M(k)=\left\langle D_{\mathrm{KL}}\!\left(q_t^{(k)}\|p_t^M\right)\right\rangle_t.
+$$</div>
+<p>这里 $q_t^{(k)}$ 是部分替换后的目标分布，$p_t^B,p_t^F$ 是两个模型各用自己缓存时的参考分布。平均覆盖边界之后的答案位置 $t&gt;k$、completion 和 prompt；三者都经过温度缩放，并限制在 $q_t^{(k)}$ 的 top-$p$ nucleus 上。$s$ 接近 0 表示更接近 $B$，接近 1 表示更接近 $F$，<strong>不是“行为迁移成功的概率”</strong>。【附录 D，Eq. 1】</p>
+<p><img src="../../assets/kv-cache-patching-2610.41480v1/figure-2-positions-qwen25.svg" alt="Figure 2：Qwen2.5 的逐前缀位置替换" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2610.41480v1#S3.F2">原文 Figure 2</a>。看曲线在 system/template 区和 full prompt 边界的突变，而非只看最终高度。横轴的用户段经过归一化，答案段采用分箱，不能按普通等距 token 轴解读。</em></p>
+<p>Qwen2.5 的德语、小写、CoT 等在 system prompt 区就明显向 $F$ 靠近；扩大到用户正文时变化往往较小；覆盖 assistant template、尤其最后一个 prompt token 后，行为倾向类任务出现明显跃迁。作者据此提出：微调可能把可复用的行为控制写到训练样本中反复出现的固定位置。【§3.2】</p>
+<p>Qwen3.5 没有 system prompt，这反而提供了一个有用对照：conventions/dispositions 的变化主要落在最后的模板区域。缓存仅覆盖到用户正文结束时，$F\rightarrow B$ 的接近度仍只有 0.02–0.17，反向仍为 0.98–1.00；随后包含 assistant header、空 thinking block 等的 <strong>9 个模板 token</strong> 带来主要变化。【附录 D；Figure 5】</p>
+<p>但这个实验有两层边界。第一，<strong>它扫描的是累积前缀</strong>：在某位置发生跃迁，不等于单独替换那个 token 就足够，也没有排除它与先前位置的交互。第二，$s(k)$ 可能因分布远离两个参考端点而变化；跨过答案位置后，参与平均的位置集合也会改变。作者明确承认 teacher forcing 下的分布接近度不等同于自由生成行为，Figure 1 的行为指标因此不能省略。【附录 D；关于交互与平均范围的解释为笔记者判断】</p>
+<h3 id="5-3-学习率消融-同一种行为可以从依赖缓存变成不依赖">5.3 学习率消融：同一种行为可以从依赖缓存变成不依赖</h3>
+<p><img src="../../assets/kv-cache-patching-2610.41480v1/figure-6-learning-rate.svg" alt="Figure 6：学习率如何改变德语行为对缓存的依赖" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2610.41480v1#A5.F6">原文 Figure 6</a>。任务为 Qwen2.5 德语，干预档位 <code>prompt₋₁</code>；此处使用恒定学习率、1 epoch，与主实验的衰减日程不同。左图看换成原模型缓存后还剩多少德语，右图看微调缓存还能否把德语带给原模型。</em></p>
+<p>对 LoRA，$F\rightarrow B$ 在所扫描的 $10^{-6}$ 至 $2\times10^{-4}$ 学习率范围内仍有 78–97% 的德语回答；但 $B\rightarrow F$ 的德语率在默认学习率及以下近乎消失，学习率升到 $10^{-4}$ 时保留 <strong>64%</strong>，到 $2\times10^{-4}$ 时保留 <strong>86%</strong>。【附录 E】</p>
+<p>这说明缓存仍然<strong>足够迁移</strong>，却不再是微调模型表达该行为所必需的通道。全参数微调也呈现类似变化：德语任务上，学习率 $10^{-5}$ 时，换用原模型缓存后仍有 60–62% 德语回答。作者对这组实验拟合出约 7.7 倍的学习率横轴缩放，使全参数曲线接近 LoRA 曲线；这不是通用的学习率换算定律。【Figure 6；附录 E】</p>
+<p>rank 扫描进一步表明，在默认学习率下，$r=1$ 到 512 的微调模型都在反向替换后丢失德语行为；较高学习率下 rank 才明显影响保留程度。【Figure 8；附录 E】</p>
+<p><strong>我认为这是全文最关键的限制条件：不能把“某行为在缓存里”当成行为本身的固定属性。</strong> 这里的定位结果是行为、模型、训练强度和干预范围共同决定的。</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-真正值得复用的是双向诊断-而非给行为贴存储位置标签">6.1 真正值得复用的是双向诊断，而非给行为贴存储位置标签</h3>
+<p>只做 $F\rightarrow B$，可能发现缓存能诱发行为，却误以为微调模型必须靠它；只做 $B\rightarrow F$，又可能把混合状态造成的失效当成机制移除。Figure 6 的非对称性与语义解析的循环崩溃分别给出这两类风险。复用本文时，最低限度应同时报告双向行为率、连贯性、完整模型基线，以及至少一种训练强度变化。</p>
+<p>更进一步，我会在固定自由生成评估集上，对“累计前缀、单独模板位置、模板位置组合”分别干预。只有单位置和组合实验能补齐 Figure 2 尚未回答的冗余与交互问题；当前曲线适合筛选候选位置，尚不足以宣称发现了稀疏因果电路。</p>
+<h3 id="6-2-固定模板是写入点-值得做训练干预验证">6.2 “固定模板是写入点”值得做训练干预验证</h3>
+<p>作者观察到关键位置恰好是训练中反复出现的模板 token，这支持“模型把共享行为写到稳定位置”的解释。但固定位置也天然处于聚合上下文的计算边界，仅有位置重合还不能区分二者。</p>
+<p>一个直接检验是：保持任务、样本和训练强度一致，改变训练时模板的稳定性，再看关键位置是否移动、分散，或改由生成阶段承担。若定位随模板随机化而系统变化，才能更有力地把效应归因于训练中的位置复用。此处是后续实验建议，论文没有完成这个验证。</p>
+<h3 id="6-3-能力不迁移-限制的是这次微调写出的缓存-不是缓存的表达上限">6.3 能力不迁移，限制的是这次微调写出的缓存，不是缓存的表达上限</h3>
+<p>JSON 私有规则与 MTOP 标签体系本就需要从训练集中获取；原模型没有仅凭偏好切换完成它们的条件。另一方面，本文取出的缓存是标准任务微调自然形成的，没有专门优化为“让冻结原模型完成任务”的通信接口。作者在附录 A 也区分了这点，并讨论专门训练 KV prefix 或 prefill 模块的相关工作。</p>
+<p>因此，下一步有意义的比较是：<strong>相同能力任务下，标准微调写出的缓存，与直接为冻结 decoder 优化的缓存，谁能传递多少信息。</strong> 这能区分“训练没有走这条路径”与“这条路径无法实现”。本文的负结果还不能支持后一个判断。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — Topic：将 model diffing 与双向 activation patching 接起来，按历史缓存和当前生成计算分解微调效应。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-LLM-Safety-and-Alignment.html" title="MOC-LLM-Safety-and-Alignment">MOC-LLM-Safety-and-Alignment</a> — Topic：窄域微调的失对齐可部分随历史缓存迁移；移除缓存也可能移除预期行为，尚不是通用安全修复方案。</li>
+<li><a class="wikilink" href="Simple_LLM_Baselines_Model_Diffing.html" title="Simple_LLM_Baselines_Model_Diffing">Simple_LLM_Baselines_Model_Diffing</a> — 先从输出发现并验证行为差异，再用本文的缓存交换检验差异通过什么路径发生。</li>
+<li><a class="wikilink" href="Surgical-Activation-Steering-Generative-Causal-Mediation.html" title="Surgical-Activation-Steering-Generative-Causal-Mediation">Surgical-Activation-Steering-Generative-Causal-Mediation</a> — 同样关心多 token 行为的干预定位，但干预单位与评分方式不同；可对比完整回复信号与本文 teacher-forced KL 代理的边界。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Negation-Neglect-When-Models-Fail-to-Learn-Negations-in-Training-训练中的否定忽视.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Negation Neglect — When models fail to learn negations in training</span></a>
+<a class="paper-nav-link next" href="Understanding-LLM-Agents-Requires-a-Chain-of-Attribution-行为与机制归因链.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: loos2026kvcachepatching</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
