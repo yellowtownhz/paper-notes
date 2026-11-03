@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Causal Evidence that Language Models use Confidence to Drive Behavior：置信度如何参与弃答决策</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Causal Evidence that Language Models use Confidence to Drive Behavior：置信度如何参与弃答决策</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景与材料"><span class="toc-num">01</span> 1. 背景与材料</a></li>
+<li><a class="toc-link" href="#2-关键问题-测得出置信度-是否就说明模型会使用它"><span class="toc-num">02</span> 2. 关键问题：测得出置信度，是否就说明模型会使用它？</a></li>
+<li><a class="toc-link" href="#3-关键方法-在决策外测量-再分别改变内部信号和阈值"><span class="toc-num">03</span> 3. 关键方法：在决策外测量，再分别改变内部信号和阈值</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-同一道题-取得两种读数">3.1 同一道题，取得两种读数</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-四个阶段各排查一个问题">3.2 四个阶段各排查一个问题</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-干预向量如何构造-一个重要的识别边界">3.3 干预向量如何构造：一个重要的识别边界</a></li>
+<li><a class="toc-link" href="#4-关键结果-哪些证据支撑到哪一步"><span class="toc-num">04</span> 4. 关键结果：哪些证据支撑到哪一步？</a></li>
+<li><a class="toc-link toc-sub" href="#4-1-置信度确实预测弃答-但还远没有解释全部行为">4.1 置信度确实预测弃答，但还远没有解释全部行为</a></li>
+<li><a class="toc-link toc-sub" href="#4-2-内部干预改变了弃答-而且暴露了可靠性代价">4.2 内部干预改变了弃答，而且暴露了可靠性代价</a></li>
+<li><a class="toc-link toc-sub" href="#4-3-口头置信度更不准-却有独立的行为预测信息">4.3 口头置信度更不准，却有独立的行为预测信息</a></li>
+<li><a class="toc-link toc-sub" href="#4-4-阈值能调行为-但自然语言百分比不是精确控制接口">4.4 阈值能调行为，但自然语言百分比不是精确控制接口</a></li>
+<li><a class="toc-link" href="#5-insights-下一步最值得检验什么"><span class="toc-num">05</span> 5. Insights：下一步最值得检验什么？</a></li>
+<li><a class="toc-link" href="#6-连接与发现"><span class="toc-num">06</span> 6. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-03</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2603.22161v3" target="_blank">arXiv</a>
+    </div>
+    <h1>Causal Evidence that Language Models use Confidence to Drive Behavior：置信度如何参与弃答决策</h1>
+    <p class="authors">Dharshan Kumaran, Nathaniel Daw, Simon Osindero, Petar Veličković, Viorica Patraucean</p>
+    <div class="topic-row"><span class="topic-tag">Interpretability</span> <span class="topic-tag">Metacognition</span> <span class="topic-tag">Uncertainty_Estimation</span> <span class="topic-tag">Activation_Steering</span></div>
+</header>
+
+<p><strong>这篇论文提供了两层证据：不允许弃答时测得的置信度，可以预测之后的弃答；对置信度相关的内部激活方向做干预，也能改变弃答。</strong> 更有意思的是，模型口头报告的把握虽然更不擅长区分答对与答错，却仍能补充预测它会不会回答。</p>
+<p>我的判断：最值得借鉴的是把<strong>置信度的测量、内部干预、决策阈值</strong>拆开验证的实验设计。它支持内部置信度相关信号参与行为控制，但尚未定位出独立的“自我评估模块”，也没有证明增加模型的自信能提高可靠性。</p>
+<h2 id="1-背景与材料">1. 背景与材料</h2>
+<ul>
+<li>作者来自 Google DeepMind；Nathaniel Daw 同时署名 Princeton University。</li>
+<li>阅读版本：<a href="https://arxiv.org/html/2603.22161v3">arXiv 2603.22161v3</a>，2026-09-18 更新，首稿发表于 2026-03-23。v3 首页标注已发表于 <strong>Nature Machine Intelligence (2026)</strong>，<a href="https://doi.org/10.1038/s42256-026-01293-x">期刊 DOI</a>。本笔记依据 arXiv 正文与补充材料，未另行核对期刊排版版。</li>
+<li>作者在 Data / Code Availability 中给出同一个 <a href="https://osf.io/resw4/overview?view_only=e96b5380edd04c64a37746b9b6ec7b49">OSF 项目</a>。本次阅读核对了方法、结果、补充分析和原图，<strong>未运行代码或复现实验</strong>。</li>
+</ul>
+<h2 id="2-关键问题-测得出置信度-是否就说明模型会使用它">2. 关键问题：测得出置信度，是否就说明模型会使用它？</h2>
+<p>沿用原文 §3.2 的题目：<strong>谁获得了 2010 年 IEEE Frank Rosenblatt Award？</strong> 四个选项分别是 Linus Pauling、Sugeno、Kazuo Tanaka 和 Golden Gate，论文把第二项设为正确答案。先让模型必须四选一，再允许它输出 <code>5</code> 表示弃答。</p>
+<p>假如它第一次选择第二项，第二次却弃答，可能有几种解释：它对这个答案确实没有把握；它只是在响应“谨慎一点”的指令；也可能只是题目形式触发了某种拒答习惯。<strong>单看第二次输出中 <code>5</code> 的概率，无法区分这些解释。</strong> 那个概率本身已经包含了弃答指令的影响。</p>
+<p>因此，作者先在没有弃答选项时测量置信度，再用这个独立测量预测允许弃答时的行为。这比直接检验“置信度与答对率相关”多走了一步：研究对象变成了模型怎样根据自己的把握采取行动。上面的逐阶段走法用于解释实验；论文没有提供这道具体题的完整输出或干预轨迹。</p>
+<h2 id="3-关键方法-在决策外测量-再分别改变内部信号和阈值">3. 关键方法：在决策外测量，再分别改变内部信号和阈值</h2>
+<h3 id="3-1-同一道题-取得两种读数">3.1 同一道题，取得两种读数</h3>
+<p>作者把 SimpleQA 改造成四选一题目，用 Gemma 3 12B 生成相似、不相似和无关干扰项；<strong>1,000 道题用于校准，另 1,000 道用于主实验</strong>。主分析覆盖 GPT-4o、Gemma 3 27B IT、DeepSeek-V3 家族 671B 和 Qwen3-Next-80B-A3B-Instruct；主实验除 DeepSeek 使用温度 0.7 采样外，其余采用 greedy decoding（§3.1–3.2）。</p>
+<p>在奖项题的第一次回答后，研究者记录两种置信度：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>读数</th>
+<th>如何取得</th>
+<th>它与后续弃答的关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>校准置信度 $C$</td>
+<td>从答案 token 的 logits / logprobs 取得模型所选选项的概率；在独立校准集上拟合温度缩放，以降低 ECE</td>
+<td>衡量第一次作答时对所选答案的把握；答案可以是错的</td>
+</tr>
+<tr>
+<td>口头置信度 $V$</td>
+<td>另做一次前向，将原题、选项和模型自己的答案交给它，要求从十档概率区间中选择一档</td>
+<td>是对自己已给答案的再评价，但仍在引入弃答任务之前取得</td>
+</tr>
+</tbody>
+</table></div>
+<p>温度缩放是<strong>研究者在模型外做的读数校准</strong>，没有把校准函数装进 LLM，也没有训练模型权重。口头置信度相对于“作答”是事后的，相对于后续“弃答”则是事前的；这两个时间参照不能混用（§3.3–3.5.1）。</p>
+<h3 id="3-2-四个阶段各排查一个问题">3.2 四个阶段各排查一个问题</h3>
+<ol>
+<li><strong>Phase 1：必须作答。</strong> 输出选项编号，取得 $C$；另一次前向取得 $V$。</li>
+<li><strong>Phase 2：允许弃答。</strong> 同一道题加入“没有明确正确答案就选 5”的指令，检验 Phase 1 的读数能否预测这次行为。关键原文是：“If you don’t see a clearly correct answer, choose ’5’ to avoid making an error.” 实际所有题都有正确选项。因此，这里的“自由弃答”指没有指定数值阈值，仍然有明确的谨慎指令。</li>
+<li><strong>Phase 3：改内部激活。</strong> 使用 Phase 2 提示，在 Gemma 内部加入提高或降低回答倾向的置信度相关向量，观察同题行为是否改变。</li>
+<li><strong>Phase 4：改指令阈值。</strong> 要求模型在内部评估答对概率，低于阈值就输出 <code>5</code> 请求 oracle 帮助；阈值从 0 到 100、每次增加 10。输入里并不提供研究者测得的 $C$，也没有实际调用 oracle。</li>
+</ol>
+<p>作者用逻辑回归描述 Phase 2 的决策：</p>
+<div class="math-display">$$
+P(\mathrm{abstain}=1)=\sigma(\beta_0+\beta_C C+\beta_D D).
+$$</div>
+<p>其中 $\sigma$ 是 sigmoid 函数；$D$ 虽被称为 difficulty，实际是跨随机选项排列的平均正确率，<strong>越大越容易</strong>。当 $\beta_C&lt;0$ 时，置信度越高，弃答概率越低；由拟合系数可推得概率为 0.5 时的隐式置信度阈值。曲线的陡峭程度表示决策对置信度有多敏感，与前面校准 logits 的温度是不同参数。Phase 4 则再加入指令阈值 $T$，看它能否在置信度之外独立改变行为（§3.5.2、3.5.4）。</p>
+<p><strong>这些都是研究者拟合的计算模型。</strong> 回归能描述行为，不等于 Transformer 内部已经被发现了一个显式比较器。</p>
+<h3 id="3-3-干预向量如何构造-一个重要的识别边界">3.3 干预向量如何构造：一个重要的识别边界</h3>
+<p>沿着奖项题的第二次运行，干预发生在 <code>Answer:</code> 最后一个 token 的 residual stream：模型已处理题目和全部选项，尚未输出答案。向量来自另外一组题目的 Phase 2 激活，构造过程如下（§3.5.3）：</p>
+<ul>
+<li>只保留<strong>答对且没有弃答</strong>的试次，避免直接把正确与错误的差异当成置信度。</li>
+<li>定义回答与弃答的置信度差。这里 $C_i$ 是 Phase 2 的校准选项概率，$C_5$ 对应弃答：</li>
+</ul>
+<div class="math-display">$$
+m=\max_{i\in\{1,2,3,4\}}C_i-C_5.
+$$</div>
+<ul>
+<li>从差值最高、最低的各 75 个试次中，各选 25 个；使两组所选答案编号分布近似平衡，任一编号占比不超过 28%，减少向某个答案 token 偏移的可能。</li>
+<li>高置信方向取两组激活均值之差，低置信方向取其相反数。把方向缩放至该层 residual 参考范数的 3%，再用强度 $\alpha\in[0.5,2.0]$ 做单层加性干预：</li>
+</ul>
+<div class="math-display">$$
+v_{\mathrm{high}}=\mu(H)-\mu(L),\qquad
+v_{\mathrm{low}}=-v_{\mathrm{high}},\qquad
+\widetilde h^{(\ell)}=h^{(\ell)}+\alpha v^{(\ell)}_{\mathrm{scaled}}.
+$$</div>
+<p>最后在 <strong>500 道未用于构造向量的题目</strong>上与无干预条件比较。这里真正操纵的是一个从“回答—弃答差值”分组得到的方向；它有可能同时包含置信度、回答偏好和决策策略。这个限定决定了后面因果结论应当怎样表述。</p>
+<h2 id="4-关键结果-哪些证据支撑到哪一步">4. 关键结果：哪些证据支撑到哪一步？</h2>
+<h3 id="4-1-置信度确实预测弃答-但还远没有解释全部行为">4.1 置信度确实预测弃答，但还远没有解释全部行为</h3>
+<p>GPT-4o 在 Phase 1 的正确率为 <strong>63.7%</strong>。允许弃答后，全部题目中 <strong>30.0% 答对、13.4% 答错、56.6% 弃答</strong>；已回答部分的正确率为 <strong>69.1%</strong>。也就是说，准确率的提高伴随着覆盖率降到 43.4%，并不是凭空提高知识水平（§4.1–4.2）。</p>
+<p><img src="../../assets/causal-confidence-2603.22161/figure-2.png" alt="Figure 2：置信度与正确率、弃答行为" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.22161v3#S4.F2">原文 Figure 2</a>，CC BY 4.0。重点看 C、D：C 比较各类预测变量，D 展示弃答随 Phase 1 置信度平滑变化。A、B 仅说明读数与答对相关，单独不足以证明行为控制。</em></p>
+<p>只用 $C$ 的模型，pseudo-$R^2$ 为 <strong>0.106</strong>；在同时控制题目难度、RAG 分数、语义特征的模型中，置信度的标准化系数绝对值约 <strong>0.99</strong>，明显大于其他单项预测变量。拟合的隐式阈值约 <strong>77%</strong>，转换过程是平滑的（§4.2.1、Supplementary Table 1）。这是“比所测替代变量更能预测”的证据，不能把 pseudo-$R^2$ 当成已解释的方差比例，更不能据此说行为已被完整解释。</p>
+<p>替代解释的控制也有范围：RAG 分数来自 Wikipedia 短摘要与问题的相似度，检索只成功了 680/1,000 题，失败记为 0；语义控制只取了句向量前十个主成分，覆盖 23% 方差。它们弱于置信度，并不等于所有知识可及性或文本启发式都已排除（Supplementary Methods）。</p>
+<h3 id="4-2-内部干预改变了弃答-而且暴露了可靠性代价">4.2 内部干预改变了弃答，而且暴露了可靠性代价</h3>
+<p>Gemma 的干预效应在第 31 层最强。作者汇总第 30–40 层的单层干预结果：从最大低置信方向到最大高置信方向，<strong>弃答率由 66.5% 降至 7.0%，相差 59.5 个百分点</strong>；相应覆盖率由 33.5% 增至 93.0%。与此同时，已回答题目的准确率从 <strong>59.2% 降至 53.7%</strong>（§4.3、Figure 3）。</p>
+<p><img src="../../assets/causal-confidence-2603.22161/figure-3.png" alt="Figure 3：Gemma 内部干预与行为变化" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.22161v3#S4.F3">原文 Figure 3</a>，CC BY 4.0。A 看干预效应集中在哪些层；B 同时看正确、错误和弃答，避免只看到覆盖率增长；C、D 显示概率质量在实际答案和弃答之间转移。B 是第 30–40 层结果的平均，不是同时向这些层注入。</em></p>
+<p>这比前面的回归更强：<strong>固定输入、改变内部激活，行为随之改变。</strong> 但结果也直接表明，提高所干预的“自信”会让模型回答更多较不可靠的题。</p>
+<p>作者进一步用两个中介量解释干预效应：$M_1$ 是“实际答案的最大置信度变化减去弃答置信度变化”，$M_2$ 是给定置信度下、干预前后拟合决策曲线的差。论文报告两条间接路径分别占总效应的 <strong>67.1% 和 26.2%</strong>；改用 Gemma 自身多次作答表现控制难度后，置信度路径仍占 70.5%（§4.3.1、Figure 4、补充中介分析）。</p>
+<p>这些比例属于特定中介模型的分解。原文同时报告总效应 $c=-0.82$、剩余直接效应 $c&#x27;=-0.32$，并说明 logit 模型下各效应不严格相加；因此<strong>不能把两项占比相加后，将剩下的 6.7% 当成直接效应</strong>。中介结果增强了置信度相关解释，但未单独建立干预的功能特异性。</p>
+<h3 id="4-3-口头置信度更不准-却有独立的行为预测信息">4.3 口头置信度更不准，却有独立的行为预测信息</h3>
+<p>Supplementary Table 14 在 Phase 1 数据上报告：GPT-4o 的口头置信度区分正误的 AUROC 为 <strong>0.546</strong>，校准概率为 <strong>0.746</strong>。然而，在已经包含校准概率和辅助变量的弃答回归中，加入口头置信度仍使 pseudo-$R^2$ 从 <strong>0.153 升至 0.215</strong>；两种读数互相提供增量预测信息（Supplementary Table 15）。</p>
+<p>这一区分很有价值：<strong>“哪个读数更能判断答案对不对”和“哪个读数更贴近模型的决策”是两项评估。</strong> 四个纳入分析的模型均出现独立贡献；但效应并非一样大，例如 DeepSeek 的 Phase 4 中，加入口头置信度仅增加约 0.002 的 pseudo-$R^2$。将口头读数也做保序回归（isotonic regression）校准后，独立贡献仍存在（Supplementary Tables 16–17）。</p>
+<p>进一步看内部表示：作者用五折交叉验证的 ridge regression，从 Gemma 的答前 token 激活解码两类读数。在第 37 层，对口头置信度与校准概率的 $R^2$ 分别为 <strong>0.39、0.58</strong>，且都包含另一种读数没有覆盖的信息（§4.5.1）。</p>
+<p><img src="../../assets/causal-confidence-2603.22161/supp-figure-10.png" alt="Supplementary Figure 10：答前激活中的置信度信息" /></p>
+<p><em>来源：<a href="https://arxiv.org/html/2603.22161v3#Sx9.F10">原文 Supplementary Figure 10</a>，CC BY 4.0。a、b 的纵轴是控制另一种读数后的增量 $\Delta R^2$，与前段的总 $R^2$ 不同；c 看正确性本身的可解码性。补充正文指出，校准概率的解码 $R^2$ 到最终第 61 层继续上升至 0.74，因此不能把第 37 层的 0.58 写成全网络峰值。</em></p>
+<p>作者提出两种读数都是更丰富内部状态的有损投影。这个解释与数据相容，但“丰富状态”还没有被完整命名：控制两种读数、四选项分布、margin、熵以及辅助变量后，激活仍含有预测弃答的剩余信息，残差 AUROC 为 0.75；作者明确说其性质有待研究（补充材料 AC additional analyses）。<strong>能被探针读出，也不等于模型在原始前向中按探针的方式读取。</strong></p>
+<h3 id="4-4-阈值能调行为-但自然语言百分比不是精确控制接口">4.4 阈值能调行为，但自然语言百分比不是精确控制接口</h3>
+<p>Phase 4 中，提高指令阈值会提高弃答率。在 GPT-4o 上，阈值单变量模型的 pseudo-$R^2$ 为 <strong>0.105</strong>，加入 Phase 1 置信度后为 <strong>0.241</strong>。但拟合结果显示明显偏离“置信度低于阈值才弃答”：Phase 1 置信度为 80% 时，约在指令阈值 46% 就达到 50% 弃答概率（Figure 5、Supplementary Table 4）。</p>
+<p>这里必须保留提示敏感性：同一套提示用于 Gemma 时，阈值效应并不显著（$p=0.086$）。作者生成了 20 个改写，选取在 100% 阈值下弃答最多的版本做主实验；其中 13 个版本在该阈值下超过 80% 弃答。另一个测试过的模型 Llama 3.1 70B 因 Phase 2 弃答率仅 4%，未纳入分析（§3.1、3.5.4）。</p>
+<p>因此，更准确的结论是：这些模型在合适提示下表现出可由阈值调节的弃答策略。它尚不足以保证任意提示、任意模型都能稳定执行同一数值规则。</p>
+<h2 id="5-insights-下一步最值得检验什么">5. Insights：下一步最值得检验什么？</h2>
+<p><strong>1. 最需要补的是“置信度方向”的特异性。</strong> 向量由回答与弃答的 margin 定义，中介量也包含同一类输出差值；干预确实有因果效应，但其心理学命名仍需额外检验。我会用无弃答提示下的置信度构造方向，与当前方向、同范数随机方向及直接弃答偏好方向对照，再检验它能否跨任务改变求助、下注或信息搜集，同时监控答案内容是否受损。这样才能进一步区分一般把握信号与特定动作偏好。</p>
+<p><strong>2. 两个读数互补，尚未唯一确定二阶元认知机制。</strong> 口头置信度来自另一次前向，预测优势也可能来自同一复杂状态的不同非线性读出。作者的 Figure 6 本身就将两阶段限定为计算层面的功能示意。下一步若能找到两个方向，分别改变自报把握与答案分布，并检验它们对弃答的独立因果作用，会比仅凭联合回归更接近机制识别。</p>
+<p><strong>3. 应当在固定覆盖率下检验风险，而不是奖励“更敢答”。</strong> 本文干预同时扩大覆盖率并降低已回答准确率，尚未证明风险—覆盖率曲线得到改善。若将其用于 agent 求助策略，我会先与外部置信度阈值、语义熵和口头置信度策略比较同等覆盖率下的错误率，并加入错误回答与求助成本。本文只研究无 CoT 的事实选择题，尚未验证多步推理中的回溯、验证或放弃路径。</p>
+<blockquote class="card card-info">
+<p><strong>原文核对提醒</strong>：[?] Figure 3 标注无干预弃答基线为 28.2%，Supplementary Figure 2 则标为 28.8%，未找到差异解释。本笔记保留这一不一致，主要使用 §4.3 明确报告的两端干预结果。各图号均按 v3 HTML 标注。</p>
+</blockquote>
+<h2 id="6-连接与发现">6. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — 从读出内部状态推进到行为干预，同时保留方向的功能特异性问题。</li>
+<li><a class="wikilink" href="A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位.html" title="A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位">A-Mechanistic-Study-of-Language-Model-Introspection-内部扰动的门控与定位</a> — 两篇都需要区分内部信息与报告/行动倾向；该文进一步定位门控和位置报告的 attention heads，本文提供的是置信度—弃答的功能模型与方向干预。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Does-Reasoning-Improve-Seeing-VLM推理收益与头部干预.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Does Reasoning Improve Seeing? Understanding When Vision-Language Models Benefit from Thinking</span></a>
+<a class="paper-nav-link next" href="Understanding-LLM-Agents-Requires-a-Chain-of-Attribution-行为与机制归因链.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Understanding LLM Agents Requires a Chain of Attribution: On the Interplay Between Mechanistic Interpretability and Behavioral Approaches</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: kumaran2026causalconfidence</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
