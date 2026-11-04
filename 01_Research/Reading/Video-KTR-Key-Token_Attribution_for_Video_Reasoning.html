@@ -976,7 +976,7 @@
 <p>现有视频推理方法存在两个核心问题：</p>
 <ol>
 <li><strong>粗粒度奖励</strong>: 依赖序列级奖励，忽视细粒度的视觉-时间-语言关联</li>
-<li><strong>单一归因</strong>: 只用预测熵选择 token，无法区分模态特异性依赖</li>
+<li><strong>单一归因</strong>: 只用预测熵选择 token，无法区分它们对不同模态的依赖</li>
 </ol>
 <hr />
 <h2 id="3-数据集">3. 数据集</h2>
@@ -1054,12 +1054,12 @@ $$</div>
 <h3 id="4-2-token-选择与策略更新">4.2 Token 选择与策略更新</h3>
 <ol>
 <li><strong>Token 合并</strong>: $S = S_{\text{vis}} \cup S_{\text{temp}} \cup S_{\text{ent}}$</li>
-<li><strong>掩码机制</strong>: 只对关键 token 进行梯度更新</li>
+<li><strong>掩码机制</strong>: 只有关键 token 位置的策略损失参与梯度更新</li>
 </ol>
 <div class="math-display">$$
 J_{\text{Video-KTR}}(\theta) = \mathbb{E}_{q, \{o_i\}} \left[ \frac{1}{G} \sum_{i=1}^G \frac{1}{|o_i|} \sum_{t=1}^{|o_i|} m_{i,t} \cdot \min\left( r_{i,t} \cdot \hat{A}_{i,t}, \text{clip}(r_{i,t}, 1-\epsilon, 1+\epsilon) \cdot \hat{A}_{i,t} \right) \right]
 $$</div>
-<p>其中 $m_{i,t} \in \{0, 1\}$ 是二值掩码，只在关键 token 处为 1</p>
+<p>其中 $m_{i,t} \in \{0, 1\}$ 是二值掩码，仅在关键 token 位置取值为 1</p>
 <h3 id="4-3-核心公式对比">4.3 核心公式对比</h3>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
@@ -1139,10 +1139,10 @@ $$</div>
 <p><strong>核心发现</strong>: Video-KTR 在 Video-Holmes 上以 42.7% 超越 GPT-4o (42.0%)</p>
 <h3 id="消融实验关键发现">消融实验关键发现</h3>
 <ol>
-<li><strong>三种信号互补</strong>: 单独使用时间感知 token 收益最大，但组合使用带来最一致提升</li>
+<li><strong>三种信号互补</strong>: 单独使用时间感知 token 的收益最大，但组合使用三种信号能带来最一致的提升</li>
 <li><strong>硬性选择优于软加权</strong>: Binary Top-20% 策略最优</li>
 <li><strong>20% 更新比例最佳</strong>: 过高引入噪声</li>
-<li><strong>扰动强度鲁棒</strong>: 帧打乱/视觉遮蔽的具体强度对结果影响有限</li>
+<li><strong>对扰动强度较为稳健</strong>: 帧打乱/视觉遮蔽的具体强度对结果影响有限</li>
 </ol>
 <h3 id="语言学分析">语言学分析</h3>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>

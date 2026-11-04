@@ -984,7 +984,7 @@
 <p><strong>动机与未解决的问题：</strong></p>
 <ol>
 <li>
-<p><strong>现有 interpretability 方法按 token 设计</strong>——对 CoT 推理粒度不对。你关心的是&quot;这句话改变了推理方向&quot;，而不是&quot;第 420 个 token 的 logits 偏移了&quot;。</p>
+<p><strong>现有 interpretability 方法按 token 设计</strong>——用于 CoT 推理时，分析粒度过细。你关心的是&quot;这句话改变了推理方向&quot;，而不是&quot;第 420 个 token 的 logits 偏移了&quot;。</p>
 </li>
 <li>
 <p><strong>粒度的 Goldilocks 问题</strong>——token 太细，paragraph 会把多个 reasoning step 混在一起。Sentence 是自然的最小推理单元。</p>
@@ -1025,7 +1025,8 @@ $$\text{importance}_c := D_{\text{KL}}[p(A&#x27;_{S_i} | T_i \not\approx S_i) \|
 <p>论文验证了 smoothing 参数对结论无影响（Appendix A：Laplace $\alpha = 1.0$ 和 Jeffreys prior $\alpha = 0.5$ 结论一致）。</p>
 <h3 id="3-2-receiver-heads-白盒方法">3.2 Receiver Heads（白盒方法）</h3>
 <p><strong>动机：</strong> 如果某些句子确实是&quot;锚点&quot;，模型内部应该有机制在追踪它们。注意力模式是最自然的候选。</p>
-<p><strong>定义：</strong> 对每个 attention head，将 token-level 注意力矩阵平均为 sentence-sentence 矩阵，计算每个句子被所有下游句子（间隔 &gt;= 4 句，排除局部连续注意力的干扰）关注的程度。如果某个 head 的注意力分布 kurtosis 异常高 → 它把注意力集中在少数句子上 → 叫它 &quot;receiver head&quot;。直觉：后续句子通过这些 head &quot;接收&quot;到关键锚点句子的信息。</p>
+<p><strong>定义：</strong> 对每个 attention head，将 token-level 注意力矩阵平均为 sentence-sentence 矩阵，计算每个句子受到所有下游句子关注的程度。下游句子与它的间隔需 &gt;= 4 句，以排除局部连续注意力的干扰。</p>
+<p>如果某个 head 的注意力分布 kurtosis 异常高，说明它把注意力集中在少数句子上，论文将其称为 &quot;receiver head&quot;。直觉上，后续句子通过这些 head &quot;接收&quot;关键锚点句子的信息。</p>
 <p><strong>关键属性：</strong></p>
 <ul>
 <li>Split-half reliability $r = .67$（跨问题一致性高）</li>

@@ -1084,7 +1084,7 @@ $$\max_\theta J^{RL}_{p_\theta}(\theta) \equiv \min_\theta \left[ D_{\text{KL}}(
 <p>而 CE 只最小化 KL 散度，不显式约束熵。</p>
 <p>直觉上的理解：EPG 给 confident samples 更大权重 → 这些样本的预测已经接近正确 → 梯度会进一步强化正确预测 → 熵自然下降更快。反过来 CE 给 uncertain samples 更大权重 → 这些样本可能是错的 → 梯度可能在错误方向上强化 → 熵的下降不稳定。</p>
 <h3 id="4-4-adaptive-entropy-annealing-aepg">4.4 Adaptive Entropy Annealing (aEPG)</h3>
-<p>核心问题：纯 EPG 可能 plasticity 不够，纯 CE 会遗忘。解决方案是用 sigmoid schedule 做 interpolation。</p>
+<p>核心问题：纯 EPG 可能 plasticity 不够，纯 CE 会遗忘。解决方案是用 sigmoid schedule 在两种梯度之间插值。</p>
 <p><strong>aEPG gradient</strong>:
 $$g_{\text{aEPG}}(\theta) = \alpha_t g_{\text{CE}}(\theta) + (1-\alpha_t)(-g_{\text{EPG}}(\theta))$$</p>
 <p><strong>Sigmoid schedule</strong>:
@@ -1218,7 +1218,7 @@ $$\alpha_t = \sigma\left(\tau \frac{T-2t}{T}\right)$$</p>
 </tr>
 </tbody>
 </table></div>
-<p>aEPG 在 LoRA、Adapter、Prefix 三种 PEFT 上都能 work。</p>
+<p>aEPG 在 LoRA、Adapter、Prefix 三种 PEFT 上都带来了提升。</p>
 <h3 id="5-2-entropy-regularization-对比">5.2 Entropy Regularization 对比</h3>
 <p><strong>Table 3: 这是最有意思的实验</strong></p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
@@ -1349,7 +1349,7 @@ $$\alpha_t = \sigma\left(\tau \frac{T-2t}{T}\right)$$</p>
 </tr>
 </tbody>
 </table></div>
-<p><strong>注意</strong>: 纯 EPG (α=0) 在 CIFAR-100 上完全 fail 了（只有 7.32%），说明从头训练需要 exploration。但混合 CE 和 EPG（α=0.2）反而比纯 CE 好。</p>
+<p><strong>注意</strong>: 纯 EPG (α=0) 在 CIFAR-100 上训练失败（只有 7.32%），说明从头训练需要 exploration。但混合 CE 和 EPG（α=0.2）反而比纯 CE 好。</p>
 <p>这个实验揭示了 EPG 的<strong>适用边界</strong>：EPG 依赖于模型已经有合理的 confidence 分布。随机初始化的网络对所有样本都不 confident（$\pi(y|x) \approx 1/K$），导致 EPG 梯度权重对所有样本都一样小，无法有效学习。</p>
 <h2 id="6-golden-case-一个样本的梯度计算">6. Golden Case: 一个样本的梯度计算</h2>
 <p>假设一个 5 分类任务，输入 $x_i$，真实标签 $y_i = 3$，模型输出 softmax 为 $\pi_\theta = [0.05, 0.05, 0.1, \mathbf{0.7}, 0.1]$（正确类别概率 0.7）。</p>

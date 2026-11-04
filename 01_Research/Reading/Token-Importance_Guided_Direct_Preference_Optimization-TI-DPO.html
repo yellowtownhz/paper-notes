@@ -1088,9 +1088,9 @@
 <p><strong>为什么用梯度</strong>：梯度直接反映了&quot;改变这个 token embedding 对最终 reward 的影响有多大&quot;。梯度是 data-driven 的，直接 quantifies causal contribution。概率估计（如 TIS-DPO）只看输出概率差异，容易被 contrastive model 的不一致输出带偏。</p>
 <p><strong>计算流程</strong>：</p>
 <p><strong>Step 1: 计算梯度</strong></p>
-<p>对于 token embedding $e_i$，计算其对 policy log-probability 的梯度：</p>
+<p>对 policy log-probability 关于 token embedding $e_i$ 求梯度：</p>
 <div class="math-display">$$\bar{G}_i = \frac{1}{t}\sum_{j=1}^{t}\nabla_{e_i}\log\pi_\theta(y^j|x, y^{&lt;j})$$</div>
-<p>物理意义：这个梯度衡量了 token $e_i$ 对生成每个后续 token $y^j$ 的&quot;影响力&quot;。梯度大 = 这个 token 很重要，改动它会对生成结果产生大影响。</p>
+<p>梯度的含义：这个梯度衡量了 token $e_i$ 对生成每个后续 token $y^j$ 的&quot;影响力&quot;。梯度大 = 这个 token 很重要，改动它会对生成结果产生大影响。</p>
 <p>为什么平均？因为要平衡 local 和 global importance——每个 token 的生成只依赖 prefix，但梯度本身已经包含历史依赖。</p>
 <p><strong>Step 2: 计算 Importance Score</strong></p>
 <div class="math-display">$$I_i = ||\bar{G}_i||_1 = \sum_k |\bar{G}_i[k]|$$</div>
@@ -1111,7 +1111,7 @@
 <h3 id="4-6-triplet-loss-第二个核心创新">4.6 Triplet Loss（第二个核心创新）</h3>
 <p><strong>动机</strong>：binary comparison (good vs bad) 太粗糙。人类偏好有梯度——有些回答&quot;还行但不够好&quot;。用 triplet 结构（preferred-intermediate-non-preferred）可以捕捉这个连续性。</p>
 <div class="math-display">$$\mathcal{L}_{triplet} = \mathbb{E}\left[\max\left(0, \underbrace{\sum_{t=1}^{T_w}\left\|\log\frac{\pi_\theta(y^t|x, y^{&lt;t})}{\pi_{ref}} - \log\frac{\pi_\theta(y_w^t|x, y_w^{&lt;t})}{\pi_{ref}}\right\|_2^2}_{\text{Bring }y\text{ closer to }y_w} - \underbrace{\sum_{t=1}^{T_l}\left\|\log\frac{\pi_\theta(y_l^t|x, y_l^{&lt;t})}{\pi_{ref}} - \log\frac{\pi_\theta(y^t|x, y^{&lt;t})}{\pi_{ref}}\right\|_2^2}_{\text{Push }y\text{ away from }y_l} + \alpha\right)\right]$$</div>
-<p>物理意义：</p>
+<p>各项的作用：</p>
 <ul>
 <li>$y$ 是模型生成的中间态输出（anchor）</li>
 <li>第一个 term：让 $y$ 往 $y_w$（preferred）靠拢（pull toward good）</li>

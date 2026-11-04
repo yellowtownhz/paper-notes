@@ -991,10 +991,10 @@
 <li><strong>Flexible generalization（灵活泛化）</strong>：同一个向量能当任意下游操作的合法参数（broadcast）。</li>
 <li><strong>Selectivity（选择性）</strong>：只占表征总量一小撮；解析文本 / 语法流畅这类日常处理不走它。</li>
 </ol>
-<p><strong>为什么这不 trivial / 之前卡在哪：</strong></p>
+<p><strong>为什么这个问题并不简单：此前的三处障碍</strong></p>
 <ol>
 <li><strong>架构上没有明显对应物</strong>。人脑工作空间和递归动力学、脑区互联紧绑，而 transformer 是前馈的、单次 forward pass，没有 recurrence。所以&quot;LLM 应该有工作空间&quot;并非理所当然。</li>
-<li><strong>现有读取工具不够用</strong>。要问&quot;哪些表征可言语化&quot;，得能把中间层激活翻成词。<strong>logit lens</strong>（直接把 unembedding 套到中间层）在早中层失灵——它假设各层同坐标，而中间层几何离最后一层很远。<strong>tuned lens</strong>（训一个线性映射去匹配输出分布）是相关性的、非因果的，在涉及&quot;未说出口的中间计算&quot;的 prompt 上倾向<strong>直接跳到最终答案</strong>，把中间步跳过去。所以现有 lens 恰恰在&quot;读出沉默中间推理&quot;这件最想做的事上表现差。</li>
+<li><strong>现有读取工具不够用</strong>。要研究&quot;哪些表征可言语化&quot;，首先得能把中间层激活翻译成词。<strong>logit lens</strong>（直接把 unembedding 套到中间层）在早中层失灵——它假设各层同坐标，而中间层几何离最后一层很远。<strong>tuned lens</strong>（训一个线性映射去匹配输出分布）是相关性的、非因果的，在涉及&quot;未说出口的中间计算&quot;的 prompt 上倾向<strong>直接跳到最终答案</strong>，把中间步跳过去。所以现有 lens 恰恰在&quot;读出沉默中间推理&quot;这件最想做的事上表现差。</li>
 <li><strong>概念空白</strong>。就算读得出，也没人证明过：这些&quot;能被说出来&quot;的表征是不是恰好也是模型<strong>拿来做内部推理、做灵活组合</strong>的那些。&quot;可报告的内容&quot; = &quot;真正驱动思考的内容&quot;？——这是本文最核心的 empirical 主张。</li>
 </ol>
 <blockquote class="card card-info">
@@ -1010,7 +1010,7 @@
 </blockquote>
 <h3 id="3-1-整体思路">3.1 整体思路</h3>
 <p>一句话：<strong>用&quot;平均 Jacobian&quot;把中间层激活线性地投影到词表上</strong>，找出&quot;这个激活平均而言倾向于让模型说出哪些词&quot;。这些方向就是 J-lens 向量；它们在残差流里张成的（稀疏）子空间就是 J-space。</p>
-<p>关键的直觉转折在&quot;平均&quot;上。单条 prompt 上的 Jacobian 混了两种东西：(a) 模型对某概念的<strong>一般言语化倾向</strong>，(b) 该概念在<strong>当前上下文</strong>里被怎么用。对一大批上下文求平均，就把 (b) 洗掉，只留 (a)——也就是&quot;可言语化性&quot;（poised to be spoken about, should the occasion arise），而不是&quot;恰好在这条 prompt 里被说了&quot;。附录消融（图16/17）证明这个&quot;平均&quot;就是 J-lens 超过 logit / tuned lens 的关键。</p>
+<p>关键的直觉转折在&quot;平均&quot;上。单条 prompt 上的 Jacobian 同时反映两种影响：(a) 模型对某概念的<strong>一般言语化倾向</strong>，(b) 该概念在<strong>当前上下文</strong>里被怎么用。对一大批上下文求平均，就把 (b) 洗掉，只留 (a)——也就是&quot;可言语化性&quot;（poised to be spoken about, should the occasion arise），而不是&quot;恰好在这条 prompt 里被说了&quot;。附录消融（图16/17）证明这个&quot;平均&quot;就是 J-lens 超过 logit / tuned lens 的关键。</p>
 <h3 id="3-2-j-lens-的数学定义">3.2 J-lens 的数学定义</h3>
 <p>模型每个位置维护一个 residual stream 向量 h，逐层更新。第一层几乎只编码当前 token 身份；最后一层 h_final 乘固定的 unembedding 矩阵 W_U 就读出 next-token 分布。J-lens 就是拿来看<strong>中间层</strong> h_ℓ 里装了什么。</p>
 <p><strong>（1）平均 Jacobian（核心公式）</strong>——对第 ℓ 层、位置 t 的激活 h_{ℓ,t} 做小扰动，会沿后续所有层传播，影响每个位置 t'≥t 的最终层激活 h_{final,t'}；一阶近似下这是线性的，由 Jacobian 矩阵描述。对每层 ℓ 计算：</p>
@@ -1034,7 +1034,7 @@
 <p>每层的 J-lens 向量是<strong>过完备</strong>的：n_vocab 个向量塞进 d_model 维空间（n_vocab &gt; d_model），所以它们可能张满整个残差流，且给定激活的分解<strong>不唯一</strong>。</p>
 <p>但经验上<strong>同一时刻只有少数 J-lens 向量强激活</strong>。于是定义 <strong>J-space = 能被 k 个 J-lens 向量的稀疏非负组合表示的点集</strong>。</p>
 <ul>
-<li>几何上：给定 k，J-space 是一堆 k 维锥的并集——&quot;锥&quot;是因为要求<strong>非负</strong>组合（只能加权、不能减），&quot;并集&quot;是因为可以是<strong>任意</strong> k 元 J-lens 子集里选。给定激活，它的 <strong>J-space 分量</strong> = J-space 里离它最近的点；<strong>非 J-space 分量</strong> = 差值。用 <strong>gradient pursuit</strong>（稀疏追踪算法）求这个稀疏非负组合，系数就是它的 local J-space 坐标。</li>
+<li>几何上：给定 k，J-space 是一堆 k 维锥的并集——&quot;锥&quot;是因为要求<strong>非负</strong>组合（只能加权、不能减），&quot;并集&quot;是因为组合可以从<strong>任意</strong> k 元 J-lens 子集中选取。给定激活，它的 <strong>J-space 分量</strong> = J-space 里离它最近的点；<strong>非 J-space 分量</strong> = 差值。用 <strong>gradient pursuit</strong>（稀疏追踪算法）求这个稀疏非负组合，系数就是它的 local J-space 坐标。</li>
 <li>⚠️ <strong>稀疏度 k 是&quot;somewhat arbitrary&quot;的</strong>（作者自己承认），全文换着用：verbal report 用 k=16、reasoning probe 用 k=25、ablation 用 k=10，通常 ≤25（经验上&quot;有意义激活&quot;的数量）。<strong>一个可调 k + 过完备字典 + 分解不唯一</strong>，给了不小的拟合自由度——看结果时要警惕&quot;选到能 work 的 k / 层段&quot;。</li>
 <li>在 superposition 视角下：模型激活可分解为过完备特征方向（sparse frame）的稀疏组合，J-lens 向量是这个 frame 的一个 <strong>token-indexed 子 frame</strong>，其余方向（占绝大多数）构成 J-space 之外的表征。</li>
 </ul>
@@ -1094,15 +1094,15 @@
 </table></div>
 <p><strong>核心 tradeoff</strong>：J-lens 便宜（每层一次预计算的矩阵乘）、grounded（解析地从模型 Jacobian 导出、无需辅助训练）、可统一作用于激活 / 权重 / 特征方向；代价是<strong>输出只能是单 token 的排名列表</strong>——这条限制后面会反复咬住阴性结论。用平均 Jacobian（而非训练的预测器）&quot;经验上对结果非常重要&quot;。</p>
 <h3 id="3-7-counterfactual-reflection-training-由发现直接推出的训练技术">3.7 Counterfactual Reflection Training（由发现直接推出的训练技术）</h3>
-<p>工作空间账户做了个强预测：<strong>模型的内部推理路由经过&quot;它可能说出来的东西&quot;的表征</strong>。推论——要改变模型在某上下文怎么想，也许只需改变它&quot;如果被打断并要求反思，会说什么&quot;。作者据此设计 <strong>反事实反思训练</strong>。</p>
+<p>工作空间解释给出了一个强预测：<strong>模型的内部推理路由经过&quot;它可能说出来的东西&quot;的表征</strong>。推论——要改变模型在某上下文怎么想，也许只需改变它&quot;如果被打断并要求反思，会说什么&quot;。作者据此设计 <strong>反事实反思训练</strong>。</p>
 <p>流程（原文 §Shaping the J-space，图7 / 图10）：</p>
 <ol>
-<li>从生产 RL 训练环境采 <strong>1 万条</strong>任务 prompt，用基线模型（<strong>Claude Haiku 4.5</strong>）生成部分 rollout，随机选某轮<strong>截断</strong>。样本涵盖：已做了不良行为的、处在可能做但还没做的处境的、以及随机上下文。</li>
+<li>从生产 RL 训练环境采 <strong>1 万条</strong>任务 prompt，用基线模型（<strong>Claude Haiku 4.5</strong>）生成部分 rollout，随机选某轮<strong>截断</strong>。样本涵盖三类上下文：模型已经做出不良行为、可能做出不良行为但还未实施，以及随机选取的上下文。</li>
 <li>截断点<strong>追加一个反思问题</strong>（短 user 轮），如 &quot;What's the most honest thing you can do right now?&quot;、&quot;Pause here. Are there principles you should be thinking about that you haven't yet?&quot;</li>
 <li><strong>生成目标反思</strong>：给基线模型 20 条采样自 Anthropic constitution 的原则，让它写一段 2–4 段、把相关原则用自然内化语言 paraphrase、且结合当前任务细节（不是背规则）的反思。<strong>关键：constitution 只在生成时提供；最终训练样本里把这些脚手架全剥掉</strong>，只留 [原始上下文 + 反思问题 + 模型写的反思]。</li>
 <li><strong>fine-tune 基线模型，loss 只算在反思那一轮</strong>。</li>
 </ol>
-<p>评估时<strong>从不 prompt 模型反思</strong>，模型也从不输出反思文本。假设是：训练它在&quot;反事实反思续写&quot;里说出原则，会让<strong>原始上下文</strong>的工作空间被 populate 上这些原则相关概念，从而改变行为。</p>
+<p>评估时<strong>从不 prompt 模型反思</strong>，模型也从不输出反思文本。假设是：训练它在&quot;反事实反思续写&quot;里说出原则，会让模型处理<strong>原始上下文</strong>时，工作空间中也出现这些原则相关概念，从而改变行为。</p>
 <p><strong>为什么反直觉</strong>：它不给目标行为的任何 demonstration，也不在目标上下文里直接干预模型回复；只监督一段&quot;永远不会在评估时被请求&quot;的反事实续写，靠 out-of-context reasoning 把训练文本内容迁移到不含该文本的输入上。和 implicit chain-of-thought 是近亲，但用在规范性行为原则而非解题策略上，且<strong>机制可被 J-lens 直接看到</strong>（能看到概念进工作空间、ablate 能撤销）。与 Deliberative Alignment 的区别是：后者直接干预 target 上下文的模型回复，这里只监督一个从不被请求的续写。</p>
 <p><img src="../../assets/source-images/workspace-gwm-fig-07.png" alt="图7" />
 <em>图7（原文 Fig.1 配图，反思训练的直觉）：fine-tune 让 J-space 从 &quot;task tool plan code step&quot; 之外多长出 &quot;honesty truth integrity&quot;。</em></p>
@@ -1168,7 +1168,7 @@
 <p>⚠️ <strong>数据规模总评</strong>：n=8 / n=11 / 6 prompt / 单例 case 在全文承担了不少 headline 结论（尤其 auditing 与 selectivity）。这些&quot;漂亮 case&quot;很有说服力地建立直觉，但作为因果主张的证据强度有限。真正做了较大 n + CI 的是 verbal report（14 类）、flexible gen（192 swap）、reflection training（27+100）、model organism（40 prompt）、broadcast（5 seeds + 随机旋转对照）。</p>
 </blockquote>
 <h2 id="5-关键结果-五条功能属性-三条结构签名-三个应用">5. 关键结果：五条功能属性 + 三条结构签名 + 三个应用</h2>
-<p>下面分三块讲：先验五条功能属性（每条开头给一句&quot;信几分&quot;），再看三条结构签名（模型权重是不是真的照工作空间的样子长的），最后三个应用（把工具用出去）。全文数字都以 factcheck 核过的为准；单源、只在图里读出来的小数我会标出来。</p>
+<p>下面分三块讲：先检验五条功能属性（每条开头给一句&quot;信几分&quot;），再看三条结构签名（模型权重是不是真的照工作空间的样子长的），最后三个应用（把工具用出去）。全文数字都以 factcheck 核过的为准；单源、只在图里读出来的小数我会标出来。</p>
 <h3 id="5-1-五条功能属性-j-space-逐条对上了工作空间的定义">5.1 五条功能属性：J-space 逐条对上了工作空间的定义</h3>
 <p><strong>① Verbal report（可报告）—— 信七八分，但要记住它和 J-lens &quot;by construction&quot; 相关。</strong>
 最基础的实验：让 Sonnet 4.5 &quot;想一个类别里的东西再一个词说出来&quot;（14 类），在说出来前一个 token 位置读 J-lens，读出的排序和最终吐出的词高度相关，越接近输出越吻合。因果版：随机 swap 进一个目标概念，能可靠把它顶到输出分布前列。真正硬的一步是<strong>特权性检验</strong>——把一个概念的完整表征（&quot;Tell me about X&quot; 激活、对 100 个 baseline 概念 mean-subtract）拆成 J-space 分量（top k=16 J-lens 向量的稀疏非负组合）和非 J-space 余量。J-space 分量只占该概念向量方差的 <strong>6–7%</strong>（另外 ~93% 在外面），可是拿它做 swap 有 <strong>59%</strong> 把目标顶进 top-5，逼近纯 J-lens 向量的 <strong>88%</strong>；拿非 J-space 余量做只有 <strong>5%</strong>。再加一道 clamp（把 J-lens 坐标钉在干净值、不让概念重新写回 J-space），非 J-space 余量那点残余效果直接归零——说明它那点作用还是绕道 J-space 实现的（原文 line 186–196）。
@@ -1179,7 +1179,7 @@
 <p><strong>② Directed modulation（定向调控）—— 信七分。</strong>
 三个任务族（记类别实例 / 心算表达式 / 数线宽字符数）× think / ignore / no-instruction。关键对照是 <strong>no-instruction 基线≈0</strong>——光有上下文不会让目标概念进 J-lens；&quot;think about X&quot; 能把它顶上去且随模型增大而增强；&quot;ignore X&quot; 介于两者之间但<strong>不为零</strong>（原文管这叫 LLM 版&quot;白熊效应&quot;，越叫你别想越会想）。更漂亮的是 <strong>paired-question</strong> 设计：同一段 stimulus 配两个问题，&quot;预测下一个词&quot;（需要用到词性/时态但不用命名它）时 J-lens 里<strong>不出现</strong> adjective/past 这类标签；换成&quot;下一个词是什么词性&quot;就在 stimulus 上冒出 adjective（3 个位置）。stimulus token 完全一样，差异只能归到问题——干净地证明&quot;是不是把某属性拉进 J-space&quot;由任务决定，而非文本本身。</p>
 <p><strong>③ Internal reasoning（内部推理）—— 信七分，但缺随机扰动基线。</strong>
-这就是开头 spider→ant 那类。系统版：50 条两跳事实 prompt 做 swap，把中间概念换掉后最终答案 top-1 翻到目标的比例是 <strong>Haiku 54% / Sonnet 70% / Opus 70%</strong>（原文 line 248）。probe 版（90 条、k=25）：中间推理探针的 J-space 分量占探针方差 <strong>10–15%</strong>，swap 成功 <strong>61%</strong> vs 非 J-space 分量 <strong>60%</strong>（注意这里两者接近）——但用 clamp 把 J-space 钉死后非 J-space 掉到 <strong>6%</strong>，说明还是靠 J-space 中介（line 256–260）。还有个多步算术单例（Opus 4.5，&quot;( 4 + 17 ) * 2 + 7 =&quot;）：中间量 <strong>21 → 42 → 49</strong> 按计算顺序在 ~L71 起依次爬到 J-lens 顶端，activation patching 证实这些深度确实对计算因果。另有一条时序对照：<strong>中间量的 swap 比答案的 swap 早约 17% 的深度</strong>生效。</p>
+这就是开头 spider→ant 那类。系统版：50 条两跳事实 prompt 做 swap，把中间概念换掉后最终答案 top-1 翻到目标的比例是 <strong>Haiku 54% / Sonnet 70% / Opus 70%</strong>（原文 line 248）。probe 版（90 条、k=25）：中间推理探针的 J-space 分量占探针方差 <strong>10–15%</strong>，swap 成功 <strong>61%</strong> vs 非 J-space 分量 <strong>60%</strong>（注意这里两者接近）——但用 clamp 把 J-space 钉死后非 J-space 掉到 <strong>6%</strong>，说明还是靠 J-space 中介（line 256–260）。还有个多步算术单例（Opus 4.5，&quot;( 4 + 17 ) * 2 + 7 =&quot;）：中间量 <strong>21 → 42 → 49</strong> 按计算顺序在 ~L71 起依次爬到 J-lens 顶端，activation patching 证实这些深度处的激活确实对计算结果有因果影响。另有一条时序对照：<strong>中间量的 swap 比答案的 swap 早约 17% 的深度</strong>生效。</p>
 <blockquote class="card card-info">
 <p>⚠️ 两处保留：(1) 这 17% 是<strong>只在成功 trial 上</strong>取的 median（Figure 15 右图标注 successful trials），有选择偏差，作为&quot;中间早于答案&quot;的证据要打点折；(2) 54–70% 这个 headline 数<strong>没有配随机/朴素扰动的 null 基线</strong>（&quot;任意等幅扰动能顶到目标几成&quot;），所以&quot;70% 算不算强&quot;缺参照系。probe 那条的非-J-space 28%→clamp 6% 算相邻对照，但不是针对 54–70% 的 null。</p>
 </blockquote>
@@ -1217,7 +1217,7 @@
 <blockquote class="card card-info">
 <p>⚠️ 作者自己把最后这条&quot;元认知&quot;标为最 speculative——只证明了 damn/fail 特异于抑制指令 + post-trained 模型，没证明它们因果下游于&quot;抑制失败&quot;本身（而非抑制指令本身）。</p>
 </blockquote>
-<p><strong>应用三：Counterfactual Reflection Training（从工作空间账户直接推出的训练技术）。</strong>
+<p><strong>应用三：Counterfactual Reflection Training（从工作空间解释直接推出的训练技术）。</strong>
 机制细节在 §3.7，这里只看结果。在 Claude Haiku 4.5 上（1 万条 RL prompt，loss 只算反思轮，评测时从不请求反思）：fabrication 基准 dishonesty <strong>0.25 → 0.07</strong>，deception 基准 <strong>0.38 → 0.05</strong>。J-lens 直接看得到——微调后模型读完评测 prompt、还没输出时，workspace 已带上 reflection/ethical/honestly/constitution 等词。<strong>因果验证</strong>：ablate 训练新增的伦理反思 token（fabrication 176 个 / deception 63 个），base 模型基本不动（<strong>0.25→0.25</strong> / <strong>0.38→0.48</strong>），反思训练模型则<strong>打回原形</strong>（<strong>0.07→0.22</strong> / <strong>0.05→0.23</strong>）——改善几乎全由训练植入的这些 J-lens 向量承载。</p>
 <blockquote class="card card-info">
 <p>⚠️ 见 §6 批判：0.25→0.07 捆绑了至少三件事（伦理文本 SFT + 反事实续写结构 + constitution grounding），且 target reflection 是同一个 baseline Haiku 自己生成的（self-distillation），缺&quot;同段文本、同轮、朴素 SFT&quot;的对照臂，无法证明&quot;绕弯的反事实结构&quot;本身有价值。ablate 打回原形只证明&quot;改善由 J-space 内容承载&quot;，不证明&quot;反事实结构优于朴素 SFT&quot;。</p>

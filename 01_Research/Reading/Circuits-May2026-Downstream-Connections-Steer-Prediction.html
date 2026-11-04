@@ -1012,7 +1012,7 @@
 <p><strong>真正值得讲清楚的不是公式，而是 coactivation 加权这个设计决策（这才是这篇真正贡献的点）</strong>：</p>
 <p>光有 feature-to-feature 虚拟权重还不够——虚拟权重大的连接，如果两个 feature 在真实分布上从不一起激活，这条通路实际上不起作用。所以论文对虚拟权重再乘一个 <strong>coactivation 统计</strong>（两个特征在 transcripts of interest 上同时激活的频率/强度 [?]），让 ranking 反映 <strong>on-distribution effect</strong> 而不是 raw 权重。原文（line 40）原话：&quot;TWERA virtual weights between features weighted by coactivation statistics so that their ranking reflects on-distribution effects.&quot;</p>
 <p><strong>这个 coactivation 加权是核心 why</strong>：它把&quot;理论上可能的连接&quot;过滤成&quot;分布上真实会走的连接&quot;。没有这一步，你会看到一堆只在罕见 token 上才激活的大权重连接，把排名搞乱。raw virtual weight 谁都能想到；coactivation 加权让它从&quot;理论上连着&quot;变成&quot;实际在线&quot;——这是点睛。</p>
-<p><strong>用 downstream 做什么</strong>：把每个特征的 top downstream features（连同它们自己的简短描述）作为一份新的 descriptor，喂给人类或 LLM grader，用来判断&quot;这个特征会因果地影响什么行为&quot;。</p>
+<p><strong>用 downstream 做什么</strong>：把每个特征排名靠前的下游特征及其简短描述作为新的 descriptor，交给人类或 LLM grader 判断&quot;这个特征会因果地影响什么行为&quot;。</p>
 <h3 id="3-3-steering-验证-downstream-预测是否成立">3.3 Steering：验证 downstream 预测是否成立</h3>
 <p>downstream 是&quot;预测&quot;，steering 是&quot;验证&quot;。论文用了两种 steering，<strong>方向的选择由&quot;想验证因果的方向&quot;决定</strong>——这是个干净的设计：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
@@ -1044,7 +1044,7 @@
 <p>定性分析（Feature A/B 那种 case-by-case）没法说明 downstream 信号<strong>系统地</strong>有用。于是让 <strong>Opus 4.7 当 grader</strong>：</p>
 <ul>
 <li>收集 10 组候选特征，每组 3-5 个，每组都像 green example 那样构造：标准描述相似，但只有一个在给定 prompt 下真能 steer（negative multiplicative 改变答案）。</li>
-<li>给 Opus 看每个特征的不同信息子集，让它从最可能 steer 到最不可能排序。</li>
+<li>向 Opus 提供每个特征的不同信息子集，让它按改变目标行为的可能性从高到低排序。</li>
 <li>4 种信息条件：(1) top activating examples；(2) examples + top unembeds；(3) examples + TWERA-ranked downstream；(4) examples + unembeds + downstream。</li>
 <li><strong>位置去偏</strong>：原文（line 74）是 <strong>for each group</strong>，正确答案在<strong>每组</strong>的每个排名位置各出现 2 次，所以<strong>每组</strong>样本数 = 2 × 该组候选数 [?]（两份笔记都没写清这个 per-group 粒度）。</li>
 <li><strong>指标</strong>：normalized rank = (predicted_rank − 1) / (num_candidates − 1)。越低越好，0 是完美，0.5 大致随机。</li>

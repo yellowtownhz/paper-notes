@@ -985,7 +985,7 @@
 </blockquote>
 <p><img src="https://arxiv.org/html/2605.18083v1/latex/figs/intro_tradeoff_plot_final.png" alt="Figure 1: 横轴=扩展语言能力、纵轴=原语言保留。dense baselines 都堵在 Pareto 前沿上互相 trade-off，DeltaMoE 一个点跳到右上角。" /></p>
 <p><strong>为什么 dense merge 必然 trade-off？</strong> CPT 把权重从 θ_base 推到 θ_cpt，post-training 把 θ_base 推到 θ_post。把两个偏移塞回同一组 dense 参数里：averaging 就是把两个方向加权平均（稀释 CPT），delta merge 就是叠加两个不相关方向（θ 飘离原 Instruct，catastrophic forgetting）。这是参数空间冲突，不是数据量不够——2× CPT 数据的 Dense-FT-Avg-2FLOPs 在 hu MGSM 上从 64.4 退到 56.8，2× 数据反而更糟（Table 5）。</p>
-<p>要解决的是<strong>架构层面的冲突</strong>：能不能开一块新的参数子空间专门装新语言、再让 alignment delta 干净地嫁接过来。</p>
+<p>要解决的是<strong>架构层面的冲突</strong>：能否用新的参数子空间学习新语言，再将 alignment delta 嫁接到这部分参数上。</p>
 <hr />
 <h2 id="3-关键方法-把-dense-ffn-复制成-4-experts-cpt-阶段冻住-expert-0-装原语言-剩下-3-个-trainable-expert-装新语言-merging-阶段把-dense-alignment-delta-广播给所有-experts">3. 关键方法：把 dense FFN 复制成 4 experts，CPT 阶段冻住 expert-0 装原语言、剩下 3 个 trainable expert 装新语言；Merging 阶段把 dense alignment delta 广播给所有 experts</h2>
 <p><img src="https://arxiv.org/html/2605.18083v1/x1.png" alt="Figure 2: 两阶段 pipeline。左 CPT 阶段，FFN 复制为 N 个 expert，仅 expert 1..N-1 + router 训练，attention/embedding/expert-0 冻结；右 Merging 阶段，把外部 dense post-trained 模型的 Δ 广播到所有 experts 的 gate/up/down。" /></p>
@@ -1052,7 +1052,7 @@ $$</div>
 <div class="math-display">$$
 \hat\theta^\text{MoE}_\text{shared} = \theta^\text{MoE}_\text{shared} + \Delta^\text{shared}_\text{post},\quad \Delta^\text{shared}_\text{post} = \theta^\text{shared}_\text{post-trained} - \theta^\text{shared}_\text{base}
 $$</div>
-<p>Stage 1 这些参数被冻结所以等于 base，加 Δ 后等价于 dense post-trained 模型的对应位置。</p>
+<p>这些参数在 Stage 1 被冻结，仍与 base 相同；加 Δ 后，便与 dense post-trained 模型的对应参数相同。</p>
 <p><strong>2) Expert FFN — 同一个 FFN delta broadcast 到所有 i ∈ {0, 1, ..., N−1}（注意包括 frozen expert-0）</strong>：</p>
 <div class="math-display">$$
 \hat W^i_\text{gate} = W^i_\text{gate} + \Delta^\text{gate}_\text{post},\quad \hat W^i_\text{up} = W^i_\text{up} + \Delta^\text{up}_\text{post},\quad \hat W^i_\text{down} = W^i_\text{down} + \Delta^\text{down}_\text{post}
@@ -1114,7 +1114,7 @@ $$</div>
 <ul>
 <li>论文未披露 router 初始化方式（按 sparse upcycling 惯例应该是 random init，但 1 frozen + 3 trainable 的设定下，random init 会让 expert-0 在 Stage 1 早期被路由概率分散——en 会受损。也没说有没有 router-only warmup）[?]</li>
 <li>baseline LR 不一致：Dense-FT 系列 2e-5、LLaMA-Pro <strong>2e-4（高 10×）</strong>、MoLA 5e-5、DeltaMoE 5e-5（Table 11）——LLaMA-Pro 的 LR 高一个数量级，加上 +28 层时崩到 24.60，公平性受影响</li>
-<li>top-2 引入约 1.8× dense FLOPs，作者用 2× CPT data 的 dense baseline 来过补偿对比公平性</li>
+<li>top-2 引入约 1.8× dense FLOPs；作者为 dense baseline 提供 2× CPT data，以略高的计算预算补偿这一差异</li>
 <li>Total 24.7B / Active 13.3B vs dense 7.6B</li>
 <li>Stage 2 之后是否还要再 fine-tune？论文看是 zero-shot 直接评估</li>
 <li>§4.2 的 router-tuning 是 optional：0.15B token（原:新 = 1:2），只训 router，进一步提升原语言保留——不属于主表 pipeline</li>

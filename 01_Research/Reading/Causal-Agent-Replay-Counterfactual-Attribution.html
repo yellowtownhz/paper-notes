@@ -922,7 +922,7 @@
     </div>
     <ul class="toc-list">
         <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
-<li><a class="toc-link" href="#2-关键问题-agent-失败后-光看-trace-很容易-blame-错地方"><span class="toc-num">02</span> 2. 关键问题：agent 失败后，光看 trace 很容易 blame 错地方</a></li>
+<li><a class="toc-link" href="#2-关键问题-agent-失败后-只看-trace-容易把责任归到错误步骤"><span class="toc-num">02</span> 2. 关键问题：agent 失败后，只看 trace 容易把责任归到错误步骤</a></li>
 <li><a class="toc-link" href="#3-关键方法-把-agent-trace-当-scm-用-counterfactual-replay-找-point-of-commitment"><span class="toc-num">03</span> 3. 关键方法：把 agent trace 当 SCM，用 counterfactual replay 找 point of commitment</a></li>
 <li><a class="toc-link toc-sub" href="#3-1-agent-trajectory-as-scm">3.1 Agent trajectory as SCM</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-intervention-algebra">3.2 Intervention algebra</a></li>
@@ -975,7 +975,7 @@
 <li><strong>一句话定位</strong>: 一个面向 LLM agent 失败 trace 的因果调试器。不是让 LLM judge 读 log 后猜 blame，而是从某一步做 <code>do_resample</code>，重新 rollout，看坏结果概率怎么变。</li>
 </ul>
 <hr />
-<h2 id="2-关键问题-agent-失败后-光看-trace-很容易-blame-错地方">2. 关键问题：agent 失败后，光看 trace 很容易 blame 错地方</h2>
+<h2 id="2-关键问题-agent-失败后-只看-trace-容易把责任归到错误步骤">2. 关键问题：agent 失败后，只看 trace 容易把责任归到错误步骤</h2>
 <blockquote class="card card-info">
 <p><strong>Golden Case — 问题是什么？</strong></p>
 <p>论文开头的例子很像真实事故复盘：一个客服 agent 收到用户消息，里面藏了 prompt injection：</p>
@@ -991,7 +991,7 @@
 </ol>
 <p>事后看 log，最显眼的一定是 <code>issue_refund</code>。但论文说，怪这个 step 是 category error：调用退款工具只是机械执行，真正让系统走上坏轨道的可能是上一轮“决定退款”。更后面的确认消息就更不是原因，只是坏结果之后的尾巴。</p>
 </blockquote>
-<p>这篇关心的不是“agent 有没有失败”，而是更窄、更工程的问题：<strong>失败已经发生了，开发者该修哪一步？</strong></p>
+<p>这篇关心的不是“agent 有没有失败”，而是更具体的工程问题：<strong>失败已经发生了，开发者该修哪一步？</strong></p>
 <p>现有工具通常只能回答两类问题：</p>
 <ul>
 <li><strong>Observability / tracing</strong>: 发生了什么。state、action、tool result、final answer 都能还原。</li>
@@ -1013,7 +1013,7 @@
 <blockquote class="card card-info">
 <p>给定一条失败 trace 和一个能判断 bad/good 的 outcome function，如果在第 <code>k</code> 步让同一个 agent 重新决策，并让后续继续跑，坏结果概率会不会显著下降？</p>
 </blockquote>
-<p>注意这个设定自带三个昂贵前提：trace 要能重放，step 要能干预，outcome 要能自动判定。真实生产 agent 里，这三件事都不便宜。</p>
+<p>这个设定需要满足三个成本较高的前提：trace 要能重放，step 要能干预，outcome 要能自动判定。真实生产 agent 里，这三件事都不便宜。</p>
 <hr />
 <h2 id="3-关键方法-把-agent-trace-当-scm-用-counterfactual-replay-找-point-of-commitment">3. 关键方法：把 agent trace 当 SCM，用 counterfactual replay 找 point of commitment</h2>
 <blockquote class="card card-info">
@@ -1069,7 +1069,7 @@ $$</div>
 从第 <code>k</code> 步开始换 policy / model。</p>
 </li>
 </ol>
-<p>归因主线用的是 <code>do_resample</code>。其他几个更像调试工具箱。</p>
+<p>归因主要使用 <code>do_resample</code>，其余操作提供了针对动作、观察、上下文和策略的调试手段。</p>
 <h3 id="3-3-contrastive-single-step-attribution">3.3 Contrastive single-step attribution</h3>
 <p>对每个 step $k$：固定 $[0,k)$ 的 factual actions，在 $k$ 做 <code>do_resample(k)</code>，然后 forward run $K$ 次，估计：</p>
 <div class="math-display">$$
@@ -1112,7 +1112,7 @@ $$</div>
 <h3 id="3-5-shapley-attribution-for-interactions">3.5 Shapley attribution for interactions</h3>
 <p>单步 attribution 处理不了“两个 step 合起来才出事”。论文举的是 AND-failure：只有 step $i$ 和 step $j$ 都错，outcome 才 bad。</p>
 <ul>
-<li>如果固定另一个 bad step，每个 step 都看起来负全责，effect 加起来接近 2，double count。</li>
+<li>如果固定另一个 bad step，每个 step 都看起来承担全部责任，effect 加起来接近 2，double count。</li>
 <li>如果另一个 step 也被 resample，每个 step 又可能看起来没责任。</li>
 </ul>
 <p>CAR 用 Shapley 来拆 shared responsibility。定义 coalition $S$ 是“被固定在 factual actions 的 step 集合”：</p>
@@ -1220,7 +1220,7 @@ $$</div>
 <div class="math-display">$$
 1-q^2=0.91
 $$</div>
-<p>这基本就是论文最硬的数字：两个真正交互的 step 分到大部分责任，第三个无关 step 接近 0；Shapley values 之和 0.909，接近理论总 effect 0.91。</p>
+<p>这是论文中最具体的定量结果：两个真正交互的 step 分到大部分责任，第三个无关 step 接近 0；Shapley values 之和 0.909，接近理论总 effect 0.91。</p>
 <p>限制也明显：只展示一个 synthetic SCM；没有具体 CI；没有 MC permutation budget。</p>
 <h3 id="5-3-contrastive-estimator-在-interaction-case-会-over-count">5.3 Contrastive estimator 在 interaction case 会 over-count</h3>
 <p>来源：Section 5。</p>

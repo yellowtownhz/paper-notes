@@ -928,7 +928,7 @@
 <li><a class="toc-link toc-sub" href="#3-1-同一条-step-14-15-如何穿过监控管线">3.1 同一条 step 14 → 15 如何穿过监控管线</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-表征与-probe">3.2 表征与 probe</a></li>
 <li><a class="toc-link toc-sub" href="#3-3-risk-标签实际测量什么">3.3 Risk 标签实际测量什么</a></li>
-<li><a class="toc-link toc-sub" href="#3-4-feature-ablation-到底因果了什么">3.4 Feature ablation 到底因果了什么</a></li>
+<li><a class="toc-link toc-sub" href="#3-4-feature-ablation-检验的是哪一层因果关系">3.4 Feature ablation 检验的是哪一层因果关系</a></li>
 <li><a class="toc-link" href="#4-关键证据-先证明信号可读-再问可检查性值不值成本"><span class="toc-num">05</span> 4. 关键证据：先证明信号可读，再问可检查性值不值成本</a></li>
 <li><a class="toc-link toc-sub" href="#4-1-held-out-nemotron-raw-明显更准">4.1 Held-out Nemotron：RAW 明显更准</a></li>
 <li><a class="toc-link toc-sub" href="#4-2-layer-localization-与-probe-ablation">4.2 Layer localization 与 probe ablation</a></li>
@@ -967,7 +967,7 @@
 <li>Hariom Tatsat、Ariye Shater，Barclays Quantitative Analytics；arXiv:2605.06890v4，2026 年。</li>
 <li>模型：GPT-OSS 20B 与 Gemma 3 27B IT。</li>
 <li>训练数据：NVIDIA Nemotron function-calling 多步轨迹；跨分布测试：BFCL 的 limited zero-shot slice。</li>
-<li>范围很窄也很清楚：论文不解释 agent 的全部 planning、memory 或长程 reasoning，只监控“下一步回答还是调工具”的瞬间。</li>
+<li>论文的监控范围很明确：它只关注“下一步回答还是调工具”的瞬间，不解释 agent 的全部 planning、memory 或长程 reasoning。</li>
 </ul>
 <p><img src="https://arxiv.org/html/2605.06890v4/agent_anatomy_finance.png" alt="Figure 1: Basic anatomy of an AI agent" /></p>
 <blockquote class="card card-info">
@@ -1011,7 +1011,7 @@ $$</div>
 <div class="math-display">$$
 p(y=1\mid z)=\sigma(w^\top z+b),
 $$</div>
-<p>Tool-Risk 则在 tool-call rows 上训练三分类 softmax。二者不是并列的两个安全结论：Tool-Need 判断“要不要 delegate”，Tool-Risk 只在准备调用后判断启发式风险档。</p>
+<p>Tool-Risk 则在 tool-call rows 上训练三分类 softmax。二者回答不同层次的问题：Tool-Need 判断“要不要 delegate”，Tool-Risk 只在准备调用后判断启发式风险档。</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1051,12 +1051,12 @@ $$</div>
 <li><strong>High</strong>：21 个 authentication、外发通信或危险执行 tools。</li>
 </ul>
 <p>这些是 distinct tool 数，不是样本数。风险显然还取决于 arguments、权限、环境状态和用户策略：<code>send_email</code> 发草稿给自己与外传客户数据不能只靠工具名归为同一个风险。因此 Probe 2 更准确的名字是 <strong>heuristic risk screen</strong>，不是已验证的安全风险模型。</p>
-<h3 id="3-4-feature-ablation-到底因果了什么">3.4 Feature ablation 到底因果了什么</h3>
+<h3 id="3-4-feature-ablation-检验的是哪一层因果关系">3.4 Feature ablation 检验的是哪一层因果关系</h3>
 <p>作者把 top-ranked SAE coordinates $z_j$ 置零，再运行同一个 probe。如果概率显著变化或标签翻转，可以说明：</p>
 <blockquote class="card card-info">
 <p>probe 的 readout 功能性地依赖这些 sparse coordinates。</p>
 </blockquote>
-<p>但实验没有把 ablated features 解码回 residual stream，也没有重新生成 agent action。因此它不能说明“这些 features 控制模型是否调用工具”。这一区分是读这篇论文最容易滑过去的地方。</p>
+<p>但实验没有把 ablated features 解码回 residual stream，也没有重新生成 agent action。因此它不能说明“这些 features 控制模型是否调用工具”。阅读这篇论文时，最容易忽略的正是 probe 依赖与动作控制之间的区别。</p>
 <h2 id="4-关键证据-先证明信号可读-再问可检查性值不值成本">4. 关键证据：先证明信号可读，再问可检查性值不值成本</h2>
 <h3 id="4-1-held-out-nemotron-raw-明显更准">4.1 Held-out Nemotron：RAW 明显更准</h3>
 <p>Appendix Table 13 给出同分布汇总（RAW / SAE）：</p>
@@ -1092,7 +1092,7 @@ $$</div>
 </tbody>
 </table></div>
 <p>所以结论不是“SAE 提升了工具决策预测”，而是：<strong>dense residual 中有更强的线性可读信号；SAE 用一部分预测力交换 layer、feature index、自然语言标签和 ablation target。</strong></p>
-<p>这项交换是否划算，论文其实还没测：没有 feature-label fidelity、人工审计速度/准确率、额外 latency 或告警处置收益。SAE 在这里提供的是 inspectability affordance，不是已经证实的 audit utility。</p>
+<p>这些解释线索是否值得牺牲部分预测力，论文还没有评估：没有 feature-label fidelity、人工审计速度/准确率、额外 latency 或告警处置收益。SAE 在这里提供的是 inspectability affordance，不是已经证实的 audit utility。</p>
 <p>顺带一提，v4 的 Table 3 把 Risk macro-F1 写成 GPT/Gemma 的 <strong>0.64/0.62</strong>，但 Table 5 confusion matrices 和 Appendix Table 13 对应 <strong>0.699/0.668</strong>。本文按可复算且在附录重复的后者记录，前者应标作表格口径错误 <code>[?]</code>。</p>
 <h3 id="4-2-layer-localization-与-probe-ablation">4.2 Layer localization 与 probe ablation</h3>
 <ul>
@@ -1157,7 +1157,7 @@ $$</div>
 </tbody>
 </table></div>
 <p>Gemma 的 0.2% missed rate 不是完美 delegation，而是接近“总是调用”：在 no-tool steps 上 98.5% 都多调。这个结果说明新分布上的 threshold 与 tool prior 至少和 representation 一样重要。</p>
-<p>RAW / SAE 在 BFCL 也没有统一胜负：GPT Tool-Need 是 84.7% / 87.6%，Gemma 是 81.9% / 77.7%；Risk 则 RAW 在两个模型都更高（Appendix Table 14）。有限 slice 只能说明两种表征都保留部分 transferable signal，不能给出普适排名。</p>
+<p>RAW / SAE 在 BFCL 也没有统一胜负：GPT Tool-Need 是 84.7% / 87.6%，Gemma 是 81.9% / 77.7%；Risk 则 RAW 在两个模型都更高（Appendix Table 14）。这个有限测试子集只能说明两种表征都保留了部分可迁移信号，无法据此给出普适排名。</p>
 <h2 id="5-证据边界-我会在复现前先补什么">5. 证据边界：我会在复现前先补什么</h2>
 <ol>
 <li><strong>先确认 trajectory-level split。</strong> 原文没有报告 train/validation/test 的 trajectory 数和切分单位。相邻 step 共享几乎全部累计上下文；如果按 row 随机切分，会产生严重近重复。这里是潜在风险，不应写成已经泄漏。</li>

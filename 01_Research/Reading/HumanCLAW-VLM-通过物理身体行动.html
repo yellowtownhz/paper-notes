@@ -989,10 +989,13 @@
 <p><strong>Skill-Specific Verifier（§2.2, Appendix §7, Table 6）</strong>：对提议技能用紧凑 skill-specific prompt 从<strong>当前 ego 视图 alone</strong> 重答一个 checklist（walk 前方是否空旷、stop 是否真到达、climb 脚下是否有台阶等）；失败则同池替换修正技能。side_step/step_back（身后不可见）与 sit 无检查。它是决定性组件（§5 消融）。</p>
 </li>
 <li>
-<p><strong>Skill-conditioned Motion Generator（§2.3, Fig 4）</strong>：人类动作不能瞬时切换，需要减速/重心转移等 transient，且 VLM 需要一个 zero-shot 可靠的接口（发 walk 得到常识性走路，而非 moonwalk）。<strong>Motion Base DiT</strong> 是 38M 参数、10 层、8 头 self-attention（line 468，PDF 确认，非渲染损坏），训练为 receding-horizon continuation：看最近 5 个 clean body state，生成接下来 15 帧 @30fps = 0.5s chunk。<strong>为什么 receding-horizon + 5 帧滑动历史能产生惯性一致的过渡</strong>：history 直接作为 motion token 与噪声未来拼接（而非压缩成条件向量），future token 能 attend 到精确近期 pose/velocity，天然产生惯性连续——这是复现者最该理解的设计选择。<strong>每技能一个 ControlNet adapter</strong>，base DiT 冻结；加新技能只训新 ControlNet。条件 <code>e_s(c_t)</code> 从 chunk 几何<strong>自动读出</strong>（walk=骨盆位移+yaw，sit=目标坐高），无需人工标参；每技能仍人工激进过滤 AMASS 片段保 zero-shot 对齐。</p>
+<p><strong>Skill-conditioned Motion Generator（§2.3, Fig 4）</strong>：人类动作不能瞬时切换，需要减速/重心转移等 transient，且 VLM 需要一个 zero-shot 可靠的接口（发 walk 得到常识性走路，而非 moonwalk）。</p>
+<p><strong>Motion Base DiT</strong> 是 38M 参数、10 层、8 头 self-attention（line 468，PDF 确认，非渲染损坏），训练为 receding-horizon continuation：看最近 5 个 clean body state，生成接下来 15 帧 @30fps = 0.5s chunk。</p>
+<p><strong>为什么 receding-horizon + 5 帧滑动历史能产生惯性一致的过渡</strong>：history 直接作为 motion token 与噪声未来拼接（而非压缩成条件向量），future token 能 attend 到精确近期 pose/velocity，天然产生惯性连续——这是复现者最该理解的设计选择。</p>
+<p><strong>每技能一个 ControlNet adapter</strong>，base DiT 冻结；加新技能只训新 ControlNet。条件 <code>e_s(c_t)</code> 从 chunk 几何<strong>自动读出</strong>（walk=骨盆位移+yaw，sit=目标坐高），无需人工标参；每技能仍人工激进过滤 AMASS 片段保 zero-shot 对齐。</p>
 </li>
 <li>
-<p><strong>Half-physics Simulator（§2.4, Fig 6）</strong>：在&quot;全动力学人形（会摔倒）&quot;与&quot;纯运动学幽灵（穿墙）&quot;之间取中间态。<strong>世界</strong>遵守刚体物理（collision/friction/gravity/articulated+movable objects）；<strong>身体不由关节扭矩驱动</strong>，而由生成运动导出的等效运动学速度驱动——所以 agent 不因 balance loss / motor tracking 失败，但仍与物理交互（墙挡人、推走可动物体、无支撑竖直运动受重力约束）。代价：测的是&quot;动作决策&quot;而非低层控制，且<strong>无触觉通道</strong>（碰撞位移世界但 agent 从不&quot;感到&quot;）。</p>
+<p><strong>Half-physics Simulator（§2.4, Fig 6）</strong>：在&quot;全动力学人形（会摔倒）&quot;与&quot;纯运动学幽灵（穿墙）&quot;之间取中间态。<strong>世界</strong>遵守刚体物理（collision/friction/gravity/articulated+movable objects）；<strong>身体不由关节扭矩驱动</strong>，而由生成运动导出的等效运动学速度驱动——所以 agent 不因 balance loss / motor tracking 失败，但仍与物理交互（墙挡人、推走可动物体、无支撑竖直运动受重力约束）。代价：测的是&quot;动作决策&quot;而非低层控制，且<strong>无触觉通道</strong>（碰撞使环境中的物体发生位移，但 agent 从不&quot;感到&quot;）。</p>
 </li>
 </ul>
 <h3 id="3-2-数学形式化">3.2 数学形式化</h3>

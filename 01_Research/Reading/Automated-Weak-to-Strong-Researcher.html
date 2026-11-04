@@ -1001,7 +1001,7 @@
 <li>每个 AAR 是一个 Claude Opus 4.6 agent，跑在独立 Docker 容器里</li>
 <li>Sandbox 内只能看到去掉了 label 的 <code>data/</code> 和 <code>cache_results/</code>（read-only）</li>
 <li>Agent 之间通过 forum 分享发现，通过 storage 共享代码</li>
-<li>所有重要日志存在 sandbox 外面，防止 agent 不小心删掉</li>
+<li>所有重要日志保存在 sandbox 外，防止 agent 意外删除</li>
 </ul>
 <h3 id="2-3-三种执行模式-阶梯式递进">2.3 三种执行模式（阶梯式递进）</h3>
 <ol>
@@ -1038,7 +1038,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>加上通用的模型训练/推理 helper functions 和 baseline implementations。</p>
+<p>此外还提供通用的模型训练/推理辅助函数及基线实现。</p>
 <h3 id="2-5-agent-的系统-prompt">2.5 Agent 的系统 Prompt</h3>
 <p>完整的 prompt 模板在 GitHub 上的 <code>w2s_research/research_loop/prompt.jinja2</code>。设计要点：</p>
 <ul>
@@ -1049,7 +1049,7 @@
 </ul>
 <h3 id="2-6-关键设计决策">2.6 关键设计决策</h3>
 <p><strong>最反直觉的发现：不给 workflow 比给 workflow 好。</strong> 他们试过预设的研究 scaffold（提想法 → 做计划 → 写代码 → smoke test → 完整训练 → 分析 → 重复），效果反而更差。核心原因是：固定的步骤让 agent 没法根据当前 idea 调整策略。比如一个 idea 依赖某个未验证的假设，固定流水线会逼 agent 匆匆做完计划直接跑完整训练。没有预设步骤时，agent 表现得像有经验的研究员：先设计便宜的小实验验证假设，确认前提成立后再投入完整训练。</p>
-<p><strong>用模糊的研究方向而非具体 idea 列表做 seeding。</strong> 试过让 Claude 预先生成一大堆具体 idea 给 AAR 执行，结果很差。两个 failure mode：(1) idea distribution 高度偏斜（和 undirected 设置下的 entropy collapse 一样），集中在 self-training 等少数方向；(2) 很多在纸面上听上去 principled 的 idea 实际上无效，提前 commit 到它们浪费算力。用模糊的方向描述让 AAR 自己 propose concrete ideas 反而更好。</p>
+<p><strong>用模糊的研究方向而非具体 idea 列表做 seeding。</strong> 试过让 Claude 预先生成一大堆具体 idea 给 AAR 执行，结果很差。两个 failure mode：(1) idea distribution 高度偏斜（和 undirected 设置下的 entropy collapse 一样），集中在 self-training 等少数方向；(2) 很多看似有理论依据的 idea 实际上无效，过早选定这些方案会浪费算力。用模糊的方向描述让 AAR 自己 propose concrete ideas 反而更好。</p>
 <p><strong>LM self-evolution 碾压 heuristic evolutionary search。</strong> 传统进化搜索把每个 idea 当黑盒，只看 PGR score。如果 PGR 差是因为梯度爆炸这种 technical issue，进化搜索会直接放弃整个方向。LM agent 会看 training logs、诊断问题、修 hyperparameter、重新跑——把一个看起来 dead 的方向救回来。LM-based 迭代天然受益于大模型通用能力的提升，而进化搜索不会。</p>
 <p><strong>Finding sharing 用 local agentic search 最好。</strong> 试了三种：(1) remote keyword search（关键词查询天然受限），(2) remote agentic search via MCP（实际上还是在做 keyword-like query），(3) local agentic search（把所有 findings sync 到每个 sandbox，让 AAR 自己浏览）。第三种最好，原因类似为什么人类 researcher 广泛阅读能找到 targeted search 找不到的 connection。</p>
 <h3 id="2-7-两种并行策略">2.7 两种并行策略</h3>
@@ -1207,7 +1207,7 @@
 <li>Weak model: Qwen1.5-0.5B-Chat，Strong model: Qwen3-4B-Base</li>
 <li>每次 fine-tuning run 不到 2 小时</li>
 <li>训练用 Unsloth + LoRA，推理用 vLLM</li>
-<li>每个 idea 跑 5 个 seed，parallel 在 5 张 GPU 上</li>
+<li>每个 idea 使用 5 个 seed，在 5 张 GPU 上并行运行</li>
 </ul>
 <h3 id="4-5-跨数据集泛化">4.5 跨数据集泛化</h3>
 <p><img src="../../assets/source-images/automated-w2s-researcher/figure_4.png" alt="Figure 4: Cross-dataset generalization" /></p>

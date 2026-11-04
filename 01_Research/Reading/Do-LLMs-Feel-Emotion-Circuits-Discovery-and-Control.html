@@ -1008,13 +1008,13 @@
 <p>用 RMS 缩放保持激活量级。Test set 上 steering 成功率 91.22%，验证了方向的有效性，但也暴露了 surprise 只有 67.71% 的天花板（Table 1）。</p>
 <h3 id="3-3-阶段-2-定位局部情感组件">3.3 阶段 2：定位局部情感组件</h3>
 <h4>MLP Neuron 定位</h4>
-<p>核心思路：MLP 的 down-projection $W_d^{(l)}$ 把 neuron 空间映射到 residual stream 空间。反过来算，就能知道每个 neuron 对情感方向的贡献。</p>
+<p>核心思路：MLP 的 down-projection $W_d^{(l)}$ 把 neuron 空间映射到 residual stream 空间。将情感方向投影回 neuron 空间，就能计算每个 neuron 对该方向的贡献。</p>
 <p><strong>neuron-space alignment vector</strong>:</p>
 <div class="math-display">$$\beta_e^{(l)} = (W_d^{(l)})^\top v_e^{(l)} \in \mathbb{R}^{d_{\text{ff}}}$$</div>
 <p>$\beta_{e,j}^{(l)}$ 的意思：neuron $j$ 的 write vector 在情感方向 $v_e^{(l)}$ 上的投影大小 -- 越大说明这个 neuron 被激活时越能把 residual stream 推向目标情感。</p>
 <p><strong>per-neuron contribution</strong>:</p>
 <div class="math-display">$$c_{e,n}^{(l)} = g_{t,n}^{(l)} \odot \beta_e^{(l)}$$</div>
-<p>alignment 方向乘上 gated activation（SwiGLU 输出）的实际强度 = 最终贡献。跨样本取均值后排序。</p>
+<p>将 alignment 与 gated activation（SwiGLU 输出）逐元素相乘，得到各 neuron 的实际贡献，再跨样本取均值后排序。</p>
 <h4>Attention Head 定位</h4>
 <p>Attention head 没法做解析分解（softmax 非线性），所以用因果干预：记录正常 forward pass 的投影分数 $s$，逐个 zero-out 某个 head（在 $W_O^{(l)}$ 前置零），重新算 $s&#x27;$。Head importance = $\Delta s = s&#x27; - s$。</p>
 <h4>因果验证：Ablation 和 Enhancement</h4>

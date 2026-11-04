@@ -956,7 +956,7 @@
 <h2 id="1-背景信息">1. 背景信息</h2>
 <ul>
 <li>作者团队横跨 Rutgers（Metaxas 组，Xi Chen / Mingyu Jin）、多伦多大学（Jingcheng Niu / Gerald Penn，做 BERTology、knowledge-neuron 批判那条线）、Northwestern（Zhaoran Wang，理论）。是一支&quot;经验派 mech interp + 理论&quot;的混编队，而且带着一条一贯的方法论血统：Penn / Niu 之前就是靠&quot;攻击领域的隐性前提&quot;（如 knowledge neuron thesis）而不是刷分立身的。</li>
-<li>arXiv:2605.12671v1，cs.CL，2026-05-12，CC BY 4.0。正文脚注标了 &quot;Machine Learning, ICML&quot;，看起来是投 ICML——<strong>但这是 preprint，没有任何录用信息，不要当成已接收</strong>。</li>
+<li>arXiv:2605.12671v1，cs.CL，2026-05-12，CC BY 4.0。正文脚注标了 &quot;Machine Learning, ICML&quot;，看起来是投 ICML——<strong>但这是 preprint，尚无录用信息，不能视为已接收</strong>。</li>
 <li>代码开源：https://github.com/TonyXiChen/OASR</li>
 <li>一句话定位：这是一篇<strong>打脸式（position / critique）论文</strong>。它不提出更强的 circuit discovery 方法，而是用一个新工具（OASR）系统性地证明整个 circuit / sheaf discovery（下称 CSD）领域赖以立足的一个<strong>隐含假设是错的</strong>。全文没有独立的 Limitations 章节，作者的自我 caveat 散落在附录和正文里（后面 §6 会点出这些&quot;给自己留的退路&quot;）。</li>
 </ul>
@@ -1066,7 +1066,7 @@
 <p>DiscoGP 的边得分（Gumbel-Sigmoid 松弛）：</p>
 <div class="math-display">$$s_e = \sigma\!\left(\frac{l_e - \log\frac{\log\mathcal{U}_1}{\log\mathcal{U}_2}}{\tau}\right), \quad \mathcal{U}_1,\mathcal{U}_2 \sim \mathrm{Uniform}(0,1)$$</div>
 <ul>
-<li>$l_e$：边 $e$ 的可学 logit；$\tau$：温度；$\log\log\mathcal{U}$ 项是 Gumbel 噪声让离散选择可微；再套 STE 拿硬 0/1 mask 但保留梯度。</li>
+<li>$l_e$：边 $e$ 的可学 logit；$\tau$：温度；$\log\log\mathcal{U}$ 项是 Gumbel 噪声让离散选择可微；再用 STE 得到硬 0/1 mask，同时保留梯度。</li>
 </ul>
 <p>稀疏惩罚（对期望激活的软惩罚）：</p>
 <div class="math-display">$$\mathcal{L}_{\mathrm{sparsity}}=\frac{1}{|E|}\sum_{e\in E}\sigma(l_e)$$</div>
@@ -1075,8 +1075,8 @@
 <p>组合目标：</p>
 <div class="math-display">$$\mathcal{L}=\mathcal{L}_{\mathrm{fidelity}}+\lambda_s\mathcal{L}_{\mathrm{sparsity}}+\lambda_c\mathcal{L}_{\mathrm{complete}}+\lambda_o\mathcal{L}_{\mathrm{overlap}}(R)$$</div>
 <ul>
-<li>注意 $\mathcal{L}_{\mathrm{sparsity}}$ 和 $\mathcal{L}_{\mathrm{overlap}}$ 形式一模一样，只是求和范围不同——<strong>排斥项本质就是&quot;对已用过的边额外施加稀疏压力&quot;</strong>。反复迭代（每轮把 $R$ 更新为迄今所有已选边的并集）就刷出一串低重叠 sheaf。</li>
-<li>边界诚实：作者自陈 EP 用 Lagrangian 稀疏约束，没法直接套 overlap 惩罚，所以 OASR 只加在 DiscoGP / 类似框架上。</li>
+<li>注意 $\mathcal{L}_{\mathrm{sparsity}}$ 和 $\mathcal{L}_{\mathrm{overlap}}$ 形式一模一样，只是求和范围不同——<strong>排斥项本质就是&quot;对已用过的边额外施加稀疏压力&quot;</strong>。通过反复迭代（每轮把 $R$ 更新为迄今所有已选边的并集），搜索出一系列低重叠 sheaf。</li>
+<li>适用边界：作者说明 EP 使用 Lagrangian 稀疏约束，无法直接加入 overlap 惩罚，因此 OASR 仅用于 DiscoGP 或类似框架。</li>
 <li><strong>[?] 复现缺口 + critique 点</strong>：论文正文没给 $\lambda_s, \lambda_c, \lambda_o, \tau$ 的具体数值，也没给迭代时 $R$ 究竟是&quot;上一个 sheaf&quot;还是&quot;累计并集&quot;（从&quot;排斥后交集持续缩小&quot;推断应是累计并集，需查代码确认）。更要命的是<strong>没有对 $\lambda_o$ 做敏感性分析</strong>——无法排除&quot;调大 $\lambda_o$ 就能把 IoU 刷到任意低&quot;，也就无法判断报出的低 IoU 有多少是超参调出来的。</li>
 </ul>
 <h3 id="3-3-三边-sheaf-与-没有不可或缺组件-的构造-第-4-节">3.3 三边 sheaf 与&quot;没有不可或缺组件&quot;的构造（第 4 节）</h3>

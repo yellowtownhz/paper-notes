@@ -1018,13 +1018,14 @@
 &quot;We propose to partially alleviate these problems by constructing a better conversational dataset, feeding activations from multiple layers and multiple token positions, training on on-policy data and increasing the magnitude of the activation injection.&quot;</p>
 </blockquote>
 <h3 id="3-1-整体架构">3.1 整体架构</h3>
-<p>AO 本身结构不动（还是 Qwen3-8B base + LoRA finetune，activation 通过 norm-matched injection 加到第 2 个 transformer layer 之后的 residual stream）。这篇改的是<strong>训练数据配方</strong>和<strong>注入超参</strong>，不动模型结构。</p>
+<p>AO 本身结构不动（还是 Qwen3-8B base + LoRA finetune，activation 通过 norm-matched injection 加到第 2 个 transformer layer 之后的 residual stream）。这篇改的是<strong>训练数据配方</strong>和<strong>注入超参</strong>。</p>
 <h3 id="3-2-核心模块-四个改进-按对-aobench-贡献从大到小排">3.2 核心模块（四个改进，按对 AObench 贡献从大到小排）</h3>
 <p><strong>(a) 换对话数据集——单步最大 jump（+0.244 → +0.310，Fig.3，n=3 seeds）</strong></p>
 <p><img src="https://arxiv.org/html/2606.02609v2/figures/ablation_convqa.png" alt="Figure 3: 替换对话数据集后的独立效果对比" /></p>
 <p>Motivation：LatentQA 问的&quot;不是 activation 里有的东西&quot;，逼模型 text inversion。</p>
 <p>做法（Fig.2）：用 Sonnet 4.6 从目标模型 on-policy CoT 切分构造 QA 对。</p>
-<p><img src="https://arxiv.org/html/2606.02609v2/figures/past-future-og.png" alt="Figure 2: 对话数据集构造流程，从 CoT 切分生成问答对" />关键设计是切分点 i 的选择——显式被指导成&quot;问题从前缀文字答不出（anti-text-inversion）但从前缀 activation 有望答出（solvability）&quot;。训练时 AO 看 prefix 对应位置的 activation + 这个问题，目标是答出 suffix 相关内容。这个&quot;solvability + anti-text-inversion&quot;的对偶约束是全文最核心的方法学贡献。</p>
+<p><img src="https://arxiv.org/html/2606.02609v2/figures/past-future-og.png" alt="Figure 2: 对话数据集构造流程，从 CoT 切分生成问答对" /></p>
+<p>关键设计是切分点 i 的选择——构造数据时明确要求&quot;问题从前缀文字答不出（anti-text-inversion）但从前缀 activation 有望答出（solvability）&quot;。训练时 AO 看 prefix 对应位置的 activation + 这个问题，目标是答出 suffix 相关内容。这个&quot;solvability + anti-text-inversion&quot;的对偶约束是全文最核心的方法学贡献。</p>
 <p><strong>（b) 喂多层（layer 18 → 22 单层 +0.025；单层 22 → 5 层 21-25 再 +0.05，Fig.4）</strong></p>
 <p><img src="https://arxiv.org/html/2606.02609v2/figures/layer_sweep.png" alt="Figure 4: 层选择消融，Layer 22 及多层提取的性能对比" /></p>
 <p>Motivation：原配方从 25%/50%/75% 随机抽一层，但已知大部分 feature 集中在 55–80% 层范围。Layer 22（≈62% 深度）是峰值，喂 5 个连续层再涨一截，最大增益出在 model-diffing 任务。</p>
@@ -1033,14 +1034,14 @@
 <p><strong>（c) on-policy past/future-lens（isolated +0.244 → +0.274，Fig.5，n=3 seeds）</strong></p>
 <p><img src="https://arxiv.org/html/2606.02609v2/figures/ablation_onpolicy.png" alt="Figure 5: 替换为 on-policy CoT 数据后 AObench 分数的提升" /></p>
 <p>Motivation：FineWeb 是预训练语料，预测未来 token 不需要懂&quot;模型在想什么&quot;。换成模型自己 rollout 的 CoT，任务更 solvable，也更贴合真实使用场景（agent trace 都是 on-policy）。</p>
-<p>效果存在但 modest（作者自承 &quot;the magnitude of the effect is modest&quot;）。⚠️ 重要 caveat（§4 Caveats）：这个 ablation <strong>不干净</strong>——因为对话数据集本身也是从 on-policy CoT 构造的，两者的贡献有重叠，on-policy lens 的独立贡献可能被高估。</p>
+<p>效果存在，但幅度较小（作者自承 &quot;the magnitude of the effect is modest&quot;）。⚠️ 重要 caveat（§4 Caveats）：这个 ablation <strong>不干净</strong>——因为对话数据集本身也是从 on-policy CoT 构造的，两者的贡献有重叠，on-policy lens 的独立贡献可能被高估。</p>
 <p><strong>（d) 调 injection 强度（整体 AObench 微涨；hallucination 79% → 85%，Fig.6）</strong></p>
 <p><img src="https://arxiv.org/html/2606.02609v2/figures/steering_ablation.png" alt="Figure 6: 注入强度消融实验，增大强度对性能的边际影响" /></p>
 <p>Motivation：LM 对 token 的&quot;均匀加权先验&quot;压住了被注入的单 token activation；加大 norm 帮模型把它当成 load-bearing。</p>
 <p>注入公式沿用 Karvonen et al. 2025（<strong>原文未给新公式，以下引自 Karvonen 2025</strong>，本文只调了强度标量 α，约 2×，原 α 具体值论文未披露）：</p>
 <pre><code>h'_2 = h_2 + α · (||h_2|| / ||a||) · a
 </code></pre>
-<p><code>h_2</code> 是第 2 层后的 residual stream，<code>a</code> 是被注入的 activation 向量，<code>α</code> 是强度标量。本质：把外来 activation 缩放到和目标位置 residual stream 同 norm，再按 α 加上去。</p>
+<p><code>h_2</code> 是第 2 层后的 residual stream，<code>a</code> 是被注入的 activation 向量，<code>α</code> 是强度标量。具体操作是把外来 activation 缩放到与目标位置 residual stream 相同的 norm，再乘以 α 后加到该位置。</p>
 <p>对比 NLA（Fraser-Taliente et al. 2026）的&quot;完全替换 token embedding + 固定 scalar&quot;：作者在 Qwen3-8B 上试过，显著差于 additive 方案（无正式 ablation，但&quot;every run&quot;都更差）。作者的 hypothesis：第 1 层 residual stream 和后续层的 cosine similarity 异常小（第 1 层独有），过了第 1 层后 cosine similarity 层间稳定，所以在第 2 层后注入时残差流已在&quot;正确的 basis&quot;里。</p>
 <h3 id="3-3-训练流程">3.3 训练流程</h3>
 <ul>

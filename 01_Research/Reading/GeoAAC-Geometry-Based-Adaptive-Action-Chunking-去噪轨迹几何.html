@@ -947,7 +947,7 @@
 
 <h2 id="1-背景">1. 背景</h2>
 <p><strong>关键问题</strong>：固定 action horizon 在同一任务不同阶段适配性不同。
-<strong>关键做法</strong>：读 Flow Matching 去噪轨迹的&quot;几何&quot;作过程级可靠性信号，免训练、单次生成即定 horizon。
+<strong>关键做法</strong>：将 Flow Matching 去噪轨迹的&quot;几何&quot;作为过程级可靠性信号，无需训练，在单次生成中决定 horizon。
 <strong>关键结论</strong>：仿真在多样家务基准上领先最优固定基线，真机方向性提升（口径见 §5）。
 <strong>我的判断</strong>：信号是单次推理副产物、零额外前向/采样/训练，工程干净；但&quot;几何=可靠性&quot;前提证据偏薄，多数仿真增益落统计噪声内，采用前需重验前提。</p>
 <ul>
@@ -983,7 +983,7 @@
 <li><strong>① 局部几何变化</strong>（Eq.2）：$b_{k}^{(t)}=\left\|\mathrm{vec}\!\left(\frac{\mathbf{v}_{1:k}^{(t+1)}-\mathbf{v}_{1:k}^{(t)}}{\Delta\tau_{t}+\epsilon}\right)\right\|_{2}$——相邻 velocity 之差的 L2（轨迹沿 flow time 的&quot;加速度&quot;）。相邻步几乎不变→自信；大幅修正→不确定。除以 $\Delta\tau_t$ 抵消非均匀积分间隔，否则&quot;步长大&quot;被误读成&quot;变化大&quot;。</li>
 <li><strong>② 时序权重</strong>（Eq.4）：$w_{t}=\frac{\bar{s}_{t}(1-\bar{s}_{t})^{2}}{\frac{1}{T-1}\sum_{j}\bar{s}_{j}(1-\bar{s}_{j})^{2}}$——Fig.4(a) 显示后期几何变化增大但相关性下降，故中段取峰、后期按二次衰减压更狠。均匀权重会被后期高幅低可靠噪声污染。</li>
 <li><strong>③ 累积中位数边界</strong>（Eq.7–10）：$r_{k}\!=\!\frac{\widetilde{U}_{k}-\widetilde{U}_{k-1}}{|\widetilde{U}_{k-1}|+\epsilon},\ e_{k}\!=\!\max(r_k,0),\ F_{k}\!=\!\frac{\sum_{i=2}^{k}e_{i}}{\sum_{j}e_{j}},\ \hat{k}_{50}$ 取 $F_k$ 跨 0.5 插值。Ũ 绝对尺度跨 obs/任务漂移，固定阈值难标定；相对增长 + 累积中位数抗单点瞬态尖峰，只取正增长避免抵消前置证据。</li>
-<li><strong>④ 运动下界兜底</strong>（Eq.11–13）：$q=\min(M(\mathbf{A})/\alpha,1),\ k_{\mathrm{motion}}=\lfloor k_{\min}+(1-q)(H-k_{\min})+0.5\rfloor,\ k^{*}=\max(k_{50},k_{\mathrm{motion}})$。预测运动小→执行几步几乎不动却触发新推理（空转），故运动越小强制越长最短 horizon。$\alpha,k_{\min}$ 论文声明&quot;跨任务固定&quot;但<strong>全程未给值</strong>[?]。</li>
+<li><strong>④ 运动下界兜底</strong>（Eq.11–13）：$q=\min(M(\mathbf{A})/\alpha,1),\ k_{\mathrm{motion}}=\lfloor k_{\min}+(1-q)(H-k_{\min})+0.5\rfloor,\ k^{*}=\max(k_{50},k_{\mathrm{motion}})$。预测运动小→执行几步几乎不动却触发新推理（空转），因此预测运动越小，设置的最短 horizon 越长。$\alpha,k_{\min}$ 论文声明&quot;跨任务固定&quot;但<strong>全程未给值</strong>[?]。</li>
 </ul>
 <p><img src="https://arxiv.org/html/2609.20776v1/overview.png" alt="Figure 2：从去噪轨迹几何到执行前缀" /></p>
 <p><em>来源：<a href="https://arxiv.org/html/2609.20776v1#S1.F2">原文 Figure 2</a>。注意同一次生成中的中间速度信息如何形成各前缀的可靠性剖面，再决定执行多少步。这里复用已有去噪计算，不代表整条任务的重规划次数不会增加。</em></p>

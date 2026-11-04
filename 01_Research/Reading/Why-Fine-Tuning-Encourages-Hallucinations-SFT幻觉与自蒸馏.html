@@ -1040,7 +1040,7 @@
 <h3 id="基本设定">基本设定</h3>
 <p><strong>原始模型</strong>：Qwen2.5-1.5B（主实验），Qwen2.5-7B 和 LLaMA 3.1-8B 用于跨模型验证。都是 pre-trained base model，没有经过 instruction tuning。</p>
 <p><strong>训练任务</strong>：closed-book factual QA。输入 &quot;Q: Which country is X located in?&quot;，输出 &quot;A: Italy&quot;。标准 SFT（cross-entropy on answer tokens）。训练数据 = D_Known（8K 条模型已知的 fact）+ D_Unk（8K 条模型不认识的 fact），50:50 混合。</p>
-<p><strong>三个指标的物理含义</strong>：</p>
+<p><strong>三个指标分别衡量什么</strong>：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1266,7 +1266,7 @@
 <p>UUID 和 self-distillation 在 drift 上行为一致 — 都只有 task-format adaptation 阶段的 baseline drift (~5%)。Semantic keys 额外的 6pp drift 就是 representational interference 的<strong>直接观测</strong>。</p>
 <p>（注：论文还用了额外 5 种 drift metrics 做 triangulation — NS, MTD, Rank-rho, NTR, JSD — 结论一致，详见 Appendix F。）</p>
 <h3 id="self-distillation-效果-遗忘从-15pp-压到-3pp">Self-Distillation 效果：遗忘从 ~15pp 压到 ~3pp</h3>
-<p>机制搞清楚了，fix 自然落出来：用 self-distillation 约束模型在旧知识上的输出分布不要漂移。</p>
+<p>明确表征干扰机制后，解决思路也随之明确：用 self-distillation 约束模型在旧知识上的输出分布，避免其发生漂移。</p>
 <ul>
 <li>Self-Distillation: D_Held 仅掉约 3pp，且 D_Unk 学习速度基本保持</li>
 <li>从 drift 分析看（Figure 5），self-distillation 把表征漂移压回到和 UUID 相同的 baseline 水平 — 阻止了 interference 的传播</li>
@@ -1321,7 +1321,7 @@
 <li><strong>Top-76：forgetting 降到 ~3pp</strong>，跟 full distillation 一模一样</li>
 <li><strong>Random-76：forgetting 停在 ~10pp</strong>，跟 standard SFT 没区别</li>
 </ul>
-<p>结论：self-distillation 的有效成分是<strong>保护 teacher 在 competing entity tokens 上的 opinion</strong> — 即&quot;对于这个问题，哪些替代答案是 plausible 的&quot;。只要保护了这个高概率区域，学新实体的梯度就推不走旧实体的概率质量。约束 random tokens 完全没用，因为那些 token 跟新旧知识之间的竞争无关。</p>
+<p>结论：self-distillation 的有效成分是<strong>保留 teacher 对竞争实体 token 的判断</strong>，即&quot;对于这个问题，哪些替代答案是 plausible 的&quot;。只要保护了这个高概率区域，学新实体的梯度就推不走旧实体的概率质量。约束 random tokens 完全没用，因为那些 token 跟新旧知识之间的竞争无关。</p>
 <hr />
 <h2 id="6-insights">6. Insights</h2>
 <h3 id="6-1-对论文本身的-comments">6.1 对论文本身的 Comments</h3>

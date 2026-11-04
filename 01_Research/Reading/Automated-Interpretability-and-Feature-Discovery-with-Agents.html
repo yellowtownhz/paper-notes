@@ -924,7 +924,7 @@
         <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
 <li><a class="toc-link" href="#2-关键问题-解释器不仅会-说得像-还不知道该从哪里开始找"><span class="toc-num">02</span> 2. 关键问题：解释器不仅会“说得像”，还不知道该从哪里开始找</a></li>
 <li><a class="toc-link" href="#3-关键方法-发现与解释是两个相互供给证据的循环"><span class="toc-num">03</span> 3. 关键方法：发现与解释是两个相互供给证据的循环</a></li>
-<li><a class="toc-link toc-sub" href="#3-1-featureexplainer-固定评测电池约束自由生成">3.1 FeatureExplainer：固定评测电池约束自由生成</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-featureexplainer-用固定评测指标约束假设生成">3.1 FeatureExplainer：用固定评测指标约束假设生成</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-featurefinder-先用局部几何提召回-再用统计量与语义筛选提精度">3.2 FeatureFinder：先用局部几何提召回，再用统计量与语义筛选提精度</a></li>
 <li><a class="toc-link" href="#4-数据与实验设置"><span class="toc-num">04</span> 4. 数据与实验设置</a></li>
 <li><a class="toc-link" href="#5-关键结果-迭代确实收紧标签-但-赢-由自身指标体系定义"><span class="toc-num">05</span> 5. 关键结果：迭代确实收紧标签，但“赢”由自身指标体系定义</a></li>
@@ -973,7 +973,7 @@
 <p>论文瞄准两个串联的 bottleneck：</p>
 <ol>
 <li><strong>Discovery</strong>：SAE 每层有成千上万特征，仅能解释“给定 feature”并没有回答“哪个 feature 与我的问题相关”。</li>
-<li><strong>Explanation</strong>：top-activating examples 只给正例局部，one-shot 标签容易抓到语义邻域，却漏掉语言、句法或上下文等必要条件；遇到 polysemantic feature 时还会硬压成单标签。</li>
+<li><strong>Explanation</strong>：top-activating examples 只展示部分高激活正例，one-shot 标签容易抓到语义邻域，却漏掉语言、句法或上下文等必要条件；遇到 polysemantic feature 时还会硬压成单标签。</li>
 </ol>
 <p>作者因此主张，可解释性应被视为实验过程，而不是 metadata generation：解释必须能预测哪些输入激活、能被 matched controls 反驳，并在必要时接受 causal intervention。</p>
 <h2 id="3-关键方法-发现与解释是两个相互供给证据的循环">3. 关键方法：发现与解释是两个相互供给证据的循环</h2>
@@ -989,7 +989,7 @@
 </blockquote>
 <p><img src="../../assets/papers/2605.01555/interpagent-workflow.png" alt="InterpAgent 中 FeatureFinder 与 FeatureExplainer 的交互流程" /></p>
 <p>图 2 最值得看的是信息流：Finder 的输出不是最终解释，而是 Explainer 的待检验假设种子；两个 Agent 共享 Python 环境与持久记忆，supervisor 只负责路由，用户也可以只调用其中一条链。</p>
-<h3 id="3-1-featureexplainer-固定评测电池约束自由生成">3.1 FeatureExplainer：固定评测电池约束自由生成</h3>
+<h3 id="3-1-featureexplainer-用固定评测指标约束假设生成">3.1 FeatureExplainer：用固定评测指标约束假设生成</h3>
 <p>每轮最多维护若干假设，对每个假设用七项指标排序：Detection F1、Fuzzing F1、Surprisal AUROC、embedding similarity、LLM-as-judge coherence、$t$-test 的 $p$-value、Cohen's $d$。可选 steering 不默认进入排名。</p>
 <p>排序不是把异质量纲直接相加，而是先转成各指标的 ordinal rank，再取平均，并过滤 Pareto-dominated hypotheses。Agent 针对最弱指标构造下一轮反例；最多运行 4 次 refinement（方法部分举例预算为 5），或在最佳假设稳定且没有新 counterexample 时提前停止。语义不同而分数接近的多组解释会触发 polysemantic flag（Section 3.2, Appendix A.1–A.2）。</p>
 <p>这里的设计选择很关键：<strong>matched negatives 决定标签是否包含必要约束</strong>。例如只给 French technology 正例，模型很容易写成“技术”；加入语义相似的 English technology 负例，语言约束才会暴露。</p>
@@ -1024,7 +1024,7 @@ $$</div>
 <p>语言 benchmark 上，k-NN+Leiden 的 ARI=0.315、NMI=0.536，优于 Agglomerative（ARI=0.130）与 K-Means（ARI=0.118），说明 local neighborhood 比 global partition 更适合这里的 activation geometry；但 ARI 绝对值仍不高，发现依赖后续强筛选（Table A5）。初始语言 marker 中最终仅 0.2%–4.0% 通过 LLM screening（Table A6）。</p>
 <p>在语言、coding、math、harmful 八类有存活 marker 的类别上，category prompts 的激活均显著高于 random controls，作者报告独立样本 $t$-test 为 $p&lt;10^{-4}$（Figure 4）。层分布也有可解释趋势：math/coding markers 出现在 layers 0/8，safety markers 出现在 layers 8/11（Table A7）；不过每格仅 0–3 个 validated markers，不足以把这种分布当成稳健的“深层更抽象”定律。</p>
 <p><img src="../../assets/papers/2605.01555/discovered-feature-validation.png" alt="发现的语言与非语言 marker 在目标 prompt 和随机对照上的激活差异" /></p>
-<p>图 4 支持的是“筛选后 marker 对目标组有 activation separation”，不是完整 discovery pipeline 的 recall；没有被找到的真实 features 无法从这张图评估。</p>
+<p>图 4 支持的是“筛选后 marker 对目标组有 activation separation”，并未衡量完整 discovery pipeline 的 recall；这张图无法告诉我们，还有多少真实 features 未被找到。</p>
 <h3 id="5-3-因果性-泛化与成本">5.3 因果性、泛化与成本</h3>
 <ul>
 <li>Safety case 中，对一个发现方向施加 $-50\times$ intervention 会降低目标危险 prompt 的 refusal，同时保留 benign instruction following 和一个无关 illicit request 的 refusal（Figure 6）。这是有 specificity controls 的因果证据，但只有单个定性 case，且作者出于安全原因隐藏 feature ID 与 recipe，无法完整复现。</li>

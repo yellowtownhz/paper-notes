@@ -981,7 +981,7 @@
 </blockquote>
 <ul>
 <li><strong>为什么重要</strong>：human babysitting 是迈向 general physical intelligence 的规模化硬上限——人不是算力，没法并行、没法 24h 不眠。</li>
-<li><strong>之前方法卡在哪</strong>（§5.2–5.3 论证得很干净）：已有 self-improvement loop 都跑在&quot;便宜 substrate&quot;上——Eureka 每分钟数千 Isaac Gym rollout、Voyager 用 Minecraft（near-free）、DREureka 只在仿真迭代落地前才部署、AutoRT 只做数据采集。古典 robot scientist 固定装置从不自己写工具，LLM research agent 从不碰真机器人。原话划界：&quot;In every case, the loop closes on a cheap substrate while real-robot execution serves only as a sim-to-real or data target, never as the medium of iteration.&quot; ENPIRE 把闭环介质换成硬件，绑定资源从算力预算换成<strong>机器人访问预算</strong>。</li>
+<li><strong>之前方法卡在哪</strong>（§5.2–5.3 论证得很干净）：已有 self-improvement loop 都跑在&quot;便宜 substrate&quot;上——Eureka 每分钟数千 Isaac Gym rollout、Voyager 用 Minecraft（near-free）、DREureka 只在仿真迭代落地前才部署、AutoRT 只做数据采集。古典 robot scientist 固定装置从不自己写工具，LLM research agent 从不碰真机器人。原话划界：&quot;In every case, the loop closes on a cheap substrate while real-robot execution serves only as a sim-to-real or data target, never as the medium of iteration.&quot; ENPIRE 把闭环介质换成硬件，系统受限的资源从算力预算变为<strong>机器人访问预算</strong>。</li>
 </ul>
 <h2 id="3-关键方法-enpire-四模块-harness-先人导建环境-en-再全自主改策略-pire">3. 关键方法：ENPIRE——四模块 harness，先人导建环境（EN），再全自主改策略（PIRE）</h2>
 <blockquote class="card card-info">
@@ -1033,7 +1033,9 @@ via Git.
 <li><strong>MTU</strong> 存在<strong>两处不一致的口径</strong>：§2.2 泛述 &quot;fleet's average token consumption&quot;，§3.6 明确 &quot;tokens consumed per minute&quot;；复现以 §3.6 为准但须知两者并存。派生 <strong>Tokens-to-Success / Time-to-Success</strong>。</li>
 </ul>
 </li>
-<li><strong>硬件与编排（复现要点，压缩）</strong>：8 台同构站，每站 2× YAM 6-DoF 臂（I2RT，双臂 14 关节，CAN bus）+ 力限平行夹爪、单 RTX 5090 32GB / Ultra 9 285K / 128GB、RealSense D405（1 顶视 + 2 腕视，GPU 任务加侧装 D435i）。策略推理 30Hz、底层 PD + 重力补偿 100Hz。每站 agent 跑在单一 autoresearch 仓库沙箱（绕过权限弹窗、无限联网）；跨站协调<strong>完全经 Git</strong>，无中央服务器。FastAPI 端点：<code>/start</code>（开 rollout）、<code>/restart</code>（新 rollout buffer 目录，隔离不同假设的数据）、<code>/home</code>（回零）；Push-T 另加 <code>/avoid</code>/<code>/resume</code> 处理遮挡。真实 RL 后端集成 PLD-RL（作者前作 residual RL），按 SERL 异步三层设计（deployment/learner/actor，Portal/ZMQ msgpack），deployment 与 learner 间是<strong>松耦合磁盘契约</strong> + RLPD 式数据混合（RL 过渡进 online buffer，human 过渡进 demo buffer）。</li>
+<li><strong>硬件与编排（复现要点，压缩）</strong>：8 台同构站，每站 2× YAM 6-DoF 臂（I2RT，双臂 14 关节，CAN bus）+ 力限平行夹爪、单 RTX 5090 32GB / Ultra 9 285K / 128GB、RealSense D405（1 顶视 + 2 腕视，GPU 任务加侧装 D435i）。策略推理 30Hz、底层 PD + 重力补偿 100Hz。</li>
+<li><strong>执行编排</strong>：每站 agent 跑在单一 autoresearch 仓库沙箱（绕过权限弹窗、无限联网）；跨站协调<strong>完全经 Git</strong>，无中央服务器。FastAPI 端点：<code>/start</code>（开 rollout）、<code>/restart</code>（新 rollout buffer 目录，隔离不同假设的数据）、<code>/home</code>（回零）；Push-T 另加 <code>/avoid</code>/<code>/resume</code> 处理遮挡。</li>
+<li><strong>学习后端</strong>：真实 RL 后端集成 PLD-RL（作者前作 residual RL），按 SERL 异步三层设计（deployment/learner/actor，Portal/ZMQ msgpack），deployment 与 learner 间是<strong>松耦合磁盘契约</strong> + RLPD 式数据混合（RL 过渡进 online buffer，human 过渡进 demo buffer）。</li>
 <li><strong>与已有方法的区别</strong>：保留 skill-accumulation 与 reward-generation 机制，但把闭环介质换成硬件；跨站协调用 Git 而非中心调度——fleet 松耦合、容错，Git 历史即&quot;唯一真相源&quot;。</li>
 <li><strong>核心机制图</strong>：插销混合 reward（视觉对齐 + 插入深度 + 末端力矩），是 agent autoresearch 出来的验证器，决定整条生命周期里&quot;成功与否&quot;的判定：
 <img src="https://arxiv.org/html/2606.19980v2/agent-generate-env.png" alt="Figure 9: pin insertion 混合 reward" /></li>

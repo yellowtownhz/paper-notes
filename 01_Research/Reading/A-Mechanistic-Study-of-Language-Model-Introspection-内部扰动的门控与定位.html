@@ -959,7 +959,7 @@
 <li><a href="https://arxiv.org/html/2609.35108v1">官方全文</a> · <a href="https://arxiv.org/pdf/2609.35108v1">PDF</a> · <a href="https://github.com/Zethan06/introspection_mechanism">作者代码</a>。本笔记阅读正文及附录 A–C，核对原图；未运行代码或复现实验。</li>
 </ul>
 <h2 id="2-关键问题-模型的内部变化-怎样成为一个可核验的回答">2. 关键问题：模型的内部变化，怎样成为一个可核验的回答？</h2>
-<p>沿用 <strong>Figure 1 的示意例子</strong>：用户给出十个候选词，其中 <code>TOKEN 6: assurances</code>。研究者保持文字完全不变，却把一个从 <code>cat</code> 提取的概念向量加到候选 6 的隐藏状态上。正确答案是 <code>6</code>；未注入时应回答 <code>none</code>。这里的猫不是输入文本中的异常词，Figure 1 也只是流程示意，不能当作这一概念的单次实测记录。</p>
+<p>沿用 <strong>Figure 1 的示意例子</strong>：用户给出十个候选词，其中 <code>TOKEN 6: assurances</code>。研究者保持文字完全不变，却把一个从 <code>cat</code> 提取的概念向量加到候选 6 的隐藏状态上。正确答案是 <code>6</code>；未注入时应回答 <code>none</code>。猫这一概念通过隐藏状态注入，并未作为异常词出现在输入中。Figure 1 也只是流程示意，不能当作这一概念的单次实测记录。</p>
 <p>难点不只是“能否输出 6”。即使隐藏状态包含注入位置，模型也可能回答 <code>none</code>；反过来，模型可能愿意报位置，却报错。因此需要区分：</p>
 <ol>
 <li><strong>检测/报告倾向</strong>：答案是否为任一位置，而非 <code>none</code>。</li>
@@ -1013,7 +1013,7 @@ $$</div>
 </tbody>
 </table></div>
 <p>Gate-on 与 Gate-off <strong>分别学习 32 个头，不是同一套开关</strong>；两套集合的交集分别为 18、16、18 个头（Table 7）。搜索范围是 Qwen 17–23、LLaMA 13–16、Gemma 21–28 层。只训练选择头的 mask，模型和概念向量都冻结：Top-$k$ 二值前向、STE 反向，Adam、学习率 $3\times10^{-3}$、两个 epoch。32 是在 validation 上与同层范围的随机等量头集合比较后选择的规模，而非证明不可再缩小的最小电路（A.7–A.10）。</p>
-<p><strong>一个容易漏掉的实验设计</strong>：训练 Gate-on mask 时，router 的 attention 被固定到真正目标的后继 token，以便搜索主要负责“是否报告”的头；Gate-off 训练没有这个操作。训练还筛选 clean 回答 <code>none</code> 的配对样本，Gate-on 要求 injected 回答正确，Gate-off 要求 injected 报任意位置。测试时除非特别声明，不再强制 router。这个分工因此既有实验证据，也带有搜索目标的归纳偏置。</p>
+<p><strong>一个容易漏掉的实验设计</strong>：训练 Gate-on mask 时，router 的 attention 被固定到真正目标的后继 token，以便搜索主要负责“是否报告”的头；Gate-off 训练没有这个操作。训练还筛选 clean 回答 <code>none</code> 的配对样本，Gate-on 要求 injected 回答正确，Gate-off 要求 injected 报任意位置。测试时除非特别声明，不再强制 router。因此，理解这项分工时，既要看干预证据，也要考虑搜索目标带来的归纳偏置。</p>
 <p>Router 最终定位到 Qwen <strong>L24 H29/H31</strong>、LLaMA <strong>L17 H24</strong>、Gemma <strong>L29 H1/H11</strong>。它们关注的通常是被注入候选的<strong>后继 token</strong>，而非候选词本身。回到候选 6：路由头从 $p_6+1$ 读取位置相关信息，再送到最终回答位置。作者还把这些头的 attention 直接改为指向另一个候选后继 token 的 one-hot 分布，观察答案是否被改写；该操作不改 value。</p>
 <p>这支持后继位置参与路由，但论文没有完整追踪“注入信号如何先传播到后继 token”的上游电路。</p>
 <h2 id="4-数据边界-这是为了研究可报告行为而筛选出的实验池">4. 数据边界：这是为了研究可报告行为而筛选出的实验池</h2>
@@ -1136,7 +1136,7 @@ $$</div>
 \Delta s_t=\frac{\Delta K_tq^I+K_t^0\Delta q}{\sqrt{d_h}},\qquad
 \Delta o=W_O(\Delta V)^\top a^I+W_O(V^0)^\top\Delta a.
 $$</div>
-<p>第一式拆开 attention score 的变化；第二式拆开头输出的变化。第一项分别是“key 改变如何被 query 读取”和“value 改变如何被 attention 汇总”，第二项则让变化后的 query / attention 作用于旧内容。这是精确恒等分解，<strong>交互项包含在第一项里</strong>，所以不能把第一项叫成完全独立的纯 key/value 效应。</p>
+<p>第一式拆开 attention score 的变化；第二式拆开头输出的变化。两式的第一项分别表示“key 改变如何被 query 读取”和“value 改变如何被 attention 汇总”；第二项分别表示 query 和 attention 的变化如何作用于旧内容。这是精确恒等分解，<strong>交互项包含在第一项里</strong>，所以不能把第一项叫成完全独立的纯 key/value 效应。</p>
 <p>对 key 变化和 $M=W_O(\Delta V)^\top$ 做 SVD 后，关键直觉是：</p>
 <div class="math-display">$$
 \Delta Kq^I=\sum_k\sigma_k(v_k^\top q^I)u_k,

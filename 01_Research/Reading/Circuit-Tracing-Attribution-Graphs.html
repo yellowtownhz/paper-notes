@@ -990,7 +990,7 @@ $$</div>
 <div class="math-display">$$
 \hat{\mathbf{y}}^{\ell}=\sum_{\ell&#x27;=1}^{\ell}W_{dec}^{\ell&#x27;\to\ell}\mathbf{a}^{\ell&#x27;}.
 $$</div>
-<p>训练同时最小化逐层 MSE 与 sparsity penalty。所有层的 features 联合训练，目标是“用少量激活 features 重建原模型每层 MLP 做了什么”，而不是重建 residual stream 本身。</p>
+<p>训练目标同时包含逐层 MSE 与 sparsity penalty。所有层的 features 联合训练，目标是“用少量激活 features 重建原模型每层 MLP 做了什么”，而不是重建 residual stream 本身。</p>
 <h3 id="3-2-三个模型不要混">3.2 三个模型不要混</h3>
 <ol>
 <li><strong>原模型</strong>：真正被解释的 Transformer。</li>
@@ -999,7 +999,7 @@ $$</div>
 </ol>
 <p>第 3 个模型在原 prompt 上能与原模型的 activations/logits <strong>精确相等</strong>，但这是加入误差校正后的局部等价，不等于机制等价。作者的类比很准确：像函数在一点附近的局部近似，基准点对齐，偏离后可能迅速分叉。</p>
 <h3 id="3-3-为什么冻结之后能画图">3.3 为什么冻结之后能画图</h3>
-<p>MLP 非线性已由 CLT features“跨过去”，attention pattern 与 normalization denominator 又被冻结；于是 source feature 对 downstream feature preactivation 的直接作用变成线性“virtual weight”。local model 只剩 feature activation 的非线性，可以视为跨 token 的巨大稀疏全连接网络。</p>
+<p>MLP 计算已由 CLT features 替代，attention pattern 与 normalization denominator 又被冻结。因此，source feature 对 downstream feature preactivation 的直接作用可表示为线性“virtual weight”。local model 只剩 feature activation 的非线性，可以视为跨 token 的巨大稀疏全连接网络。</p>
 <h2 id="4-第二步-从-local-model-构造-attribution-graph">4. 第二步：从 local model 构造 attribution graph</h2>
 <h3 id="4-1-四类节点与边">4.1 四类节点与边</h3>
 <p>图包含：</p>
@@ -1016,9 +1016,9 @@ $$</div>
 <p>其中 $w_{s\to t}$ 汇总 decoder 到 encoder 之间所有不经过另一 MLP/CLT、但可经过 residual 与 attention OV 的线性路径。注意：它捕获“信息经冻结 attention 被搬到了哪里”，不解释 QK 为什么选择那个 attention pattern。</p>
 <h3 id="4-2-从百万-edges-压到人能读的图">4.2 从百万 edges 压到人能读的图</h3>
 <p>一个位置仍会激活约百级 features，短 prompt 也可能产生百万 edges。作者计算多步 indirect influence，保留对目标 logit 直接或间接最重要的节点/边；默认剪枝通常让节点数缩小约 <strong>10 倍</strong>，completeness 下降约 <strong>20%</strong>。</p>
-<p>剪枝后仍常有数百节点、数千至数万 edges。研究者借 UI 查看 feature-activating examples、手工命名，并把语义相近 features 合并为 <strong>supernodes</strong>。这个流程非常实用，但“图中的简洁故事”已经经过字典学习、局部线性化、影响度剪枝和人工分组四层选择。</p>
+<p>剪枝后仍常有数百节点、数千至数万 edges。研究者借 UI 查看 feature-activating examples、手工命名，并把语义相近 features 合并为 <strong>supernodes</strong>。这个流程便于实际分析，但“图中的简洁故事”已经经过字典学习、局部线性化、影响度剪枝和人工分组四层选择。</p>
 <h3 id="4-3-dag-例子告诉我们的机制边界">4.3 DAG 例子告诉我们的机制边界</h3>
-<p>图中 <code>Digital → say _D</code>、<code>Analytics → say _A</code>、<code>say DA_ → say DAG</code> 等路径可以被 feature inhibition 验证；但 <code>National</code> 对 logit 的显示影响很小。作者怀疑它主要通过改变 attention pattern 发挥作用，而这恰好被固定 QK 的方法排除。也就是说，一张看似完整的图会主动漏掉“为什么从这些 token 读取信息”。</p>
+<p>图中 <code>Digital → say _D</code>、<code>Analytics → say _A</code>、<code>say DA_ → say DAG</code> 等路径可以被 feature inhibition 验证；但 <code>National</code> 对 logit 的显示影响很小。作者怀疑它主要通过改变 attention pattern 发挥作用，而这恰好被固定 QK 的方法排除。也就是说，这种构图方式会遗漏“为什么从这些 token 读取信息”，即使图看起来已经完整。</p>
 <h2 id="5-两个-case-studies-图用于提出机制假设">5. 两个 case studies：图用于提出机制假设</h2>
 <h3 id="5-1-factual-recall-是并行路径-不是一条记忆边">5.1 Factual recall 是并行路径，不是一条记忆边</h3>
 <p><code>Fact: Michael Jordan plays the sport of</code> → <code>basketball</code> 的图显示两条主要路径：</p>
@@ -1070,7 +1070,7 @@ $$</div>
 </ul>
 <p>因此图适合生成“这一小段路径值得干预”的假设，不适合把所有长路径当成已证实的内部算法。</p>
 <h3 id="6-4-评估集本身偏向方法容易解释的-token">6.4 评估集本身偏向方法容易解释的 token</h3>
-<p>图评估只有 <strong>n=260</strong>，并筛选原模型 top-1 正确、低频、loss &gt; 0.2、目标 token 未在上下文出现的样本。最后一项特意过滤了 attention/复制主导、方法不解释的案例。这使 CLT 与图指标适合比较版本，却不能代表任意真实 prompt 上的解释成功率。</p>
+<p>图评估只有 <strong>n=260</strong>，并筛选原模型 top-1 正确、低频、loss &gt; 0.2、目标 token 未在上下文出现的样本。最后一项筛选条件过滤了由 attention/复制主导、该方法不解释的案例。这使 CLT 与图指标适合比较版本，却不能代表任意真实 prompt 上的解释成功率。</p>
 <h2 id="7-失败模式比-headline-更重要">7. 失败模式比 headline 更重要</h2>
 <ol>
 <li><strong>Missing QK circuits</strong>：固定 attention 只保留 OV 搬运，induction 和 multiple-choice 等行为会只显示“答案 token 影响答案”，漏掉选择路径的关键计算。</li>

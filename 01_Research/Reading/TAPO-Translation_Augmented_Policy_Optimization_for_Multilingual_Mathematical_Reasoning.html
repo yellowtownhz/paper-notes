@@ -1021,7 +1021,7 @@
 <hr />
 <h2 id="4-关键方法-tapo-的核心是-理解-推理分离-步级相对优势">4. 关键方法：TAPO 的核心是&quot;理解-推理分离&quot; + &quot;步级相对优势&quot;</h2>
 <h3 id="整体架构">整体架构</h3>
-<p>TAPO 基于 GRPO 框架，但强制执行一个 explicit &quot;understand-then-reason&quot; 流程：</p>
+<p>TAPO 基于 GRPO 框架，要求模型显式遵循 &quot;understand-then-reason&quot; 流程：</p>
 <pre><code>Non-English Question → &lt;english Translation&gt; → English Reasoning Trace → Answer
 </code></pre>
 <p>Trajectory 结构：<code>o = [τ_trans, τ_reason]</code></p>
@@ -1044,7 +1044,7 @@ $$R^{trans} = M(\tau_{trans}, q) \times R^{format}$$</li>
 <li><strong>COMETKIWI-DAXL</strong>：reference-free metric</li>
 </ul>
 <p>有意思的是 xCOMET 容易被 reward hacking——模型学会了&quot;直接复制原文&quot;来骗高分（Table 2 中 Sw 的 xCOMET 训练版本 Gemini Score 是 0.00）。</p>
-<p><strong>为什么 ChrF++ 更鲁棒？</strong> ChrF++ 是 character-level n-gram，复制原文时 n-gram 和 reference 不匹配，天然不敏感。xCOMET 是 neural model，可能学到某些 superficial pattern（如语言相似性）而给高分。低资源语言的 reference 翻译可能质量不高，导致 xCOMET 给复制原文高分。</p>
+<p><strong>为什么 ChrF++ 更鲁棒？</strong> ChrF++ 是 character-level n-gram，复制原文时 n-gram 和 reference 不匹配，因此难以靠直接复制原文获得高分。xCOMET 是 neural model，可能学到某些 superficial pattern（如语言相似性）而给高分。低资源语言的 reference 翻译可能质量不高，导致 xCOMET 给复制原文高分。</p>
 <ol start="3">
 <li><strong>Reasoning Reward</strong>（Eq 4）：
 $$R^{reason} = \begin{cases} 1, &amp; \text{if the final answer is correct} \\ 0, &amp; \text{otherwise or if } R^{format} = 0 \end{cases}$$</li>
@@ -1071,7 +1071,7 @@ $$\hat{A}_i^{trans*} = \alpha \hat{A}_i^{trans} + (1-\alpha) \hat{A}_i^{reason}$
 <ul>
 <li>翻译部分的优势不是纯看翻译质量，也掺了推理优势</li>
 <li>这样翻译就会朝&quot;有助于正确推理&quot;的方向优化，而不是只追求字面准确</li>
-<li>α=0.25 是最优（Figure 6）——少量翻译信号就够了，太多会&quot;淹没&quot;推理的逻辑约束</li>
+<li>α=0.25 时推理准确率最高（Figure 6）</li>
 </ul>
 <p><img src="https://arxiv.org/html/2603.25419v1/extracted/figures/386784ee26229eaa4fcb65f1bb6d35517e13a000430b883f685a6858d2d5f070f2.jpg" alt="Figure 6: Alpha trade-off between reasoning accuracy and translation quality" /></p>
 <p><strong>为什么 α=0.25 最优？</strong> 当 α 接近 1 时，翻译 signal 太强，可能&quot;淹没&quot;推理的 logical constraint。α=0.25 时，推理 signal 占主导（0.75），翻译只起辅助作用。论文没有给出理论解释，但实验证明这个 trade-off 存在。</p>
@@ -1201,7 +1201,7 @@ Your output **must** be structured into the following three sections:
 </table></div>
 <p>关键观察：</p>
 <ul>
-<li><strong>Swahili 提升 8.1%</strong>（49.0 vs 40.9），这是最 dramatic 的提升——Swahili 和 Telugu 是训练数据中最低资源的语言，baseline 翻译能力最差，TAPO 直接优化这个短板</li>
+<li><strong>Swahili 提升 8.1%</strong>（49.0 vs 40.9），这是该对比中最明显的提升——Swahili 和 Telugu 是训练数据中最低资源的语言，baseline 翻译能力最差，TAPO 直接优化这个短板</li>
 <li>Telugu 提升 1.5%</li>
 <li>untrained languages 表现和 GRPO 相当，没有损失</li>
 <li>单语言最高：English 91.7%，French 86.5%</li>

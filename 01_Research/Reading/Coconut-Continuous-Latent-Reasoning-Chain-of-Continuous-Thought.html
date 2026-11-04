@@ -922,7 +922,7 @@
     </div>
     <ul class="toc-list">
         <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
-<li><a class="toc-link" href="#2-关键问题-llm-被迫在-语言空间-里推理-但语言不是为推理设计的-而且-transformer-给每个-token-分的算力都一样-浪费在没信息量的连接词上"><span class="toc-num">02</span> 2. 关键问题：LLM 被迫在"语言空间"里推理，但语言不是为推理设计的；而且 Transformer 给每个 token 分的算力都一样，浪费在没信息量的连接词上</a></li>
+<li><a class="toc-link" href="#2-关键问题-语言输出约束了推理-逐-token-的固定算力难以匹配决策难度"><span class="toc-num">02</span> 2. 关键问题：语言输出约束了推理，逐 token 的固定算力难以匹配决策难度</a></li>
 <li><a class="toc-link" href="#3-关键方法-把最后一层-hidden-state-直接当下一步的输入-embedding-continuous-thought-配一个多阶段课程把语言-cot-逐步-退火-成连续思考"><span class="toc-num">03</span> 3. 关键方法：把最后一层 hidden state 直接当下一步的输入 embedding（"continuous thought"），配一个多阶段课程把语言 CoT 逐步"退火"成连续思考</a></li>
 <li><a class="toc-link toc-sub" href="#3-1-数学形式化">3.1 数学形式化</a></li>
 <li><a class="toc-link toc-sub" href="#3-2-训练流程-多阶段课程-借自-icot-deng-2024">3.2 训练流程：多阶段课程（借自 iCoT / Deng 2024）</a></li>
@@ -969,7 +969,7 @@
 <li>发表：arXiv 2412.06769，初版 2024-12，本地缓存标注 2025-08-07 修订版；cs.CL；未走正式会议，metadata 显示 arXiv.org。截至读时约 581 引用。</li>
 </ul>
 <hr />
-<h2 id="2-关键问题-llm-被迫在-语言空间-里推理-但语言不是为推理设计的-而且-transformer-给每个-token-分的算力都一样-浪费在没信息量的连接词上">2. 关键问题：LLM 被迫在&quot;语言空间&quot;里推理，但语言不是为推理设计的；而且 Transformer 给每个 token 分的算力都一样，浪费在没信息量的连接词上</h2>
+<h2 id="2-关键问题-语言输出约束了推理-逐-token-的固定算力难以匹配决策难度">2. 关键问题：语言输出约束了推理，逐 token 的固定算力难以匹配决策难度</h2>
 <blockquote class="card card-info">
 <p><strong>Golden Case — 问题是什么？</strong>
 论文 Figure 6 的 ProsQA 例子最能说明问题（我把它当贯穿全文的主线）。给一张 DAG，节点是虚构概念（lempus、sterpus、rorpus、bompus…），边是&quot;every X is a Y&quot;这种蕴含关系。问题形如：</p>
@@ -1057,7 +1057,7 @@ $$E_t = [e(x_1), ..., e(x_i), \; h_i, ..., h_{j-1}, \; e(x_j), ..., e(x_t)]$$</p
 <li><strong>Stage k</strong>：把 CoT 的<strong>前 k 个推理步</strong>替换成 $k\times c$ 个 continuous thought。
 <ul>
 <li>$c$ = 一个语言推理步换成几个连续思考（超参）。</li>
-<li>若某条链短于 k 步，就把语言步全删光。</li>
+<li>若某条链短于 k 步，就不再保留语言推理步。</li>
 <li><code>&lt;bot&gt;</code>/<code>&lt;eot&gt;</code> 包裹连续思考，且<strong>不计入 c</strong>。</li>
 </ul>
 </li>
@@ -1083,7 +1083,7 @@ $$E_t = [e(x_1), ..., e(x_i), \; h_i, ..., h_{j-1}, \; e(x_j), ..., e(x_t)]$$</p
 <h3 id="3-3-推理流程">3.3 推理流程</h3>
 <ul>
 <li>问题 token 之后立刻插 <code>&lt;bot&gt;</code>，进入 latent mode。</li>
-<li><strong>何时插 <code>&lt;eot&gt;</code>（退出 latent）？</strong> 两个策略：(a) 训一个二分类器在 latent thought 上决定何时停；(b) 直接 pad 到固定长度。作者说两者效果<strong>相当</strong>（未给具体数字对比），为简单起见实验用 (b)：latent thought 数量手动设成跟最终训练阶段一致。</li>
+<li><strong>何时插 <code>&lt;eot&gt;</code>（退出 latent）？</strong> 两个策略：(a) 训一个二分类器在 latent thought 上决定何时停；(b) 直接 pad 到固定长度。作者说两者效果<strong>相当</strong>（未给具体数字对比），实验为简化流程采用 (b)，将 latent thought 数量手动设为最终训练阶段的 continuous thought 数量。</li>
 <li>全程 greedy decoding。</li>
 </ul>
 <h3 id="3-4-与已有方法的本质区别-tradeoff">3.4 与已有方法的本质区别 / tradeoff</h3>
@@ -1221,7 +1221,7 @@ $$E_t = [e(x_1), ..., e(x_i), \; h_i, ..., h_{j-1}, \; e(x_j), ..., e(x_t)]$$</p
 <p>[?] <strong>Section 5 用的是重训变体</strong>：Section 5.1 为解决&quot;遗忘早期 stage&quot;，把训练改成&quot;以 p=0.3 概率混合其他 stage 数据&quot;重训了一个变体，Figure 5 的插值结果来自这个变体、<strong>不是主表模型</strong>。论文自己没把这个区别讲清楚，容易让人以为 Figure 5 就是主模型。</p>
 </blockquote>
 <h2 id="5b-关键结果-可解释性-bfs-机制-探针-隐式-value-function-节点高度相关性-把-latent-为什么利于规划-做成了机制解释">5b. 关键结果（可解释性 / BFS 机制）：探针 → 隐式 value function → 节点高度相关性，把&quot;latent 为什么利于规划&quot;做成了机制解释</h2>
-<p>这一段是全文最有意思的部分，本质是一条递进链：把不可读的 latent thought 探回语言空间 → 定义出隐式价值函数 → 用图论量（节点高度）解释优势来源。</p>
+<p>这一段是全文最有意思的部分，分析逐步展开：先把不可读的 latent thought 探回语言空间，再定义隐式价值函数，最后用图论量（节点高度）解释优势来源。</p>
 <ul>
 <li><strong>连续思考 = 高效推理表示（Figure 4 case）</strong>：GSM8k 一道题 $3\times3\times60=540$，第一个 continuous thought 探回语言 top token 是 &quot;180&quot;/&quot;9&quot; 这类中间变量——它同时编码了 $3\times180$ 和 $9\times60$ 两条 trace 的分布。</li>
 </ul>

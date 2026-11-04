@@ -983,7 +983,7 @@
 <p>这个例子同时暴露两个控制问题：</p>
 <ol>
 <li><strong>在线 selection 的观测是否够用？</strong> 常规 router 只显式接收 task、history、observation 和候选 SOP。Emotion2Skill 的研究假设是：模型在 residual stream 中形成的状态表示，可能是文本 router 尚未显式利用的计算中间量。</li>
-<li><strong>离线 evolution 如何从 episode outcome 下钻？</strong> 最终 0/1 success 不能直接指出哪个 skill invocation、precondition 或退出规则出了问题。Case A 的 step 4 出现 $\delta_t=0.42$ 的内部状态突变；这类 transition 随后被用于定位 <code>QueryRephrase</code> 缺少 query budget 和 escalation path（Appendix E, Case B）。</li>
+<li><strong>离线 evolution 如何从 episode outcome 定位到具体调用？</strong> 最终 0/1 success 不能直接指出哪个 skill invocation、precondition 或退出规则出了问题。Case A 的 step 4 出现 $\delta_t=0.42$ 的内部状态突变；这类 transition 随后被用于定位 <code>QueryRephrase</code> 缺少 query budget 和 escalation path（Appendix E, Case B）。</li>
 </ol>
 <p>但 Golden Case 不能证明“内部状态先于一切文本证据”：step 3 已经出现 <code>none below USD 50</code>，只是早于 step 4 的精确 no-results 事件。一个更强的 text-only router 或手写失败启发式也可能在 step 3 选择 <code>QueryRephrase</code>。论文展示了 rerouting 确实发生，却没有固定外部文本、只干预 emotion direction 的配对实验，也没有报告同预算、同 prompt、仅去掉 emotion block 的主对照。</p>
 <p>因此，这篇论文真正要检验的不是“LLM 会不会感到困惑”，而是：带 emotion 语义锚点的 model-internal feature，经 task/skill/outcome supervision 适配后，能否成为 skill system 的有效控制信号。</p>
@@ -1111,7 +1111,7 @@ $$</div>
 \tag{7}
 $$</div>
 <p>这里的 adapter 不是单纯的无监督 emotion compression：Eq. 6 已把 baseline skill choice 与 episode outcome 写进表示。最终 controller feature 更准确地说是 <strong>emotion-anchored hidden features + task/skill/outcome supervision</strong> 的组合，不能把下游增益只归因于 emotion ontology。</p>
-<p>两个关键接口没有闭合：</p>
+<p>两个关键接口仍缺少实现说明：</p>
 <ul>
 <li>主方法总目标只有 $\mathcal L_{ctr}+\lambda\mathcal L_{cls}$；Appendix C.3 才说 confidence 使用 episode-success BCE 训练，但未给 BCE 权重、采样、校准或并入总 loss 的方式 <code>[?]</code>。</li>
 <li>$k$-means 产生无语义 cluster ID；论文没有说明它们如何一一对齐到 Table 11 的 12 个命名模板 <code>[?]</code>。</li>
@@ -1246,7 +1246,7 @@ Revised SOP:
 </tr>
 </tbody>
 </table></div>
-<p>版本内还有两处复现冲突：§4.1 称 “all experiments” 使用 8×H800，Appendix B.1/B.2 则称 baseline、training 和 inference 使用 2×H800；$L^*$ 又同时被描述为在 validation data 上选择，以及在 GoEmotions test set 上“评估并同时选择”。终稿不能把任一说法静默当成唯一事实 <code>[?]</code>。</p>
+<p>版本内还有两处复现冲突：§4.1 称 “all experiments” 使用 8×H800，Appendix B.1/B.2 则称 baseline、training 和 inference 使用 2×H800；$L^*$ 又同时被描述为在 validation data 上选择，以及在 GoEmotions test set 上“评估并同时选择”。两组说法均需澄清，不能任选其一作为唯一事实 <code>[?]</code>。</p>
 <p>主文 §3 的 Eq. 2–15 是本文采用的 canonical 编号；Appendix A、D、H 仍沿用整体前移或跳号的旧交叉引用，复现时应按公式内容而非附录编号对应。</p>
 <h3 id="3-7-系统边界">3.7 系统边界</h3>
 <ul>
@@ -1320,7 +1320,7 @@ Story:
 <h3 id="5-1-emotion-directions-的-probe-质量-figure-3">5.1 Emotion directions 的 probe 质量（Figure 3）</h3>
 <p><img src="https://arxiv.org/html/2608.09248v2/x3.png" alt="Emotion vector quality 与 layer selection（Figure 3）" /></p>
 <p>Qwen3-8B 的 GoEmotions hit-any accuracy 在 layer 16/18/20/22/24/26/28 依次为 <strong>15.8/24.3/21.7/30.5/37.2/33.6/35.1%</strong>；random baseline 为 8.2%，故选择 layer 24。对应 Fisher ratio 为 <strong>0.91/1.34/1.52/1.21/2.08/1.83/1.57</strong>，虽同在 layer 24 达峰，但与 accuracy 并不逐层单调同步。Qwen3-14B 在 layer 26/40 达到 39.4%（Figure 3；§4.2）。</p>
-<p>t-SNE 只显示可区分的 valence regions，fine-grained 类别仍 substantial overlap。Appendix C.1 报告将 contrastive directions 换成 raw/plain within-class means 后，probe 从 37.2% 降到 29.6%；该对照是否仍保留 PCA 未说明 <code>[?]</code>。此外，global-mean subtraction 不会改变任意两类均值之差：</p>
+<p>t-SNE 只显示可区分的 valence regions，细粒度类别仍有明显重叠。Appendix C.1 报告将 contrastive directions 换成 raw/plain within-class means 后，probe 从 37.2% 降到 29.6%；该对照是否仍保留 PCA 未说明 <code>[?]</code>。此外，global-mean subtraction 不会改变任意两类均值之差：</p>
 <div class="math-display">$$
 (\mu_k-\bar\mu)-(\mu_{k&#x27;}-\bar\mu)=\mu_k-\mu_{k&#x27;}.
 $$</div>

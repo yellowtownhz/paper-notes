@@ -987,7 +987,7 @@
 <h3 id="三个必须满足的条件-section-1-2">三个必须满足的条件（Section 1-2）</h3>
 <ol>
 <li><strong>Architectural Compatibility</strong>：能从预训练 checkpoint warm-start，不要求从头训。</li>
-<li><strong>Computational Efficiency</strong>：per-token 更新是串行的、瓶颈 GPU。必须有 chunk-wise、能并行的实现。</li>
+<li><strong>Computational Efficiency</strong>：per-token 更新是串行的，会限制 GPU 并行计算。需要支持 chunk-wise 并行更新。</li>
 <li><strong>Tailored Learning Objective for LM</strong>：reconstruction 目标只是&quot;记住当前 token&quot;，跟自回归 LM 要&quot;预测下一个 token&quot;在因果上错配——Theorem 1 正式证明了这一点。</li>
 </ol>
 <hr />
@@ -1062,7 +1062,7 @@
 <p>⚠️ 这个定理证的是<strong>单步</strong> update 的期望贡献。实际推理时 fast weight 会累积 K 个 chunk 的 update（128k 序列、C=1024 → 125 次）。多步累积下 ε 级干扰项会不会累加成显著噪声？定理的单步界无法回答。假设 2（其他位置无关）在真实长序列里有多个相似 key 时也未必成立。</p>
 </blockquote>
 <h3 id="3-5-context-parallel-实现-cp-native">3.5 Context Parallel 实现（CP-native）</h3>
-<p>式 1 的更新规则是<strong>加性关联</strong>的，所以可以三阶段并行（Appendix Algorithm 1）：</p>
+<p>式 1 的更新可以<strong>通过加法累积</strong>，所以可以分三阶段并行（Appendix Algorithm 1）：</p>
 <ol>
 <li>所有 chunk 并行算 <code>ΔW_[i] = V̂_[i]^T Z_[i]</code></li>
 <li>一次 prefix-sum（cumsum）聚合成 <code>S_i = Σ_{j&lt;i} ΔW_j</code>——GPU 上用 parallel scan 极快</li>
