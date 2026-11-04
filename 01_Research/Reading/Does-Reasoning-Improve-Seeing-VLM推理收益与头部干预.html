@@ -929,7 +929,7 @@
 <li><a class="toc-link toc-sub" href="#3-3-从探针敏感性到生成干预">3.3 从探针敏感性到生成干预</a></li>
 <li><a class="toc-link" href="#4-数据与设置-主要机制分析来自一个较小的样本池"><span class="toc-num">04</span> 4. 数据与设置：主要机制分析来自一个较小的样本池</a></li>
 <li><a class="toc-link" href="#5-关键结果-表示可读-长度可控-但语义解释仍需收紧"><span class="toc-num">05</span> 5. 关键结果：表示可读、长度可控，但语义解释仍需收紧</a></li>
-<li><a class="toc-link toc-sub" href="#5-1-thinking-的表示更易解码-预测能力仍不算强">5.1 Thinking 的表示更易解码，预测能力仍不算强</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-答案尚未生成-表示中已经能读出一部分推理收益信息">5.1 答案尚未生成，表示中已经能读出一部分推理收益信息</a></li>
 <li><a class="toc-link toc-sub" href="#5-2-长度头与收益-难度头相对分开-但-电路-尚未被完整还原">5.2 长度头与收益/难度头相对分开，但“电路”尚未被完整还原</a></li>
 <li><a class="toc-link toc-sub" href="#5-3-输出长度可控-还需检验计算预算是否分配合理">5.3 输出长度可控，还需检验计算预算是否分配合理</a></li>
 <li><a class="toc-link toc-sub" href="#5-4-最大收益出现在预先划分的子集-整体提升小得多">5.4 最大收益出现在预先划分的子集，整体提升小得多</a></li>
@@ -938,6 +938,7 @@
 <li><a class="toc-link toc-sub" href="#6-2-最短成功样本可以做描述标签-不宜直接用作停止规则">6.2 最短成功样本可以做描述标签，不宜直接用作停止规则</a></li>
 <li><a class="toc-link toc-sub" href="#6-3-最该补的是从-oracle-分组走向真实决策的那一步">6.3 最该补的是从 oracle 分组走向真实决策的那一步</a></li>
 <li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#修订记录"><span class="toc-num">08</span> 📝 修订记录</a></li>
     </ul>
 </nav>
 
@@ -1028,8 +1029,13 @@ $$</div>
 </ul>
 <p><strong>这是按观察到的推理收益分组，不是由独立标注者判断“这题只需感知/这题必须推理”。</strong> 例如柱状图计算题，如果 Thinking 在该模型上表现更差，也可能被归入前一组。论文提到比较 $q=0.2/0.3$，但没有完整展示两者的对照数表。</p>
 <h2 id="5-关键结果-表示可读-长度可控-但语义解释仍需收紧">5. 关键结果：表示可读、长度可控，但语义解释仍需收紧</h2>
-<h3 id="5-1-thinking-的表示更易解码-预测能力仍不算强">5.1 Thinking 的表示更易解码，预测能力仍不算强</h3>
-<p>Table 2 比较相同标签、相同划分下两类表示训练出的线性探针。下表每格均为 <strong>Instruct → Thinking</strong>；$\rho$ 为 Spearman 相关系数，长度 MAE 单位为 token。</p>
+<h3 id="5-1-答案尚未生成-表示中已经能读出一部分推理收益信息">5.1 答案尚未生成，表示中已经能读出一部分推理收益信息</h3>
+<p>第一步检验的是：答案尚未生成时，能否用线性探针从当时的表示中预测“这道题多思考是否有帮助”。Table 2 固定标签与数据划分，只分别使用 Instruct 和 Thinking 的表示训练探针，因此比较的是<strong>同一目标在两类表示中的可读性</strong>。</p>
+<p>五组模型的趋势一致：Thinking 表示的收益预测误差更低、相关性更高，长度预测误差也更低。例如 InternVL-8B 的收益 MSE 从 <strong>0.168 降到 0.119</strong>，Spearman 相关系数从 <strong>0.341 升到 0.458</strong>。这支持相关信息在 Thinking 版本中更容易被线性读出。作者将其解释为 reasoning-oriented training 重组了表示；不过，两者是不同训练版本，实验尚未逐项控制训练因素来检验这一因果解释。</p>
+<p>这一步还不能直接给出可靠的逐题决策。最大模型 Qwen3-VL-32B 的相关系数也只有 <strong>0.531</strong>；相关性提高，仍未回答收益正负能否判对、阈值是否校准，以及考虑成本后切换到 Thinking 是否更划算。<strong>这些结果支持继续尝试基于探针的控制器，实际路由后的正确率仍需另测。</strong></p>
+<details>
+<summary>五组模型的完整探针结果</summary>
+<p>下表每格均为 <strong>Instruct → Thinking</strong>；$\rho$ 为 Spearman 相关系数，长度 MAE 单位为 token。32B 在这里提供的是探针证据，后面的主要头部干预只覆盖 4B/8B。</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1072,15 +1078,19 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>五组比较趋势一致，支持 Thinking 版本中的相关信息更容易被线性读出。作者据此认为 reasoning-oriented training 重组了表示；但实验比较的是两个训练版本，尚未通过逐项控制训练因素来检验这一因果解释。</p>
-<p>最大模型的 $\rho$ 也只有 0.531，用它决定“是否开启推理”时，仍可能误判不少样本。<strong>MSE 更低不直接等于路由后的正确率更高</strong>；还需检验收益正负能否判对、阈值是否经过校准，以及计入成本后的决策效果。</p>
+</details>
 <h3 id="5-2-长度头与收益-难度头相对分开-但-电路-尚未被完整还原">5.2 长度头与收益/难度头相对分开，但“电路”尚未被完整还原</h3>
-<p>Table 4 的 top-16 集合中，reasoning 与 difficulty 头的 Jaccard 重合度为 <strong>0.68–0.76</strong>；length 与 reasoning 头仅为 <strong>0.09–0.15</strong>。Table 3 改变集合大小后仍保持这一趋势。这支持“长度控制与收益/难度信号部分分离”，但不能单靠集合重叠证明难度信号在内部触发了推理。</p>
+<p>读出信号后，作者继续检查：<strong>影响“回答多长”的头，与影响“推理是否有益”的头，是否是同一批？</strong> 这一步先看两类预测是否依赖相同的头，再决定怎样分别尝试生成干预。作者据逐头消融对探针的影响选择头集合，并比较它们的重叠程度。</p>
+<p>Table 4 的 top-16 集合中，reasoning 与 difficulty 头的 Jaccard 重合度为 <strong>0.68–0.76</strong>；length 与 reasoning 头仅为 <strong>0.09–0.15</strong>。Table 3 改变集合大小后仍保持这一趋势。也就是说，长度相关头与收益/难度相关头相对分开，这为分别尝试两类生成干预提供了依据；集合重叠本身还不能证明难度信号会在内部触发推理。</p>
 <p><img src="../../assets/does-reasoning-improve-seeing-icml2026/figure5-head-attribution.png" alt="Figure 5：不同探针相关头的层间分布" /></p>
-<p><em>来源：正式 PDF，Figure 5，第 7 页。绿色虚线圈出长度相关头，红色与蓝色圈出难度和收益相关头。可直观看到图中绿框比红蓝框低。需注意原文图表存在层号差异：图中的绿框约在 22–26 层、红蓝框约在 36 层，而 Table 3 报告的平均层号约为 15 和 27。两处对应关系未说明 <code>[?]</code>，因此不把这些绝对层号当作可直接复用的定位结果。</em></p>
-<p>这里定位的是影响探针输出的头集合，尚未说明头与头之间传递什么信息、如何共同完成计算。后面的生成干预补充了行为层面的因果证据，但仍不足以支持“发现完整元认知电路”这一更强判断。</p>
+<p><em>来源：正式 PDF，Figure 5，第 7 页。绿色虚线圈出长度相关头，红色与蓝色圈出难度和收益相关头；图中绿框比红蓝框低。图与表中的绝对层号存在未解释差异 <code>[?]</code>，不宜直接据此复用定位结果，详见下方补充。</em></p>
+<p>这一步找到的是影响探针输出的头集合，还没有说明头与头之间传递什么信息、如何共同完成计算。接下来必须直接改变这些头、观察生成行为，才能把探针层面的关联推进到行为干预；即使干预有效，也仍不等于完整还原了元认知电路。</p>
+<details>
+<summary>图表中未解释的层号差异</summary>
+<p>Figure 5 的绿框约在 22–26 层、红蓝框约在 36 层，而 Table 3 报告的平均层号约为 15 和 27。两处对应关系未说明 <code>[?]</code>，因此不把这些绝对层号当作可直接复用的定位结果。</p>
+</details>
 <h3 id="5-3-输出长度可控-还需检验计算预算是否分配合理">5.3 输出长度可控，还需检验计算预算是否分配合理</h3>
-<p>Table 5 中，InternVL-8B-Thinking 的平均生成长度为：</p>
+<p>先检验最直接的控制目标：放大或抑制长度相关头，是否真的能让模型回答变长或变短？Table 5 在 <strong>InternVL-8B-Thinking</strong> 上缩放这些头的输出，得到如下平均生成长度：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1101,10 +1111,10 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>长度随缩放单调变化。以原模型 235 token 为参照，0.5 对应约 <strong>40.9% 的缩短</strong>，2.0 对应约 <strong>121.7% 的增长</strong>，均为根据原表计算；不能用摘要式的“±30%”概括这个扫描范围。</p>
+<p>长度随缩放单调变化，说明对这些头的干预确实能够控制输出长短。以原模型 235 token 为参照，0.5 对应约 <strong>40.9% 的缩短</strong>，2.0 对应约 <strong>121.7% 的增长</strong>，均为根据原表计算；“±30%”无法概括这个扫描范围。接下来需要检验的是，缩短回答究竟付出了多少正确率代价。</p>
 <p>同表给出的准确率变化是 <strong>−0.8%</strong>，但图注明确说明，比较的是 $\alpha=0.5$ 和 $2.0$ 两端，<strong>没有给出缩短版相对原模型的准确率差</strong>。因此，该表支持输出长度可控、两端准确率差异较小，尚不能据此宣称“节省 40.9% token 而准确率只损失 0.8%”。文中虽然列出了与 $\ell_{\mathrm{opt}}$ 对齐的评估目标，但未提供足够结果证明干预后的长度更接近逐题最优预算。</p>
 <h3 id="5-4-最大收益出现在预先划分的子集-整体提升小得多">5.4 最大收益出现在预先划分的子集，整体提升小得多</h3>
-<p>Table 6 报告不同深度干预在对应子集上的效果：</p>
+<p>另一类生成干预针对推理倾向：作者增强与抑制归因方向相反的头，检验能否改善答题正确率，以及不同深度是否适合不同题目。这里的题目已按真实观察到的 $r_{\mathrm{help}}$ 划为低收益和高收益子集；Table 6 比较在这些预先分组上干预低层或高层头的效果：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1146,9 +1156,13 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p><em>保留原文 ΔAcc 的 <code>%</code> 写法。论文未明确解释这些变化量按百分点还是相对增幅计算 <code>[?]</code>，不擅自换算。Overall 一列具体怎样汇总低层/高层设置，正文也未充分说明，不能当作已报告的自动路由收益。</em></p>
-<p>解读“提升 5.3%”时，关键在于它对应哪个子集：<strong>对不同收益分组，干预不同深度的头产生不同效果；同一行整体增益为 1.2%，并伴随更长输出。</strong> 这提示模型内部存在可通过干预改变的行为差异；至于实际计算效率是否改善，还需在相同 token 或延迟预算下比较。</p>
-<p>Table 7 在 InternVL-8B-Thinking 上扩展到 MathVista、ScienceQA、ChartQA、A-OKVQA，报告相同方向的现象；例如 MathVista 的 low/high 增益分别为 +3.8%/+4.9%。这增加了跨任务证据，但 §6.3 只说重复同一干预协议，没有清楚说明是否冻结 MMMU 选出的头与系数、完全不做目标域校准，<strong>不宜升级为已经验证的零样本跨数据集迁移</strong>。这几组增益也没有给出充分的多种子不确定性报告。</p>
+<p>以 InternVL-8B 为例，最醒目的 <strong>+5.3%</strong> 来自高收益子集上的高层干预，同一行的 Overall 只有 <strong>+1.2%</strong>，并伴随 <strong>31%</strong> 的长度增长。关键收获是：不同收益分组对不同深度的干预呈现不同效果，为有针对性的控制提供了行为证据；要判断计算效率是否改善，还需在相同 token 或延迟预算下比较。</p>
+<p><strong>这些分组结果尚未验证自动决策。</strong> 实际面对新题时，需要先预测它属于哪组；本文没有给出把预测误差也计入的完整路由评估。表中的 Overall 又未充分说明如何汇总低层/高层设置，不能将它当作已测得的自动路由收益。ΔAcc 继续保留原文 <code>%</code> 写法，因为论文没有明确解释它按百分点还是相对增幅计算 <code>[?]</code>。</p>
+<p>Table 7 在其他数据集上也报告了相同方向的现象，扩大了任务覆盖；但是否完全不做目标域校准尚不明确，因此仍不能声称已验证零样本跨数据集迁移。这几组增益也没有充分的多种子不确定性报告。</p>
+<details>
+<summary>跨数据集补充验证及其迁移边界</summary>
+<p>Table 7 在 InternVL-8B-Thinking 上扩展到 MathVista、ScienceQA、ChartQA、A-OKVQA；例如 MathVista 的 low/high 增益分别为 +3.8%/+4.9%。§6.3 只说重复同一干预协议，没有清楚说明是否冻结 MMMU 选出的头与系数、完全不做目标域校准。因此，这组证据支持更多任务上出现相同方向的效果，还不能确定一套已选好的干预能否直接迁移。</p>
+</details>
 <h2 id="6-insights">6. Insights</h2>
 <h3 id="6-1-推理无益-不等于-视觉感知占主导">6.1 “推理无益”不等于“视觉感知占主导”</h3>
 <p>这是我最在意的定义问题。低 $r_{\mathrm{help}}$ 可能出现在纯感知题上，也可能源于 Thinking 版本读错图、语言先验过强、算错或任务能力较弱。原文按这个收益标签命名感知/推理子集，再用子集增益解释视觉 grounding；从性能分组推到视觉依据的使用，还缺少独立证据。</p>
@@ -1165,7 +1179,12 @@ $$</div>
 <li><a class="wikilink" href="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering.html" title="TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering">TACT-Mitigating-Overthinking-and-Overacting-via-Activation-Steering</a>：同样把内部状态转为可控信号；可比较根据当前状态触发的纠偏，与本文主要用于机制分析的头部缩放之间的区别。</li>
 </ul>
 <hr />
-
+<p>#Research #Paper #Vision_Language_Model #Mechanistic_Interpretability #Adaptive_Inference</p>
+<h2 id="修订记录">📝 修订记录</h2>
+<ul>
+<li>2026-11-04：补足探针、头部定位与生成干预之间的实验动机；突出长度缩放的准确率比较边界及预分组收益，折叠完整探针表、层号差异与跨数据集补充。本轮基于既有笔记整理表达，未重新全文核验原论文。
+</li>
+</ul>
 
 
 <nav class="paper-nav"><a class="paper-nav-link prev" href="Explainable-deep-learning-improves-human-mental-models-of-self-driving-cars-CW-Net与心理模型.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Explainable deep learning improves human mental models of self-driving cars：解释如何纠正对自动驾驶的理解</span></a>

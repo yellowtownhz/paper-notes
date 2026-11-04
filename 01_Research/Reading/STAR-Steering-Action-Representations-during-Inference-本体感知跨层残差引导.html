@@ -930,11 +930,12 @@
 <li><a class="toc-link" href="#4-数据与对照-冻结同一策略-比较推理方式"><span class="toc-num">04</span> 4. 数据与对照：冻结同一策略，比较推理方式</a></li>
 <li><a class="toc-link" href="#5-关键结果-平均收益存在-但高度依赖任务与参数"><span class="toc-num">05</span> 5. 关键结果：平均收益存在，但高度依赖任务与参数</a></li>
 <li><a class="toc-link toc-sub" href="#5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</a></li>
-<li><a class="toc-link toc-sub" href="#5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-收益依赖何时混合-从哪层开始-也依赖参数校准">5.2 收益依赖何时混合、从哪层开始，也依赖参数校准</a></li>
 <li><a class="toc-link toc-sub" href="#5-3-机制证据-对象敏感度提高-注意力图变化很小">5.3 机制证据：对象敏感度提高，注意力图变化很小</a></li>
 <li><a class="toc-link toc-sub" href="#5-4-实机与复现边界">5.4 实机与复现边界</a></li>
 <li><a class="toc-link" href="#6-insights-哪些实验能进一步检验机制解释"><span class="toc-num">06</span> 6. Insights：哪些实验能进一步检验机制解释？</a></li>
 <li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#修订记录"><span class="toc-num">08</span> 📝 修订记录</a></li>
     </ul>
 </nav>
 
@@ -1045,7 +1046,7 @@ $$</div>
 </ul>
 <h2 id="5-关键结果-平均收益存在-但高度依赖任务与参数">5. 关键结果：平均收益存在，但高度依赖任务与参数</h2>
 <h3 id="5-1-主实验-四个组合平均改善-π₀-₅-的收益并不均匀">5.1 主实验：四个组合平均改善，π₀.₅ 的收益并不均匀</h3>
-<p>下表数据来自论文 Tables 1–2，成功率单位为 %，差值单位为百分点：</p>
+<p>首先看最直接的问题：<strong>冻结同一个策略，只改变推理时的内部更新，能否让机器人多完成一些任务？</strong> 作者比较原始推理 Native、注意力侧干预 DTP 和 STAR。下表来自论文 Tables 1–2，成功率单位为 %，差值单位为百分点：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1087,11 +1088,15 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>对表中四组已舍入均值的增益做等权平均，得到 <strong>3.95 个百分点</strong>，与摘要的“4.0”相符。这个汇总按模型—基准组合等权计算，不代表汇集全部评估 episode 后得到的成功率增益。</p>
+<p><strong>四个模型—基准组合都高于 Native，也都高于 DTP，支持完整 STAR 能够改善这些设置下的执行。</strong> 对四组已舍入均值的增益做等权平均，得到 <strong>3.95 个百分点</strong>，与摘要的“4.0”相符；这是组合等权的汇总，不是汇集全部 episode 后的成功率增益。接下来需要看，这个平均值是否掩盖了某些条件下的退步。</p>
 <p>π₀.₅ 在任务目标变化子集（task split）上的成功率从 <strong>6.8% → 18.8%</strong>，object 从 <strong>66.2% → 67.0%</strong>；lan <strong>92.8% → 92.6%</strong>、swap <strong>9.2% → 7.2%</strong>、env <strong>65.8% → 65.0%</strong> 则均下降。平均增益主要来自 task split，尚不能据此认为模型对每类扰动都更鲁棒。空间布局和任务目标变化仍然困难。（Table 2）</p>
 <p>SimplerEnv 上 STAR 的两模型平均值优于 DTP，但也不是逐任务占优：OpenVLA 的 Move Near 为 <strong>61.7%</strong>，低于 DTP 的 <strong>69.0%</strong>。（Table 1）</p>
-<h3 id="5-2-消融-调度和起始层都是实质设计">5.2 消融：调度和起始层都是实质设计</h3>
-<p>消融均在 OpenVLA / SimplerEnv 上进行，关键结果如下：</p>
+<h3 id="5-2-收益依赖何时混合-从哪层开始-也依赖参数校准">5.2 收益依赖何时混合、从哪层开始，也依赖参数校准</h3>
+<p>STAR 同时引入了跨层混合和本体状态调度。要判断调度是否有贡献，先比较固定强度与动态强度：在 <strong>OpenVLA / SimplerEnv</strong> 上，四个固定 $\beta$ 中最好的成功率为 <strong>31.6%</strong>，完整 STAR 为 <strong>36.0%</strong>。这支持根据运动状态调整强度，比一直采用这些固定值更有效。（Table 4）</p>
+<p>提前混合是否还能保留收益？在同一设置下，从首层开始，成功率只有 <strong>25.7%</strong>；从三分之一深度之后开始为 <strong>27.6%</strong>；限制在末三分之一才达到 <strong>36.0%</strong>。这组对照说明，后层干预的位置本身是实质设计，并非保留的早层更新越多越好。（Table 5）</p>
+<p><strong>动态调度仍需要校准。</strong> 将区间从 $(0.25,0.55)$ 改为 $(0.35,0.55)$，成功率降到 <strong>28.9%</strong>，甚至低于 Native 的 <strong>30.3%</strong>。因此，完整方法的正收益不能外推到任意一组动态参数。论文列出了不同模型/基准的参数，却未充分说明独立调参集与参数选择过程；training-free 不等于 tuning-free。（Tables 4、7）</p>
+<details>
+<summary>完整消融结果：强度区间、起始层与四种本体信号</summary>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1128,18 +1133,26 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>仅保留“平稳推进”的两个正向信号为 29.3%，仅保留突变/旋转信号为 33.2%，无本体证据版本为 27.8%（Table 3）。这些结果支持根据运动状态调节干预强度，持续保留前层更新并不足够。作者仅对 Table 4 明确说明结果取八次评估的平均值，表中未报告方差或置信区间。</p>
-<p><strong>参数校准会直接影响收益</strong>：完整方法的成功率高于 Native，但选择不合适的动态区间后，成功率可能反而低于 Native。论文列出了不同模型/基准的参数，却未充分说明独立调参集与参数选择过程。因此，使用 STAR 仍需考虑参数校准；training-free 不等于 tuning-free。（Table 7）</p>
+<p>去掉任一种本体信号，成功率降至 30.1%–31.7%；仅保留“平稳推进”的两个正向信号为 29.3%，仅保留突变/旋转信号为 33.2%，无本体证据版本为 27.8%。这些比较进一步支持四类信号在当前调度中的共同作用，但没有单独检验干预时机与强度分布各贡献多少。（Table 3；后续对照见第 6 节）</p>
+<p>本节消融均在 OpenVLA / SimplerEnv 上进行。作者仅对 Table 4 明确说明结果取八次评估的平均值，表中未报告方差或置信区间。</p>
+</details>
 <h3 id="5-3-机制证据-对象敏感度提高-注意力图变化很小">5.3 机制证据：对象敏感度提高，注意力图变化很小</h3>
-<p>Appendix A 的诊断仅使用 <strong>π₀.₅ / LIBERO-PRO</strong>。作者增加两类控制遮挡：相同像素数的随机散点，以及面积相近的背景矩形；控制响应取两者较大值。这用于检查敏感度变化是否针对任务对象，还是对任意图像破坏都有类似响应。</p>
+<p>成功率提高以后，还要追问它是否来自更充分地利用任务对象。Appendix A 仅在 <strong>π₀.₅ / LIBERO-PRO</strong> 上做诊断：除遮挡对象外，再遮挡相同像素数的随机散点，或面积相近的背景矩形，并取两种控制响应的较大值。这里除了观察对象敏感度是否提高，还要比较<strong>对象区域相对控制区域的响应比是否提高</strong>，以区分整体敏感度与对象选择性的变化。</p>
 <p><img src="../../assets/papers/STAR-2610.41009/fig3-object-awareness.png" alt="Figure 3：对象遮挡对照与注意力诊断" /></p>
 <p><em>来源：<a href="https://arxiv.org/html/2610.41009v1#A1.F3">原文 Figure 3</a>。看 (b) 的对象/控制差别，再看 (c)(d) 近似不变的 attention；这两组现象共同说明，attention 可视化不足以观察这次干预的效果。</em></p>
 <p>在第 18 层，平均对象敏感度从 <strong>0.056 → 0.087</strong>，作者报告增益比 <strong>1.554</strong>；对象敏感度与控制敏感度的比值从 <strong>1.806 → 1.977</strong>。相比单独的对象遮挡曲线，这组对照更能说明响应是否具有对象选择性。两个比值回答的问题不同：前者衡量相对 Native 的敏感度增幅，后者衡量对对象区域相对于控制区域的选择性。（Appendix A.2）</p>
-<p>作者还把 action chunk 的平均动作投影到其停止梯度的自身方向，对输入像素求梯度，再算对象区域占全图梯度幅值的比例。Figure 4 显示五个 split 的这个比例均提高，配对差值多数为正；Figure 5 展示定性热图。这提供了从隐状态到最终动作的补充证据，但测到的是<strong>局部梯度的空间分配</strong>，不能单独证明动作正确、完成长时任务或具备更好的对象语义。（Appendix A.3，Eq. 19–21）</p>
-<p>原文观察到，干预前后的注意力图相似，对象区域 attention mass 曲线接近。STAR 的确没有直接编辑注意力矩阵，但前层隐状态的修改仍可能影响后层注意力，因此这些结果只支持“变化很小”，不支持“严格不变”。（Appendix A.4）</p>
+<p>隐状态更敏感，还需要检查这种变化是否延伸到最终动作。作者因此计算动作输出对输入像素的梯度，观察其中分配给对象区域的比例。Figure 4 中，五个 split 的这个比例均提高，配对差值多数为正；Figure 5 还展示了定性热图。这提供了从隐状态到最终动作的补充证据。不过，<strong>局部梯度更集中于对象，并不保证动作正确</strong>：前面的 π₀.₅ 成功率中仍有三个 split 下降，两层证据需要分开判断。（Appendix A.3，Eq. 19–21）</p>
+<p>最后再看注意力：干预前后的注意力图相似，对象区域 attention mass 曲线也接近。结合前两项诊断，这说明仅靠注意力可视化容易漏掉这次干预造成的变化。STAR 没有直接编辑注意力矩阵，但修改前层隐状态仍可能影响后层注意力；现有观察支持变化很小，不能写成严格不变。（Appendix A.4）</p>
+<details>
+<summary>动作梯度指标的具体构造</summary>
+<p>作者把 action chunk 的平均动作投影到其停止梯度的自身方向，对输入像素求梯度，再计算对象区域占全图梯度幅值的比例。这个量反映局部梯度的空间分配，不能单独证明完成长时任务或具备更好的对象语义。（Appendix A.3，Eq. 19–21）</p>
+</details>
 <h3 id="5-4-实机与复现边界">5.4 实机与复现边界</h3>
-<p>实机任务是把梨放入碗中。作者先收集 <strong>100 条轨迹（episodes）</strong>，用来微调 π₀.₅ <strong>15,000 steps</strong>；Native 与 STAR 共用该 checkpoint。STAR 本身无需额外训练，但这项实机评估使用的是已完成任务适配的策略。Native 成功 <strong>17/40（42.5%）</strong>，STAR <strong>19/40（47.5%）</strong>，仅多成功两次，可视为小规模的正向迹象。单张 RTX 3090 上额外推理延迟为 <strong>3.3%</strong>；论文未报告绝对延迟，这一开销比例也不能直接外推到其他架构。（§4.5、Table 6）</p>
-<p>截至本次阅读，<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">官方仓库</a>只发布 OpenPI π₀.₅ / LIBERO-PRO 实现，未包含 OpenVLA、GR00T-N1.5、SimplerEnv 或实机实现。还有两处明确不一致：</p>
+<p>实机评估进一步检查仿真中的增益能否出现在真实执行中。任务是把梨放入碗中，Native 与 STAR 共用经过任务适配的 π₀.₅ checkpoint：Native 成功 <strong>17/40（42.5%）</strong>，STAR <strong>19/40（47.5%）</strong>。结果方向为正，但只多成功两次，证据规模还很小。单张 RTX 3090 上额外推理延迟为 <strong>3.3%</strong>；论文未报告绝对延迟，这一比例也不能直接外推到其他架构。（§4.5、Table 6）</p>
+<p>这项实机结果也有一个使用前提：作者先用 **100 条轨迹（episodes）**微调 π₀.₅ <strong>15,000 steps</strong>。STAR 本身无需额外训练，实机评估的基础策略则已完成任务适配。</p>
+<p>复现还受公开实现范围与版本差异约束。本笔记核查的<a href="https://github.com/PKU-VaLuE-Lab/STAR/tree/0eaa15fc9223734af024e928a82e40966724b739">固定代码快照</a>只包含 OpenPI π₀.₅ / LIBERO-PRO 实现，未包含 OpenVLA、GR00T-N1.5、SimplerEnv 或实机实现；其 README 与论文报告的成功率及调度参数也不一致，<strong>哪套配置对应哪组结果仍是 [?]</strong>。</p>
+<details>
+<summary>论文与固定代码快照的两处差异</summary>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1161,7 +1174,8 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>两者都给出 $\beta\in[0.25,0.55]$、最后六个 action-expert 层、10 Hz 环境与执行五步再规划。上表差异已核实，但<strong>哪一套配置对应哪组结果仍是 [?]</strong>，现有材料尚未给出解释。复现时应锁定版本，分别记录论文配置、README 配置与配置类默认值。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/README.md#L113-L128">README 配置原文</a></p>
+<p>两者都给出 $\beta\in[0.25,0.55]$、最后六个 action-expert 层、10 Hz 环境与执行五步再规划。上表差异已在此前阅读中核实，现有材料尚未解释对应关系。复现时应锁定版本，分别记录论文配置、README 配置与配置类默认值。<a href="https://github.com/PKU-VaLuE-Lab/STAR/blob/0eaa15fc9223734af024e928a82e40966724b739/README.md#L113-L128">README 配置原文</a></p>
+</details>
 <h2 id="6-insights-哪些实验能进一步检验机制解释">6. Insights：哪些实验能进一步检验机制解释？</h2>
 <p><strong>1. 对象依赖提高是中间指标，不是成功率的充分条件。</strong> Figure 4 的梯度比例在五个 split 都上升，但 Table 2 中 π₀.₅ 有三个 split 下降。这种差异说明，对对象像素更敏感与利用对象信息生成正确动作，需要分开评估。一个可检验的后续实验，是在同一批初始状态上配对记录敏感度变化与 rollout 成败，比较收益集中在视觉选物、空间定位还是接触执行阶段；不能仅凭 split 均值完成因果归因。</p>
 <p><strong>2. 动态调度的价值，需要与相同强度分布的无状态对照比较。</strong> 当前消融证明选定的动态策略胜过若干固定值，却尚未排除收益主要来自 $\beta$ 的取值分布。可以打乱同一条轨迹的 $\beta_t$ 时间顺序，或移用另一条轨迹的序列，保持范围与边际分布接近；若按真实运动时序对齐的调度仍更好，就能更有力地支持：收益来自干预时机与运动状态的匹配，而不只是干预强度的分布。</p>
@@ -1174,7 +1188,12 @@ $$</div>
 <li><a class="wikilink" href="Not-All-Features-Are-Created-Equal-VLA机制与因果干预.html" title="Not-All-Features-Are-Created-Equal-VLA机制与因果干预">Not-All-Features-Are-Created-Equal-VLA机制与因果干预</a>：对象敏感度、动作变化和闭环成功是不同层次的证据，适合一起思考怎样建立机制归因。</li>
 </ul>
 <hr />
-
+<p>#Research #Paper #Vision_Language_Action #Activation_Steering #Visual_Grounding</p>
+<h2 id="修订记录">📝 修订记录</h2>
+<ul>
+<li>2026-11-04：围绕执行收益、调度设计和对象机制重组结果解释；把参数消融与代码配置细节折叠，保留各任务下降、校准失效及小规模实机证据的限定。本轮基于既有笔记整理表达，未重新全文核验原论文。
+</li>
+</ul>
 
 
 <nav class="paper-nav"><a class="paper-nav-link prev" href="Task-Vectors-Can-Be-Linearly-Decomposed-into-Interpretable-and-Controllable-Components-任务识别与标签判别.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Task Vectors Can Be Linearly Decomposed into Interpretable and Controllable Components</span></a>

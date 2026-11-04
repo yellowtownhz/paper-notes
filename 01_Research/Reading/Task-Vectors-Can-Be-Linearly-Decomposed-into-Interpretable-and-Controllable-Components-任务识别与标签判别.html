@@ -930,13 +930,15 @@
 <li><a class="toc-link" href="#4-实验设置-哪些结果是在未见样本上得到的"><span class="toc-num">04</span> 4. 实验设置：哪些结果是在未见样本上得到的</a></li>
 <li><a class="toc-link" href="#5-关键证据-有效-但不是任意任务上的独立功能开关"><span class="toc-num">05</span> 5. 关键证据：有效，但不是任意任务上的独立功能开关</a></li>
 <li><a class="toc-link toc-sub" href="#5-1-独立测试比优化集热图更有说服力">5.1 独立测试比优化集热图更有说服力</a></li>
-<li><a class="toc-link toc-sub" href="#5-2-tr-tl-的输出效应不同-但并非互不影响">5.2 TR/TL 的输出效应不同，但并非互不影响</a></li>
-<li><a class="toc-link toc-sub" href="#5-3-随机方向对照支持结构的价值-也限定了主张">5.3 随机方向对照支持结构的价值，也限定了主张</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-相同预算下-tr-tl-坐标比随机坐标多提供了什么">5.2 相同预算下，TR/TL 坐标比随机坐标多提供了什么？</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-两个分量改变了什么-标签判别有区别-集合偏好仍会交叉变化">5.3 两个分量改变了什么：标签判别有区别，集合偏好仍会交叉变化</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-调节也有失效的任务">5.4 调节也有失效的任务</a></li>
 <li><a class="toc-link" href="#6-我的判断-最值得追问的三个问题"><span class="toc-num">06</span> 6. 我的判断：最值得追问的三个问题</a></li>
 <li><a class="toc-link toc-sub" href="#6-1-收益中有多少是-回到标签集合-有多少是真正判对了">6.1 收益中有多少是“回到标签集合”，有多少是真正判对了？</a></li>
 <li><a class="toc-link toc-sub" href="#6-2-向量恒等分解-方向正交-效果独立是三件事">6.2 向量恒等分解、方向正交、效果独立是三件事</a></li>
 <li><a class="toc-link toc-sub" href="#6-3-投影度量和-任务识别-的目标没有完全对齐">6.3 投影度量和“任务识别”的目标没有完全对齐</a></li>
 <li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+<li><a class="toc-link" href="#修订记录"><span class="toc-num">08</span> 📝 修订记录</a></li>
     </ul>
 </nav>
 
@@ -1036,8 +1038,7 @@ $$</div>
 <p>归一化使干预长度固定为 $\lambda\|h\|_2$，论文取 $\lambda=1$。调整系数主要改变的是<strong>方向及成分占比</strong>，不会无限增大扰动长度。不过，归一化也使两个系数对最终扰动的影响相互耦合。</p>
 <p>BO 在每一层独立搜索 $[0,2]^2$：12 个初始点包含原始 TV，随后 30 次搜索，共 42 次准确率评估。使用 Gaussian Process、Matérn-5/2 核和 Expected Improvement，在 $41\times41$ 网格上选下一次评估点。模型权重始终冻结，但仍需带标签的优化集和多次前向评估，并非零成本控制。（Appendix C）</p>
 <h2 id="4-实验设置-哪些结果是在未见样本上得到的">4. 实验设置：哪些结果是在未见样本上得到的</h2>
-<p>主实验覆盖 Llama 3.2 1B、Llama 3.1 8B、Qwen 3.5 2B Base、Qwen 3.5 2B、Qwen 3.5 9B；任务为 SST-2、SUBJ、Financial PhraseBank（FP）、AG News，分别有 2、2、3、4 类。示例、TV 构造 query 和评估 query 不重叠。（§4）</p>
-<p>需要分清三种比较：</p>
+<p>实验首先要分清：<strong>在搜索用过的数据上找到更好系数，与把这组系数用于新样本，是两种不同的证据。</strong> 此外，即使新系数有用，也需要比较随机坐标，才能判断收益是否与 TR/TL 的功能设计有关。论文安排了以下三类比较：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1065,10 +1066,14 @@ $$</div>
 </tbody>
 </table></div>
 <p>Table 2 每个任务使用 500 条独立样本，仅报告两个 Llama。原始 TV 也在<strong>优化方法选出的同一层</strong>评估，因此该表比较的是同层重组的效果，未提供“原始 TV 独立挑选最佳层”这一完整基线。随机方向与 Qwen 的独立测试结果也未列入该表。（Appendix E）</p>
-<p>复现仍有几项信息缺口：正文及附录未充分交代 $D_{\mathrm{opt}}$ 的明确样本量、分解正则 $\varepsilon$ 数值、标签字符串到 token 行的选择规则，以及完整 prompt 模板 <code>[?]</code>。“256 个 TV 构造 query”也不能直接视为优化集大小。</p>
+<details>
+<summary>模型、数据与仍待澄清的复现设置</summary>
+<p>主实验覆盖 Llama 3.2 1B、Llama 3.1 8B、Qwen 3.5 2B Base、Qwen 3.5 2B、Qwen 3.5 9B；任务为 SST-2、SUBJ、Financial PhraseBank（FP）、AG News，分别有 2、2、3、4 类。示例、TV 构造 query 和评估 query 不重叠。（§4）</p>
+<p>正文及附录未充分交代 $D_{\mathrm{opt}}$ 的明确样本量、分解正则 $\varepsilon$ 数值、标签字符串到 token 行的选择规则，以及完整 prompt 模板 <code>[?]</code>。“256 个 TV 构造 query”也不能直接视为优化集大小。</p>
+</details>
 <h2 id="5-关键证据-有效-但不是任意任务上的独立功能开关">5. 关键证据：有效，但不是任意任务上的独立功能开关</h2>
 <h3 id="5-1-独立测试比优化集热图更有说服力">5.1 独立测试比优化集热图更有说服力</h3>
-<p>以下选取 Table 2 的代表性结果，准确率单位为 %，增益单位为百分点：</p>
+<p>先固定在优化集选出的层和系数，再到未参与搜索的样本上测试：如果增益仍在，就说明调节效果能够迁移到新 query。Table 2 的 16 个配置均有正增益。以下选取代表性结果，准确率单位为 %，增益单位为百分点：</p>
 <div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
 <thead>
 <tr>
@@ -1131,23 +1136,29 @@ $$</div>
 </tr>
 </tbody>
 </table></div>
-<p>这支持“调整两个系数可以修复原始 TV 的一部分错误”。不过，大幅增益对应的指令 TV 基线在所选层极低，不能直接解释为模型获得了同等幅度的新任务知识。对于较小增益，表中未提供置信区间或多次完整实验的方差，其稳定性仍需检验。</p>
-<p><strong>为什么不把 Figure 2 中普遍出现的正增益作为核心证据？</strong> BO 的初始候选包含原始 TV，最终又选取已评估点中准确率最高的点。在相同数据、确定性评估的前提下，优化集最优值自然不会低于原始点，这是搜索设计本身保证的性质。因此，判断这种分解是否有效，更需要看独立测试、等预算随机搜索和更强基线。</p>
-<h3 id="5-2-tr-tl-的输出效应不同-但并非互不影响">5.2 TR/TL 的输出效应不同，但并非互不影响</h3>
-<p>作者在二分类任务 SST-2、SUBJ 上，单独注入 TR 或 TL 分量，扫描强度 $\gamma\in\{-1,-0.5,0,0.5,1\}$。用两个指标观察输出（§4.2，Eq. 11–13）：</p>
+<p>先比较表中同为 SST-2 的结果：1B 模型的指令 TV 从 11.2% 升到 79.6%，示例 TV 则从 80.4% 升到 82.8%；8B 也表现出指令 TV 增益更大的差别。<strong>调节确实能修复原始 TV 的一部分错误，但表中最大的改善出现在原始输出已经很差的指令 TV 上。</strong> 结合前面的标签集合例子，这些增益仍需区分“让模型正确输出已有判断”和“改善标签间判断”，不能全部算作获得了新任务知识。FP 示例 TV 的增益只有 1.8 个百分点；表中没有置信区间或多次完整实验的方差，较小增益的稳定性仍需检验。</p>
+<p>Figure 2 的优化集热图只能提供较弱的支持：BO 初始候选包含原始 TV，又从已评估点中选最高准确率，在相同数据、确定性评估下，最优值本就不会更低。独立测试中的增益不由这条搜索规则直接保证；接下来还要检验，是否任意两条搜索轴都能带来同样收益。</p>
+<h3 id="5-2-相同预算下-tr-tl-坐标比随机坐标多提供了什么">5.2 相同预算下，TR/TL 坐标比随机坐标多提供了什么？</h3>
+<p>这里需要排除一个简单解释：只要允许二维搜索，随便选两个方向也能修好原始 TV。作者因此固定同一个 TV，用相同 BO 预算比较 TR/TL、普通随机轴，以及避开 TR/TL 子空间的随机轴。（§4.3、Appendix D）</p>
+<p><img src="../../assets/task-vectors-tr-tl-2610.41743/fig4-random-controls.png" alt="论文 Figure 4：TR/TL 与随机分解坐标下的搜索增益" /></p>
+<p><em>原文 Figure 4。左侧指令 TV 的 TR/TL 优势更明显；右侧示例 TV 中，普通随机搜索也有收益，与 TR/TL 的差距缩小。此处不从箱线图估算精确均值，也不把箱体跨度当作置信区间。<a href="https://arxiv.org/html/2610.41743v1/search_method_gain_comparison_split.svg">原图来源</a>。</em></p>
+<p><strong>指令 TV 上的优势更明显，说明有功能含义的坐标并非可以被任意随机坐标等价替换；示例 TV 上普通随机搜索也有收益，TR/TL 的额外价值较小。</strong> 这一差别限定了结构设计的贡献，尚不能证明它是唯一或最优分解。示例 TV 的 Random 优于 Random$_\perp$，与“随机轴偶然包含有用的 TR/TL 成分”相容；作者没有把这一解释进一步验证成确定机制。</p>
+<details>
+<summary>随机方向对照如何保持可比</summary>
+<p>Random 用两个高斯随机轴分解同一个 TV；Random$_\perp$ 将随机轴限制在 TR/TL 子空间的正交补。每种方法均保留各自残差、恢复原始 TV 点、使用相同 BO 预算及归一化；随机轴采样运行 5 个种子。Figure 4 先按原始 TV 准确率选层，再固定层比较各方法，报告的是优化集上的搜索增益。（§4.3、Appendix D）</p>
+</details>
+<h3 id="5-3-两个分量改变了什么-标签判别有区别-集合偏好仍会交叉变化">5.3 两个分量改变了什么：标签判别有区别，集合偏好仍会交叉变化</h3>
+<p>坐标搜索有用，还不能说明 TR 与 TL 确实承担了命名所暗示的不同功能。为此，作者在 SST-2、SUBJ 两个二分类任务中分别注入 TR 或 TL：若功能有所区分，两种干预对“进入标签集合”和“在标签内选对”的影响就应不同。用来观察这两种变化的指标为（§4.2，Eq. 11–13）：</p>
 <div class="math-display">$$
 M_{\mathrm{TR}}=\log\sum_{j\in\mathcal Y}e^{z_j}-\log\sum_{k\notin\mathcal Y}e^{z_k},
 \qquad M_{\mathrm{TL}}=z_y-z_{\bar y}.
 $$</div>
-<p>前者是候选标签集合相对词表其余部分的 log odds；后者是正确标签相对错误标签的 logit margin。</p>
+<p>前者是候选标签集合相对词表其余部分的 log odds；后者是正确标签相对错误标签的 logit margin。作者分别扫描干预强度 $\gamma\in\{-1,-0.5,0,0.5,1\}$，观察这两个指标怎样响应。</p>
 <p><img src="../../assets/task-vectors-tr-tl-2610.41743/fig3-component-effects.png" alt="论文 Figure 3：单独干预 TR 或 TL 后，两种输出指标的变化" /></p>
 <p><em>原文 Figure 3。先看下排：TR 蓝线接近零，TL 橙线随强度变化，支持标签判别功能的区分。再看上排：TL 同时影响候选集合偏好，TR 的响应也有非单调现象。<a href="https://arxiv.org/html/2610.41743v1/binary_component_logit_effects_subj_tl_reoriented.svg">原图来源</a>。</em></p>
-<p>相比只看准确率，这更接近功能验证；但目前支持的仍是<strong>两个分量对所选输出指标的影响不同</strong>。TL 改变 $M_{\mathrm{TR}}$，不一定意味着内部两个过程相互依赖，因为提升一个候选标签的 logit 就能改变候选集合的 log-sum-exp。同样，两条曲线不同也不足以证明内部计算机制彼此独立。</p>
-<h3 id="5-3-随机方向对照支持结构的价值-也限定了主张">5.3 随机方向对照支持结构的价值，也限定了主张</h3>
-<p>作者用两个高斯随机轴分解同一个 TV；另一对照 Random$_\perp$ 将随机轴限制在 TR/TL 子空间的正交补。每种方法均保留各自残差、恢复原始 TV 点、使用相同 BO 预算及归一化；随机轴采样运行 5 个种子。（§4.3、Appendix D）</p>
-<p><img src="../../assets/task-vectors-tr-tl-2610.41743/fig4-random-controls.png" alt="论文 Figure 4：TR/TL 与随机分解坐标下的搜索增益" /></p>
-<p><em>原文 Figure 4。左侧指令 TV 的 TR/TL 优势更明显；右侧示例 TV 中，普通随机搜索也有收益，与 TR/TL 的差距缩小。此处不从箱线图估算精确均值，也不把箱体跨度当作置信区间。<a href="https://arxiv.org/html/2610.41743v1/search_method_gain_comparison_split.svg">原图来源</a>。</em></p>
-<p>该对照排除了“只要多搜几次就完全一样”的简单解释，但没有证明 TR/TL 是唯一或最优分解。示例 TV 的 Random 优于 Random$_\perp$，与“随机轴偶然包含有用的 TR/TL 成分”相容；作者没有把这一解释进一步验证成确定机制。</p>
+<p>结果中，TR 对标签判别指标的影响接近零，TL 则能改变它；这为两种分量的功能区分提供了比总体准确率更直接的支持。不过，TL 也会改变候选集合偏好，TR 的响应还有非单调现象。因此，目前更稳妥的结论是：<strong>两个分量对所选输出指标的影响不同，还不能据此认为它们是互不影响的功能开关。</strong></p>
+<p>TL 改变 $M_{\mathrm{TR}}$，不一定意味着内部两个过程相互依赖，因为提升一个候选标签的 logit 就能改变候选集合的 log-sum-exp。同样，两条曲线不同也不足以证明内部计算机制彼此独立。</p>
+<h3 id="5-4-调节也有失效的任务">5.4 调节也有失效的任务</h3>
 <p>失败例进一步限定了方法的适用范围：在日语金融语境中的隐含承诺／拒绝识别 JF-ICR 上，Llama 3.2 1B 的后层有改善，Llama 3.1 8B 则几乎没有。作者推测后者可能缺少可靠的原始 TV，但未用实验定位原因。这至少表明，二维调节未必能补足任务所需的表征。（§4.4，Figure 5）</p>
 <h2 id="6-我的判断-最值得追问的三个问题">6. 我的判断：最值得追问的三个问题</h2>
 <h3 id="6-1-收益中有多少是-回到标签集合-有多少是真正判对了">6.1 收益中有多少是“回到标签集合”，有多少是真正判对了？</h3>
@@ -1170,7 +1181,12 @@ $$</div>
 </ul>
 <hr />
 <p><strong>阅读范围与来源</strong>：<a href="https://arxiv.org/abs/2610.41743v1">arXiv 元数据</a>、<a href="https://arxiv.org/html/2610.41743v1">正文与附录</a>、<a href="https://arxiv.org/pdf/2610.41743v1">PDF</a>。图 1、3、4 从官方 v1 SVG 等比例栅格化，数值未重绘；Table 2 数字已与 PDF 核对。以上未包含代码运行或实验复现。</p>
-
+<p>#Research #Paper #Interpretability #In_Context_Learning #Activation_Steering</p>
+<h2 id="修订记录">📝 修订记录</h2>
+<ul>
+<li>2026-11-04：重组独立测试、随机方向与成分干预的证据顺序，补足各项比较的目的与结果解释；折叠模型设置和随机对照细节，保留小增益不确定性与失败案例。本轮基于既有笔记整理表达，未重新全文核验原论文。
+</li>
+</ul>
 
 
 <nav class="paper-nav"><div class="paper-nav-link prev disabled"></div>
