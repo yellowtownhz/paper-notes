@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboCasa-Mem: Benchmarking Environment and Process Memory in Long-Horizon Mobile Manipulation</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">RoboCasa-Mem: Benchmarking Environment and Process Memory in Long-Horizon Mobile Manipulation</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-糖已经溶了-机器人怎么知道哪杯咖啡加过糖"><span class="toc-num">02</span> 2. 关键问题：糖已经溶了，机器人怎么知道哪杯咖啡加过糖？</a></li>
+<li><a class="toc-link" href="#3-关键方法-动态答案-结构化记忆与几何控制分别解决不同问题"><span class="toc-num">03</span> 3. 关键方法：动态答案、结构化记忆与几何控制分别解决不同问题</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-评分跟随实际历史-避免固定目标答案">3.1 评分跟随实际历史，避免固定目标答案</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-hmap-如何记住并选出加糖杯">3.2 HMAP 如何记住并选出加糖杯</a></li>
+<li><a class="toc-link" href="#4-数据与指标-既看最终成功-也看失败发生在哪一步"><span class="toc-num">04</span> 4. 数据与指标：既看最终成功，也看失败发生在哪一步</a></li>
+<li><a class="toc-link" href="#5-关键证据-收益集中在哪里-能否归因于记忆"><span class="toc-num">05</span> 5. 关键证据：收益集中在哪里，能否归因于记忆？</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-主结果支持隐藏属性回忆-尚未解决过程调度">5.1 主结果支持隐藏属性回忆，尚未解决过程调度</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-分阶段结果接近记忆决策-但还混有执行能力">5.2 分阶段结果接近记忆决策，但还混有执行能力</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-单任务消融支持组件互补-归因仍不完整">5.3 单任务消融支持组件互补，归因仍不完整</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-真实机器人结果是小规模佐证">5.4 真实机器人结果是小规模佐证</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-11</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2611.06475v1" target="_blank">arXiv</a>
+    </div>
+    <h1>RoboCasa-Mem: Benchmarking Environment and Process Memory in Long-Horizon Mobile Manipulation</h1>
+    <p class="authors">Sihang Chen, Chen Ye, Wei Chen, Xiaohan Lei, Zhipeng Tang, Sha Zhang, Yuan Zhang, Zixuan Chen, Jiajun Deng, Houqiang Li, Yanyong Zhang</p>
+    <div class="topic-row"><span class="topic-tag">Embodied_AI</span> <span class="topic-tag">Agent_Memory</span> <span class="topic-tag">Vision_Language_Action</span> <span class="topic-tag">Robotics_Benchmark</span></div>
+</header>
+
+<p><strong>本文最有价值的设计是让历史信息决定正确答案，再按机器人实际做过的动作评分。</strong> 这比用任务长度代替记忆需求更直接。HMAP 基线在隐藏属性回忆上有清楚收益，但过程跟踪和多任务调度仍很弱；总体提升不能概括为五类记忆都获得改善。</p>
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与团队</strong>：Sihang Chen 等；中国科学技术大学为主要团队，另有同济大学、香港中文大学、安徽大学、南京大学作者。</li>
+<li><strong>版本</strong>：2026-11-04 的 arXiv v1，17 页，预印本；本笔记未确认会议录用。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2611.06475v1">官方全文</a>、<a href="https://arxiv.org/pdf/2611.06475v1">PDF</a>、<a href="https://github.com/SiHhangChen/RoboCasa-Mem">代码</a>。已核对正文、任务规范、Table 3–7 和训练附录；未运行仿真、训练策略或验证代码发布的完整性。</li>
+</ul>
+<h2 id="2-关键问题-糖已经溶了-机器人怎么知道哪杯咖啡加过糖">2. 关键问题：糖已经溶了，机器人怎么知道哪杯咖啡加过糖？</h2>
+<p><strong>贯穿案例是论文的 SweetCup。</strong> 机器人准备一杯加糖、一杯不加糖的咖啡，搬运两杯之后，再选出加过糖的那杯。糖溶解后，当前图像不能可靠地揭示这一属性。前面若给左杯加糖，最后应选左杯对应的对象；若给另一杯加糖，正确答案也应改变（§3.1、Appendix A）。</p>
+<p>这比“动作很多”更接近记忆的必要条件：不同历史可以产生相似的当前观测，却要求不同决策。原文 Eq. 1 将其理想化为：</p>
+<div class="math-display">$$
+o_t(h_t)=o_t(h&#x27;_t),\qquad
+\mathcal G_q^\star(h_t,x)\cap\mathcal G_q^\star(h&#x27;_t,x)=\varnothing.
+$$</div>
+<p>$x$ 是任务指令，$h_t$ 是交互历史，$o_t$ 是当前观测，$\mathcal G_q^\star$ 是某个语义问题 $q$ 的可接受回答集合。直觉是：<strong>只看当前画面，无法同时答对这两种历史。</strong> 作者把它作为任务设计准则，并未要求每组场景逐像素完全相同，也未证明所有视觉捷径都已排除。</p>
+<p><img src="../../assets/papers/2611.06475-robocasa-mem/figure1.png" alt="RoboCasa-Mem 的记忆需求与任务设计，原文 Figure 1" /></p>
+<p>图源：<a href="https://arxiv.org/html/2611.06475v1#S3.F1">原文 Fig. 1</a>。上方的咖啡例子贯穿两类信息：环境里“哪杯有糖”，过程里“糖是否已加、哪杯已搬”。长时序只是这些信息可能丢失的条件。</p>
+<h2 id="3-关键方法-动态答案-结构化记忆与几何控制分别解决不同问题">3. 关键方法：动态答案、结构化记忆与几何控制分别解决不同问题</h2>
+<h3 id="3-1-评分跟随实际历史-避免固定目标答案">3.1 评分跟随实际历史，避免固定目标答案</h3>
+<p>Behavior-Conditioned Evaluation 允许机器人自行决定给哪一杯加糖。评估器从实际轨迹记录这个选择，最后检查它是否选中了同一杯，而非预先规定“左杯才是答案”。MilkMatch 同样按真实拿取顺序定义第一盒、第二盒，并核对它们与来源托盘的颜色关系（§3.4、Appendix A）。</p>
+<p>这样既允许多条合法路径，也减少背下固定目标的捷径。但若策略总给固定一侧加糖、始终采用同一顺序，仍可能形成稳定策略；因此动态评估是必要改进，不能单独证明策略使用了历史。区分这两者需要对历史或目标分配做额外控制。</p>
+<h3 id="3-2-hmap-如何记住并选出加糖杯">3.2 HMAP 如何记住并选出加糖杯</h3>
+<p>HMAP 分为高层符号记忆规划器和低层几何增强 VLA。沿 SweetCup 可以把信息流写清（§4、Fig. 2）：</p>
+<ol>
+<li><strong>观察变化</strong>：高层读取当前与 50 个控制步前的多视角图像、总任务，以及上一轮实体记忆和过程记忆。在 20 Hz 记录频率下，两组观测相隔 2.5 秒。</li>
+<li><strong>更新持久状态</strong>：实体记忆保存“哪杯加了糖、现在在哪里”；过程记忆保存“加糖已完成、第一杯已搬、第二杯待搬”。之后即使看不出糖，先前确认的属性仍可保留。</li>
+<li><strong>输出当前子目标</strong>：例如 Fig. 2 中的“把剩下的一杯移到餐台”。记忆递归传给下一次高层调用，低层只接收当前子目标及其常规任务输入。</li>
+<li><strong>执行动作</strong>：低层根据指令、子目标、当前图像和机器人状态生成动作。它不承担重读全部长期历史的职责。</li>
+<li><strong>再次规划</strong>：新的观测更新位置和进度；最后选杯时，实体记忆中的加糖身份应决定目标。这是模型设计预期，不能据此假定每次记忆写入都正确。</li>
+</ol>
+<p>高层使用 <strong>Qwen3-VL-4B-Instruct</strong>，由示范轨迹离线生成的结构化标注监督训练；它不是未经训练、只拼接一段记忆提示词的通用 VLM。核心递推为原文 Eq. 2：</p>
+<div class="math-display">$$
+(e_k,p_k,g_k)=H_\theta(c,x,e_{k-1},p_{k-1},\mathcal I_{t_k},\mathcal I_{t_k-50}).
+$$</div>
+<p>其中 $e_k,p_k,g_k$ 分别为实体记忆、过程记忆和可执行子目标，$c$ 为固定提示。两帧帮助识别近期变化，递归记忆承载更早的信息；只增加两帧本身并不能覆盖整个任务历史。</p>
+<p><img src="../../assets/papers/2611.06475-robocasa-mem/figure2.png" alt="HMAP 的高层记忆与低层控制，原文 Figure 2" /></p>
+<p>图源：<a href="https://arxiv.org/html/2611.06475v1#S4.F2">原文 Fig. 2</a>。上半部更新两类记忆；下半部用任务条件化 query 从当前几何 token 中取信息，再以 scale/shift 调制动作网络。几何编码器处理的是当前多视角观测，没有建立跨回合的三维长期地图。</p>
+<p>低层基于 $\pi_{0.5}$，加入冻结的 <strong>VGGT-$\Omega$</strong>。8 个可学习 query 在视觉—语言—状态流中获得任务上下文，再通过 cross-attention 检索几何特征，生成动作专家各层的缩放和平移量。这样能按当前子目标选择几何信息，而非无差别拼接所有几何 token。规划器与控制器分开训练，控制器沿用 flow-matching 目标（§4.2、Appendix C）。</p>
+<p><strong>实现细节仍不足以直接复现。</strong> Appendix C 明确缺少 FillAndRetrieve 的训练预算、优化器、LoRA、检查点选择及部分任务配置；重规划间隔只对部分任务给出。图 2 将低层标为 Gemma-4B，正文使用 PaliGemma/$\pi_{0.5}$ 描述，具体 backbone/checkpoint 对应关系仍需代码确认 <code>[?]</code>。不能把方法示意当作完整运行配置。</p>
+<h2 id="4-数据与指标-既看最终成功-也看失败发生在哪一步">4. 数据与指标：既看最终成功，也看失败发生在哪一步</h2>
+<p>九项任务按主要记忆需求分组：环境记忆包括位置、属性、实体关系；过程记忆包括单任务进度和多任务调度。每个任务用规则专家收集 <strong>200 条成功示范，共 1,800 条</strong>；专家结合机械臂运动规划与移动底盘闭环控制，随机化物体位置、外观、顺序和部分任务参数。标准策略输入不含专家内部任务状态、成功标志等特权信息（§3.3、Appendix B）。</p>
+<p>记录接口为三路 $224\times224$ RGB、37 维机器人状态、13 维动作，频率 20 Hz。各方法在同一批示范上训练，每任务用相同的 <strong>50 个留出场景种子</strong>测试。对照包括 ACT、Diffusion Policy、$\pi_{0.5}$ 和 MemER-style；后者与 HMAP 使用同一高层模型和低层骨干，但记忆训练不同，宜称“本文实现的 MemER-style 对照”，不等同于原方法的所有配置。</p>
+<ul>
+<li><strong>SR</strong>：整项任务最终满足语义成功条件的比例。</li>
+<li><strong>SCR</strong>：预定义阶段完成率的均值，反映走到哪里。</li>
+</ul>
+<p>一般阶段要求先完成前置阶段。<strong>SugarCount 是分母需要特别处理的例外</strong>：只有要求至少两块糖的回合才纳入“第二次加糖”阶段，各阶段适用回合集合不同。因此其阶段率未必递减，不能直接用后阶段率除以前阶段率解释条件成功率（Appendix B）。</p>
+<h2 id="5-关键证据-收益集中在哪里-能否归因于记忆">5. 关键证据：收益集中在哪里，能否归因于记忆？</h2>
+<h3 id="5-1-主结果支持隐藏属性回忆-尚未解决过程调度">5.1 主结果支持隐藏属性回忆，尚未解决过程调度</h3>
+<p>Table 3 报告 HMAP 九任务宏平均 SR 为 <strong>24.2%</strong>，$\pi_{0.5}$ 为 <strong>16.2%</strong>，提高 8.0 个百分点；表内保留两位小数为 0.24 与 0.16。分任务结果更能决定该如何理解这个提升：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>任务</th>
+<th>主要需求</th>
+<th style="text-align:right">$\pi_{0.5}$ SR</th>
+<th style="text-align:right">HMAP SR</th>
+<th>应看到的现象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PutBackCup</td>
+<td>原位置回忆</td>
+<td style="text-align:right">0.68</td>
+<td style="text-align:right">0.70</td>
+<td>最终成功接近</td>
+</tr>
+<tr>
+<td>SweetCup</td>
+<td>加糖属性</td>
+<td style="text-align:right">0.04</td>
+<td style="text-align:right">0.10</td>
+<td>有改善，绝对成功仍低</td>
+</tr>
+<tr>
+<td>TempReport</td>
+<td>热/冷水属性</td>
+<td style="text-align:right">0.22</td>
+<td style="text-align:right">0.86</td>
+<td>最大收益来源</td>
+</tr>
+<tr>
+<td>CanRecall</td>
+<td>物体—柜子关系</td>
+<td style="text-align:right">0.00</td>
+<td style="text-align:right">0.00</td>
+<td>都未完成</td>
+</tr>
+<tr>
+<td>MilkMatch</td>
+<td>来源—目标颜色</td>
+<td style="text-align:right">0.12</td>
+<td style="text-align:right">0.16</td>
+<td>小幅改善</td>
+</tr>
+<tr>
+<td>DrawerSearch</td>
+<td>搜索和计数进度</td>
+<td style="text-align:right">0.12</td>
+<td style="text-align:right">0.08</td>
+<td>HMAP 更低</td>
+</tr>
+<tr>
+<td>SugarCount</td>
+<td>加糖次数</td>
+<td style="text-align:right">0.28</td>
+<td style="text-align:right">0.28</td>
+<td>无提升</td>
+</tr>
+<tr>
+<td>HeatAndInspect</td>
+<td>加热与检查交错</td>
+<td style="text-align:right">0.00</td>
+<td style="text-align:right">0.00</td>
+<td>都未完成</td>
+</tr>
+<tr>
+<td>FillAndRetrieve</td>
+<td>接水与取物交错</td>
+<td style="text-align:right">0.00</td>
+<td style="text-align:right">0.00</td>
+<td>都未完成</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>按表中数值自行计算</strong>，去掉 TempReport 后，其余八项的平均 SR 提升只有 <strong>1.0 个百分点</strong>。这不削弱温度回忆结果，但显著收窄“记忆增强有效”的覆盖范围。HeatAndInspect 的 SCR 从 0.32 到 0.50，说明执行进度增加，仍不能表述为成功恢复了两个未完成任务。</p>
+<h3 id="5-2-分阶段结果接近记忆决策-但还混有执行能力">5.2 分阶段结果接近记忆决策，但还混有执行能力</h3>
+<p>回到 SweetCup，Table 6 中两杯均搬完的比例为 0.18 与 0.22，最终选对比例为 0.04 与 0.10。因此在到达选杯阶段的回合中，成功率约为 <strong>22% 与 45%</strong>。TempReport 对应的最终温度报告条件成功率约为 <strong>41% 与 90%</strong>（§5.2、Appendix B）。它们比总 SR 更接近“此前信息是否被用上”。</p>
+<p>但到达该阶段的回合是各策略自己筛出来的，难度分布未必相同；“选对并操作完成”的谓词也可能包含控制错误。分阶段分析有助定位，尚未完全隔离纯记忆收益。</p>
+<h3 id="5-3-单任务消融支持组件互补-归因仍不完整">5.3 单任务消融支持组件互补，归因仍不完整</h3>
+<p>Table 5 在简化的 <strong>SingleMilkMatch</strong> 上逐步加入规划器、几何调制和任务条件化 query：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th style="text-align:right">抓取</th>
+<th style="text-align:right">移动并放置</th>
+<th style="text-align:right">放入正确容器</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\pi_{0.5}$</td>
+<td style="text-align:right">0.70</td>
+<td style="text-align:right">0.60</td>
+<td style="text-align:right">0.20</td>
+</tr>
+<tr>
+<td>+ Planner</td>
+<td style="text-align:right">0.66</td>
+<td style="text-align:right">0.50</td>
+<td style="text-align:right">0.34</td>
+</tr>
+<tr>
+<td>+ VGGT-$\Omega$</td>
+<td style="text-align:right">0.70</td>
+<td style="text-align:right">0.64</td>
+<td style="text-align:right">0.40</td>
+</tr>
+<tr>
+<td>完整 HMAP</td>
+<td style="text-align:right">0.74</td>
+<td style="text-align:right">0.56</td>
+<td style="text-align:right">0.46</td>
+</tr>
+</tbody>
+</table></div>
+<p>这些是累计阶段率。规划器加入后，放置率降低而正确容器成功率提高，支持它改善目标选择；完整模型的正确放置条件比例为 $0.46/0.56\approx0.82$。但“加规划器”同时加入子任务分解、额外模型和记忆监督，不能单独归因于实体/过程记忆划分；逐步添加也不是完整的正交消融。VGGT 加入后的某阶段改善，没有在完整模型上处处保留。</p>
+<h3 id="5-4-真实机器人结果是小规模佐证">5.4 真实机器人结果是小规模佐证</h3>
+<p>真实实验在 AgileX Cobot Magic 上做物体搬运：记住来源容器颜色，转身后放到同色目标容器。使用 100 条示范，Table 4 报告每方法 10 次测试，HMAP 最终正确 <strong>8/10</strong>，$\pi_{0.5}$ 为 <strong>2/10</strong>；两者抓取均为 10/10，移动并放置为 9/10 与 10/10。差异集中在目标选择，和仿真结果相容，但只有一个真实任务，不能推广为开放家庭场景的可靠性结论。HTML 版本该段的交叉引用错位，此处依据 PDF 正文和表题的 Table 4。</p>
+<h2 id="6-insights">6. Insights</h2>
+<p><strong>最该复用的是“相似现状、不同历史、不同答案”的配对设计。</strong> 当前评估允许策略自己选择历史，因此仍可能形成固定顺序。一个更强的诊断实验是固定当前观察与动作执行器，只交换两条合法历史或记忆状态，检查选杯是否相应改变；再设正确记忆、删除记忆、打乱记忆三个条件。这样才能判断策略是否真的依赖了被声称的历史信息。</p>
+<p><strong>过程记忆的瓶颈可能在状态更新与任务切换。</strong> 两项调度都未成功，而 HMAP 已经有 pending-obligation 字段。继续扩大记忆容量未必解决问题。我会分别提供真值任务状态、真值下一子目标和稳定低层控制，观察哪种替换恢复成功；这能区分记错进度、选错下一步和执行不了。</p>
+<p><strong>现有成功示范实验没有验证错误记忆的修正能力。</strong> 高层记忆一旦把“尝试加糖”误写成“已经加糖”，后面即使记得很牢也会选错。数据只保留成功轨迹，论文没有验证失败动作、重复尝试和回退后的记忆修正。加入受控失败与恢复示范，并测错误状态持续时间，比只报告更高 SR 更能检验记忆更新是否可靠。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="Long-Term-Memory-for-VLA-Based-Agents-in-Open-World-Task-Execution-ChemBot双层记忆与进度控制.html" title="Long-Term-Memory-for-VLA-Based-Agents-in-Open-World-Task-Execution-ChemBot双层记忆与进度控制">Long-Term-Memory-for-VLA-Based-Agents-in-Open-World-Task-Execution-ChemBot双层记忆与进度控制</a> — 都把持久任务状态交给高层、短技能交给 VLA；RoboCasa-Mem 更明确控制历史依赖，ChemBot 的进度交接则提供另一种分析任务切换失败的入口。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Understanding-AI-from-the-Inside-The-State-of-Mechanistic-Interpretability-for-AI-Safety-机制证据与安全收益.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Understanding AI from the Inside: The State of Mechanistic Interpretability for AI Safety</span></a>
+<a class="paper-nav-link next" href="AstroAgentBench-Evaluating-Agentic-Planning-on-Space-Mission-Planning-Tasks-可验证规划与任务价值.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">AstroAgentBench: Evaluating Agentic Planning on Space Mission Planning Tasks</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: chen2026robocasamem</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
