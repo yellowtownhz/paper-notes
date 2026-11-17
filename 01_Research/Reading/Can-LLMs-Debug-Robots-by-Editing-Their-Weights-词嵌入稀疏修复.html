@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can LLMs Debug Robots by Editing Their Weights?</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Can LLMs Debug Robots by Editing Their Weights?</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-能开炉灶-却听不懂炉灶的另一种说法"><span class="toc-num">02</span> 2. 关键问题：能开炉灶，却听不懂炉灶的另一种说法</a></li>
+<li><a class="toc-link" href="#3-关键方法-agent-找映射-词嵌入表保存修复"><span class="toc-num">03</span> 3. 关键方法：Agent 找映射，词嵌入表保存修复</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-agent-实际获得什么工具">3.1 Agent 实际获得什么工具？</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-炉灶案例如何变成权重变化">3.2 炉灶案例如何变成权重变化？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-为什么能保证部分输入不受影响">3.3 为什么能保证部分输入不受影响？</a></li>
+<li><a class="toc-link" href="#4-数据与评估-三次独立搜索-共用一个-held-out-环境条件"><span class="toc-num">04</span> 4. 数据与评估：三次独立搜索，共用一个 held-out 环境条件</a></li>
+<li><a class="toc-link" href="#5-关键结果-收益来自词义方向-额外优化的优势仍未确定"><span class="toc-num">05</span> 5. 关键结果：收益来自词义方向，额外优化的优势仍未确定</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-能否再次找到有效编辑-收益落在哪里">5.1 能否再次找到有效编辑，收益落在哪里？</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-是方向有效-还是只要动这些权重就有效">5.2 是方向有效，还是只要动这些权重就有效？</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-动作对齐是否支持机制解释">5.3 动作对齐是否支持机制解释？</a></li>
+<li><a class="toc-link toc-sub" href="#5-4-泛化与失败记录-哪些限制会改变判断">5.4 泛化与失败记录：哪些限制会改变判断？</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-稀疏编辑提供的最强保证来自结构-而非语义距离">6.1 稀疏编辑提供的最强保证来自结构，而非语义距离</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-机制干预应该帮助找出最小有效变化">6.2 机制干预应该帮助找出最小有效变化</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-与逐层指令蒸馏互补-但不能直接比较成功率">6.3 与逐层指令蒸馏互补，但不能直接比较成功率</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-17</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2611.09376" target="_blank">arXiv</a>
+    </div>
+    <h1>Can LLMs Debug Robots by Editing Their Weights?</h1>
+    <p class="authors">Jusheng Zhang, Keze Wang, Liang Lin</p>
+    <div class="topic-row"><span class="topic-tag">VLA</span> <span class="topic-tag">Model_Editing</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Instruction_Grounding</span></div>
+</header>
+
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Jusheng Zhang（Stanford University），Keze Wang、Liang Lin（X-Era AI）。</li>
+<li><strong>版本</strong>：2026-11-06，arXiv:2611.09376v1；按预印本正文与附录阅读，未见会议录用信息。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2611.09376v1">论文全文</a>｜<a href="https://jushengzhang.github.io/posts/robot-weight-debugging/">作者解读</a>｜<a href="https://github.com/jushengzhang/robot-weight-debugging">代码与实验记录</a>。v1 正文还写公共链接待发布；截至 2026-11-13，官方仓库已公开首版代码、65 行编辑、16 个会话记录及证据，实机实验仍在进行中。</li>
+</ul>
+<p><strong>核心判断</strong>：LLM 确实找到了有效的机器人权重修复，但最强结果是很具体的<strong>词汇到任务的重新映射</strong>。GPT-6 Astra 修改 π0.5 的 65 行 token embedding，在 765 条 held-out 改写指令上将成功率从 86.3% 提至 92.0%。真正有辨识度的证据是：收益全部落在读取这些行的指令里，而简单使用它发现的词表直接替换 embedding，也能解释大部分提升。[§3；Table 1–3]</p>
+<h2 id="2-关键问题-能开炉灶-却听不懂炉灶的另一种说法">2. 关键问题：能开炉灶，却听不懂炉灶的另一种说法</h2>
+<p>论文的真实指令是：</p>
+<blockquote class="card card-info">
+<p>activate the cooking appliances heat source</p>
+</blockquote>
+<p>它要求打开炉灶。原策略却拿起盘子，300 步后超时；改权重后，同场景、同指令、同 seed 的运行在第 78 步完成任务。模型本来就会执行规范炉灶指令，失败点出现在描述性词语与任务行为之间的对应关系。[Fig. 1；§3.1]</p>
+<p><img src="../../assets/debug-2611.09376/fig1-teaser.png" alt="图1：不改指令，只改词嵌入后选择了正确任务" /></p>
+<p><em>原文 Fig. 1，来源：<a href="https://arxiv.org/html/2611.09376v1/pi05-teaser.png">arXiv v1 原图</a>。上排拿盘子，下排操作炉灶旋钮；最后保存的画面是 298/76 步，终止判定为 300/78 步。下方 74.3%→87.5% 是全部 335 条命中编辑 token 的指令统计，不是这一个案例的成功率。</em></p>
+<p>这不要求那些词对预训练语言模型完全陌生。问题是它们在当前策略中没有稳定地调用熟悉的机器人任务。作者也发现 action expert 可以关注语言，却仍执行错误任务：有 attention，不等于任务含义已经正确传到动作端。[§3.1]</p>
+<h2 id="3-关键方法-agent-找映射-词嵌入表保存修复">3. 关键方法：Agent 找映射，词嵌入表保存修复</h2>
+<h3 id="3-1-agent-实际获得什么工具">3.1 Agent 实际获得什么工具？</h3>
+<p>GPT-6 Astra 能读取原始权重、张量名称和维度、tokenizer，并在持久 CPU Python 工作区做线性代数、保存替换张量。独立的 forward 工具提供仿真 rollout 和固定输入 replay，可返回动作与激活。协议禁止梯度更新、训练循环、迭代 loss fitting，也禁止在 CPU 工作区自行执行目标网络。[§2]</p>
+<p>每个语言修复会话有 50 次 forward <strong>请求</strong>；请求可以包含一批 episode 或多个 replay，不能理解为只用 50 条数据或只前向 50 次。Agent 在 practice 数据上诊断、提候选、验证并决定保留或撤销，冻结后才由作者在未暴露的 held-out 集评分。</p>
+<p><img src="../../assets/debug-2611.09376/fig2-interface.png" alt="图2：权重编辑与独立闭环评估接口" /></p>
+<p><em>原文 Fig. 2，来源：<a href="https://arxiv.org/html/2611.09376v1/assets/study-editing-interface.png">arXiv v1 原图</a>。上支路是成功的词嵌入编辑；下支路是 FastWAM 的另一次探索。作者说明这是生成的方法示意图，内嵌相机图用于说明流程；不能把下支路当作同等成功的实验，也不能将此图当作 rollout 证据。</em></p>
+<h3 id="3-2-炉灶案例如何变成权重变化">3.2 炉灶案例如何变成权重变化？</h3>
+<p>Agent 从失败表述中识别出词语线索，将其 token embedding 拉向策略熟悉的任务词。C 会话的部分实际配方如下；下划线表示 SentencePiece 词首边界。[Appendix F，Table S9]</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>来源 token</th>
+<th>目标 token / 目标均值</th>
+<th style="text-align:right">强度 $\alpha$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_activate</code></td>
+<td><code>_turn</code></td>
+<td style="text-align:right">0.75</td>
+</tr>
+<tr>
+<td><code>_cooking</code></td>
+<td><code>_stove</code></td>
+<td style="text-align:right">0.75</td>
+</tr>
+<tr>
+<td><code>_cooker</code></td>
+<td><code>_stove</code></td>
+<td style="text-align:right">1.00</td>
+</tr>
+<tr>
+<td><code>_basin</code></td>
+<td><code>_bowl</code></td>
+<td style="text-align:right">1.00</td>
+</tr>
+<tr>
+<td><code>_fermented</code></td>
+<td><code>_wine</code></td>
+<td style="text-align:right">1.00</td>
+</tr>
+<tr>
+<td><code>_dairy</code></td>
+<td><code>_cheese</code>、<code>_milk</code>、<code>_butter</code> 的均值</td>
+<td style="text-align:right">0.50</td>
+</tr>
+</tbody>
+</table></div>
+<p>具体更新为：</p>
+<div class="math-display">$$
+E&#x27;_i=(1-\alpha_i)E_i+\alpha_i\bar E_{T_i},
+\qquad
+\bar E_{T_i}=\frac1{|T_i|}\sum_{j\in T_i}E_j.
+$$</div>
+<p>原指令字符串不变，tokenizer 仍读到原 token ID，但查出的向量更接近相应任务锚点；后续 VLM 和 action expert 都按原计算图运行。$\alpha=1$ 是完整替换，较小的值保留部分原向量；多目标均值用于避免把 dairy 这类词强行压到唯一物体。[Eq. 1]</p>
+<p>三个会话都保护规范任务指令中出现的 token ID，只改其他选定行。最强的 C 改了 65 行、132,768 个实际存储标量，占导出 checkpoint 的 0.00367%。词表为 $257152\times2048$；65 行的容量是 133,120 个标量，实际变化数较少是因为部分元素舍入后相等。它不是只改 65 个权重。[§3.3；Appendix A]</p>
+<h3 id="3-3-为什么能保证部分输入不受影响">3.3 为什么能保证部分输入不受影响？</h3>
+<p>设被改行集合为 $S$，输入指令的 token ID 集合为 $I(c)$。在本文执行路径上：</p>
+<div class="math-display">$$
+a=F_\vartheta\big(V(o),E[I(c)],z\big).
+$$</div>
+<p>其中 $o$ 为观测，$V(o)$ 为视觉输入的编码，$z$ 为固定的 flow 噪声，$\vartheta$ 表示其余未编辑参数。</p>
+<p>如果 $I(c)\cap S=\varnothing$，那么模型根本没有读到被改的行；在相同观测、噪声和确定性执行下，动作块严格相同。这是由查表结构得到的局部性，不需要假设两个词“语义无关”。[Eq. 2；Table 2]</p>
+<p><strong>保证只覆盖不命中这些行的输入。</strong> 某个新场景仍然使用 <code>_fermented</code> 时，它也会被拉向 wine；模型不会因为语境变了就自动关闭编辑。固定输入相同也不等于两个独立渲染的仿真过程数值完全相同；论文同时记录了极小的图像变化与闭环结果差异，因此不能把这些差异直接归因于词嵌入编辑。[§3.3；Appendix A]</p>
+<h2 id="4-数据与评估-三次独立搜索-共用一个-held-out-环境条件">4. 数据与评估：三次独立搜索，共用一个 held-out 环境条件</h2>
+<p>主模型是 OpenPI 发布的 <strong>pi05_libero</strong>，导出参数约 3.62B，包含 SigLIP、PaliGemma 风格 VLM 和 flow-matching action expert；这是已有 LIBERO 适配的 checkpoint，与另一篇使用的 DROID 零样本 checkpoint 不同。每次生成 10 个未来动作，执行 5 个后重规划，使用 10 次去噪；该配置不把离散机器人状态写进语言 prefix。[§2–3；Appendix A]</p>
+<p>practice/held-out 按 suite 与 variant ID 的 SHA-256 奇偶划分。编辑器可见 4,986 个跨扰动类别的 practice variants；三次语言搜索各自从同一原始 checkpoint 开始，不继承彼此编辑。每个冻结候选最终评估 <strong>765 个 held-out Language Instructions variants</strong>，另评估其他六类扰动的 360 个 episode。[§2]</p>
+<p>主 held-out 统一使用 <strong>seed 7</strong>。因此“三次独立”指三次搜索，不是三个独立数据集，也不是三个独立环境种子。模型已经接受过示范训练，Agent 又使用仿真反馈；准确说法是本研究不增加梯度训练或新专家示范，不能称为完全 data-free。</p>
+<h2 id="5-关键结果-收益来自词义方向-额外优化的优势仍未确定">5. 关键结果：收益来自词义方向，额外优化的优势仍未确定</h2>
+<h3 id="5-1-能否再次找到有效编辑-收益落在哪里">5.1 能否再次找到有效编辑，收益落在哪里？</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>会话</th>
+<th style="text-align:right">编辑行数</th>
+<th style="text-align:right">成功数 / 765</th>
+<th style="text-align:right">修复 / 退化</th>
+<th style="text-align:right">相对原模型 exact $p$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原模型</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">660（86.3%）</td>
+<td style="text-align:right">—</td>
+<td style="text-align:right">—</td>
+</tr>
+<tr>
+<td>A</td>
+<td style="text-align:right">18</td>
+<td style="text-align:right">684（89.4%）</td>
+<td style="text-align:right">32 / 8</td>
+<td style="text-align:right">$1.82\times10^{-4}$</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align:right">20</td>
+<td style="text-align:right">673（88.0%）</td>
+<td style="text-align:right">18 / 5</td>
+<td style="text-align:right">0.0106</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align:right">65</td>
+<td style="text-align:right">704（92.0%）</td>
+<td style="text-align:right">48 / 4</td>
+<td style="text-align:right">$1.31\times10^{-10}$</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>来源：Table 1。将三项主比较作为一个检验组进行 Holm 校正后仍显著；这项校正没有覆盖整篇所有探索性检验。</em></p>
+<p>C 的净提升为 44/765，即 <strong>5.75 个百分点</strong>，配对 95% 区间 [3.95, 7.55]。其中 335 条指令读取被改的 token，成功数 249→293（74.3%→87.5%）；其余 430 条逐例成功/失败结果全部不变。A/B 的结果变化也全部局限于各自命中编辑 token 的子集。[Table 2]</p>
+<p>描述替代物体/动作名称的 level 5 贡献了 44 个净修复中的 32 个。它说明收益集中于特定语言困难，不能外推成所有语言理解能力均匀变强。[Fig. 3]</p>
+<h3 id="5-2-是方向有效-还是只要动这些权重就有效">5.2 是方向有效，还是只要动这些权重就有效？</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>同一批 765 条指令</th>
+<th style="text-align:right">成功率</th>
+<th style="text-align:right">修复 / 退化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原模型</td>
+<td style="text-align:right">86.3%</td>
+<td style="text-align:right">—</td>
+</tr>
+<tr>
+<td>同 65 行、匹配范数的随机方向</td>
+<td style="text-align:right">85.2%</td>
+<td style="text-align:right">7 / 15</td>
+</tr>
+<tr>
+<td>按 C 找到的目标全部直接替换</td>
+<td style="text-align:right">90.5%</td>
+<td style="text-align:right">43 / 11</td>
+</tr>
+<tr>
+<td>C 的插值 / 混合配方</td>
+<td style="text-align:right">92.0%</td>
+<td style="text-align:right">48 / 4</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>来源：Table 3。主表将 2 个直接替换、3 个随机对照运行错误计为失败；仅保留有效 pair 的敏感性分析不改变结论。</em></p>
+<p>随机方向没有收益，说明编辑方向有信息。但直接替换已经解释了大部分提升。C 与直接替换在 <strong>763 个共同有效 pair</strong> 上是 20 胜、9 负，$p=0.0614$；不能宣布插值策略显著优于直接替换。</p>
+<p>这个“词典基线”继承了 Agent 找到的来源词、目标词与均值组合，所以它没有独立承担词表发现的成本。更准确的贡献是 <strong>LLM 从 rollout、探针与权重中发现可用映射</strong>；其精细配方比简单替换多带来多少价值，统计证据尚不充分。随机对照也只有一个具体随机实现。[§3.4]</p>
+<h3 id="5-3-动作对齐是否支持机制解释">5.3 动作对齐是否支持机制解释？</h3>
+<p>作者额外审计的是 <strong>B 会话</strong>的固定输入 replay，不是 C 的完整电路。对 7 条描述性指令，比较动作块到规范任务指令动作的距离，除以未编辑时的距离，再取中位数 $\rho$：[§3.5；Table 4]</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>干预</th>
+<th style="text-align:right">距离比 $\rho$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原模型</td>
+<td style="text-align:right">1.000</td>
+</tr>
+<tr>
+<td>仅改变 embedding 范数</td>
+<td style="text-align:right">1.004</td>
+</tr>
+<tr>
+<td>仅改变方向</td>
+<td style="text-align:right">0.340</td>
+</tr>
+<tr>
+<td>最终 B 编辑</td>
+<td style="text-align:right">0.367</td>
+</tr>
+</tbody>
+</table></div>
+<p>方向变化明显把动作拉向任务锚点；只改范数几乎无效。这比“语言 attention 增加”更直接。不过，cooktop 单例中最终 VLM 语言残差到锚点的距离反而增至原来的 3.165 倍，action expert 的三个测量层却都更接近锚点。<strong>动作有效对齐，并不要求每层表示都更像规范 prompt。</strong>[§3.5]</p>
+<h3 id="5-4-泛化与失败记录-哪些限制会改变判断">5.4 泛化与失败记录：哪些限制会改变判断？</h3>
+<p>首先，早先的 200 条 held-out 小样本上，C 仅从 181/200 到 185/200，$p=0.289$。之后评估的是原划分中全部 765 条语言样本，候选没有修改、也没有筛选有利条目，但不能把它称为预注册的独立复现。B 在额外 practice 多种子验证中也有一个 seed 净损失 2 次，尚缺跨 held-out seeds 的系统验证。[§2、§3.6；Table S1]</p>
+<p>其次，其他 13 个机器人编辑会话中，12 个最终拒绝候选，唯一保留者 held-out $p=0.542$。有两个已拒绝、但仍存档的候选在事后评估中呈现名义正收益，不能笼统说“其他所有编辑完全无效”；也不能把“12 次拒绝”当成 Agent 判断可修复性的准确率。[Table 6]</p>
+<p>失败恢复任务尤其有启发：一个干预把空抓后的重开夹爪比例从 5% 提到 15%，配对 practice 成功数却从 213/352 降到 208/352。能够改变一个与失败有关的信号，不等于改变了决定任务成功的原因。[§4]</p>
+<p>论文另有一个独立的输入接口结果：添加 benchmark 场景元数据后，FastWAM 在 210 个配对样本上从 147 次成功降至 102 次（70.0%→48.6%）；π0.5 两种格式均为 186/210，但有 9 胜、9 负的逐例变化。针对元数据的权重修复没有形成重复确认的成功案例，因此这应当记作<strong>输入格式敏感性发现</strong>，而非另一个成功编辑结果。[§5]</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-稀疏编辑提供的最强保证来自结构-而非语义距离">6.1 稀疏编辑提供的最强保证来自结构，而非语义距离</h3>
+<p>本文能证明未读改动行的固定输入完全不变，是因为嵌入查表具有明确的访问范围。它比在一小组任务上观察“没有显著下降”更强，也比“编辑范数很小所以影响很小”更可靠。但同词不同义仍全部命中，保障范围在 token ID 处结束。[基于 Eq. 2 的判断]</p>
+<p>我会用 <code>_fermented</code>、<code>_round</code> 等编辑构造<strong>同 token、不同目标含义</strong>的对照，检查它是否把任何发酵物都偏向 wine、把任何圆形物都偏向 bowl；再测试上下文门控能否保留收益、减少误调用。这是针对本文配方的后续实验设想，论文没有报告这些结果。</p>
+<h3 id="6-2-机制干预应该帮助找出最小有效变化">6.2 机制干预应该帮助找出最小有效变化</h3>
+<p>方向/范数对照和固定输入 replay 已经说明“哪些变化有效”，但尚未解释从某行 embedding 到动作选择的完整因果路径。可以从一个修复、一条退化指令开始逐行撤销编辑，再对关键层做 patching，检查修复是否共享某条任务选择通路。这样能把当前的词表工程进一步推进为可检验的机制解释。[研究设想]</p>
+<h3 id="6-3-与逐层指令蒸馏互补-但不能直接比较成功率">6.3 与逐层指令蒸馏互补，但不能直接比较成功率</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>比较维度</th>
+<th>本文</th>
+<th>Distilling Instructions into Weights</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>已验证的错误</td>
+<td>描述性词汇触发错误任务</td>
+<td>复合指令中物体与目的地绑定错误</td>
+</tr>
+<tr>
+<td>编辑信号</td>
+<td>Agent 找到的词汇—任务锚点对应</td>
+<td>同一观测下有效/无效说法的逐层差值</td>
+</tr>
+<tr>
+<td>写入位置</td>
+<td>词嵌入表的 65 行</td>
+<td>VLM 多层 MLP down-projection</td>
+</tr>
+<tr>
+<td>保留依据</td>
+<td>不读改动 token 时固定输入严格不变</td>
+<td>有限任务上的回归评估</td>
+</tr>
+<tr>
+<td>主评估变化轴</td>
+<td>同一 seed，未见语言 variants</td>
+<td>同一任务，未见 simulator seeds</td>
+</tr>
+<tr>
+<td>策略与环境</td>
+<td>pi05_libero，LIBERO 系列</td>
+<td>pi05 DROID，RoboLab</td>
+</tr>
+</tbody>
+</table></div>
+<p>两篇共同指向“重新调用已存在的能力”，但覆盖的是不同语言失效与不同泛化维度。我认为值得补上的实验是把两类错误放进同一 checkpoint、同一环境，交叉比较稀疏词表修复和逐层蒸馏；目前没有证据表明其中一种普遍优于另一种。</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-VLA.html" title="MOC-VLA">MOC-VLA</a> — 机器人任务词汇、策略适配与语言鲁棒性。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — 结构性局部保证、方向对照，以及内部信号改变与任务改善的区别。</li>
+<li><a class="wikilink" href="Distilling-Instructions-into-Weights-Closed-Form-Edits-Fix-a-Robot-Policys-Misreading-闭式指令蒸馏.html" title="Distilling-Instructions-into-Weights-Closed-Form-Edits-Fix-a-Robot-Policys-Misreading-闭式指令蒸馏">Distilling-Instructions-into-Weights-Closed-Form-Edits-Fix-a-Robot-Policys-Misreading-闭式指令蒸馏</a> — 用有效改写的内部状态作为教师，修复关系绑定；与本文属于不同团队的两项研究。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Distilling-Instructions-into-Weights-Closed-Form-Edits-Fix-a-Robot-Policys-Misreading-闭式指令蒸馏.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Distilling Instructions into Weights: Closed-Form Edits Fix a Robot Policy's Misreading</span></a>
+<a class="paper-nav-link next" href="Beyond-Analysis-Training-Language-Models-with-Internal-Mechanistic-Feedback-错误特征交互正则化.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Beyond Analysis: Training Language Models with Internal Mechanistic Feedback</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: zhang2026debugrobots</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distilling Instructions into Weights: Closed-Form Edits Fix a Robot Policy's Misreading</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234fc3f7%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ab47bc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22url%28%23g%29%22%2F%3E%3Cpath%20d%3D%22M7%204h6.5L18%208.5V19a1%201%200%200%201-1%201H7a1%201%200%200%201-1-1V5a1%201%200%200%201%201-1z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M13.5%204v4.5H18%22%20fill%3D%22none%22%20stroke%3D%22%23c9b3e6%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2212.5%22%20width%3D%228%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%234fc3f7%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%2215.5%22%20width%3D%226%22%20height%3D%221.6%22%20rx%3D%220.8%22%20fill%3D%22%23ab47bc%22%2F%3E%3C%2Fsvg%3E">
+    <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+    <link id="hljs-theme" rel="stylesheet" href="../../vendor/highlight/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-code: #0d1b2a;
+            --text-primary: #e2e2e8;
+            --text-secondary: #8b8b9e;
+            --text-dim: #5a5a6e;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --accent-cyan: #26c6da;
+            --border-color: #2a4a7f;
+            --border-subtle: #1e2d4a;
+            --sidebar-width: 280px;
+            --bg-sidebar-start: #0c0c18;
+            --bg-sidebar-end: #12122a;
+            --bg-overlay: rgba(0,0,0,0.6);
+            --glow-blue: rgba(79,195,247,0.03);
+            --glow-purple: rgba(171,71,188,0.03);
+            --toc-hover-bg: rgba(79,195,247,0.04);
+            --toc-active-bg: rgba(79,195,247,0.06);
+            --toc-active-border: var(--accent-blue);
+            --toc-sub-active-border: var(--accent-cyan);
+            --badge-green-bg: rgba(102,187,106,0.1);
+            --badge-green-border: rgba(102,187,106,0.2);
+            --badge-purple-bg: rgba(171,71,188,0.1);
+            --badge-purple-border: rgba(171,71,188,0.2);
+            --badge-blue-bg: rgba(79,195,247,0.1);
+            --badge-blue-border: rgba(79,195,247,0.2);
+            --badge-blue-hover: rgba(79,195,247,0.2);
+            --topic-bg: rgba(79,195,247,0.08);
+            --topic-border: rgba(79,195,247,0.15);
+            --th-bg: rgba(79,195,247,0.06);
+            --tr-even-bg: rgba(22,33,62,0.4);
+            --tr-hover-bg: rgba(79,195,247,0.04);
+            --code-inline-border: rgba(42,74,127,0.3);
+            --blockquote-gradient: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(171,71,188,0.4);
+            --tag-pill-bg: rgba(102,187,106,0.1);
+            --tag-pill-border: rgba(102,187,106,0.2);
+            --resize-handle-hover: rgba(79,195,247,0.15);
+            --card-border-hover: var(--accent-blue);
+            --card-shadow: rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #f0f0f4;
+            --bg-code: #f7f7f9;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-dim: #86868b;
+            --accent-blue: #0071e3;
+            --accent-green: #34c759;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-purple: #af52de;
+            --accent-cyan: #32ade6;
+            --border-color: #d2d2d7;
+            --border-subtle: #e5e5ea;
+            --bg-sidebar-start: #f5f5f7;
+            --bg-sidebar-end: #fafafa;
+            --bg-overlay: rgba(0,0,0,0.3);
+            --glow-blue: rgba(0,113,227,0.03);
+            --glow-purple: rgba(175,82,222,0.02);
+            --toc-hover-bg: rgba(0,113,227,0.06);
+            --toc-active-bg: rgba(0,113,227,0.08);
+            --toc-active-border: #0071e3;
+            --toc-sub-active-border: #32ade6;
+            --badge-green-bg: rgba(52,199,89,0.1);
+            --badge-green-border: rgba(52,199,89,0.25);
+            --badge-purple-bg: rgba(175,82,222,0.08);
+            --badge-purple-border: rgba(175,82,222,0.2);
+            --badge-blue-bg: rgba(0,113,227,0.08);
+            --badge-blue-border: rgba(0,113,227,0.2);
+            --badge-blue-hover: rgba(0,113,227,0.15);
+            --topic-bg: rgba(0,113,227,0.06);
+            --topic-border: rgba(0,113,227,0.12);
+            --th-bg: rgba(0,113,227,0.05);
+            --tr-even-bg: rgba(0,0,0,0.02);
+            --tr-hover-bg: rgba(0,113,227,0.04);
+            --code-inline-border: rgba(0,0,0,0.1);
+            --blockquote-gradient: linear-gradient(135deg, rgba(0,113,227,0.04) 0%, var(--bg-card) 100%);
+            --wikilink-border: rgba(175,82,222,0.3);
+            --tag-pill-bg: rgba(52,199,89,0.08);
+            --tag-pill-border: rgba(52,199,89,0.2);
+            --resize-handle-hover: rgba(0,113,227,0.15);
+            --card-border-hover: #0071e3;
+            --card-shadow: rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.85;
+            font-size: 15px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, var(--glow-blue), transparent),
+                radial-gradient(ellipse 600px 400px at 80% 80%, var(--glow-purple), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            width: 88px;
+            padding: 0 8px;
+            color: var(--text-primary);
+            font: inherit;
+            color-scheme: dark;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .theme-toggle { color-scheme: light; }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        body { overflow-x: hidden; }
+
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Home button */
+        .home-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .home-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+        }
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-blue);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-end) 100%);
+            border-right: 1px solid var(--border-subtle);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) transparent;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .toc-list { list-style: none; padding: 0; }
+
+        .toc-link {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.4rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-link:hover {
+            color: var(--text-primary);
+            background: var(--toc-hover-bg);
+            border-left-color: var(--accent-blue);
+        }
+
+        .toc-link.active {
+            color: var(--accent-blue);
+            background: var(--toc-active-bg);
+            border-left-color: var(--toc-active-border);
+            font-weight: 500;
+        }
+
+        .toc-link.toc-sub {
+            padding-left: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .toc-link.toc-sub:hover { color: var(--text-secondary); }
+        .toc-link.toc-sub.active { color: var(--accent-cyan); border-left-color: var(--toc-sub-active-border); }
+
+        .toc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            min-width: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar resize handle */
+        .sidebar-resize-handle {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            z-index: 101;
+            background: transparent;
+            transition: background 0.2s;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--resize-handle-hover);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-toggle svg { width: 20px; height: 20px; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            z-index: 90;
+        }
+
+        /* Floating scroll-to-top / scroll-to-bottom controls (detail pages) */
+        .scroll-nav {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1rem;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .scroll-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .scroll-btn svg { width: 20px; height: 20px; }
+
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 3.5rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .content-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 3px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .badge-branch {
+            background: var(--badge-green-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--badge-green-border);
+        }
+
+        .badge-date {
+            background: var(--badge-purple-bg);
+            color: var(--accent-purple);
+            border: 1px solid var(--badge-purple-border);
+        }
+
+        .badge-link {
+            background: var(--badge-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--badge-blue-border);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: var(--badge-blue-hover);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 8s ease infinite;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .authors {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .topic-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .topic-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            background: var(--topic-bg);
+            color: var(--accent-cyan);
+            border: 1px solid var(--topic-border);
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin: 2rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        p { margin-bottom: 0.85rem; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-subtle);
+            text-align: left;
+        }
+
+        th {
+            background: var(--th-bg);
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        tr:nth-child(even) td { background: var(--tr-even-bg); }
+        tr:hover td { background: var(--tr-hover-bg); }
+
+        /* Code */
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82em;
+            color: var(--accent-blue);
+            border: 1px solid var(--code-inline-border);
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 1.15rem 1.35rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: var(--text-primary);
+            font-size: inherit;
+        }
+
+        /* Lists */
+        ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+        li { margin: 0.35rem 0; }
+
+        /* Blockquotes as cards */
+        blockquote {
+            background: var(--blockquote-gradient);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        blockquote p { margin-bottom: 0.5rem; }
+        blockquote p:last-child { margin-bottom: 0; }
+
+        /* Wiki links */
+        .wikilink {
+            color: var(--accent-purple);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--wikilink-border);
+            transition: all 0.2s;
+        }
+
+        .wikilink:hover {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Unresolved wikilinks: target note not in the vault yet (Obsidian convention). */
+        .wikilink.unresolved {
+            color: var(--text-dim);
+            border-bottom: 1px dotted var(--text-dim);
+            cursor: default;
+        }
+
+        .wikilink.unresolved:hover {
+            color: var(--text-dim);
+            border-bottom-color: var(--text-dim);
+        }
+
+        /* Math */
+        .math-display {
+            margin: 1.25rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        /* Horizontal rules */
+        hr {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color) 30%, var(--border-color) 70%, transparent);
+            border: none;
+            margin: 2.5rem 0;
+            opacity: 0.5;
+        }
+
+        /* Strong / emphasis */
+        strong { color: var(--text-primary); font-weight: 600; }
+        em { color: var(--accent-orange); font-style: italic; }
+
+        /* Images */
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            margin: 1rem 0;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover { color: var(--accent-cyan); }
+
+        /* Footer */
+        .page-footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Prev/Next navigation */
+        .paper-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .paper-nav-link {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .paper-nav-link:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-card);
+        }
+
+        .paper-nav-link.disabled {
+            visibility: hidden;
+        }
+
+        .paper-nav-link.next {
+            text-align: right;
+        }
+
+        .paper-nav-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .paper-nav-title {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .paper-nav-link.next .paper-nav-title {
+            margin-left: auto;
+        }
+
+        /* Tags at bottom */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .tag-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: var(--tag-pill-bg);
+            color: var(--accent-green);
+            border: 1px solid var(--tag-pill-border);
+        }
+
+        /* Fade in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay.open { display: block; }
+            .sidebar-resize-handle { display: none; }
+            .main-content { margin-left: 0; max-width: 100%; padding: 3.5rem 1.25rem 3rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.3rem; }
+            .scroll-nav { bottom: 0.75rem; right: 0.75rem; }
+        }
+        @page {
+            size: A4;
+            margin: 18mm 18mm 20mm;
+            @bottom-center {
+                content: counter(page);
+                font-family: 'DM Sans', 'Noto Sans SC', sans-serif;
+                font-size: 8pt;
+                color: #667085;
+            }
+        }
+
+        @media print {
+            :root, [data-theme="light"], [data-theme="dark"] {
+                color-scheme: light;
+                --bg-primary: #fff;
+                --bg-secondary: #f5f7fa;
+                --bg-card: #f3f6fa;
+                --bg-code: #f5f7fa;
+                --text-primary: #202938;
+                --text-secondary: #526071;
+                --text-dim: #667085;
+                --accent-blue: #205b91;
+                --accent-green: #287347;
+                --accent-red: #b42318;
+                --accent-orange: #995313;
+                --accent-purple: #744497;
+                --accent-cyan: #206b7a;
+                --border-color: #cdd5df;
+                --border-subtle: #dde3eb;
+                --th-bg: #eaf0f7;
+                --tr-even-bg: #f6f8fb;
+                --blockquote-gradient: linear-gradient(#f3f6fa, #f3f6fa);
+                --code-inline-border: #dde3eb;
+            }
+
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            html, body {
+                background: #fff;
+                font-size: 10.5pt;
+                line-height: 1.7;
+                height: auto;
+                overflow: visible;
+            }
+            body::before, .sidebar, .sidebar-resize-handle, .sidebar-toggle,
+            .sidebar-overlay, .page-controls, .scroll-nav, .paper-nav {
+                display: none !important;
+            }
+            .page-wrapper, .main-content, .content-inner {
+                display: block;
+                position: static;
+                width: auto;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .fade-in { opacity: 1; transform: none; }
+
+            .page-header {
+                margin-bottom: 6mm;
+                padding-bottom: 4mm;
+                break-inside: avoid-page;
+                break-after: avoid-page;
+            }
+            .header-meta { gap: 2mm; margin-bottom: 3mm; }
+            .header-badge { font-size: 7.5pt; letter-spacing: 0; padding: 1mm 2mm; }
+            .authors { font-size: 9pt; }
+            .topic-row { margin-top: 2mm; gap: 1.5mm; }
+            h1 {
+                font-size: 21pt;
+                line-height: 1.3;
+                color: #244d74;
+                background: none;
+                -webkit-text-fill-color: currentColor;
+            }
+            h2, h3, h4, h5, h6 {
+                break-after: avoid-page;
+                break-inside: avoid-page;
+            }
+            h2 { font-size: 15pt; margin: 7mm 0 3mm; padding-top: 3mm; }
+            h3 { font-size: 12pt; margin: 5mm 0 2mm; }
+            h4 { font-size: 10.5pt; margin: 4mm 0 2mm; }
+            p, li { orphans: 3; widows: 3; }
+            p { margin-bottom: 2.5mm; }
+            a { overflow-wrap: anywhere; }
+            hr { margin: 5mm 0; }
+
+            table { font-size: 9pt; line-height: 1.55; margin: 4mm 0; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { break-inside: avoid-page; }
+            th, td { padding: 2mm 2.5mm; overflow-wrap: anywhere; }
+            th { font-size: 9pt; }
+            table, blockquote, pre { break-inside: auto; }
+            blockquote { padding: 3mm 4mm; margin: 4mm 0; border-radius: 2mm; }
+
+            img, svg { max-width: 100%; }
+            img {
+                max-height: 220mm;
+                object-fit: contain;
+                break-inside: avoid-page;
+                margin: 2mm 0;
+            }
+            figure, p:has(> img:only-child) { break-inside: avoid-page; }
+            p:has(> img:only-child):has(+ p > em:only-child) { break-after: avoid-page; }
+            pre {
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                overflow: visible;
+                padding: 3mm;
+                font-size: 8.5pt;
+            }
+            pre code, pre code.hljs {
+                white-space: inherit;
+                overflow-wrap: inherit;
+                overflow: visible;
+                background: transparent;
+                color: var(--text-primary);
+            }
+            /* Dark highlight.js themes can otherwise leave pale text on paper. */
+            pre code [class^="hljs-"], pre code [class*=" hljs-"] { color: #334e68; }
+            .math-display, .katex-display { overflow: visible; break-inside: avoid-page; }
+            .page-footer { margin-top: 6mm; padding-top: 3mm; font-size: 8pt; }
+        }
+
+    </style>
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+
+<div class="page-controls">
+<a class="home-btn" href="../../index.html" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a>
+<select id="theme-mode" class="theme-toggle" onchange="setThemeMode(this.value)" aria-label="Theme mode" title="Auto follows system appearance">
+    <option value="auto" selected>Auto</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+</select>
+
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="scroll-nav">
+    <button class="scroll-btn" onclick="scrollToTop()" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <button class="scroll-btn" onclick="scrollToBottom()" aria-label="Scroll to bottom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+<div class="sidebar-resize-handle" id="resizeHandle"></div>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-brand">PAPER NOTE</div>
+        <div class="sidebar-title">Distilling Instructions into Weights: Closed-Form Edits Fix a Robot Policy's Misreading</div>
+    </div>
+    <ul class="toc-list">
+        <li><a class="toc-link" href="#1-背景信息"><span class="toc-num">01</span> 1. 背景信息</a></li>
+<li><a class="toc-link" href="#2-关键问题-机器人会搬方块-为什么抓住后又松手"><span class="toc-num">02</span> 2. 关键问题：机器人会搬方块，为什么抓住后又松手？</a></li>
+<li><a class="toc-link" href="#3-关键方法-把明确指令造成的逐层变化蒸馏到-mlp"><span class="toc-num">03</span> 3. 关键方法：把明确指令造成的逐层变化蒸馏到 MLP</a></li>
+<li><a class="toc-link toc-sub" href="#3-1-沿着同一个方块案例走一遍">3.1 沿着同一个方块案例走一遍</a></li>
+<li><a class="toc-link toc-sub" href="#3-2-闭式解究竟在拟合什么">3.2 闭式解究竟在拟合什么？</a></li>
+<li><a class="toc-link toc-sub" href="#3-3-为什么图像位置重要">3.3 为什么图像位置重要？</a></li>
+<li><a class="toc-link" href="#4-数据与评估-用配对闭环结果检验离线修复"><span class="toc-num">04</span> 4. 数据与评估：用配对闭环结果检验离线修复</a></li>
+<li><a class="toc-link" href="#5-关键结果-主任务提升很强-编辑位置和适用边界同样重要"><span class="toc-num">05</span> 5. 关键结果：主任务提升很强，编辑位置和适用边界同样重要</a></li>
+<li><a class="toc-link toc-sub" href="#5-1-首先确认收益超过噪声-而且来自更新方向">5.1 首先确认收益超过噪声，而且来自更新方向</a></li>
+<li><a class="toc-link toc-sub" href="#5-2-同样的教师信号-写到哪里更有效">5.2 同样的教师信号，写到哪里更有效？</a></li>
+<li><a class="toc-link toc-sub" href="#5-3-哪些结果限制了结论">5.3 哪些结果限制了结论？</a></li>
+<li><a class="toc-link" href="#6-insights"><span class="toc-num">06</span> 6. Insights</a></li>
+<li><a class="toc-link toc-sub" href="#6-1-最有价值的是-已知正确输入-提供了反事实教师">6.1 最有价值的是“已知正确输入”提供了反事实教师</a></li>
+<li><a class="toc-link toc-sub" href="#6-2-复现时应把-改写指令-保留为强基线">6.2 复现时应把“改写指令”保留为强基线</a></li>
+<li><a class="toc-link toc-sub" href="#6-3-没有已知正确输入-应是停止当前方案的信号">6.3 “没有已知正确输入”应是停止当前方案的信号</a></li>
+<li><a class="toc-link" href="#7-连接与发现"><span class="toc-num">07</span> 7. 连接与发现</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+<div class="content-inner">
+
+<header class="page-header">
+    <div class="header-meta">
+        <span class="header-badge badge-date">2026-11-17</span>
+<span class="header-badge badge-branch">Finished</span>
+<a class="header-badge badge-link" href="https://arxiv.org/abs/2611.11894" target="_blank">arXiv</a>
+    </div>
+    <h1>Distilling Instructions into Weights: Closed-Form Edits Fix a Robot Policy's Misreading</h1>
+    <p class="authors">Ali-Adeeb Abbas, Esmaeil Seraj</p>
+    <div class="topic-row"><span class="topic-tag">VLA</span> <span class="topic-tag">Model_Editing</span> <span class="topic-tag">Interpretability</span> <span class="topic-tag">Instruction_Grounding</span></div>
+</header>
+
+<h2 id="1-背景信息">1. 背景信息</h2>
+<ul>
+<li><strong>作者与机构</strong>：Ali-Adeeb Abbas（Northeastern University RIVeR Laboratory、General Motors），Esmaeil Seraj（General Motors）。</li>
+<li><strong>版本</strong>：2026-11-09，arXiv:2611.11894v1；本文按预印本正文及附录阅读，未见会议录用信息。</li>
+<li><strong>材料</strong>：<a href="https://arxiv.org/html/2611.11894v1">论文全文</a>｜<a href="https://ali-adeeb.com/weightsmith/">项目页</a>｜<a href="https://github.com/adeeb10abbas/weightsmith">代码 weightsmith</a>。代码、编辑脚本和逐 episode 结果公开；v1 附录 H 明确说原始 rollout、activation capture 和候选权重留在 GPU 主机，未随仓库发布。</li>
+<li><strong>版本边界</strong>：2026-11-13 查看的项目页已加入其他模型架构实验；下文结论限于 arXiv v1 的 π0.5 实验，不将网页扩展结果混入论文。</li>
+</ul>
+<p><strong>核心判断</strong>：这篇最值得复用的是“先找到模型已经能做对的输入，再把输入产生的内部变化写进权重”。作者把一条含糊指令的执行成功率从 21.1% 提至 82.8%，同时用随机方向、编辑位置和未编辑重复运行约束解释。证据支持修复已有技能的调用；尚未定位出完整的语法绑定电路，也没有证明能补上欠缺的运动技能。[§2–5]</p>
+<h2 id="2-关键问题-机器人会搬方块-为什么抓住后又松手">2. 关键问题：机器人会搬方块，为什么抓住后又松手？</h2>
+<p>论文的真实案例是：</p>
+<blockquote class="card card-info">
+<p>Put the cube then the banana in the bowl.</p>
+</blockquote>
+<p>目标是依次把方块、香蕉放进碗里。原模型在诊断用的 64 次运行中，63 次先去找方块，却常常抬起几厘米就松手，最终只成功 9 次。问题不只是“夹爪力度不足”：同一个模型换成下面的明确表述，32 个配对运行的成功数从 3 增至 22。[§2]</p>
+<blockquote class="card card-info">
+<p>Put the cube in the bowl then put the banana in the bowl.</p>
+</blockquote>
+<p>作者固定图像、机器人状态和 flow-matching 噪声，重放 <strong>21 个已记录的提前释放决策</strong>，只改变指令。把 cube 改成 rubiks cube，21 个错误全部保留；将 “in the bowl” 放到 cube 旁边，只剩 1–3 个。这个对照支持作者的诊断：模型把目的地主要绑定到靠后的 banana，持有 cube 时没有正确维持“把当前物体搬到碗里”的行为。[Fig. 2a]</p>
+<p><img src="../../assets/distilling-2611.11894/fig1-teaser.png" alt="图1：同一指令下，编辑前后搬运方块的差别" /></p>
+<p><em>原文 Fig. 1，来源：<a href="https://arxiv.org/html/2611.11894v1/fig1_teaser.png">arXiv v1 原图</a>。看下方夹爪时间线：未编辑模型抓住后第 3 个控制步就释放，编辑后持续搬运到碗里。相机画面是选出的单例，右侧才是完整 128 次 held-out 统计。</em></p>
+<p>一个注意力头也呈现目的地词偏向相邻名词的现象，但它只是辅助证据。<strong>更有说服力的是固定其他输入后改变词语关系，错误决策随之改变。</strong> 这仍未把错误定位到某个充分且必要的内部组件。[Appendix C；笔记者判断]</p>
+<h2 id="3-关键方法-把明确指令造成的逐层变化蒸馏到-mlp">3. 关键方法：把明确指令造成的逐层变化蒸馏到 MLP</h2>
+<h3 id="3-1-沿着同一个方块案例走一遍">3.1 沿着同一个方块案例走一遍</h3>
+<p>π0.5 的 VLM 先处理两路相机、指令和状态 token；action expert 读取 VLM 的 K/V，再通过 flow matching 生成动作。这里 VLM 的 prefix attention 是双向的，<strong>图像 token 也能读到语言</strong>。[§2]</p>
+<p>作者取 6 个提前释放决策，各自在原指令和明确指令下前向计算，得到一组“同场景、同状态、不同说法”的内部对照。接下来只修改 VLM 第 0–16 层的 MLP down-projection，让原说法下的 MLP 输入产生接近明确说法的残差增量。部署时机器人继续接收原指令，action expert 的参数保持原样。</p>
+<p>这里必须分清两件事：<strong>写入的是每层 residual increment 的差值；编辑目标覆盖若干 token 位置，但参数更新会作用于所有经过这层的输入。</strong> 它不是运行时只在选定位置开启的补丁。</p>
+<h3 id="3-2-闭式解究竟在拟合什么">3.2 闭式解究竟在拟合什么？</h3>
+<p>第 $\ell$ 层构造：</p>
+<ul>
+<li>$K_\ell\in\mathbb{R}^{72\times16384}$：原指令下 MLP down-projection 的输入。每行对应一个位置，在 6 个决策上取平均。</li>
+<li>72 个位置包括 <strong>40 个两种 prompt 共有的起始、Task: 与机器人状态位置，以及 32 个图像 cell（每个相机 16 个）</strong>。不要求两个不同长度的指令逐词对齐。</li>
+<li>$V_\ell\in\mathbb{R}^{72\times2048}$：同一位置在明确指令与原指令下，<strong>该层残差增量之差</strong>。</li>
+</ul>
+<p>使用行向量约定，更新为：</p>
+<div class="math-display">$$
+\Delta W_\ell=K_\ell^\top(K_\ell K_\ell^\top+\lambda I)^{-1}V_\ell,
+\qquad
+\lambda=10^{-3}\frac{\mathrm{tr}(K_\ell K_\ell^\top)}{72}.
+$$</div>
+<p>它使 $K_\ell\Delta W_\ell\approx V_\ell$：这些原指令触发的输入方向，经过更新后的线性层，多得到一份接近明确指令的残差变化。正则项限制更新规模、改善求解稳定性；每层 rank 至多为 72。[Eq. 1；Appendix C]</p>
+<p>数学工具沿用模型编辑中的多 key 闭式更新。本文的具体贡献是把<strong>已知有效的指令改写</strong>变成编辑目标，并用机器人闭环执行检验它。这里没有梯度训练或新专家示范，但使用了机器人观测、失败记录、激活及仿真反馈，不能宽泛地称为“完全不需要数据”。</p>
+<h3 id="3-3-为什么图像位置重要">3.3 为什么图像位置重要？</h3>
+<p>只写 prompt 和状态位置，21 个提前释放仍剩 13 个；加入图像位置后全部消失。只用图像位置、覆盖第 0–16 层，也能消除这 21 个离线错误。相反，沿一个能区分 cube/banana 的单一方向做 steering，两次尝试都没有改变释放决策。[Fig. 2b；Table 7]</p>
+<p>这支持一种解释：明确指令改变了<strong>语言条件化的图像表示</strong>，action expert 从这些表示中取得“继续持有并搬运”的信息。作者未证明这是唯一通路；一个相关方向的干预失败，也不能证明它在所有条件下都没有因果作用。</p>
+<p><strong>低秩不等于稀疏。</strong> 小版本只用第 8–16 层的 32 个图像 key，低秩因子占 5.3M 参数量，约为全模型的 0.16%；合并进权重后却改变约 2.48 亿个存储标量，即 7.4%。完整版本则改变 13.4% 的存储标量。“0.16%”描述补丁的因子存储成本，不是实际被改写权重的比例。[§4.2；Appendix C]</p>
+<h2 id="4-数据与评估-用配对闭环结果检验离线修复">4. 数据与评估：用配对闭环结果检验离线修复</h2>
+<p>实验使用约 <strong>3.35B 的 OpenPI π0.5 DROID joint-position checkpoint</strong>，在 16 个 RoboLab / Isaac Sim 任务上零样本评估；checkpoint 没有在这些任务上训练。每次输入两张 $224\times224$ 图像及机器人状态，输出 15 步动作块，包含 7 个关节与夹爪命令。[§3]</p>
+<p>编辑在 practice seeds 上构建和筛选，冻结后才交给独立评分流程跑 held-out seeds。原模型与编辑模型使用相同 simulator slots，并在两半样本中交换运行先后。结果记录 <strong>fixed（失败变成功）/ broke（成功变失败）</strong>，采用 exact McNemar 检验与配对区间。[§3；Appendix H]</p>
+<p>这一设计很必要：同 seed 不能消除所有仿真与渲染差异。作者记录的同权重重跑也会出现大量双向翻转，因此另跑未编辑对照，不能把每个“救回的 episode”都直接归因于编辑。</p>
+<h2 id="5-关键结果-主任务提升很强-编辑位置和适用边界同样重要">5. 关键结果：主任务提升很强，编辑位置和适用边界同样重要</h2>
+<h3 id="5-1-首先确认收益超过噪声-而且来自更新方向">5.1 首先确认收益超过噪声，而且来自更新方向</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>比较</th>
+<th style="text-align:right">原模型 → 测试条件</th>
+<th style="text-align:right">fixed / broke</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整编辑，128 held-out seeds</td>
+<td style="text-align:right">27/128 → 106/128</td>
+<td style="text-align:right">81 / 2</td>
+<td>+61.7 个百分点；95% 区间 [52.3, 70.3]；$p=7.2\times10^{-22}$</td>
+</tr>
+<tr>
+<td>同层、同 rank、同奇异值的随机方向，前 64 seeds</td>
+<td style="text-align:right">13/64 → 9/64</td>
+<td style="text-align:right">6 / 10</td>
+<td>$p=0.45$，随机扰动没有复制收益</td>
+</tr>
+<tr>
+<td>原权重配明确指令，同 64 seeds</td>
+<td style="text-align:right">13/64 → 57/64</td>
+<td style="text-align:right">45 / 1</td>
+<td>同组完整编辑为 50/64，编辑恢复了改写的大部分效果</td>
+</tr>
+<tr>
+<td>自动工具构建的小版本，新 64 seeds</td>
+<td style="text-align:right">8/64 → 36/64</td>
+<td style="text-align:right">33 / 5</td>
+<td>$p=4.3\times10^{-6}$，端到端流程有收益，但低于手工构建实验的绝对成功率</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>来源：§4.1、§4.5、Appendix C/H。随机对照在舍入前匹配层、秩、奇异值和范数，不严格匹配 bf16 舍入后实际变化的标量数。</em></p>
+<p>自动工具 <code>weightsmith distill</code> 按规则选失败决策、采集激活、求解和离线检查；有效改写仍由调用者提供，闭环 held-out 评分由外部流程执行。它只在这个任务上验证过，不能等同于自动发现并修复任意机器人故障。[§4.5]</p>
+<h3 id="5-2-同样的教师信号-写到哪里更有效">5.2 同样的教师信号，写到哪里更有效？</h3>
+<p>Table 1 使用另一组 <strong>共享 64 个 held-out seeds</strong>，原模型为 5/64：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="可横向滚动的表格"><table>
+<thead>
+<tr>
+<th>编辑位置</th>
+<th style="text-align:right">成功数 / 64</th>
+<th>关键现象</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VLM，完整编辑</td>
+<td style="text-align:right">55</td>
+<td>最好；还能改善两个迁移任务</td>
+</tr>
+<tr>
+<td>VLM，小版本</td>
+<td style="text-align:right">41</td>
+<td>显著弱于完整版本，直接比较 $p=0.007$</td>
+</tr>
+<tr>
+<td>VLM + action expert</td>
+<td style="text-align:right">43</td>
+<td>离线匹配更近，但闭环反而不如只改 VLM</td>
+</tr>
+<tr>
+<td>只改 action expert</td>
+<td style="text-align:right">20</td>
+<td>52% 的运行在第一动作块就闭爪，尚未到达物体</td>
+</tr>
+<tr>
+<td>action head，最小范数更新</td>
+<td style="text-align:right">0</td>
+<td>94% 的运行第一动作块闭爪，修复方向缺乏状态选择性</td>
+</tr>
+<tr>
+<td>action head，加门控</td>
+<td style="text-align:right">30</td>
+<td>能改善主任务，但未迁移到另外两个任务</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>来源：§4.4，Table 1/10。门控 head 编辑来自盲测 Agent，额外使用保留行为的负例；各方案参数量和约束不同，不是严格的等预算层定位实验。</em></p>
+<p>这个结果给出比“改夹爪输出”更具体的理由：在上游写入目的地信息，可以让下游自己区分什么时候持有、什么时候释放；直接推动输出更容易在接近香蕉等正确行为上同时闭爪。action expert 还有缩小 MLP 输出的门控，穿过门控求解需要更大的权重变化，进一步放大副作用。[§4.4；Appendix G]</p>
+<p>小版本另一次 128-seed 实验为 102/128，对照 19/128。不能拿它与完整版本的 106/128 直接宣布“性能基本无损”：两次基线不同，且上表的直接比较已经检出了差距。</p>
+<h3 id="5-3-哪些结果限制了结论">5.3 哪些结果限制了结论？</h3>
+<p>同一编辑在 held-out seeds 上使拿眼镜从 22/64 到 44/64、方块放到碗左边从 8/64 到 36/64；放到右边仍为 0/32。其余 13 项没有检出显著差异，但许多只有 16–32 次配对，<strong>这支持有限迁移，不能保证没有能力损失</strong>。[§4.3；Table 9]</p>
+<p>7 个独立、互盲的 Claude Opus 编辑会话中，只有处理该误读指令的候选通过 held-out 检验。它找到的是 1,024 个值的门控 action-head 编辑，成功数 11/64→27/64；不要把这一结果与操作员会话构建的完整 VLM 编辑混为一次自主发现。[§4.6]</p>
+<p>其他故障还揭示了一个重要反例：堆叠任务的编辑把“空夹爪在堆上闭合”从 73 次 replan 降到 5 次，held-out 成功却只是 35/64→39/64，$p=0.585$。修正一个错误决策之后，第三块的放置精度仍不足。视觉混淆、抓取姿态和接触滑落的编辑也未得到可靠成功提升。[§4.6–4.7]</p>
+<p>噪声也限制了这些负结论的强度。按 30% 配对结果不一致、80% power 的近似，32 对 episode 只能检测约 27 个百分点的变化，128 对约为 14 个百分点。小样本上的“不显著”不能排除小幅收益或损害。[Fig. 5；Table 6]</p>
+<h2 id="6-insights">6. Insights</h2>
+<h3 id="6-1-最有价值的是-已知正确输入-提供了反事实教师">6.1 最有价值的是“已知正确输入”提供了反事实教师</h3>
+<p>这项工作先改变指令而固定观测，再把内部差值写入权重，最后回到原指令测试，因而把诊断和修复连起来了。对 VLA 可解释性研究，我会优先寻找<strong>同一个物理状态下，等价说法能使动作从错变对</strong>的案例；它比单纯从成功/失败轨迹相减更少混入状态差异。随后再用局部 activation patching、路径干预检查哪些变化必要，而不是把一次大范围低秩编辑的成功当作电路已解释。[基于 §2、§4 的研究判断]</p>
+<h3 id="6-2-复现时应把-改写指令-保留为强基线">6.2 复现时应把“改写指令”保留为强基线</h3>
+<p>明确指令本身就很好，权重编辑的实际价值取决于指令是否必须保持原样、能否泛化到未见表述、以及回归风险。若部署端允许可靠改写，本文尚未给出权重编辑优于它的证据。值得做的下一轮是：在未见对象与关系组合上，比较 prompt 改写、65 行词嵌入编辑、本文逐层蒸馏，使用同一批观测和配对种子；分别测词义错误与关系绑定错误。[后续实验设想]</p>
+<h3 id="6-3-没有已知正确输入-应是停止当前方案的信号">6.3 “没有已知正确输入”应是停止当前方案的信号</h3>
+<p>平盒抓取与滑落实验表明，调对一个姿态或夹爪标量也可能无法完成任务。这给出了实用的资源分配准则：先验证现有策略能否在某种等价输入下完成任务，再决定是否继续做蒸馏。但当前证据来自一个零样本 checkpoint 与有限候选，不能把它升级为“权重编辑永远不能产生新技能”的理论边界。[§5；笔记者判断]</p>
+<h2 id="7-连接与发现">7. 连接与发现</h2>
+<ul>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-VLA.html" title="MOC-VLA">MOC-VLA</a> — 输入表述变化如何通过视觉语言表示影响机器人动作。</li>
+<li><a class="wikilink" href="../../03_Personal/MOCs/MOC-Interpretability.html" title="MOC-Interpretability">MOC-Interpretability</a> — 固定观测反事实、权重干预与闭环行为验证的证据层次。</li>
+<li><a class="wikilink" href="Can-LLMs-Debug-Robots-by-Editing-Their-Weights-词嵌入稀疏修复.html" title="Can-LLMs-Debug-Robots-by-Editing-Their-Weights-词嵌入稀疏修复">Can-LLMs-Debug-Robots-by-Editing-Their-Weights-词嵌入稀疏修复</a> — 另一个团队在 pi05_libero 上改词嵌入行，提供更强的输入不命中时局部性保证；本文则处理复合指令的目标绑定。本文引用的 companion study 是 Abbas/Seraj 自己的仓库研究，并非这篇 Zhang 等人的论文。</li>
+</ul>
+<hr />
+
+
+
+<nav class="paper-nav"><a class="paper-nav-link prev" href="Encoded-but-Not-in-Control-Revealing-the-Grounding-Gap-in-Vision-Language-Robot-Policies-指令编码与抓取目标选择.html"><span class="paper-nav-label">&larr; Previous</span><span class="paper-nav-title">Encoded but Not in Control — 机器人能读出目标，为什么还会抓错？</span></a>
+<a class="paper-nav-link next" href="Can-LLMs-Debug-Robots-by-Editing-Their-Weights-词嵌入稀疏修复.html"><span class="paper-nav-label">Next &rarr;</span><span class="paper-nav-title">Can LLMs Debug Robots by Editing Their Weights?</span></a></nav>
+
+<div class="page-footer">
+    <p>Generated from Markdown | cite: abbas2026distilling</p>
+</div>
+
+</div>
+</main>
+
+</div>
+
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/auto-render.min.js"></script>
+<script src="../../vendor/highlight/highlight.min.js"></script>
+<script>
+(function() {
+    var systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    // Old code saved resolved system themes, so start with a new preference key.
+    var mode = 'auto';
+    try { mode = localStorage.getItem('theme-mode') || 'auto'; } catch (e) {}
+    if (['auto', 'light', 'dark'].indexOf(mode) === -1) mode = 'auto';
+    function applyTheme() {
+        var theme = mode === 'auto' ? (systemTheme.matches ? 'dark' : 'light') : mode;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme-mode', mode);
+        var selector = document.getElementById('theme-mode');
+        if (selector) selector.value = mode;
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) {
+            hljsLink.href = theme === 'light'
+                ? '../../vendor/highlight/github.min.css'
+                : '../../vendor/highlight/github-dark.min.css';
+        }
+    }
+    window.setThemeMode = function(value) {
+        if (['auto', 'light', 'dark'].indexOf(value) === -1) return;
+        mode = value;
+        try { localStorage.setItem('theme-mode', mode); } catch (e) {}
+        applyTheme();
+    };
+    applyTheme();
+    systemTheme.addEventListener('change', function() {
+        if (mode === 'auto') applyTheme();
+    });
+})();
+
+// Sidebar toggle
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// Scroll to top / bottom (detail-page floating controls)
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+window.scrollToBottom = function() {
+    var max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    window.scrollTo({ top: max, behavior: 'smooth' });
+};
+
+// Sidebar resize
+(function() {
+    var handle = document.getElementById('resizeHandle');
+    if (!handle) return;
+    var MIN = 200, MAX = 500;
+    var dragging = false;
+
+    handle.addEventListener('mousedown', function(e) {
+        dragging = true;
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var w = Math.max(MIN, Math.min(MAX, e.clientX));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        localStorage.setItem('sidebar-width',
+            document.documentElement.style.getPropertyValue('--sidebar-width'));
+    });
+
+    // Restore saved width
+    var saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+        var w = parseInt(saved, 10);
+        if (w >= MIN && w <= MAX) {
+            document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        }
+    }
+})();
+
+// TOC scroll tracking
+var sections = document.querySelectorAll('h2[id], h3[id]');
+var tocLinks = document.querySelectorAll('.toc-link');
+
+function updateActiveToc() {
+    var current = '';
+    sections.forEach(function(section) {
+        var rect = section.getBoundingClientRect();
+        if (rect.top <= 120) {
+            current = section.getAttribute('id');
+        }
+    });
+    tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+        }
+    });
+}
+
+tocLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (window.innerWidth <= 900) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
+        }
+    });
+});
+
+// Fade-in on scroll
+var fadeElements = document.querySelectorAll('.fade-in');
+function checkFadeIn() {
+    fadeElements.forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 60) {
+            el.classList.add('visible');
+        }
+    });
+}
+
+var ticking = false;
+window.addEventListener('scroll', function() {
+    if (!ticking) {
+        window.requestAnimationFrame(function() {
+            updateActiveToc();
+            checkFadeIn();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
+
+updateActiveToc();
+checkFadeIn();
+
+// KaTeX auto-render
+renderMathInElement(document.body, {
+    delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+    ],
+    throwOnError: false,
+});
+
+// Highlight.js
+document.querySelectorAll('pre code').forEach(function(block) {
+    hljs.highlightElement(block);
+});
+</script>
+
+<script src="../../site.js"></script>
+</body>
+</html>
